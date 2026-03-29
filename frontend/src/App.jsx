@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import LandingPage from './components/LandingPage'
 import PdfEditor from './components/PdfEditor'
+import { apiUrl } from './lib/apiBase'
 
 export default function App() {
   const [sessionId, setSessionId] = useState(null)
@@ -11,7 +12,7 @@ export default function App() {
     try {
       const fd = new FormData()
       fd.append('file', file)
-      const res = await fetch('/upload', { method: 'POST', body: fd })
+      const res = await fetch(apiUrl('/upload'), { method: 'POST', body: fd })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data.error || 'Upload failed')
       setSessionId(data.sessionId)
