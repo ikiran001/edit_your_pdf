@@ -28,7 +28,8 @@ export default function LandingPage({ onFileSelected, loading }) {
           ) : (
             <>
               Upload a PDF, use <strong>Edit text</strong> to change existing wording (like Word) or
-              other tools to annotate, then save or download. Locally, keep the API on port 3001.
+              other tools to annotate, then save or download. No install or account — edit in your
+              browser and download when you&apos;re done.
             </>
           )}
         </p>
