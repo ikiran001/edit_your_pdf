@@ -26,6 +26,8 @@ export default function PdfPageCanvas({
   const itemsRef = useRef(items)
   itemsRef.current = items
   const [textRuns, setTextRuns] = useState([])
+  const textRunsRef = useRef([])
+  textRunsRef.current = textRuns
   const [nativeEdit, setNativeEdit] = useState(null)
 
   const paintOverlay = useCallback((draftBox, draftLinePts) => {
@@ -373,14 +375,16 @@ export default function PdfPageCanvas({
 
   const overlayActive = tool && tool !== 'editText'
 
-  const onEditTextLayerDown = (e) => {
-    if (tool !== 'editText' || !ready || !onNativeTextEdit) return
+  const onEditTextPointerDown = (e) => {
+    if (tool !== 'editText' || !ready) return
     const pdf = pdfCanvasRef.current
-    if (!pdf || textRuns.length === 0) return
+    const runs = textRunsRef.current
+    if (!pdf || runs.length === 0) return
     const r = pdf.getBoundingClientRect()
+    if (r.width < 2 || r.height < 2) return
     const bx = (e.clientX - r.left) * (pdf.width / r.width)
     const by = (e.clientY - r.top) * (pdf.height / r.height)
-    const run = hitTestTextRun(textRuns, bx, by)
+    const run = hitTestTextRun(runs, bx, by)
     if (!run) return
     e.preventDefault()
     e.stopPropagation()
@@ -390,8 +394,8 @@ export default function PdfPageCanvas({
       run,
       leftCss: run.left * sx,
       topCss: run.top * sy,
-      widthCss: Math.max(run.width * sx, 48),
-      heightCss: Math.max(run.height * sy, run.fontSizePx * sy * 1.25),
+      widthCss: Math.max(run.width * sx, 64),
+      heightCss: Math.max(run.height * sy, (run.fontSizePx * sx) * 1.35),
       fontSizeCss: Math.max(10, run.fontSizePx * sx),
     })
   }
@@ -411,7 +415,10 @@ export default function PdfPageCanvas({
     <div ref={wrapRef} className="relative block w-full max-w-full shadow-md">
       <canvas
         ref={pdfCanvasRef}
-        className="relative z-0 block h-auto w-full max-w-full bg-white"
+        className={`block h-auto w-full max-w-full touch-none bg-white ${
+          tool === 'editText' ? 'relative z-[15] cursor-text' : 'relative z-0'
+        }`}
+        onPointerDown={tool === 'editText' ? onEditTextPointerDown : undefined}
       />
       <canvas
         ref={overlayRef}
@@ -423,16 +430,9 @@ export default function PdfPageCanvas({
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       />
-      {tool === 'editText' && ready && cw > 0 && (
-        <div
-          role="presentation"
-          className="absolute left-0 top-0 z-[15] cursor-text touch-none"
-          style={{ width: cw, height: ch }}
-          onPointerDown={onEditTextLayerDown}
-        />
-      )}
-      {nativeEdit && cw > 0 && (
+      {nativeEdit && (
         <textarea
+          key={`${nativeEdit.run.pdf.x}-${nativeEdit.run.pdf.y}-${nativeEdit.run.pdf.baseline}`}
           autoFocus
           className="absolute z-[25] resize-none rounded border-2 border-indigo-500 bg-white/98 p-1 text-zinc-900 shadow-lg outline-none dark:bg-zinc-900 dark:text-zinc-50"
           style={{
@@ -440,7 +440,7 @@ export default function PdfPageCanvas({
             top: nativeEdit.topCss,
             width: nativeEdit.widthCss,
             minHeight: nativeEdit.heightCss,
-            fontSize: nativeEdit.fontSizeCss,
+            fontSize: `${nativeEdit.fontSizeCss}px`,
             lineHeight: 1.2,
             fontFamily: 'system-ui, sans-serif',
           }}

@@ -20,8 +20,12 @@ export function buildTextRuns(viewport, textContent) {
     let asc = fontSizePdf * 0.92
     if (st && typeof st.descent === 'number' && typeof st.ascent === 'number') {
       const m = Math.max(fontSizePdf, item.height || 0) || fontSizePdf
-      desc = Math.abs(st.descent) * m
-      asc = st.ascent * m
+      let d = Math.abs(st.descent) * m
+      let a = st.ascent * m
+      if (d > fontSizePdf * 2.5) d = fontSizePdf * 0.28
+      if (a > fontSizePdf * 2.5) a = fontSizePdf * 0.92
+      desc = d
+      asc = a
     }
 
     const e = item.transform[4]
@@ -37,14 +41,18 @@ export function buildTextRuns(viewport, textContent) {
     const right = Math.max(r[0], r[2])
     const top = Math.min(r[1], r[3])
     const bottom = Math.max(r[1], r[3])
+    const boxH = Math.max(bottom - top, 2)
+    const boxW = Math.max(right - left, 2)
+    // Match on-screen size from the mapped bbox (canvas pixels)
+    const fontSizePx = Math.min(200, Math.max(9, boxH * 0.82))
 
     runs.push({
       str: s,
       left,
       top,
-      width: Math.max(right - left, 2),
-      height: Math.max(bottom - top, 2),
-      fontSizePx: fontSizePdf * viewport.scale,
+      width: Math.max(boxW, 2),
+      height: boxH,
+      fontSizePx,
       pdf: {
         x: x0,
         y: y0,
@@ -60,14 +68,14 @@ export function buildTextRuns(viewport, textContent) {
 }
 
 /** Hit-test in canvas bitmap space (px, py scaled from client coords). */
-export function hitTestTextRun(runs, px, py) {
+export function hitTestTextRun(runs, px, py, pad = 6) {
   for (let i = runs.length - 1; i >= 0; i--) {
     const r = runs[i]
     if (
-      px >= r.left &&
-      px <= r.left + r.width &&
-      py >= r.top &&
-      py <= r.top + r.height
+      px >= r.left - pad &&
+      px <= r.left + r.width + pad &&
+      py >= r.top - pad &&
+      py <= r.top + r.height + pad
     ) {
       return r
     }
