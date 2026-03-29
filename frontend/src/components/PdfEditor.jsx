@@ -33,8 +33,11 @@ export default function PdfEditor({ sessionId, onBack }) {
   const pageRefs = useRef([])
   const scrollRef = useRef(null)
   const pagesItemsRef = useRef({})
+  const nativeTextEditsRef = useRef([])
+  const [nativeTextEdits, setNativeTextEdits] = useState([])
   const { pagesItems, commit, undo, redo, canUndo, canRedo, reset } = usePagesHistory({})
   pagesItemsRef.current = pagesItems
+  nativeTextEditsRef.current = nativeTextEdits
 
   const numPages = pdfDoc?.numPages ?? 0
 
@@ -49,6 +52,7 @@ export default function PdfEditor({ sessionId, onBack }) {
         if (cancelled) return
         setPdfDoc(doc)
         reset({})
+        setNativeTextEdits([])
       } catch (e) {
         if (!cancelled) setLoadError(e?.message || 'Failed to load PDF')
       }
@@ -98,6 +102,27 @@ export default function PdfEditor({ sessionId, onBack }) {
     return Array.from({ length: numPages }, (_, i) => i)
   }, [pdfDoc, numPages])
 
+  const addNativeTextEdit = useCallback((pageIndex, { pdf, text }) => {
+    const key = `${pageIndex}:${pdf.x}:${pdf.y}:${pdf.baseline}`
+    setNativeTextEdits((prev) => {
+      const rest = prev.filter((e) => e.key !== key)
+      return [
+        ...rest,
+        {
+          key,
+          pageIndex,
+          x: pdf.x,
+          y: pdf.y,
+          w: pdf.w,
+          h: pdf.h,
+          baseline: pdf.baseline,
+          fontSize: pdf.fontSize,
+          text,
+        },
+      ]
+    })
+  }, [])
+
   const handleDownload = async () => {
     setDownloading(true)
     try {
@@ -109,6 +134,7 @@ export default function PdfEditor({ sessionId, onBack }) {
           sessionId,
           edits,
           applyTextSwap,
+          nativeTextEdits: nativeTextEditsRef.current,
         }),
       })
       const raw = await res.text()
@@ -198,6 +224,21 @@ export default function PdfEditor({ sessionId, onBack }) {
               Session <code className="text-xs">{sessionId.slice(0, 8)}…</code>
             </span>
           </div>
+          {!activeTool && (
+            <div
+              role="status"
+              className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/35 dark:text-amber-100"
+            >
+              <p className="m-0 font-medium">Select a tool first</p>
+              <p className="mt-1 mb-0 text-amber-900/90 dark:text-amber-100/90">
+                Use <strong>Edit text</strong> to change existing PDF wording (matched size), or{' '}
+                <strong>Text</strong> / <strong>Draw</strong> / <strong>Highlight</strong> /{' '}
+                <strong>Rectangle</strong> for markup. Edits to existing text apply when you click{' '}
+                <strong>Download PDF</strong>. Optional bulk swap “PDF editor” → “PDF love” uses the
+                checkbox.
+              </p>
+            </div>
+          )}
           <div className="flex flex-col items-center gap-8 pb-24">
             {pageNodes?.map((i) => (
               <div
@@ -215,6 +256,7 @@ export default function PdfEditor({ sessionId, onBack }) {
                       tool={activeTool}
                       items={pagesItems[i] || []}
                       onUpdateItems={updatePage(i)}
+                      onNativeTextEdit={(payload) => addNativeTextEdit(i, payload)}
                     />
                   )}
                 </PageLoader>

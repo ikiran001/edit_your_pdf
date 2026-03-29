@@ -1,10 +1,19 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { buildTextRuns, hitTestTextRun } from '../lib/pdfTextRuns'
+
+const RENDER_SCALE = 1.35
 
 /**
  * Renders one PDF page with pdf.js and an interaction overlay.
  * Annotations use normalized coords (0–1, top-left origin) for pdf-lib on the server.
  */
-export default function PdfPageCanvas({ pdfPage, tool, items, onUpdateItems }) {
+export default function PdfPageCanvas({
+  pdfPage,
+  tool,
+  items,
+  onUpdateItems,
+  onNativeTextEdit,
+}) {
   const wrapRef = useRef(null)
   const pdfCanvasRef = useRef(null)
   const overlayRef = useRef(null)
@@ -16,6 +25,8 @@ export default function PdfPageCanvas({ pdfPage, tool, items, onUpdateItems }) {
   const drawPointsRef = useRef(null)
   const itemsRef = useRef(items)
   itemsRef.current = items
+  const [textRuns, setTextRuns] = useState([])
+  const [nativeEdit, setNativeEdit] = useState(null)
 
   const paintOverlay = useCallback((draftBox, draftLinePts) => {
     const overlay = overlayRef.current
@@ -104,7 +115,7 @@ export default function PdfPageCanvas({ pdfPage, tool, items, onUpdateItems }) {
     if (!pdfPage) return
     let cancelled = false
     const canvas = pdfCanvasRef.current
-    const scale = 1.35
+    const scale = RENDER_SCALE
     const viewport = pdfPage.getViewport({ scale })
     const base = pdfPage.getViewport({ scale: 1 })
     metaRef.current = {
@@ -127,6 +138,24 @@ export default function PdfPageCanvas({ pdfPage, tool, items, onUpdateItems }) {
       setReady(false)
     }
   }, [pdfPage])
+
+  useEffect(() => {
+    if (!pdfPage) return
+    let cancelled = false
+    const viewport = pdfPage.getViewport({ scale: RENDER_SCALE })
+    pdfPage.getTextContent().then((tc) => {
+      if (cancelled) return
+      setTextRuns(buildTextRuns(viewport, tc))
+    })
+    return () => {
+      cancelled = true
+      setTextRuns([])
+    }
+  }, [pdfPage])
+
+  useEffect(() => {
+    if (tool !== 'editText') setNativeEdit(null)
+  }, [tool])
 
   useEffect(() => {
     if (!ready) return
@@ -177,6 +206,7 @@ export default function PdfPageCanvas({ pdfPage, tool, items, onUpdateItems }) {
 
   const onPointerDown = (e) => {
     if (!tool || !ready) return
+    if (tool === 'editText') return
     const n = normPoint(e)
     if (!n) return
 
@@ -201,6 +231,7 @@ export default function PdfPageCanvas({ pdfPage, tool, items, onUpdateItems }) {
   }
 
   const onPointerMove = (e) => {
+    if (tool === 'editText') return
     if (tool === 'draw' && drawPointsRef.current) {
       const n = normPoint(e)
       if (!n) return
@@ -232,6 +263,7 @@ export default function PdfPageCanvas({ pdfPage, tool, items, onUpdateItems }) {
   }
 
   const onPointerUp = (e) => {
+    if (tool === 'editText') return
     if (tool === 'draw' && drawPointsRef.current) {
       try {
         e.currentTarget.releasePointerCapture(e.pointerId)
@@ -339,6 +371,42 @@ export default function PdfPageCanvas({ pdfPage, tool, items, onUpdateItems }) {
   const cw = cv?.clientWidth ?? 0
   const ch = cv?.clientHeight ?? 0
 
+  const overlayActive = tool && tool !== 'editText'
+
+  const onEditTextLayerDown = (e) => {
+    if (tool !== 'editText' || !ready || !onNativeTextEdit) return
+    const pdf = pdfCanvasRef.current
+    if (!pdf || textRuns.length === 0) return
+    const r = pdf.getBoundingClientRect()
+    const bx = (e.clientX - r.left) * (pdf.width / r.width)
+    const by = (e.clientY - r.top) * (pdf.height / r.height)
+    const run = hitTestTextRun(textRuns, bx, by)
+    if (!run) return
+    e.preventDefault()
+    e.stopPropagation()
+    const sx = r.width / pdf.width
+    const sy = r.height / pdf.height
+    setNativeEdit({
+      run,
+      leftCss: run.left * sx,
+      topCss: run.top * sy,
+      widthCss: Math.max(run.width * sx, 48),
+      heightCss: Math.max(run.height * sy, run.fontSizePx * sy * 1.25),
+      fontSizeCss: Math.max(10, run.fontSizePx * sx),
+    })
+  }
+
+  const commitNativeEdit = (value) => {
+    if (!nativeEdit || !onNativeTextEdit) {
+      setNativeEdit(null)
+      return
+    }
+    const { run } = nativeEdit
+    setNativeEdit(null)
+    if (value === run.str) return
+    onNativeTextEdit({ pdf: run.pdf, text: value })
+  }
+
   return (
     <div ref={wrapRef} className="relative block w-full max-w-full shadow-md">
       <canvas
@@ -348,13 +416,48 @@ export default function PdfPageCanvas({ pdfPage, tool, items, onUpdateItems }) {
       <canvas
         ref={overlayRef}
         className={`absolute left-0 top-0 touch-none ${
-          tool ? 'z-10 cursor-crosshair' : 'pointer-events-none z-0'
+          overlayActive ? 'z-10 cursor-crosshair' : 'pointer-events-none z-0'
         }`}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       />
+      {tool === 'editText' && ready && cw > 0 && (
+        <div
+          role="presentation"
+          className="absolute left-0 top-0 z-[15] cursor-text touch-none"
+          style={{ width: cw, height: ch }}
+          onPointerDown={onEditTextLayerDown}
+        />
+      )}
+      {nativeEdit && cw > 0 && (
+        <textarea
+          autoFocus
+          className="absolute z-[25] resize-none rounded border-2 border-indigo-500 bg-white/98 p-1 text-zinc-900 shadow-lg outline-none dark:bg-zinc-900 dark:text-zinc-50"
+          style={{
+            left: nativeEdit.leftCss,
+            top: nativeEdit.topCss,
+            width: nativeEdit.widthCss,
+            minHeight: nativeEdit.heightCss,
+            fontSize: nativeEdit.fontSizeCss,
+            lineHeight: 1.2,
+            fontFamily: 'system-ui, sans-serif',
+          }}
+          defaultValue={nativeEdit.run.str}
+          onBlur={(e) => commitNativeEdit(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              e.preventDefault()
+              setNativeEdit(null)
+            }
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault()
+              e.currentTarget.blur()
+            }
+          }}
+        />
+      )}
       {textDraft && cw > 0 && (
         <input
           autoFocus

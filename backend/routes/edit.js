@@ -7,6 +7,7 @@ import {
   applyTextReplacements,
   defaultEditorToLoveRules,
 } from '../services/applyTextReplacements.js';
+import { mergeEditsWithNative } from '../utils/mergeEdits.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const uploadsRoot = path.join(__dirname, '..', 'uploads');
@@ -17,7 +18,8 @@ const router = Router();
  * POST /edit — applies client edit payload with pdf-lib, writes edited.pdf for the session.
  */
 router.post('/edit', express.json({ limit: '50mb' }), async (req, res) => {
-  const { sessionId, edits, applyTextSwap, textReplaceRules } = req.body || {};
+  const { sessionId, edits, applyTextSwap, textReplaceRules, nativeTextEdits } =
+    req.body || {};
   if (!sessionId || typeof sessionId !== 'string') {
     return res.status(400).json({ error: 'sessionId required' });
   }
@@ -37,7 +39,8 @@ router.post('/edit', express.json({ limit: '50mb' }), async (req, res) => {
     if (rules?.length) {
       pdfBytes = await applyTextReplacements(pdfBytes, rules);
     }
-    const out = await applyEditsToPdf(pdfBytes, edits || { pages: [] });
+    const merged = mergeEditsWithNative(edits || { pages: [] }, nativeTextEdits);
+    const out = await applyEditsToPdf(pdfBytes, merged);
     fs.writeFileSync(outPath, out);
     return res.json({ ok: true });
   } catch (e) {
