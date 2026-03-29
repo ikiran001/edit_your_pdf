@@ -39,6 +39,7 @@ function ThumbnailItem({ pdfDoc, pageIndex, active, onSelect }) {
 
   useEffect(() => {
     let cancelled = false
+    let renderTask = null
     ;(async () => {
       if (!pdfDoc || !canvasRef.current) return
       const page = await pdfDoc.getPage(pageIndex + 1)
@@ -49,10 +50,20 @@ function ThumbnailItem({ pdfDoc, pageIndex, active, onSelect }) {
       const ctx = canvas.getContext('2d')
       canvas.width = vp.width
       canvas.height = vp.height
-      await page.render({ canvasContext: ctx, viewport: vp }).promise
+      renderTask = page.render({ canvasContext: ctx, viewport: vp })
+      try {
+        await renderTask.promise
+      } catch {
+        /* RenderingCancelledException etc. */
+      }
     })()
     return () => {
       cancelled = true
+      try {
+        renderTask?.cancel()
+      } catch {
+        /* ignore */
+      }
     }
   }, [pdfDoc, pageIndex])
 

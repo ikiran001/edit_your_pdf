@@ -130,14 +130,24 @@ export default function PdfPageCanvas({
     canvas.width = viewport.width
     canvas.height = viewport.height
     const ctx = canvas.getContext('2d')
-    pdfPage
-      .render({ canvasContext: ctx, viewport })
-      .promise.then(() => {
+    const task = pdfPage.render({ canvasContext: ctx, viewport })
+    task.promise
+      .then(() => {
         if (cancelled) return
         setReady(true)
       })
+      .catch((e) => {
+        if (cancelled) return
+        if (e?.name === 'RenderingCancelledException') return
+        console.error(e)
+      })
     return () => {
       cancelled = true
+      try {
+        task.cancel()
+      } catch {
+        /* ignore */
+      }
       setReady(false)
     }
   }, [pdfPage])
@@ -187,7 +197,9 @@ export default function PdfPageCanvas({
     const overlay = overlayRef.current
     if (!pdf || !overlay || !ready) return
 
+    let cancelled = false
     const sync = () => {
+      if (cancelled) return
       const cw = pdf.clientWidth
       const ch = pdf.clientHeight
       if (cw < 2 || ch < 2) return
@@ -200,15 +212,28 @@ export default function PdfPageCanvas({
     }
 
     sync()
+    // Flex/grid layout often settles after the first frame; retry so the overlay matches the PDF canvas.
+    const id1 = requestAnimationFrame(() => sync())
+    let idInner = 0
+    const id2 = requestAnimationFrame(() => {
+      idInner = requestAnimationFrame(() => sync())
+    })
     const ro = new ResizeObserver(() => sync())
     ro.observe(pdf)
-    return () => ro.disconnect()
+    return () => {
+      cancelled = true
+      cancelAnimationFrame(id1)
+      cancelAnimationFrame(id2)
+      cancelAnimationFrame(idInner)
+      ro.disconnect()
+    }
   }, [pdfPage, ready, paintOverlay])
 
   const normPoint = (e) => {
     const overlay = overlayRef.current
     if (!overlay) return null
     const r = overlay.getBoundingClientRect()
+    if (r.width < 1 || r.height < 1 || !overlay.width || !overlay.height) return null
     const scaleX = overlay.width / r.width
     const scaleY = overlay.height / r.height
     const x = (e.clientX - r.left) * scaleX
@@ -409,7 +434,7 @@ export default function PdfPageCanvas({
       const runs = textRunsRef.current
       if (!pdf || runs.length === 0) return
       const r = pdf.getBoundingClientRect()
-      if (r.width < 2 || r.height < 2) return
+      if (r.width < 2 || r.height < 2 || !pdf.width || !pdf.height) return
       const bx = (e.clientX - r.left) * (pdf.width / r.width)
       const by = (e.clientY - r.top) * (pdf.height / r.height)
       const run = hitTestTextRunNearest(runs, bx, by)
@@ -429,7 +454,7 @@ export default function PdfPageCanvas({
     const { run } = nativeEdit
     setNativeEdit(null)
     if (value === run.str) return
-    onNativeTextEdit?.({ pdf: run.pdf, text: value })
+    onNativeTextEdit?.({ pdf: run.pdf, norm: run.norm, text: value })
   }
 
   return (

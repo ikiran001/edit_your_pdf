@@ -47,25 +47,74 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
     for (const item of group.items || []) {
       switch (item.type) {
         case 'nativeText': {
-          // PDF user-space box from pdf.js (origin bottom-left); masks original run then redraws.
-          const x = item.x ?? 0;
-          const y = item.y ?? 0;
-          const w = item.w ?? 1;
-          const h = item.h ?? 1;
-          const baseline = item.baseline ?? y + h * 0.75;
-          const fs = Math.max(4, Math.min(144, item.fontSize ?? 12));
+          const fs = Math.max(4, Math.min(144, Number(item.fontSize) || 12));
+          const raw = String(item.text ?? '');
+          let textW = 0;
+          try {
+            textW = raw.length ? font.widthOfTextAtSize(raw, fs) : 0;
+          } catch {
+            const safe = raw.replace(/[^\x20-\x7E]/g, '?');
+            textW = safe.length ? font.widthOfTextAtSize(safe, fs) : 0;
+          }
+          const pad = Math.max(3, fs * 0.22);
+
+          let maskX;
+          let maskY;
+          let maskW;
+          let maskH;
+          let textX;
+          let baselinePdf;
+
+          const n = item.norm;
+          if (
+            n &&
+            Number.isFinite(n.nx) &&
+            Number.isFinite(n.ny) &&
+            Number.isFinite(n.nw) &&
+            Number.isFinite(n.nh) &&
+            Number.isFinite(n.baselineN)
+          ) {
+            const padXN = pad / W;
+            const padYN = pad / H;
+            const nx0 = Math.max(0, n.nx - padXN);
+            const ny0 = Math.max(0, n.ny - padYN);
+            const nw0 = Math.min(1 - nx0, n.nw + padXN * 2);
+            const nh0 = Math.min(1 - ny0, n.nh + padYN * 2);
+            const rect = normRectToPdf(W, H, nx0, ny0, nw0, nh0);
+            maskX = rect.x;
+            maskY = rect.y;
+            maskW = rect.width;
+            maskH = Math.max(rect.height, fs * 1.35);
+            textX = n.nx * W + 0.75;
+            baselinePdf = (1 - n.baselineN) * H;
+            const needW = textX + textW + pad - (maskX + maskW);
+            if (needW > 0) maskW += needW;
+            maskW = Math.max(maskW, textW + pad * 2, fs * 0.5);
+          } else {
+            const bx = Number(item.x) || 0;
+            const by = Number(item.y) || 0;
+            const bw = Math.abs(Number(item.w) || 1);
+            const bh = Math.abs(Number(item.h) || 1);
+            baselinePdf = Number(item.baseline) || by + bh * 0.75;
+            maskW = Math.max(bw, textW + pad * 2, fs * 0.5);
+            maskH = Math.max(bh + pad * 2, fs * 1.35);
+            maskX = bx - pad;
+            maskY = by - pad;
+            textX = Math.max(bx + 0.5, maskX + 1);
+          }
+
           page.drawRectangle({
-            x,
-            y,
-            width: Math.max(w, 1),
-            height: Math.max(h, 1),
+            x: maskX,
+            y: maskY,
+            width: maskW,
+            height: maskH,
             color: rgb(1, 1, 1),
           });
-          const raw = String(item.text ?? '');
+          textX = Math.max(textX, maskX + 0.5);
           try {
             page.drawText(raw, {
-              x: x + 1,
-              y: baseline,
+              x: textX,
+              y: baselinePdf,
               size: fs,
               font,
               color: rgb(0, 0, 0),
@@ -74,8 +123,8 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
             const safe = raw.replace(/[^\x20-\x7E]/g, '?');
             if (safe.length) {
               page.drawText(safe, {
-                x: x + 1,
-                y: baseline,
+                x: textX,
+                y: baselinePdf,
                 size: fs,
                 font,
                 color: rgb(0, 0, 0),

@@ -35,8 +35,12 @@ export function buildTextRuns(viewport, textContent) {
     const y0 = f - desc
     const x1 = e + wPdf
     const y1 = f + asc
+    const pdfLeft = Math.min(x0, x1)
+    const pdfRight = Math.max(x0, x1)
+    const pdfBottom = Math.min(y0, y1)
+    const pdfTop = Math.max(y0, y1)
 
-    const r = viewport.convertToViewportRectangle([x0, y0, x1, y1])
+    const r = viewport.convertToViewportRectangle([pdfLeft, pdfBottom, pdfRight, pdfTop])
     const left = Math.min(r[0], r[2])
     const right = Math.max(r[0], r[2])
     const top = Math.min(r[1], r[3])
@@ -46,6 +50,11 @@ export function buildTextRuns(viewport, textContent) {
     // Match on-screen size from the mapped bbox (canvas pixels)
     const fontSizePx = Math.min(200, Math.max(9, boxH * 0.82))
 
+    const vw = viewport.width
+    const vh = viewport.height
+    const [, vyBaseline] = viewport.convertToViewportPoint(e, f)
+    const baselineN = vh > 0 ? Math.min(1, Math.max(0, vyBaseline / vh)) : 0
+
     runs.push({
       str: s,
       left,
@@ -53,11 +62,19 @@ export function buildTextRuns(viewport, textContent) {
       width: Math.max(boxW, 2),
       height: boxH,
       fontSizePx,
+      /** Same viewport as the canvas — server maps this to pdf-lib page size so edits line up visually. */
+      norm: {
+        nx: left / vw,
+        ny: top / vh,
+        nw: boxW / vw,
+        nh: boxH / vh,
+        baselineN,
+      },
       pdf: {
-        x: x0,
-        y: y0,
-        w: x1 - x0,
-        h: y1 - y0,
+        x: pdfLeft,
+        y: pdfBottom,
+        w: pdfRight - pdfLeft,
+        h: pdfTop - pdfBottom,
         baseline: f,
         fontSize: fontSizePdf,
       },

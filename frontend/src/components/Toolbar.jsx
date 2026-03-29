@@ -13,7 +13,9 @@ export default function Toolbar({
   onRedo,
   canUndo,
   canRedo,
+  onSave,
   onDownload,
+  saving,
   downloading,
   applyTextSwap,
   onApplyTextSwapChange,
@@ -67,8 +69,16 @@ export default function Toolbar({
         </label>
         <button
           type="button"
+          onClick={onSave}
+          disabled={saving || downloading}
+          className="rounded-lg border border-emerald-700 bg-white px-4 py-1.5 text-sm font-semibold text-emerald-800 shadow-sm hover:bg-emerald-50 disabled:opacity-50 dark:border-emerald-500 dark:bg-zinc-900 dark:text-emerald-200 dark:hover:bg-emerald-950/40"
+        >
+          {saving ? 'Saving…' : 'Save PDF'}
+        </button>
+        <button
+          type="button"
           onClick={onDownload}
-          disabled={downloading}
+          disabled={saving || downloading}
           className="rounded-lg bg-emerald-600 px-4 py-1.5 text-sm font-semibold text-white shadow hover:bg-emerald-700 disabled:opacity-50"
         >
           {downloading ? 'Preparing…' : 'Download PDF'}
