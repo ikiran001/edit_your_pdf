@@ -28,6 +28,8 @@ export default function PdfEditor({ sessionId, onBack }) {
   const [activeTool, setActiveTool] = useState(null)
   const [activePage, setActivePage] = useState(0)
   const [downloading, setDownloading] = useState(false)
+  /** When true, server runs pdf.js text find + pdf-lib redraw (real PDF text edit). */
+  const [applyTextSwap, setApplyTextSwap] = useState(true)
   const pageRefs = useRef([])
   const scrollRef = useRef(null)
   const pagesItemsRef = useRef({})
@@ -103,7 +105,11 @@ export default function PdfEditor({ sessionId, onBack }) {
       const res = await fetch('/edit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId, edits }),
+        body: JSON.stringify({
+          sessionId,
+          edits,
+          applyTextSwap,
+        }),
       })
       const raw = await res.text()
       let errMsg = ''
@@ -165,6 +171,8 @@ export default function PdfEditor({ sessionId, onBack }) {
         canRedo={canRedo}
         onDownload={handleDownload}
         downloading={downloading}
+        applyTextSwap={applyTextSwap}
+        onApplyTextSwapChange={setApplyTextSwap}
       />
       <div className="flex min-h-0 flex-1">
         <ThumbnailSidebar
