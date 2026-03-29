@@ -18,7 +18,8 @@ export default function LandingPage({ onFileSelected, loading }) {
       <header className="border-b border-zinc-200/80 bg-white/70 px-6 py-4 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/70">
         <h1 className="text-xl font-semibold tracking-tight">Edit Your PDF</h1>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Upload a PDF, annotate in the browser, then download the merged result.
+          Upload a PDF, use <strong>Edit text</strong> to change existing wording (like Word) or other
+          tools to annotate, then download. Keep the API running on port 3001.
         </p>
       </header>
 

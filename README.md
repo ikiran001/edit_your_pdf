@@ -29,7 +29,7 @@ Open `http://localhost:5173`.
 |--------|------|---------|
 | `POST` | `/upload` | multipart field `file` → `{ sessionId }` |
 | `GET` | `/pdf/:sessionId` | original PDF for pdf.js |
-| `POST` | `/edit` | JSON `{ sessionId, edits, applyTextSwap? }` → writes `edited.pdf`. If `applyTextSwap` is true, embedded text matching `PDF editor` / whole-item `editor` is white-masked and redrawn as `PDF love` / `love` (see `applyTextReplacements.js`). |
+| `POST` | `/edit` | JSON `{ sessionId, edits, applyTextSwap?, nativeTextEdits? }` → writes `edited.pdf`. Optional `nativeTextEdits[]` carries Word-style replacements (PDF coords + font size + string) from the **Edit text** tool; see `mergeEdits.js` + `nativeText` in `applyEdits.js`. If `applyTextSwap` is true, default phrase rules run in `applyTextReplacements.js`. |
 | `GET` | `/download?sessionId=` | download edited PDF (or original if never edited) |
 
 Uploads live under `backend/uploads/<sessionId>/` and are removed automatically after about one hour.

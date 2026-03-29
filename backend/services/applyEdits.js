@@ -46,6 +46,44 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
 
     for (const item of group.items || []) {
       switch (item.type) {
+        case 'nativeText': {
+          // PDF user-space box from pdf.js (origin bottom-left); masks original run then redraws.
+          const x = item.x ?? 0;
+          const y = item.y ?? 0;
+          const w = item.w ?? 1;
+          const h = item.h ?? 1;
+          const baseline = item.baseline ?? y + h * 0.75;
+          const fs = Math.max(4, Math.min(144, item.fontSize ?? 12));
+          page.drawRectangle({
+            x,
+            y,
+            width: Math.max(w, 1),
+            height: Math.max(h, 1),
+            color: rgb(1, 1, 1),
+          });
+          const raw = String(item.text ?? '');
+          try {
+            page.drawText(raw, {
+              x: x + 1,
+              y: baseline,
+              size: fs,
+              font,
+              color: rgb(0, 0, 0),
+            });
+          } catch {
+            const safe = raw.replace(/[^\x20-\x7E]/g, '?');
+            if (safe.length) {
+              page.drawText(safe, {
+                x: x + 1,
+                y: baseline,
+                size: fs,
+                font,
+                color: rgb(0, 0, 0),
+              });
+            }
+          }
+          break;
+        }
         case 'text': {
           const nx = item.x ?? 0;
           const ny = item.y ?? 0;

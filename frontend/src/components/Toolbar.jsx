@@ -1,4 +1,5 @@
 const tools = [
+  { id: 'editText', label: 'Edit text' },
   { id: 'text', label: 'Text' },
   { id: 'draw', label: 'Draw' },
   { id: 'highlight', label: 'Highlight' },
