@@ -49,7 +49,12 @@ router.post('/edit', express.json({ limit: '50mb' }), async (req, res) => {
           ? defaultEditorToLoveRules
           : null;
     if (rules?.length) {
-      pdfBytes = await applyTextReplacements(pdfBytes, rules);
+      try {
+        pdfBytes = await applyTextReplacements(pdfBytes, rules);
+      } catch (replErr) {
+        // pdf.js text scan often fails on complex PDFs (e.g. resumes); do not block save/download.
+        console.error('edit: applyTextReplacements skipped:', replErr);
+      }
     }
     const merged = mergeEditsWithNative(edits || { pages: [] }, nativeTextEdits);
     const out = await applyEditsToPdf(pdfBytes, merged);
@@ -57,7 +62,11 @@ router.post('/edit', express.json({ limit: '50mb' }), async (req, res) => {
     return res.json({ ok: true });
   } catch (e) {
     console.error('edit:', e);
-    return res.status(500).json({ error: 'Failed to apply edits' });
+    const details = e instanceof Error ? e.message : String(e);
+    return res.status(500).json({
+      error: 'Failed to apply edits',
+      details: details.slice(0, 500),
+    });
   }
 });
 

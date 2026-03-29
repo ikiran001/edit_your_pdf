@@ -154,7 +154,7 @@ export default function PdfEditor({ sessionId, onBack }) {
     let errMsg = ''
     try {
       const j = JSON.parse(raw)
-      errMsg = j.error || ''
+      errMsg = [j.error, j.details].filter(Boolean).join('\n') || ''
     } catch {
       if (!res.ok) errMsg = raw.slice(0, 200) || res.statusText
     }
