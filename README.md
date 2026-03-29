@@ -56,13 +56,11 @@ Local build matching Pages:
 
 ### Google Analytics (optional)
 
-The app supports **GA4** via [gtag.js](https://developers.google.com/tag-platform/gtagjs). The Measurement ID is baked in at **build** time.
+The app loads **GA4** via [gtag.js](https://developers.google.com/tag-platform/gtagjs) (`src/lib/analytics.js`). The Measurement ID is set in **`frontend/.env.production`** as `VITE_GA_MEASUREMENT_ID` and baked in at **`npm run build`** (including GitHub Pages).
 
-1. In [Google Analytics](https://analytics.google.com/), create a **GA4** property and copy the **Measurement ID** (format `G-XXXXXXXXXX`).
-2. **GitHub Pages:** add repository secret **`VITE_GA_MEASUREMENT_ID`** with that value, then re-run **Deploy frontend to GitHub Pages**.
-3. **Local / Vercel / Netlify:** set the same name in environment variables when you run `npm run build`.
+To use a different property, edit that file (or override with `VITE_GA_MEASUREMENT_ID=…` in the shell when building). For **`npm run dev`**, Vite does not load `.env.production`; use **`frontend/.env.local`** with the same variable if you want hits while developing.
 
-If the variable is unset, no analytics script runs. Virtual page paths: `/` (landing) and `/edit` (after upload).
+Virtual page paths sent to GA: `/` (landing) and `/edit` (after upload).
 
 ### Google Search Console verification (HTML meta tag)
 
