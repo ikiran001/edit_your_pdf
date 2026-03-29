@@ -21,6 +21,7 @@ export function mergeEditsWithNative(edits, nativeTextEdits) {
       h: nt.h,
       baseline: nt.baseline,
       fontSize: nt.fontSize,
+      norm: nt.norm,
       text: nt.text,
     });
   }

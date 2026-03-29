@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { getDocument } from 'pdfjs-dist'
+import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
 import { usePagesHistory } from '../hooks/usePagesHistory'
 import Toolbar from './Toolbar'
 import ThumbnailSidebar from './ThumbnailSidebar'
@@ -25,11 +25,16 @@ function buildEditsPayload(pagesItems) {
 export default function PdfEditor({ sessionId, onBack }) {
   const [pdfDoc, setPdfDoc] = useState(null)
   const [loadError, setLoadError] = useState(null)
-  const [activeTool, setActiveTool] = useState(null)
+  /** Default to Edit text so Word-style editing works without an extra click. */
+  const [activeTool, setActiveTool] = useState('editText')
   const [activePage, setActivePage] = useState(0)
+  const [saving, setSaving] = useState(false)
   const [downloading, setDownloading] = useState(false)
+  const [saveHint, setSaveHint] = useState(null)
   /** When true, server runs pdf.js text find + pdf-lib redraw (real PDF text edit). */
   const [applyTextSwap, setApplyTextSwap] = useState(true)
+  /** Bumped after a successful save so pdf.js refetches (edited.pdf) instead of a cached original. */
+  const [pdfBust, setPdfBust] = useState(0)
   const pageRefs = useRef([])
   const scrollRef = useRef(null)
   const pagesItemsRef = useRef({})
@@ -44,7 +49,10 @@ export default function PdfEditor({ sessionId, onBack }) {
   useEffect(() => {
     let cancelled = false
     setLoadError(null)
-    const pdfUrl = `/pdf/${sessionId}`
+    const pdfUrl =
+      pdfBust > 0
+        ? `/pdf/${sessionId}?v=${pdfBust}`
+        : `/pdf/${sessionId}`
     ;(async () => {
       try {
         const task = getDocument({ url: pdfUrl, withCredentials: false })
@@ -52,6 +60,7 @@ export default function PdfEditor({ sessionId, onBack }) {
         if (cancelled) return
         setPdfDoc(doc)
         reset({})
+        nativeTextEditsRef.current = []
         setNativeTextEdits([])
       } catch (e) {
         if (!cancelled) setLoadError(e?.message || 'Failed to load PDF')
@@ -60,7 +69,7 @@ export default function PdfEditor({ sessionId, onBack }) {
     return () => {
       cancelled = true
     }
-  }, [sessionId, reset])
+  }, [sessionId, reset, pdfBust])
 
   useEffect(() => {
     const el = scrollRef.current
@@ -102,58 +111,102 @@ export default function PdfEditor({ sessionId, onBack }) {
     return Array.from({ length: numPages }, (_, i) => i)
   }, [pdfDoc, numPages])
 
-  const addNativeTextEdit = useCallback((pageIndex, { pdf, text }) => {
-    const key = `${pageIndex}:${pdf.x}:${pdf.y}:${pdf.baseline}`
-    setNativeTextEdits((prev) => {
-      const rest = prev.filter((e) => e.key !== key)
-      return [
-        ...rest,
-        {
-          key,
-          pageIndex,
-          x: pdf.x,
-          y: pdf.y,
-          w: pdf.w,
-          h: pdf.h,
-          baseline: pdf.baseline,
-          fontSize: pdf.fontSize,
-          text,
-        },
-      ]
-    })
+  const addNativeTextEdit = useCallback((pageIndex, { pdf, norm, text }) => {
+    const key = norm
+      ? `${pageIndex}:${norm.nx}:${norm.ny}:${norm.baselineN}`
+      : `${pageIndex}:${pdf.x}:${pdf.y}:${pdf.baseline}`
+    const prev = nativeTextEditsRef.current
+    const rest = prev.filter((e) => e.key !== key)
+    const next = [
+      ...rest,
+      {
+        key,
+        pageIndex,
+        x: pdf.x,
+        y: pdf.y,
+        w: pdf.w,
+        h: pdf.h,
+        baseline: pdf.baseline,
+        fontSize: pdf.fontSize,
+        norm,
+        text,
+      },
+    ]
+    // Keep ref in sync immediately so “Download” in the same gesture as textarea blur still sends edits.
+    nativeTextEditsRef.current = next
+    setNativeTextEdits(next)
   }, [])
+
+  const persistPdfToServer = async () => {
+    const edits = buildEditsPayload(pagesItemsRef.current)
+    const res = await fetch('/edit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId,
+        edits,
+        applyTextSwap,
+        nativeTextEdits: nativeTextEditsRef.current,
+      }),
+    })
+    const raw = await res.text()
+    let errMsg = ''
+    try {
+      const j = JSON.parse(raw)
+      errMsg = j.error || ''
+    } catch {
+      if (!res.ok) errMsg = raw.slice(0, 200) || res.statusText
+    }
+    if (!res.ok) {
+      throw new Error(
+        errMsg ||
+          `Save failed (${res.status}). Is the API running on port 3001?`
+      )
+    }
+  }
+
+  const reloadPdfFromServer = () => {
+    setPdfDoc(null)
+    setPdfBust((v) => v + 1)
+  }
+
+  const handleSave = async () => {
+    setSaving(true)
+    setSaveHint(null)
+    try {
+      await persistPdfToServer()
+      reloadPdfFromServer()
+      setSaveHint('Saved — edits are stored for this session.')
+      window.setTimeout(() => setSaveHint(null), 4000)
+    } catch (e) {
+      console.error(e)
+      alert(e.message || 'Save failed')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   const handleDownload = async () => {
     setDownloading(true)
     try {
-      const edits = buildEditsPayload(pagesItemsRef.current)
-      const res = await fetch('/edit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId,
-          edits,
-          applyTextSwap,
-          nativeTextEdits: nativeTextEditsRef.current,
-        }),
-      })
-      const raw = await res.text()
-      let errMsg = ''
-      try {
-        const j = JSON.parse(raw)
-        errMsg = j.error || ''
-      } catch {
-        if (!res.ok) errMsg = raw.slice(0, 200) || res.statusText
-      }
-      if (!res.ok) {
-        throw new Error(
-          errMsg ||
-            `Edit failed (${res.status}). Is the API running on port 3001?`
-        )
-      }
-      window.location.assign(
+      await persistPdfToServer()
+      const dl = await fetch(
         `/download?sessionId=${encodeURIComponent(sessionId)}`
       )
+      if (!dl.ok) throw new Error('Download failed')
+      const blob = await dl.blob()
+      const href = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = href
+      a.download = 'edited.pdf'
+      a.rel = 'noopener'
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(href)
+
+      reloadPdfFromServer()
+      setSaveHint(null)
     } catch (e) {
       console.error(e)
       alert(e.message || 'Download failed')
@@ -195,11 +248,21 @@ export default function PdfEditor({ sessionId, onBack }) {
         onRedo={redo}
         canUndo={canUndo}
         canRedo={canRedo}
+        onSave={handleSave}
         onDownload={handleDownload}
+        saving={saving}
         downloading={downloading}
         applyTextSwap={applyTextSwap}
         onApplyTextSwapChange={setApplyTextSwap}
       />
+      {saveHint && (
+        <div
+          role="status"
+          className="border-b border-emerald-200 bg-emerald-50 px-3 py-1.5 text-center text-xs text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-100"
+        >
+          {saveHint}
+        </div>
+      )}
       <div className="flex min-h-0 flex-1">
         <ThumbnailSidebar
           pdfDoc={pdfDoc}
@@ -234,8 +297,7 @@ export default function PdfEditor({ sessionId, onBack }) {
                 Use <strong>Edit text</strong> to change existing PDF wording (matched size), or{' '}
                 <strong>Text</strong> / <strong>Draw</strong> / <strong>Highlight</strong> /{' '}
                 <strong>Rectangle</strong> for markup. Edits to existing text apply when you click{' '}
-                <strong>Download PDF</strong>. Optional bulk swap “PDF editor” → “PDF love” uses the
-                checkbox.
+                <strong>Save PDF</strong> (store on server) or <strong>Download PDF</strong> (save + file). Optional bulk swap “PDF editor” → “PDF love” uses the checkbox.
               </p>
             </div>
           )}

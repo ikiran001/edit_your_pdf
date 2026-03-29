@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
+    "test:e2e-enter": "node scripts/e2e-enter-download.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -24,6 +25,7 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.4.0",
     "pdfjs-dist": "^5.5.207",
+    "playwright": "^1.49.1",
     "tailwindcss": "^4.2.2",
     "vite": "^8.0.1"
   }

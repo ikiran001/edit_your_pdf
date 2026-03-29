@@ -1,5 +1,6 @@
-import { GlobalWorkerOptions } from 'pdfjs-dist'
-import workerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url'
+import { GlobalWorkerOptions } from 'pdfjs-dist/legacy/build/pdf.mjs'
+import workerUrl from 'pdfjs-dist/legacy/build/pdf.worker.mjs?url'
 
-// pdf.js must load its worker from a real URL (Vite serves this from node_modules).
+// Legacy bundle polyfills Uint8Array.prototype.toHex etc. so PDFs load in older browsers
+// (modern worker assumes very new runtimes and can throw hashOriginal.toHex is not a function).
 GlobalWorkerOptions.workerSrc = workerUrl

@@ -24,12 +24,24 @@ router.post('/edit', express.json({ limit: '50mb' }), async (req, res) => {
     return res.status(400).json({ error: 'sessionId required' });
   }
   const originalPath = path.join(uploadsRoot, sessionId, 'original.pdf');
-  const outPath = path.join(uploadsRoot, sessionId, 'edited.pdf');
+  const editedPath = path.join(uploadsRoot, sessionId, 'edited.pdf');
+  const outPath = editedPath;
   if (!fs.existsSync(originalPath)) {
     return res.status(404).json({ error: 'Session or PDF not found' });
   }
   try {
-    let pdfBytes = fs.readFileSync(originalPath);
+    // Chain edits: after the first save, client clears in-memory native edits and reloads from
+    // edited.pdf — the next POST must start from the latest file, not original, or changes revert.
+    let pdfBytes;
+    if (fs.existsSync(editedPath)) {
+      try {
+        pdfBytes = fs.readFileSync(editedPath);
+      } catch {
+        pdfBytes = fs.readFileSync(originalPath);
+      }
+    } else {
+      pdfBytes = fs.readFileSync(originalPath);
+    }
     const rules =
       Array.isArray(textReplaceRules) && textReplaceRules.length
         ? textReplaceRules

@@ -27,11 +27,15 @@ app.use(uploadRouter);
 app.use(editRouter);
 app.use(downloadRouter);
 
-/** Serve uploaded PDF for pdf.js (same origin when dev proxy is used). */
+/** Serve PDF for pdf.js: latest edited file when present, else original upload. */
 app.get('/pdf/:sessionId', (req, res) => {
-  const p = path.join(uploadsDir, req.params.sessionId, 'original.pdf');
+  const dir = path.join(uploadsDir, req.params.sessionId);
+  const edited = path.join(dir, 'edited.pdf');
+  const original = path.join(dir, 'original.pdf');
+  const p = fs.existsSync(edited) ? edited : original;
   if (!fs.existsSync(p)) return res.status(404).send('Not found');
   res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Cache-Control', 'no-store');
   fs.createReadStream(p).pipe(res);
 });
 

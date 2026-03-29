@@ -24,6 +24,7 @@ router.get('/download', (req, res) => {
   }
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', 'attachment; filename="edited.pdf"');
+  res.setHeader('Cache-Control', 'no-store');
   fs.createReadStream(filePath).pipe(res);
 });
 
