@@ -54,6 +54,33 @@ GitHub does **not** run your Node/Express API. It can only host the **built Reac
 Local build matching Pages:  
 `cd frontend && VITE_BASE_PATH=/edit_your_pdf/ VITE_API_BASE_URL=https://your-api.example.com npm run build`
 
+### Google Analytics (optional)
+
+The app supports **GA4** via [gtag.js](https://developers.google.com/tag-platform/gtagjs). The Measurement ID is baked in at **build** time.
+
+1. In [Google Analytics](https://analytics.google.com/), create a **GA4** property and copy the **Measurement ID** (format `G-XXXXXXXXXX`).
+2. **GitHub Pages:** add repository secret **`VITE_GA_MEASUREMENT_ID`** with that value, then re-run **Deploy frontend to GitHub Pages**.
+3. **Local / Vercel / Netlify:** set the same name in environment variables when you run `npm run build`.
+
+If the variable is unset, no analytics script runs. Virtual page paths: `/` (landing) and `/edit` (after upload).
+
+### Google Search Console verification (HTML meta tag)
+
+Google asks you to add a **meta tag** to your site’s home page `<head>`. This project’s home page is `frontend/index.html` (Vite copies it into `dist/index.html` when you build).
+
+**Recommended (no token in git):**
+
+1. In Search Console, choose **HTML tag** and copy only the **`content`** value (the long string inside `content="…"`).
+2. **GitHub Pages:** add repository secret **`VITE_GOOGLE_SITE_VERIFICATION`** with that string (no quotes), then re-run **Deploy frontend to GitHub Pages**. The workflow injects it at build time.
+3. **Local preview of production HTML:**  
+   `VITE_GOOGLE_SITE_VERIFICATION=your_token_here npm run build`  
+   then open `frontend/dist/index.html` or run `npm run preview` and confirm View Source shows  
+   `<meta name="google-site-verification" content="your_token_here" />`.
+
+**Alternative:** edit `frontend/index.html` and set `content="…"` to your full token directly (replace the `%VITE_GOOGLE_SITE_VERIFICATION%` placeholder with the token only). Commit that only if you accept the token living in the repo.
+
+After the **live** site serves the tag, return to Search Console and click **Verify**. Leave the meta tag in place after verification.
+
 **If upload shows `405` and Network tab shows `POST https://…github.io/upload`**  
 The live build has **no** API URL. The secret `VITE_API_BASE_URL` is missing or the workflow was not re-run after you added it. Add the secret, then **Actions → Deploy frontend to GitHub Pages → Run workflow**.
 

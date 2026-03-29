@@ -1,11 +1,16 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import LandingPage from './components/LandingPage'
 import PdfEditor from './components/PdfEditor'
+import { pageView } from './lib/analytics.js'
 import { apiUrl, isApiBaseConfigured } from './lib/apiBase'
 
 export default function App() {
   const [sessionId, setSessionId] = useState(null)
   const [uploading, setUploading] = useState(false)
+
+  useEffect(() => {
+    pageView(sessionId ? '/edit' : '/', sessionId ? 'Edit PDF' : 'Edit Your PDF')
+  }, [sessionId])
 
   const onFileSelected = useCallback(async (file) => {
     setUploading(true)
