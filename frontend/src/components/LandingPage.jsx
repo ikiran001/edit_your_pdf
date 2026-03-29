@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { isApiBaseConfigured } from '../lib/apiBase'
 
 export default function LandingPage({ onFileSelected, loading }) {
   const [dragOver, setDragOver] = useState(false)
@@ -18,10 +19,40 @@ export default function LandingPage({ onFileSelected, loading }) {
       <header className="border-b border-zinc-200/80 bg-white/70 px-6 py-4 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/70">
         <h1 className="text-xl font-semibold tracking-tight">Edit Your PDF</h1>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Upload a PDF, use <strong>Edit text</strong> to change existing wording (like Word) or other
-          tools to annotate, then download. Keep the API running on port 3001.
+          {import.meta.env.PROD && !isApiBaseConfigured() ? (
+            <>
+              This copy is hosted on <strong>GitHub Pages</strong> (static files only). Uploads need a
+              deployed API — set the <code className="text-xs">VITE_API_BASE_URL</code> secret and
+              redeploy (see README).
+            </>
+          ) : (
+            <>
+              Upload a PDF, use <strong>Edit text</strong> to change existing wording (like Word) or
+              other tools to annotate, then save or download. Locally, keep the API on port 3001.
+            </>
+          )}
         </p>
       </header>
+
+      {import.meta.env.PROD && !isApiBaseConfigured() && (
+        <div
+          role="alert"
+          className="mx-4 mt-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100"
+        >
+          <p className="m-0 font-medium">Backend URL missing</p>
+          <ol className="mt-2 mb-0 list-decimal space-y-1 pl-5">
+            <li>Deploy <code className="text-xs">backend/</code> (e.g. free tier on Render.com).</li>
+            <li>
+              GitHub → <strong>Settings → Secrets and variables → Actions</strong> → create{' '}
+              <code className="text-xs">VITE_API_BASE_URL</code> = your API&apos;s{' '}
+              <code className="text-xs">https://…</code> URL.
+            </li>
+            <li>
+              <strong>Actions</strong> → run <strong>Deploy frontend to GitHub Pages</strong> again.
+            </li>
+          </ol>
+        </div>
+      )}
 
       <main className="flex flex-1 flex-col items-center justify-center px-4 py-12">
         <div
