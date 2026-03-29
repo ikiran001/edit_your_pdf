@@ -37,8 +37,10 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
   const pageGroups = editsPayload.pages || [];
 
   for (const group of pageGroups) {
-    const pageIndex = group.pageIndex;
-    if (pageIndex < 0 || pageIndex >= pages.length) continue;
+    const pageIndex = Number(group.pageIndex);
+    if (!Number.isFinite(pageIndex) || pageIndex < 0 || pageIndex >= pages.length) {
+      continue;
+    }
     const page = pages[pageIndex];
     const { width: W, height: H } = page.getSize();
 
@@ -49,15 +51,29 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
           const ny = item.y ?? 0;
           const fontSize = Math.max(4, Math.min(144, item.fontSize ?? 12));
           const { x, y } = normPointToPdf(W, H, nx, ny);
-          // Baseline slightly below the click point (top-left style in UI)
           const baselineY = y - fontSize * 0.85;
-          page.drawText(String(item.text || ''), {
-            x,
-            y: baselineY,
-            size: fontSize,
-            font,
-            color: parseHexColor(item.color),
-          });
+          const raw = String(item.text || '');
+          try {
+            page.drawText(raw, {
+              x,
+              y: baselineY,
+              size: fontSize,
+              font,
+              color: parseHexColor(item.color),
+            });
+          } catch {
+            // Standard Helvetica is WinAnsi-only; fall back to ASCII subset so edits still apply.
+            const safe = raw.replace(/[^\x20-\x7E]/g, '?');
+            if (safe.length) {
+              page.drawText(safe, {
+                x,
+                y: baselineY,
+                size: fontSize,
+                font,
+                color: parseHexColor(item.color),
+              });
+            }
+          }
           break;
         }
         case 'highlight': {
@@ -76,7 +92,6 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
             height,
             color: parseHexColor(item.color || '#ffeb3b'),
             opacity: item.opacity ?? 0.35,
-            borderWidth: 0,
           });
           break;
         }

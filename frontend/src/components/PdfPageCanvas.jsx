@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 /**
  * Renders one PDF page with pdf.js and an interaction overlay.
@@ -11,6 +11,7 @@ export default function PdfPageCanvas({ pdfPage, tool, items, onUpdateItems }) {
   const metaRef = useRef({ pdfW: 1, pdfH: 1, cssW: 1, cssH: 1 })
   const [ready, setReady] = useState(false)
   const [textDraft, setTextDraft] = useState(null)
+  const [, bump] = useState(0)
   const dragRef = useRef(null)
   const drawPointsRef = useRef(null)
   const itemsRef = useRef(items)
@@ -131,6 +132,34 @@ export default function PdfPageCanvas({ pdfPage, tool, items, onUpdateItems }) {
     if (!ready) return
     paintOverlay()
   }, [ready, items, paintOverlay])
+
+  /**
+   * Keep the overlay’s CSS box and bitmap size locked to the PDF canvas.
+   * Without this, `w-full` / `h-full` on the overlay can diverge from the scaled
+   * PDF canvas so pointer events miss the overlay and tools feel “broken”.
+   */
+  useLayoutEffect(() => {
+    const pdf = pdfCanvasRef.current
+    const overlay = overlayRef.current
+    if (!pdf || !overlay || !ready) return
+
+    const sync = () => {
+      const cw = pdf.clientWidth
+      const ch = pdf.clientHeight
+      if (cw < 2 || ch < 2) return
+      overlay.style.width = `${cw}px`
+      overlay.style.height = `${ch}px`
+      overlay.width = pdf.width
+      overlay.height = pdf.height
+      paintOverlay()
+      bump((n) => n + 1)
+    }
+
+    sync()
+    const ro = new ResizeObserver(() => sync())
+    ro.observe(pdf)
+    return () => ro.disconnect()
+  }, [pdfPage, ready, paintOverlay])
 
   const normPoint = (e) => {
     const overlay = overlayRef.current
@@ -307,29 +336,32 @@ export default function PdfPageCanvas({ pdfPage, tool, items, onUpdateItems }) {
   }
 
   const cv = pdfCanvasRef.current
-  const tw = cv?.width ?? 0
-  const th = cv?.height ?? 0
+  const cw = cv?.clientWidth ?? 0
+  const ch = cv?.clientHeight ?? 0
 
   return (
     <div ref={wrapRef} className="relative block w-full max-w-full shadow-md">
-      <canvas ref={pdfCanvasRef} className="block h-auto w-full max-w-full bg-white" />
+      <canvas
+        ref={pdfCanvasRef}
+        className="relative z-0 block h-auto w-full max-w-full bg-white"
+      />
       <canvas
         ref={overlayRef}
-        className={`absolute left-0 top-0 h-full w-full touch-none ${
-          tool ? 'cursor-crosshair' : 'pointer-events-none'
+        className={`absolute left-0 top-0 touch-none ${
+          tool ? 'z-10 cursor-crosshair' : 'pointer-events-none z-0'
         }`}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       />
-      {textDraft && tw > 0 && (
+      {textDraft && cw > 0 && (
         <input
           autoFocus
-          className="absolute z-10 min-w-[120px] rounded border border-indigo-400 bg-white/95 px-2 py-1 text-sm shadow dark:bg-zinc-900"
+          className="absolute z-20 min-w-[120px] rounded border border-indigo-400 bg-white/95 px-2 py-1 text-sm shadow dark:bg-zinc-900"
           style={{
-            left: textDraft.nx * tw,
-            top: textDraft.ny * th,
+            left: textDraft.nx * cw,
+            top: textDraft.ny * ch,
           }}
           placeholder="Type text…"
           onBlur={(e) => commitText(e.target.value)}

@@ -13,4 +13,12 @@ export default defineConfig({
       '/pdf': { target: 'http://localhost:3001', changeOrigin: true },
     },
   },
+  preview: {
+    proxy: {
+      '/upload': { target: 'http://localhost:3001', changeOrigin: true },
+      '/edit': { target: 'http://localhost:3001', changeOrigin: true },
+      '/download': { target: 'http://localhost:3001', changeOrigin: true },
+      '/pdf': { target: 'http://localhost:3001', changeOrigin: true },
+    },
+  },
 })

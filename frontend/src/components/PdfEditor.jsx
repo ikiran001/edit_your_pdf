@@ -12,14 +12,13 @@ function toServerItem(it) {
 }
 
 function buildEditsPayload(pagesItems) {
-  const pages = Object.keys(pagesItems)
-    .map(Number)
-    .sort((a, b) => a - b)
-    .map((pageIndex) => ({
-      pageIndex,
-      items: (pagesItems[pageIndex] || []).map(toServerItem),
+  const pages = Object.entries(pagesItems)
+    .map(([key, list]) => ({
+      pageIndex: Number(key),
+      items: (list || []).map(toServerItem),
     }))
-    .filter((g) => g.items.length > 0)
+    .filter((g) => Number.isFinite(g.pageIndex) && g.items.length > 0)
+    .sort((a, b) => a.pageIndex - b.pageIndex)
   return { pages }
 }
 
@@ -31,7 +30,9 @@ export default function PdfEditor({ sessionId, onBack }) {
   const [downloading, setDownloading] = useState(false)
   const pageRefs = useRef([])
   const scrollRef = useRef(null)
+  const pagesItemsRef = useRef({})
   const { pagesItems, commit, undo, redo, canUndo, canRedo, reset } = usePagesHistory({})
+  pagesItemsRef.current = pagesItems
 
   const numPages = pdfDoc?.numPages ?? 0
 
@@ -98,14 +99,29 @@ export default function PdfEditor({ sessionId, onBack }) {
   const handleDownload = async () => {
     setDownloading(true)
     try {
-      const edits = buildEditsPayload(pagesItems)
+      const edits = buildEditsPayload(pagesItemsRef.current)
       const res = await fetch('/edit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId, edits }),
       })
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Edit failed')
-      window.location.href = `/download?sessionId=${encodeURIComponent(sessionId)}`
+      const raw = await res.text()
+      let errMsg = ''
+      try {
+        const j = JSON.parse(raw)
+        errMsg = j.error || ''
+      } catch {
+        if (!res.ok) errMsg = raw.slice(0, 200) || res.statusText
+      }
+      if (!res.ok) {
+        throw new Error(
+          errMsg ||
+            `Edit failed (${res.status}). Is the API running on port 3001?`
+        )
+      }
+      window.location.assign(
+        `/download?sessionId=${encodeURIComponent(sessionId)}`
+      )
     } catch (e) {
       console.error(e)
       alert(e.message || 'Download failed')
