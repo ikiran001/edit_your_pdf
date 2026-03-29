@@ -12,6 +12,12 @@ import { mergeEditsWithNative } from '../utils/mergeEdits.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const uploadsRoot = path.join(__dirname, '..', 'uploads');
 
+function isValidPdfBytes(buf) {
+  if (!buf || buf.length < 32) return false;
+  const head = buf.subarray(0, 5).toString('ascii');
+  return head === '%PDF-';
+}
+
 const router = Router();
 
 /**
@@ -50,7 +56,14 @@ router.post('/edit', express.json({ limit: '50mb' }), async (req, res) => {
           : null;
     if (rules?.length) {
       try {
-        pdfBytes = await applyTextReplacements(pdfBytes, rules);
+        const swapped = await applyTextReplacements(pdfBytes, rules);
+        if (isValidPdfBytes(swapped)) {
+          pdfBytes = swapped;
+        } else {
+          console.error(
+            'edit: applyTextReplacements returned invalid PDF; keeping previous bytes',
+          );
+        }
       } catch (replErr) {
         // pdf.js text scan often fails on complex PDFs (e.g. resumes); do not block save/download.
         console.error('edit: applyTextReplacements skipped:', replErr);

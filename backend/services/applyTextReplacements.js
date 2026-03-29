@@ -17,6 +17,17 @@ function toUint8Array(pdfBytes) {
 }
 
 /**
+ * pdf.js may detach the ArrayBuffer passed to getDocument(). Never pass a view of the
+ * same memory as pdf-lib or the caller's buffer — that corrupts subsequent reads.
+ */
+function copyForPdfJs(pdfBytes) {
+  const src = toUint8Array(pdfBytes);
+  const copy = new Uint8Array(src.byteLength);
+  copy.set(src);
+  return copy;
+}
+
+/**
  * Bounding box in pdf-lib space (origin bottom-left, y up).
  * `baseline` is PDF text baseline y; `y` is rectangle bottom edge.
  */
@@ -52,9 +63,9 @@ function charRangeBBox(item, startIdx, endIdx) {
 export async function applyTextReplacements(pdfBytes, rules) {
   if (!rules?.length) return pdfBytes;
 
-  const data = toUint8Array(pdfBytes);
+  const pdfJsData = copyForPdfJs(pdfBytes);
   const pdfJsDoc = await getDocument({
-    data,
+    data: pdfJsData,
     useSystemFonts: true,
     isEvalSupported: false,
   }).promise;
@@ -92,7 +103,7 @@ export async function applyTextReplacements(pdfBytes, rules) {
 
   if (ops.length === 0) return pdfBytes;
 
-  const doc = await PDFDocument.load(toUint8Array(data), { ignoreEncryption: true });
+  const doc = await PDFDocument.load(toUint8Array(pdfBytes), { ignoreEncryption: true });
   const font = await doc.embedFont(StandardFonts.Helvetica);
   const pages = doc.getPages();
 
