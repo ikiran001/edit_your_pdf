@@ -54,6 +54,9 @@ GitHub does **not** run your Node/Express API. It can only host the **built Reac
 Local build matching Pages:  
 `cd frontend && VITE_BASE_PATH=/edit_your_pdf/ VITE_API_BASE_URL=https://your-api.example.com npm run build`
 
+**If upload shows `405` and Network tab shows `POST https://…github.io/upload`**  
+The live build has **no** API URL. The secret `VITE_API_BASE_URL` is missing or the workflow was not re-run after you added it. Add the secret, then **Actions → Deploy frontend to GitHub Pages → Run workflow**.
+
 ---
 
 ## Share it on the internet (full app)
