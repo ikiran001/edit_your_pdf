@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
+import { apiUrl } from '../lib/apiBase'
 import { usePagesHistory } from '../hooks/usePagesHistory'
 import Toolbar from './Toolbar'
 import ThumbnailSidebar from './ThumbnailSidebar'
@@ -51,8 +52,8 @@ export default function PdfEditor({ sessionId, onBack }) {
     setLoadError(null)
     const pdfUrl =
       pdfBust > 0
-        ? `/pdf/${sessionId}?v=${pdfBust}`
-        : `/pdf/${sessionId}`
+        ? apiUrl(`/pdf/${sessionId}?v=${pdfBust}`)
+        : apiUrl(`/pdf/${sessionId}`)
     ;(async () => {
       try {
         const task = getDocument({ url: pdfUrl, withCredentials: false })
@@ -139,7 +140,7 @@ export default function PdfEditor({ sessionId, onBack }) {
 
   const persistPdfToServer = async () => {
     const edits = buildEditsPayload(pagesItemsRef.current)
-    const res = await fetch('/edit', {
+    const res = await fetch(apiUrl('/edit'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -191,7 +192,7 @@ export default function PdfEditor({ sessionId, onBack }) {
     try {
       await persistPdfToServer()
       const dl = await fetch(
-        `/download?sessionId=${encodeURIComponent(sessionId)}`
+        apiUrl(`/download?sessionId=${encodeURIComponent(sessionId)}`)
       )
       if (!dl.ok) throw new Error('Download failed')
       const blob = await dl.blob()
