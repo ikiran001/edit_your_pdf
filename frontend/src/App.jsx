@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import LandingPage from './components/LandingPage'
 import PdfEditor from './components/PdfEditor'
-import { apiUrl } from './lib/apiBase'
+import { apiUrl, isApiBaseConfigured } from './lib/apiBase'
 
 export default function App() {
   const [sessionId, setSessionId] = useState(null)
@@ -18,7 +18,23 @@ export default function App() {
       setSessionId(data.sessionId)
     } catch (e) {
       console.error(e)
-      alert(e.message || 'Upload failed. Is the API running on port 3001?')
+      if (import.meta.env.PROD && !isApiBaseConfigured()) {
+        alert(
+          'Upload failed: GitHub Pages only hosts this page — it cannot run the PDF API.\n\n' +
+            'Fix:\n' +
+            '1) Deploy backend/ on Render, Railway, Fly.io, etc. (HTTPS URL).\n' +
+            '2) GitHub repo → Settings → Secrets and variables → Actions → New secret:\n' +
+            '   Name: VITE_API_BASE_URL\n' +
+            '   Value: https://your-api.example.com  (no trailing slash)\n' +
+            '3) Actions → "Deploy frontend to GitHub Pages" → Run workflow again.\n\n' +
+            'Locally: run backend on port 3001 and use npm run dev (no secret needed).'
+        )
+      } else {
+        alert(
+          e.message ||
+            'Upload failed. Is the API running? For github.io, set VITE_API_BASE_URL (see README).'
+        )
+      }
     } finally {
       setUploading(false)
     }

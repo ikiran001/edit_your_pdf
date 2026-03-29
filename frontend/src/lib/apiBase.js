@@ -5,6 +5,11 @@
  */
 const base = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 
+/** False when unset — local dev uses the Vite proxy; GitHub Pages needs this set at build time. */
+export function isApiBaseConfigured() {
+  return Boolean(base)
+}
+
 export function apiUrl(path) {
   const p = path.startsWith('/') ? path : `/${path}`
   if (!base) return p
