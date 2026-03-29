@@ -68,7 +68,7 @@ export function buildTextRuns(viewport, textContent) {
 }
 
 /** Hit-test in canvas bitmap space (px, py scaled from client coords). */
-export function hitTestTextRun(runs, px, py, pad = 6) {
+export function hitTestTextRun(runs, px, py, pad = 8) {
   for (let i = runs.length - 1; i >= 0; i--) {
     const r = runs[i]
     if (
@@ -81,4 +81,24 @@ export function hitTestTextRun(runs, px, py, pad = 6) {
     }
   }
   return null
+}
+
+/** If no direct hit (bbox drift), pick the closest text run center within ~2 lines of slop. */
+export function hitTestTextRunNearest(runs, px, py, pad = 8) {
+  const direct = hitTestTextRun(runs, px, py, pad)
+  if (direct) return direct
+  let best = null
+  let bestD = Infinity
+  const maxSlop = 48
+  for (const r of runs) {
+    const cx = r.left + r.width / 2
+    const cy = r.top + r.height / 2
+    const d = Math.hypot(px - cx, py - cy)
+    const reach = Math.hypot(r.width, r.height) / 2 + maxSlop
+    if (d < bestD && d <= reach) {
+      bestD = d
+      best = r
+    }
+  }
+  return best
 }

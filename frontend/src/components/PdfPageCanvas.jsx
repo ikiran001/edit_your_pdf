@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { buildTextRuns, hitTestTextRun } from '../lib/pdfTextRuns'
+import { buildTextRuns, hitTestTextRunNearest } from '../lib/pdfTextRuns'
 
 const RENDER_SCALE = 1.35
 
@@ -29,6 +29,7 @@ export default function PdfPageCanvas({
   const textRunsRef = useRef([])
   textRunsRef.current = textRuns
   const [nativeEdit, setNativeEdit] = useState(null)
+  const [textDiag, setTextDiag] = useState(null)
 
   const paintOverlay = useCallback((draftBox, draftLinePts) => {
     const overlay = overlayRef.current
@@ -141,19 +142,31 @@ export default function PdfPageCanvas({
     }
   }, [pdfPage])
 
+  // After the page has painted once, rebuild text runs (avoids racing an unready canvas in some cases).
   useEffect(() => {
-    if (!pdfPage) return
+    if (!pdfPage || !ready) return
     let cancelled = false
     const viewport = pdfPage.getViewport({ scale: RENDER_SCALE })
-    pdfPage.getTextContent().then((tc) => {
-      if (cancelled) return
-      setTextRuns(buildTextRuns(viewport, tc))
-    })
+    pdfPage
+      .getTextContent()
+      .then((tc) => {
+        if (cancelled) return
+        const runs = buildTextRuns(viewport, tc)
+        setTextRuns(runs)
+        setTextDiag({ count: runs.length, scanned: true })
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setTextRuns([])
+          setTextDiag({ count: 0, scanned: true, error: true })
+        }
+      })
     return () => {
       cancelled = true
       setTextRuns([])
+      setTextDiag(null)
     }
-  }, [pdfPage])
+  }, [pdfPage, ready])
 
   useEffect(() => {
     if (tool !== 'editText') setNativeEdit(null)
@@ -375,21 +388,10 @@ export default function PdfPageCanvas({
 
   const overlayActive = tool && tool !== 'editText'
 
-  const onEditTextPointerDown = (e) => {
-    if (tool !== 'editText' || !ready) return
-    const pdf = pdfCanvasRef.current
-    const runs = textRunsRef.current
-    if (!pdf || runs.length === 0) return
-    const r = pdf.getBoundingClientRect()
-    if (r.width < 2 || r.height < 2) return
-    const bx = (e.clientX - r.left) * (pdf.width / r.width)
-    const by = (e.clientY - r.top) * (pdf.height / r.height)
-    const run = hitTestTextRun(runs, bx, by)
-    if (!run) return
-    e.preventDefault()
-    e.stopPropagation()
-    const sx = r.width / pdf.width
-    const sy = r.height / pdf.height
+  const openNativeEditorForRun = useCallback((run, pdfEl) => {
+    const r = pdfEl.getBoundingClientRect()
+    const sx = r.width / pdfEl.width
+    const sy = r.height / pdfEl.height
     setNativeEdit({
       run,
       leftCss: run.left * sx,
@@ -398,43 +400,82 @@ export default function PdfPageCanvas({
       heightCss: Math.max(run.height * sy, (run.fontSizePx * sx) * 1.35),
       fontSizeCss: Math.max(10, run.fontSizePx * sx),
     })
-  }
+  }, [])
+
+  const onEditTextPointerDown = useCallback(
+    (e) => {
+      if (tool !== 'editText' || !ready) return
+      const pdf = pdfCanvasRef.current
+      const runs = textRunsRef.current
+      if (!pdf || runs.length === 0) return
+      const r = pdf.getBoundingClientRect()
+      if (r.width < 2 || r.height < 2) return
+      const bx = (e.clientX - r.left) * (pdf.width / r.width)
+      const by = (e.clientY - r.top) * (pdf.height / r.height)
+      const run = hitTestTextRunNearest(runs, bx, by)
+      if (!run) return
+      e.preventDefault()
+      e.stopPropagation()
+      openNativeEditorForRun(run, pdf)
+    },
+    [tool, ready, openNativeEditorForRun]
+  )
 
   const commitNativeEdit = (value) => {
-    if (!nativeEdit || !onNativeTextEdit) {
+    if (!nativeEdit) {
       setNativeEdit(null)
       return
     }
     const { run } = nativeEdit
     setNativeEdit(null)
     if (value === run.str) return
-    onNativeTextEdit({ pdf: run.pdf, text: value })
+    onNativeTextEdit?.({ pdf: run.pdf, text: value })
   }
 
   return (
     <div ref={wrapRef} className="relative block w-full max-w-full shadow-md">
       <canvas
         ref={pdfCanvasRef}
-        className={`block h-auto w-full max-w-full touch-none bg-white ${
-          tool === 'editText' ? 'relative z-[15] cursor-text' : 'relative z-0'
-        }`}
-        onPointerDown={tool === 'editText' ? onEditTextPointerDown : undefined}
+        className="relative z-0 block h-auto w-full max-w-full touch-none bg-white"
       />
       <canvas
         ref={overlayRef}
         className={`absolute left-0 top-0 touch-none ${
-          overlayActive ? 'z-10 cursor-crosshair' : 'pointer-events-none z-0'
+          overlayActive ? 'z-10 cursor-crosshair' : 'pointer-events-none z-[1]'
         }`}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       />
+      {tool === 'editText' && ready && (
+        <div
+          role="application"
+          aria-label="Click PDF text to edit"
+          className="absolute inset-0 z-[20] cursor-text touch-none"
+          style={{ touchAction: 'none' }}
+          onPointerDown={onEditTextPointerDown}
+        />
+      )}
+      {tool === 'editText' && ready && !textDiag?.scanned && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-1 z-[5] rounded bg-zinc-200/90 px-2 py-1 text-center text-[11px] text-zinc-700 dark:bg-zinc-800/90 dark:text-zinc-300">
+          Detecting text on this page…
+        </div>
+      )}
+      {tool === 'editText' &&
+        ready &&
+        textDiag?.scanned &&
+        textDiag.count === 0 &&
+        !textDiag.error && (
+          <div className="pointer-events-none absolute inset-x-0 bottom-1 z-[5] rounded bg-amber-100/95 px-2 py-1 text-center text-[11px] text-amber-950 dark:bg-amber-950/90 dark:text-amber-100">
+            No selectable text on this page (try a text-based PDF, not a scan).
+          </div>
+        )}
       {nativeEdit && (
         <textarea
           key={`${nativeEdit.run.pdf.x}-${nativeEdit.run.pdf.y}-${nativeEdit.run.pdf.baseline}`}
           autoFocus
-          className="absolute z-[25] resize-none rounded border-2 border-indigo-500 bg-white/98 p-1 text-zinc-900 shadow-lg outline-none dark:bg-zinc-900 dark:text-zinc-50"
+          className="absolute z-[30] resize-none rounded border-2 border-indigo-500 bg-white/98 p-1 text-zinc-900 shadow-lg outline-none dark:bg-zinc-900 dark:text-zinc-50"
           style={{
             left: nativeEdit.leftCss,
             top: nativeEdit.topCss,
