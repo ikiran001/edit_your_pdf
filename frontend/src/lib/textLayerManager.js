@@ -1,0 +1,317 @@
+/**
+ * Group pdf.js text runs into line-level blocks (logical horizontal lines) for iLovePDF-style UX.
+ * Each block carries a merged string, union bbox in canvas + normalized + PDF space.
+ */
+
+function pickDominantRunStyle(runs) {
+  if (!runs?.length) {
+    return {
+      pdfFontFamily: 'sans-serif',
+      serverFontFamily: 'Helvetica',
+      sourceBold: false,
+      sourceItalic: false,
+      sourceColorHex: '#000000',
+    }
+  }
+  const d = runs.reduce((best, r) => ((r.str?.length || 0) > (best.str?.length || 0) ? r : best))
+  return {
+    pdfFontFamily: d.pdfFontFamily || 'sans-serif',
+    serverFontFamily: d.serverFontFamily || 'Helvetica',
+    sourceBold: !!d.sourceBold,
+    sourceItalic: !!d.sourceItalic,
+    sourceColorHex: d.sourceColorHex || '#000000',
+  }
+}
+
+/** Vertical overlap / min line height — catches same-line duplicates with low box IoU. */
+function verticalOverlapRatio(a, b) {
+  const ay2 = a.top + a.height
+  const by2 = b.top + b.height
+  const y1 = Math.max(a.top, b.top)
+  const y2 = Math.min(ay2, by2)
+  const ih = Math.max(0, y2 - y1)
+  const h = Math.min(a.height, b.height)
+  return h > 0 ? ih / h : 0
+}
+
+/**
+ * pdf.js often emits two line blocks for one visible heading (duplicate geometry).
+ * Merging keeps one block id and one `blockTextOverrides` entry.
+ */
+export function dedupeIdenticalOverlappingLineBlocks(blocks) {
+  if (!blocks?.length) return []
+  let list = [...blocks]
+  let changed = true
+  while (changed && list.length > 1) {
+    changed = false
+    outer: for (let i = 0; i < list.length; i++) {
+      for (let j = i + 1; j < list.length; j++) {
+        const a = list[i]
+        const b = list[j]
+        const ta = (a.str || '').trim()
+        const tb = (b.str || '').trim()
+        if (!ta || ta !== tb) continue
+        const iou = rectIou(a, b)
+        const vy = verticalOverlapRatio(a, b)
+        if (iou > 0.06 || vy > 0.45) {
+          const m = mergeTwoLineBlocks(a, b)
+          list = list.filter((_, k) => k !== i && k !== j)
+          list.push(m)
+          changed = true
+          break outer
+        }
+      }
+    }
+  }
+  return list
+}
+
+function rectIou(a, b) {
+  const ax2 = a.left + a.width
+  const ay2 = a.top + a.height
+  const bx2 = b.left + b.width
+  const by2 = b.top + b.height
+  const x1 = Math.max(a.left, b.left)
+  const y1 = Math.max(a.top, b.top)
+  const x2 = Math.min(ax2, bx2)
+  const y2 = Math.min(ay2, by2)
+  const iw = Math.max(0, x2 - x1)
+  const ih = Math.max(0, y2 - y1)
+  const inter = iw * ih
+  const ua = a.width * a.height + b.width * b.height - inter
+  return ua <= 0 ? 0 : inter / ua
+}
+
+function mergeTwoLineBlocks(a, b) {
+  const vw = a.viewportW
+  const vh = a.viewportH
+  const left = Math.min(a.left, b.left)
+  const top = Math.min(a.top, b.top)
+  const right = Math.max(a.left + a.width, b.left + b.width)
+  const bottom = Math.max(a.top + a.height, b.top + b.height)
+  const width = Math.max(right - left, 2)
+  const height = Math.max(bottom - top, 2)
+  const first = a.left <= b.left ? a : b
+  const second = a.left <= b.left ? b : a
+  let str
+  if (first.str === second.str) str = first.str
+  else {
+    str = appendMergedRunText(first.str, first, {
+      str: second.str,
+      left: second.left,
+      width: second.width,
+      fontSizePx: second.fontSizePx,
+    })
+  }
+
+  const lefts = [a.pdf.x, b.pdf.x]
+  const rights = [a.pdf.x + a.pdf.w, b.pdf.x + b.pdf.w]
+  const bottoms = [a.pdf.y, b.pdf.y]
+  const tops = [a.pdf.y + a.pdf.h, b.pdf.y + b.pdf.h]
+  const pdf = {
+    x: Math.min(...lefts),
+    y: Math.min(...bottoms),
+    w: Math.max(...rights) - Math.min(...lefts),
+    h: Math.max(...tops) - Math.min(...bottoms),
+    baseline: b.pdf.baseline,
+    fontSize: Math.max(a.pdf.fontSize, b.pdf.fontSize),
+  }
+  const fontSizePx = Math.min(200, Math.max(9, height * 0.82))
+  const norm = {
+    nx: left / vw,
+    ny: top / vh,
+    nw: width / vw,
+    nh: height / vh,
+    baselineN: b.norm.baselineN,
+  }
+  const mergedRuns = [...(a.runs || []), ...(b.runs || [])]
+  return {
+    str,
+    left,
+    top,
+    width,
+    height,
+    fontSizePx,
+    viewportW: vw,
+    viewportH: vh,
+    norm,
+    pdf,
+    runs: mergedRuns,
+    ...pickDominantRunStyle(mergedRuns),
+  }
+}
+
+/** Merge overlapping line blocks (duplicate pdf.js items / near-duplicates). */
+export function dedupeOverlappingLineBlocks(blocks) {
+  if (!blocks?.length) return []
+  let list = [...blocks]
+  let changed = true
+  while (changed && list.length > 1) {
+    changed = false
+    outer: for (let i = 0; i < list.length; i++) {
+      for (let j = i + 1; j < list.length; j++) {
+        const iou = rectIou(list[i], list[j])
+        if (iou > 0.18) {
+          const m = mergeTwoLineBlocks(list[i], list[j])
+          list = list.filter((_, k) => k !== i && k !== j)
+          list.push(m)
+          changed = true
+          break outer
+        }
+      }
+    }
+  }
+  return list
+}
+
+/**
+ * Join adjacent run strings; remove duplicate suffix/prefix overlaps common in pdf.js output.
+ */
+function appendMergedRunText(prevStr, prevRun, curRun) {
+  const cur = curRun.str
+  if (!cur?.length) return prevStr
+  if (prevStr === cur) return prevStr
+  if (prevStr.endsWith(cur)) return prevStr
+  if (cur.startsWith(prevStr)) return cur
+  const maxOv = Math.min(prevStr.length, cur.length)
+  for (let k = maxOv; k >= 1; k--) {
+    if (prevStr.slice(-k) === cur.slice(0, k)) {
+      return prevStr + cur.slice(k)
+    }
+  }
+  const gapPx = curRun.left - (prevRun.left + prevRun.width)
+  const spaceThreshold = Math.max(2, prevRun.fontSizePx * 0.12)
+  const sep = gapPx > spaceThreshold ? ' ' : ''
+  return prevStr + sep + cur
+}
+
+/** @param {Array<Record<string, unknown>>} runs */
+export function mergeRunsIntoLineBlocks(runs) {
+  if (!runs?.length) return []
+
+  const sorted = [...runs].sort((a, b) => {
+    const ba = typeof a.baselineY === 'number' ? a.baselineY : a.top + a.height * 0.85
+    const bb = typeof b.baselineY === 'number' ? b.baselineY : b.top + b.height * 0.85
+    return ba - bb || a.left - b.left
+  })
+  const lines = []
+  let current = [sorted[0]]
+  let lineBaseline = typeof sorted[0].baselineY === 'number' ? sorted[0].baselineY : sorted[0].top + sorted[0].height * 0.85
+
+  for (let i = 1; i < sorted.length; i++) {
+    const r = sorted[i]
+    const by = typeof r.baselineY === 'number' ? r.baselineY : r.top + r.height * 0.85
+    const lineH = Math.max(...current.map((x) => x.height), r.height, 8)
+    const maxDelta = Math.max(2.5, Math.min(10, lineH * 0.32))
+    if (Math.abs(by - lineBaseline) <= maxDelta) {
+      current.push(r)
+    } else {
+      lines.push(current)
+      current = [r]
+      lineBaseline = by
+    }
+  }
+  lines.push(current)
+
+  return lines.map((lineRuns) => {
+    lineRuns.sort((a, b) => a.left - b.left)
+    const vw = lineRuns[0].viewportW
+    const vh = lineRuns[0].viewportH
+    const left = Math.min(...lineRuns.map((x) => x.left))
+    const top = Math.min(...lineRuns.map((x) => x.top))
+    const right = Math.max(...lineRuns.map((x) => x.left + x.width))
+    const bottom = Math.max(...lineRuns.map((x) => x.top + x.height))
+    const width = Math.max(right - left, 2)
+    const height = Math.max(bottom - top, 2)
+
+    let str = lineRuns[0].str
+    for (let j = 1; j < lineRuns.length; j++) {
+      str = appendMergedRunText(str, lineRuns[j - 1], lineRuns[j])
+    }
+
+    const lefts = lineRuns.map((r) => r.pdf.x)
+    const rights = lineRuns.map((r) => r.pdf.x + r.pdf.w)
+    const bottoms = lineRuns.map((r) => r.pdf.y)
+    const tops = lineRuns.map((r) => r.pdf.y + r.pdf.h)
+    const pdf = {
+      x: Math.min(...lefts),
+      y: Math.min(...bottoms),
+      w: Math.max(...rights) - Math.min(...lefts),
+      h: Math.max(...tops) - Math.min(...bottoms),
+      baseline: lineRuns[lineRuns.length - 1].pdf.baseline,
+      fontSize: Math.max(...lineRuns.map((r) => r.pdf.fontSize)),
+    }
+
+    const fontSizePx = Math.min(200, Math.max(9, height * 0.82))
+    const last = lineRuns[lineRuns.length - 1]
+    const baselineN = last.norm.baselineN
+
+    const norm = {
+      nx: left / vw,
+      ny: top / vh,
+      nw: width / vw,
+      nh: height / vh,
+      baselineN,
+    }
+
+    return {
+      id: `L${left.toFixed(0)}T${top.toFixed(0)}`,
+      str,
+      left,
+      top,
+      width,
+      height,
+      fontSizePx,
+      viewportW: vw,
+      viewportH: vh,
+      norm,
+      pdf,
+      runs: lineRuns,
+      ...pickDominantRunStyle(lineRuns),
+    }
+  })
+}
+
+/**
+ * One pipeline: line-merge → overlap dedupe → stable ids per page.
+ * @param {Array<Record<string, unknown>>} runs
+ * @param {number} pageIndex
+ */
+export function buildPageTextBlocks(runs, pageIndex = 0) {
+  const merged = mergeRunsIntoLineBlocks(runs || [])
+  const deduped = dedupeOverlappingLineBlocks(merged)
+  const dedupedText = dedupeIdenticalOverlappingLineBlocks(deduped)
+  return dedupedText.map((b, idx) => ({
+    ...b,
+    id: `p${pageIndex}-line-${idx}-${Math.round(b.left)}-${Math.round(b.top)}`,
+  }))
+}
+
+export function hitTestTextBlockNearest(blocks, px, py, pad = 6) {
+  if (!blocks?.length) return null
+  for (let i = blocks.length - 1; i >= 0; i--) {
+    const b = blocks[i]
+    if (
+      px >= b.left - pad &&
+      px <= b.left + b.width + pad &&
+      py >= b.top - pad &&
+      py <= b.top + b.height + pad
+    ) {
+      return b
+    }
+  }
+  let best = null
+  let bestD = Infinity
+  const maxSlop = 56
+  for (const b of blocks) {
+    const cx = b.left + b.width / 2
+    const cy = b.top + b.height / 2
+    const d = Math.hypot(px - cx, py - cy)
+    const reach = Math.hypot(b.width, b.height) / 2 + maxSlop
+    if (d < bestD && d <= reach) {
+      bestD = d
+      best = b
+    }
+  }
+  return best
+}

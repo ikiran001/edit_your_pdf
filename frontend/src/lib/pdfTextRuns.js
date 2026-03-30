@@ -1,3 +1,5 @@
+import { mapPdfFontNameToServer, parsePdfFontStyle } from './textFormatDefaults'
+
 /**
  * Build selectable text runs from pdf.js text content (same viewport as the page canvas).
  * Coordinates are in canvas pixel space (0…viewport.width/height).
@@ -16,6 +18,8 @@ export function buildTextRuns(viewport, textContent) {
       Math.hypot(item.transform[2], item.transform[3]) ||
       12
     const st = item.fontName ? styles[item.fontName] : null
+    const rawPdfFontFamily = st?.fontFamily || 'sans-serif'
+    const fromStyleName = parsePdfFontStyle(rawPdfFontFamily)
     let desc = fontSizePdf * 0.28
     let asc = fontSizePdf * 0.92
     if (st && typeof st.descent === 'number' && typeof st.ascent === 'number') {
@@ -57,11 +61,22 @@ export function buildTextRuns(viewport, textContent) {
 
     runs.push({
       str: s,
+      /** Viewport Y of text baseline — used to cluster true lines (avoids merging adjacent rows). */
+      baselineY: vyBaseline,
+      /** pdf.js TextStyle.fontFamily (e.g. Helvetica, Times New Roman). */
+      pdfFontFamily: rawPdfFontFamily,
+      serverFontFamily: mapPdfFontNameToServer(rawPdfFontFamily),
+      sourceBold: fromStyleName.bold,
+      sourceItalic: fromStyleName.italic,
+      /** getTextContent does not include fill color; default matches typical PDF body text. */
+      sourceColorHex: '#000000',
       left,
       top,
       width: Math.max(boxW, 2),
       height: boxH,
       fontSizePx,
+      viewportW: vw,
+      viewportH: vh,
       /** Same viewport as the canvas — server maps this to pdf-lib page size so edits line up visually. */
       norm: {
         nx: left / vw,

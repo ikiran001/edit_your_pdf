@@ -5,10 +5,15 @@ import { usePagesHistory } from '../hooks/usePagesHistory'
 import Toolbar from './Toolbar'
 import ThumbnailSidebar from './ThumbnailSidebar'
 import PdfPageCanvas from './PdfPageCanvas'
+import TextFormatToolbar from './TextFormatToolbar'
+import { defaultTextFormat, formatFromTextBlock } from '../lib/textFormatDefaults'
 
 /** Strip client-only fields before sending edits to the API / pdf-lib. */
 function toServerItem(it) {
-  const { id, fontSizeCss, lineWidthCss, ...rest } = it
+  const rest = { ...it }
+  delete rest.id
+  delete rest.fontSizeCss
+  delete rest.lineWidthCss
   return rest
 }
 
@@ -41,6 +46,17 @@ export default function PdfEditor({ sessionId, onBack }) {
   const pagesItemsRef = useRef({})
   const nativeTextEditsRef = useRef([])
   const [nativeTextEdits, setNativeTextEdits] = useState([])
+  /** Single source of truth for on-canvas text: block id → latest string (survives re-parse / re-render). */
+  const [blockTextOverrides, setBlockTextOverrides] = useState({})
+  const [textFormat, setTextFormat] = useState(defaultTextFormat)
+  const textFormatRef = useRef(textFormat)
+  textFormatRef.current = textFormat
+  const [editTextMode, setEditTextMode] = useState(true)
+  const [inlineTextEditorOpen, setInlineTextEditorOpen] = useState(false)
+
+  useEffect(() => {
+    if (!editTextMode) setInlineTextEditorOpen(false)
+  }, [editTextMode])
   const { pagesItems, commit, undo, redo, canUndo, canRedo, reset } = usePagesHistory({})
   pagesItemsRef.current = pagesItems
   nativeTextEditsRef.current = nativeTextEdits
@@ -63,6 +79,7 @@ export default function PdfEditor({ sessionId, onBack }) {
         reset({})
         nativeTextEditsRef.current = []
         setNativeTextEdits([])
+        setBlockTextOverrides({})
       } catch (e) {
         if (!cancelled) setLoadError(e?.message || 'Failed to load PDF')
       }
@@ -112,10 +129,23 @@ export default function PdfEditor({ sessionId, onBack }) {
     return Array.from({ length: numPages }, (_, i) => i)
   }, [pdfDoc, numPages])
 
-  const addNativeTextEdit = useCallback((pageIndex, { pdf, norm, text }) => {
-    const key = norm
-      ? `${pageIndex}:${norm.nx}:${norm.ny}:${norm.baselineN}`
-      : `${pageIndex}:${pdf.x}:${pdf.y}:${pdf.baseline}`
+  const addNativeTextEdit = useCallback((pageIndex, payload) => {
+    const {
+      blockId,
+      pdf,
+      norm,
+      text,
+      fontSize,
+      fontFamily,
+      bold,
+      italic,
+      underline,
+      align,
+      color,
+      opacity,
+      rotationDeg,
+    } = payload
+    const key = `${pageIndex}:${pdf.x}:${pdf.y}:${pdf.baseline}`
     const prev = nativeTextEditsRef.current
     const rest = prev.filter((e) => e.key !== key)
     const next = [
@@ -128,11 +158,22 @@ export default function PdfEditor({ sessionId, onBack }) {
         w: pdf.w,
         h: pdf.h,
         baseline: pdf.baseline,
-        fontSize: pdf.fontSize,
+        fontSize: fontSize ?? pdf.fontSize,
         norm,
         text,
+        fontFamily,
+        bold,
+        italic,
+        underline,
+        align,
+        color,
+        opacity,
+        rotationDeg,
       },
     ]
+    if (blockId) {
+      setBlockTextOverrides((prev) => (prev[blockId] === text ? prev : { ...prev, [blockId]: text }))
+    }
     // Keep ref in sync immediately so “Download” in the same gesture as textarea blur still sends edits.
     nativeTextEditsRef.current = next
     setNativeTextEdits(next)
@@ -245,6 +286,8 @@ export default function PdfEditor({ sessionId, onBack }) {
       <Toolbar
         activeTool={activeTool}
         onToolChange={setActiveTool}
+        editTextMode={editTextMode}
+        onEditTextModeChange={setEditTextMode}
         onUndo={undo}
         onRedo={redo}
         canUndo={canUndo}
@@ -274,7 +317,7 @@ export default function PdfEditor({ sessionId, onBack }) {
         />
         <div
           ref={scrollRef}
-          className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-3 py-4 md:px-6"
+          className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden px-3 py-4 md:px-6"
         >
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <button
@@ -312,22 +355,72 @@ export default function PdfEditor({ sessionId, onBack }) {
                 className="w-full max-w-4xl"
               >
                 <div className="mb-2 text-sm font-medium text-zinc-500">Page {i + 1}</div>
-                <PageLoader pdfDoc={pdfDoc} pageIndex={i}>
+                <LazyPageLoader pdfDoc={pdfDoc} pageIndex={i} scrollRef={scrollRef}>
                   {(page) => (
                     <PdfPageCanvas
                       pdfPage={page}
+                      pageIndex={i}
                       tool={activeTool}
                       items={pagesItems[i] || []}
                       onUpdateItems={updatePage(i)}
+                      blockTextOverrides={blockTextOverrides}
                       onNativeTextEdit={(payload) => addNativeTextEdit(i, payload)}
+                      textFormat={textFormat}
+                      textFormatRef={textFormatRef}
+                      editTextMode={editTextMode}
+                      onInlineEditorActiveChange={setInlineTextEditorOpen}
+                      onBeginNativeTextEdit={(block) =>
+                        setTextFormat((prev) => formatFromTextBlock(block, prev))
+                      }
                     />
                   )}
-                </PageLoader>
+                </LazyPageLoader>
               </div>
             ))}
           </div>
         </div>
+        {activeTool === 'editText' && editTextMode && inlineTextEditorOpen && (
+          <TextFormatToolbar
+            format={textFormat}
+            onChange={setTextFormat}
+            disabled={false}
+          />
+        )}
       </div>
+    </div>
+  )
+}
+
+/** Loads page PDF.js proxy only after the page wrapper is near the viewport (scroll root). */
+function LazyPageLoader({ pdfDoc, pageIndex, scrollRef, children }) {
+  const [shouldLoad, setShouldLoad] = useState(false)
+  const wrapRef = useRef(null)
+
+  useEffect(() => {
+    const el = wrapRef.current
+    if (!el) return
+    const root = scrollRef?.current ?? null
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) setShouldLoad(true)
+      },
+      { root, rootMargin: '400px 0px', threshold: 0 }
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [scrollRef])
+
+  return (
+    <div ref={wrapRef} className="w-full">
+      {shouldLoad ? (
+        <PageLoader pdfDoc={pdfDoc} pageIndex={pageIndex}>
+          {children}
+        </PageLoader>
+      ) : (
+        <div className="flex min-h-[45vh] items-center justify-center rounded-lg border border-dashed border-zinc-300 bg-white/60 text-sm text-zinc-500 dark:border-zinc-600 dark:bg-zinc-900/40 dark:text-zinc-400">
+          Scroll to load this page…
+        </div>
+      )}
     </div>
   )
 }

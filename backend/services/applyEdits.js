@@ -1,4 +1,4 @@
-import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import { PDFDocument, StandardFonts, rgb, degrees } from 'pdf-lib';
 
 /**
  * Convert UI normalized coords (origin top-left, y down) to PDF user space
@@ -25,6 +25,29 @@ function parseHexColor(hex) {
   return rgb(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
 }
 
+/** Map UI font family + bold/italic to pdf-lib StandardFonts (Arial≈Helvetica, etc.). */
+function resolveNativeStandardFont(fontFamily, bold, italic) {
+  const fam = String(fontFamily || 'Helvetica').toLowerCase();
+  const b = !!bold;
+  const i = !!italic;
+  if (fam.includes('times')) {
+    if (b && i) return StandardFonts.TimesRomanBoldItalic;
+    if (b) return StandardFonts.TimesRomanBold;
+    if (i) return StandardFonts.TimesRomanItalic;
+    return StandardFonts.TimesRoman;
+  }
+  if (fam.includes('courier')) {
+    if (b && i) return StandardFonts.CourierBoldOblique;
+    if (b) return StandardFonts.CourierBold;
+    if (i) return StandardFonts.CourierOblique;
+    return StandardFonts.Courier;
+  }
+  if (b && i) return StandardFonts.HelveticaBoldOblique;
+  if (b) return StandardFonts.HelveticaBold;
+  if (i) return StandardFonts.HelveticaOblique;
+  return StandardFonts.Helvetica;
+}
+
 /**
  * Applies annotation payloads from the client onto a PDF using pdf-lib.
  * All positions use normalized 0–1 coords relative to each page (top-left origin).
@@ -33,6 +56,7 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
   const doc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
   const font = await doc.embedFont(StandardFonts.Helvetica);
   const pages = doc.getPages();
+  const nativeFontCache = new Map();
 
   const pageGroups = editsPayload.pages || [];
 
@@ -49,14 +73,28 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
         case 'nativeText': {
           const fs = Math.max(4, Math.min(144, Number(item.fontSize) || 12));
           const raw = String(item.text ?? '');
+          const fontEnum = resolveNativeStandardFont(item.fontFamily, item.bold, item.italic);
+          let tFont = nativeFontCache.get(fontEnum);
+          if (!tFont) {
+            tFont = await doc.embedFont(fontEnum);
+            nativeFontCache.set(fontEnum, tFont);
+          }
+
           let textW = 0;
           try {
-            textW = raw.length ? font.widthOfTextAtSize(raw, fs) : 0;
+            textW = raw.length ? tFont.widthOfTextAtSize(raw, fs) : 0;
           } catch {
             const safe = raw.replace(/[^\x20-\x7E]/g, '?');
-            textW = safe.length ? font.widthOfTextAtSize(safe, fs) : 0;
+            textW = safe.length ? tFont.widthOfTextAtSize(safe, fs) : 0;
           }
           const pad = Math.max(3, fs * 0.22);
+          const textColor = parseHexColor(item.color);
+          let opacity = Number(item.opacity);
+          if (!Number.isFinite(opacity)) opacity = 1;
+          opacity = Math.min(1, Math.max(0.05, opacity));
+          const rotationDeg = Number(item.rotationDeg) || 0;
+          const align = item.align === 'center' || item.align === 'right' ? item.align : 'left';
+          const underline = !!item.underline;
 
           let maskX;
           let maskY;
@@ -103,6 +141,16 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
             textX = Math.max(bx + 0.5, maskX + 1);
           }
 
+          if (Math.abs(rotationDeg) > 0.5) {
+            const f = 1 + Math.min(1.2, Math.abs(rotationDeg) / 90) * 0.45;
+            const cx = maskX + maskW / 2;
+            const cy = maskY + maskH / 2;
+            maskW *= f;
+            maskH *= f;
+            maskX = cx - maskW / 2;
+            maskY = cy - maskH / 2;
+          }
+
           page.drawRectangle({
             x: maskX,
             y: maskY,
@@ -110,26 +158,43 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
             height: maskH,
             color: rgb(1, 1, 1),
           });
-          textX = Math.max(textX, maskX + 0.5);
+
+          if (align === 'center') {
+            textX = maskX + (maskW - textW) / 2;
+          } else if (align === 'right') {
+            textX = maskX + maskW - textW - pad * 0.5;
+          } else {
+            textX = Math.max(textX, maskX + 0.5);
+          }
+
+          const drawOpts = {
+            x: textX,
+            y: baselinePdf,
+            size: fs,
+            font: tFont,
+            color: textColor,
+            opacity,
+            rotate: degrees(rotationDeg),
+          };
+
           try {
-            page.drawText(raw, {
-              x: textX,
-              y: baselinePdf,
-              size: fs,
-              font,
-              color: rgb(0, 0, 0),
-            });
+            page.drawText(raw, drawOpts);
           } catch {
             const safe = raw.replace(/[^\x20-\x7E]/g, '?');
             if (safe.length) {
-              page.drawText(safe, {
-                x: textX,
-                y: baselinePdf,
-                size: fs,
-                font,
-                color: rgb(0, 0, 0),
-              });
+              page.drawText(safe, drawOpts);
             }
+          }
+
+          if (underline && Math.abs(rotationDeg) < 1) {
+            const uy = baselinePdf - Math.max(0.8, fs * 0.11);
+            page.drawLine({
+              start: { x: textX, y: uy },
+              end: { x: textX + textW, y: uy },
+              thickness: Math.max(0.5, fs * 0.06),
+              color: textColor,
+              opacity,
+            });
           }
           break;
         }

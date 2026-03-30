@@ -9,6 +9,8 @@ const tools = [
 export default function Toolbar({
   activeTool,
   onToolChange,
+  editTextMode,
+  onEditTextModeChange,
   onUndo,
   onRedo,
   canUndo,
@@ -23,6 +25,20 @@ export default function Toolbar({
   return (
     <div className="flex flex-wrap items-center gap-2 border-b border-zinc-200 bg-white/90 px-3 py-2 shadow-sm backdrop-blur-sm dark:border-zinc-700 dark:bg-zinc-900/90">
       <div className="mr-2 text-sm font-medium text-zinc-600 dark:text-zinc-300">Tools</div>
+      {onEditTextModeChange && (
+        <button
+          type="button"
+          onClick={() => onEditTextModeChange(!editTextMode)}
+          title="Show or hide detected text boxes and inline editing"
+          className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+            editTextMode
+              ? 'bg-indigo-600 text-white shadow'
+              : 'bg-zinc-100 text-zinc-800 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700'
+          }`}
+        >
+          Text edit mode
+        </button>
+      )}
       {tools.map((t) => (
         <button
           key={t.id}
