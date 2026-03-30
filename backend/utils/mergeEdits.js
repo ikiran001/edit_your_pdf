@@ -23,6 +23,14 @@ export function mergeEditsWithNative(edits, nativeTextEdits) {
       fontSize: nt.fontSize,
       norm: nt.norm,
       text: nt.text,
+      fontFamily: nt.fontFamily,
+      bold: nt.bold,
+      italic: nt.italic,
+      underline: nt.underline,
+      align: nt.align,
+      color: nt.color,
+      opacity: nt.opacity,
+      rotationDeg: nt.rotationDeg,
     });
   }
 

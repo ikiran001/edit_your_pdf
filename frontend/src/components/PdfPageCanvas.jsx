@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { buildTextRuns, hitTestTextRunNearest } from '../lib/pdfTextRuns'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { buildTextRuns } from '../lib/pdfTextRuns'
+import { buildPageTextBlocks } from '../lib/textLayerManager'
+import { cssDisplayFontFromPdf, defaultTextFormat } from '../lib/textFormatDefaults'
 
 const RENDER_SCALE = 1.35
 
@@ -9,26 +11,58 @@ const RENDER_SCALE = 1.35
  */
 export default function PdfPageCanvas({
   pdfPage,
+  pageIndex = 0,
   tool,
   items,
   onUpdateItems,
   onNativeTextEdit,
+  /** Parent SSOT: stable block id → display string (from pdf.js once, then overrides). */
+  blockTextOverrides = {},
+  textFormat,
+  textFormatRef,
+  onBeginNativeTextEdit,
+  editTextMode = true,
+  onInlineEditorActiveChange,
 }) {
-  const wrapRef = useRef(null)
   const pdfCanvasRef = useRef(null)
   const overlayRef = useRef(null)
   const metaRef = useRef({ pdfW: 1, pdfH: 1, cssW: 1, cssH: 1 })
   const [ready, setReady] = useState(false)
+  /** CSS box + bitmap size for scaling text layer (canvas px ↔ layout px). */
+  const [canvasLayout, setCanvasLayout] = useState({ cssW: 0, cssH: 0, bmpW: 1, bmpH: 1 })
   const [textDraft, setTextDraft] = useState(null)
-  const [, bump] = useState(0)
   const dragRef = useRef(null)
   const drawPointsRef = useRef(null)
-  const itemsRef = useRef(items)
-  itemsRef.current = items
   const [textRuns, setTextRuns] = useState([])
-  const textRunsRef = useRef([])
-  textRunsRef.current = textRuns
+  const baseTextBlocks = useMemo(
+    () => buildPageTextBlocks(textRuns, pageIndex),
+    [textRuns, pageIndex]
+  )
+
+  const textBlocks = useMemo(() => {
+    const o = blockTextOverrides || {}
+    return baseTextBlocks.map((b) => ({
+      ...b,
+      str: Object.prototype.hasOwnProperty.call(o, b.id) ? o[b.id] : b.str,
+    }))
+  }, [baseTextBlocks, blockTextOverrides])
+  const textBlocksRef = useRef(textBlocks)
   const [nativeEdit, setNativeEdit] = useState(null)
+  const nativeEditRef = useRef(null)
+  const nativeEditorElRef = useRef(null)
+  const nativeBlurTimerRef = useRef(null)
+  /** Debounce parent `onNativeTextEdit` so typing does not re-render the whole page every key. */
+  const nativeSyncTimerRef = useRef(null)
+  const [hoverBlockId, setHoverBlockId] = useState(null)
+
+  useEffect(() => {
+    nativeEditRef.current = nativeEdit
+  }, [nativeEdit])
+
+  useLayoutEffect(() => {
+    textBlocksRef.current = textBlocks
+  }, [textBlocks])
+
   const [textDiag, setTextDiag] = useState(null)
 
   const paintOverlay = useCallback((draftBox, draftLinePts) => {
@@ -83,7 +117,7 @@ export default function PdfPageCanvas({
       }
     }
 
-    for (const it of itemsRef.current) drawItem(it)
+    for (const it of items) drawItem(it)
 
     if (draftLinePts && draftLinePts.length >= 2) {
       ctx.strokeStyle = '#111827'
@@ -112,7 +146,7 @@ export default function PdfPageCanvas({
         ctx.strokeRect(x, y, rw, rh)
       }
     }
-  }, [])
+  }, [items])
 
   useEffect(() => {
     if (!pdfPage) return
@@ -152,7 +186,14 @@ export default function PdfPageCanvas({
     }
   }, [pdfPage])
 
-  // After the page has painted once, rebuild text runs (avoids racing an unready canvas in some cases).
+  useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect -- reset extract state when page changes */
+    setTextRuns([])
+    setTextDiag(null)
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [pdfPage])
+
+  // After the page has painted once, parse text once per pdfPage (no empty reset on StrictMode cleanup).
   useEffect(() => {
     if (!pdfPage || !ready) return
     let cancelled = false
@@ -173,14 +214,26 @@ export default function PdfPageCanvas({
       })
     return () => {
       cancelled = true
-      setTextRuns([])
-      setTextDiag(null)
     }
   }, [pdfPage, ready])
 
   useEffect(() => {
-    if (tool !== 'editText') setNativeEdit(null)
-  }, [tool])
+    if (tool !== 'editText' || !editTextMode) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- exit inline editor when tool/mode off
+      setNativeEdit(null)
+    }
+  }, [tool, editTextMode])
+
+  useEffect(() => {
+    onInlineEditorActiveChange?.(!!nativeEdit)
+  }, [nativeEdit, onInlineEditorActiveChange])
+
+  useEffect(() => {
+    return () => {
+      if (nativeBlurTimerRef.current) window.clearTimeout(nativeBlurTimerRef.current)
+      if (nativeSyncTimerRef.current) window.clearTimeout(nativeSyncTimerRef.current)
+    }
+  }, [])
 
   useEffect(() => {
     if (!ready) return
@@ -203,12 +256,17 @@ export default function PdfPageCanvas({
       const cw = pdf.clientWidth
       const ch = pdf.clientHeight
       if (cw < 2 || ch < 2) return
+      setCanvasLayout({
+        cssW: cw,
+        cssH: ch,
+        bmpW: pdf.width || 1,
+        bmpH: pdf.height || 1,
+      })
       overlay.style.width = `${cw}px`
       overlay.style.height = `${ch}px`
       overlay.width = pdf.width
       overlay.height = pdf.height
       paintOverlay()
-      bump((n) => n + 1)
     }
 
     sync()
@@ -407,58 +465,144 @@ export default function PdfPageCanvas({
     ])
   }
 
-  const cv = pdfCanvasRef.current
-  const cw = cv?.clientWidth ?? 0
-  const ch = cv?.clientHeight ?? 0
-
+  const { cssW: cw, cssH: ch, bmpW, bmpH } = canvasLayout
+  const sx = bmpW > 0 ? cw / bmpW : 1
+  const sy = bmpH > 0 ? ch / bmpH : 1
   const overlayActive = tool && tool !== 'editText'
 
-  const openNativeEditorForRun = useCallback((run, pdfEl) => {
-    const r = pdfEl.getBoundingClientRect()
-    const sx = r.width / pdfEl.width
-    const sy = r.height / pdfEl.height
-    setNativeEdit({
-      run,
-      leftCss: run.left * sx,
-      topCss: run.top * sy,
-      widthCss: Math.max(run.width * sx, 64),
-      heightCss: Math.max(run.height * sy, (run.fontSizePx * sx) * 1.35),
-      fontSizeCss: Math.max(10, run.fontSizePx * sx),
-    })
-  }, [])
+  const showTextLayer = editTextMode && tool === 'editText' && ready
 
-  const onEditTextPointerDown = useCallback(
-    (e) => {
-      if (tool !== 'editText' || !ready) return
-      const pdf = pdfCanvasRef.current
-      const runs = textRunsRef.current
-      if (!pdf || runs.length === 0) return
-      const r = pdf.getBoundingClientRect()
-      if (r.width < 2 || r.height < 2 || !pdf.width || !pdf.height) return
-      const bx = (e.clientX - r.left) * (pdf.width / r.width)
-      const by = (e.clientY - r.top) * (pdf.height / r.height)
-      const run = hitTestTextRunNearest(runs, bx, by)
-      if (!run) return
-      e.preventDefault()
-      e.stopPropagation()
-      openNativeEditorForRun(run, pdf)
+  const openNativeEditorForBlock = useCallback(
+    (block) => {
+      if (nativeSyncTimerRef.current != null) {
+        window.clearTimeout(nativeSyncTimerRef.current)
+        nativeSyncTimerRef.current = null
+      }
+      onBeginNativeTextEdit?.(block)
+      setNativeEdit({ block })
     },
-    [tool, ready, openNativeEditorForRun]
+    [onBeginNativeTextEdit]
   )
 
-  const commitNativeEdit = (value) => {
-    if (!nativeEdit) {
-      setNativeEdit(null)
-      return
+  /**
+   * Seed from `textBlocksRef` (latest overrides), not `nativeEdit.block.str` (stale snapshot).
+   * One rAF pass for focus if the keyed node mounts after the first layout read.
+   */
+  useLayoutEffect(() => {
+    if (!nativeEdit) return
+    const id = nativeEdit.block.id
+    const readStr = () => textBlocksRef.current.find((b) => b.id === id)?.str ?? ''
+    const str = readStr()
+    const el = nativeEditorElRef.current
+    if (el && nativeEditRef.current?.block?.id === id && el.textContent !== str) {
+      el.textContent = str
     }
-    const { run } = nativeEdit
-    setNativeEdit(null)
-    if (value === run.str) return
-    onNativeTextEdit?.({ pdf: run.pdf, norm: run.norm, text: value })
-  }
+    const raf = requestAnimationFrame(() => {
+      if (nativeEditRef.current?.block?.id !== id) return
+      const el2 = nativeEditorElRef.current
+      if (!el2) return
+      const latest = readStr()
+      if (el2.textContent !== latest) el2.textContent = latest
+      el2.focus()
+      try {
+        const sel = window.getSelection()
+        const range = document.createRange()
+        range.selectNodeContents(el2)
+        range.collapse(false)
+        sel?.removeAllRanges()
+        sel?.addRange(range)
+      } catch {
+        /* ignore */
+      }
+    })
+    return () => cancelAnimationFrame(raf)
+  }, [nativeEdit])
+
+  const buildNativePayload = useCallback(
+    (block, text) => {
+      const fmt = textFormatRef?.current ?? textFormat ?? defaultTextFormat()
+      const { pdfW, cssW } = metaRef.current
+      const ratio = cssW > 0 ? pdfW / cssW : 1
+      const pdfFontSize = Math.max(4, Math.min(144, (fmt.fontSizeCss || 14) * ratio))
+      return {
+        blockId: block.id,
+        pdf: block.pdf,
+        norm: block.norm,
+        text,
+        fontSize: pdfFontSize,
+        fontFamily: fmt.fontFamily,
+        bold: !!fmt.bold,
+        italic: !!fmt.italic,
+        underline: !!fmt.underline,
+        align: fmt.align || 'left',
+        color: fmt.color || '#000000',
+        opacity: fmt.opacity ?? 1,
+        rotationDeg: fmt.rotationDeg ?? 0,
+      }
+    },
+    [textFormat, textFormatRef]
+  )
+
+  const flushNativeSyncTimer = useCallback(() => {
+    if (nativeSyncTimerRef.current != null) {
+      window.clearTimeout(nativeSyncTimerRef.current)
+      nativeSyncTimerRef.current = null
+    }
+  }, [])
+
+  const scheduleNativeSync = useCallback(
+    (block) => {
+      const blockId = block.id
+      if (nativeSyncTimerRef.current != null) window.clearTimeout(nativeSyncTimerRef.current)
+      nativeSyncTimerRef.current = window.setTimeout(() => {
+        nativeSyncTimerRef.current = null
+        if (nativeEditRef.current?.block?.id !== blockId) return
+        const el = nativeEditorElRef.current
+        if (!el) return
+        onNativeTextEdit?.(buildNativePayload(block, el.innerText ?? ''))
+      }, 280)
+    },
+    [onNativeTextEdit, buildNativePayload]
+  )
+
+  const commitNativeEdit = useCallback(
+    (value) => {
+      if (nativeBlurTimerRef.current) {
+        window.clearTimeout(nativeBlurTimerRef.current)
+        nativeBlurTimerRef.current = null
+      }
+      flushNativeSyncTimer()
+      const current = nativeEditRef.current
+      if (!current) {
+        setNativeEdit(null)
+        return
+      }
+      nativeEditRef.current = null
+      const { block } = current
+      setNativeEdit(null)
+      onNativeTextEdit?.(buildNativePayload(block, value))
+    },
+    [onNativeTextEdit, buildNativePayload, flushNativeSyncTimer]
+  )
+
+  /** Click outside textarea / format panel commits (canvas is not focusable — blur alone is unreliable). */
+  useEffect(() => {
+    if (!nativeEdit) return
+    const onDocPointerDown = (e) => {
+      const t = e.target
+      if (t.closest?.('[data-pdf-inline-editor-root]')) return
+      if (t.closest?.('[data-text-format-panel]')) return
+      const el = nativeEditorElRef.current
+      if (el && nativeEditRef.current) {
+        commitNativeEdit(el.innerText ?? '')
+      }
+    }
+    document.addEventListener('pointerdown', onDocPointerDown, true)
+    return () => document.removeEventListener('pointerdown', onDocPointerDown, true)
+  }, [nativeEdit, commitNativeEdit])
 
   return (
-    <div ref={wrapRef} className="relative block w-full max-w-full shadow-md">
+    <div className="relative block w-full max-w-full shadow-md">
       <canvas
         ref={pdfCanvasRef}
         className="relative z-0 block h-auto w-full max-w-full touch-none bg-white"
@@ -473,14 +617,158 @@ export default function PdfPageCanvas({
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       />
-      {tool === 'editText' && ready && (
+      {showTextLayer && cw > 0 && ch > 0 && (
         <div
-          role="application"
-          aria-label="Click PDF text to edit"
-          className="absolute inset-0 z-[20] cursor-text touch-none"
-          style={{ touchAction: 'none' }}
-          onPointerDown={onEditTextPointerDown}
-        />
+          className="pointer-events-none absolute left-0 top-0 z-[15]"
+          style={{ width: cw, height: ch }}
+        >
+          {textBlocks.map((block) => {
+            const isEditing = nativeEdit?.block?.id === block.id
+            const w = Math.max(block.width * sx, 4)
+            const h = Math.max(block.height * sy, Math.max(10, block.fontSizePx * sy * 1.15))
+            const left = block.left * sx
+            const top = block.top * sy
+            /* Viewport font size (pdf.js space) → CSS px on screen: same scale as left/top (avoids huge/blurry text). */
+            const fmt = textFormat ?? defaultTextFormat()
+            const viewportFont = fmt.fontSizeCss ?? block.fontSizePx
+            const editorFontCssPx = Math.max(6, Math.min(240, viewportFont * sx))
+            const rotDeg = fmt.rotationDeg ?? 0
+            const editFontFamily = cssDisplayFontFromPdf(block.pdfFontFamily, fmt.fontFamily)
+            return (
+              <div
+                key={block.id}
+                className="pointer-events-auto absolute"
+                style={{ left, top, width: w, minHeight: h }}
+                title={isEditing ? undefined : 'Click to edit'}
+                data-text-block-id={block.id}
+              >
+                {isEditing && (
+                  <div
+                    className="pointer-events-none absolute inset-0 z-0 min-h-full min-w-full rounded-sm bg-white"
+                    aria-hidden
+                  />
+                )}
+                <div
+                  key={isEditing ? `${block.id}__editing` : `${block.id}__idle`}
+                  ref={(el) => {
+                    if (isEditing) nativeEditorElRef.current = el
+                    else if (nativeEditorElRef.current === el) nativeEditorElRef.current = null
+                  }}
+                  role="textbox"
+                  tabIndex={isEditing ? 0 : -1}
+                  contentEditable={isEditing}
+                  suppressContentEditableWarning
+                  {...(isEditing ? { 'data-pdf-inline-editor-root': true } : {})}
+                  className={`absolute inset-0 z-[1] overflow-auto outline-none transition-[border-color,background-color] duration-150 ${
+                    isEditing ? 'select-text' : 'select-none'
+                  } ${
+                    isEditing
+                      ? 'pdf-text-layer-editor cursor-text border border-solid border-[#4A90E2] bg-white'
+                      : `cursor-text border border-transparent bg-transparent ${
+                          hoverBlockId === block.id ? 'border border-dashed border-[#ccc]' : ''
+                        }`
+                  }`}
+                  style={
+                    isEditing
+                      ? {
+                          fontSize: `${editorFontCssPx}px`,
+                          lineHeight: 'normal',
+                          fontFamily: editFontFamily,
+                          fontWeight: fmt.bold ? 700 : 400,
+                          fontStyle: fmt.italic ? 'italic' : 'normal',
+                          textDecoration: fmt.underline ? 'underline' : 'none',
+                          textAlign: fmt.align,
+                          color: fmt.color,
+                          opacity: fmt.opacity ?? 1,
+                          transform: rotDeg ? `rotate(${rotDeg}deg)` : 'none',
+                          transformOrigin: rotDeg ? 'top left' : undefined,
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-word',
+                        }
+                      : {
+                          color: 'transparent',
+                          caretColor: 'transparent',
+                          transform: 'none',
+                        }
+                  }
+                  onPointerEnter={() => {
+                    if (!isEditing) setHoverBlockId(block.id)
+                  }}
+                  onPointerLeave={() =>
+                    setHoverBlockId((id) => (id === block.id ? null : id))
+                  }
+                  onPointerDown={(e) => {
+                    if (isEditing) return
+                    e.preventDefault()
+                    e.stopPropagation()
+                    openNativeEditorForBlock(block)
+                  }}
+                  onFocus={() => {
+                    if (!isEditing) return
+                    if (nativeBlurTimerRef.current) {
+                      window.clearTimeout(nativeBlurTimerRef.current)
+                      nativeBlurTimerRef.current = null
+                    }
+                  }}
+                  onBlur={(e) => {
+                    if (!isEditing) return
+                    const related = e.relatedTarget
+                    if (
+                      related &&
+                      typeof related.closest === 'function' &&
+                      related.closest('[data-text-format-panel]')
+                    ) {
+                      nativeBlurTimerRef.current = window.setTimeout(() => {
+                        nativeBlurTimerRef.current = null
+                        e.currentTarget.focus({ preventScroll: true })
+                      }, 0)
+                      return
+                    }
+                    if (nativeBlurTimerRef.current) window.clearTimeout(nativeBlurTimerRef.current)
+                    nativeBlurTimerRef.current = window.setTimeout(() => {
+                      nativeBlurTimerRef.current = null
+                      if (!nativeEditRef.current) return
+                      const el = nativeEditorElRef.current
+                      commitNativeEdit(el?.innerText ?? '')
+                    }, 0)
+                  }}
+                  onInput={(e) => {
+                    if (!isEditing) return
+                    const el = e.currentTarget
+                    const f = textFormat ?? defaultTextFormat()
+                    const vfs = f.fontSizeCss ?? block.fontSizePx
+                    el.style.fontSize = `${Math.max(6, Math.min(240, vfs * sx))}px`
+                    el.style.fontFamily = cssDisplayFontFromPdf(block.pdfFontFamily, f.fontFamily)
+                    el.style.color = f.color
+                    el.style.fontWeight = f.bold ? '700' : '400'
+                    el.style.fontStyle = f.italic ? 'italic' : 'normal'
+                    el.style.textDecoration = f.underline ? 'underline' : 'none'
+                    el.style.lineHeight = 'normal'
+                    scheduleNativeSync(block)
+                  }}
+                  onKeyDown={(e) => {
+                    if (!isEditing) return
+                    if (e.key === 'Escape') {
+                      e.preventDefault()
+                      if (nativeBlurTimerRef.current) {
+                        window.clearTimeout(nativeBlurTimerRef.current)
+                        nativeBlurTimerRef.current = null
+                      }
+                      flushNativeSyncTimer()
+                      nativeEditRef.current = null
+                      setNativeEdit(null)
+                    }
+                    if (e.key === 'Enter' && e.ctrlKey) {
+                      e.preventDefault()
+                      commitNativeEdit(e.currentTarget.innerText ?? '')
+                      e.currentTarget.blur()
+                    }
+                  }}
+                />
+              </div>
+            )
+          })}
+        </div>
       )}
       {tool === 'editText' && ready && !textDiag?.scanned && (
         <div className="pointer-events-none absolute inset-x-0 bottom-1 z-[5] rounded bg-zinc-200/90 px-2 py-1 text-center text-[11px] text-zinc-700 dark:bg-zinc-800/90 dark:text-zinc-300">
@@ -496,34 +784,6 @@ export default function PdfPageCanvas({
             No selectable text on this page (try a text-based PDF, not a scan).
           </div>
         )}
-      {nativeEdit && (
-        <textarea
-          key={`${nativeEdit.run.pdf.x}-${nativeEdit.run.pdf.y}-${nativeEdit.run.pdf.baseline}`}
-          autoFocus
-          className="absolute z-[30] resize-none rounded border-2 border-indigo-500 bg-white/98 p-1 text-zinc-900 shadow-lg outline-none dark:bg-zinc-900 dark:text-zinc-50"
-          style={{
-            left: nativeEdit.leftCss,
-            top: nativeEdit.topCss,
-            width: nativeEdit.widthCss,
-            minHeight: nativeEdit.heightCss,
-            fontSize: `${nativeEdit.fontSizeCss}px`,
-            lineHeight: 1.2,
-            fontFamily: 'system-ui, sans-serif',
-          }}
-          defaultValue={nativeEdit.run.str}
-          onBlur={(e) => commitNativeEdit(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') {
-              e.preventDefault()
-              setNativeEdit(null)
-            }
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault()
-              e.currentTarget.blur()
-            }
-          }}
-        />
-      )}
       {textDraft && cw > 0 && (
         <input
           autoFocus
