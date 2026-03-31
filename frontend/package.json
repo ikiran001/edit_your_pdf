@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "generate-favicons": "node scripts/generate-favicons.mjs",
     "lint": "eslint .",
     "test:e2e-enter": "node scripts/e2e-enter-download.mjs",
     "preview": "vite preview"
@@ -26,6 +27,8 @@
     "globals": "^17.4.0",
     "pdfjs-dist": "^5.5.207",
     "playwright": "^1.49.1",
+    "png-to-ico": "^3.0.1",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4.2.2",
     "vite": "^8.0.1"
   }
