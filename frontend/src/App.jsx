@@ -10,7 +10,7 @@ export default function App() {
   const [uploadProgress, setUploadProgress] = useState(0)
 
   useEffect(() => {
-    pageView(sessionId ? '/edit' : '/', sessionId ? 'Edit PDF' : 'Edit Your PDF')
+    pageView(sessionId ? '/edit' : '/', sessionId ? 'Edit PDF — letsEditPDF' : 'letsEditPDF')
   }, [sessionId])
 
   const onFileSelected = useCallback(async (file) => {

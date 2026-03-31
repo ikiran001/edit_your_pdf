@@ -17,7 +17,7 @@ export default function LandingPage({ onFileSelected, loading, uploadProgress = 
   return (
     <div className="flex min-h-svh flex-col bg-gradient-to-b from-zinc-50 to-zinc-100 text-zinc-900 dark:from-zinc-950 dark:to-zinc-900 dark:text-zinc-50">
       <header className="border-b border-zinc-200/80 bg-white/70 px-6 py-4 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/70">
-        <h1 className="text-xl font-semibold tracking-tight">Edit Your PDF</h1>
+        <h1 className="text-xl font-semibold tracking-tight">letsEditPDF</h1>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
           {import.meta.env.PROD && !isApiBaseConfigured() ? (
             <>

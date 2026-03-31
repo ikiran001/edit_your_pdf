@@ -51,6 +51,18 @@ GitHub does **not** run your Node/Express API. It can only host the **built Reac
    - Value: your public API URL, e.g. `https://your-api.onrender.com` (required for upload/edit/save; Pages alone cannot run the backend).
 4. Push to `main` or `master` (or run the workflow manually). After the workflow finishes, open the URL above.
 
+### Custom domain (cleaner URL + better Google branding)
+
+Search results will keep showing `github.io/...` until you use your **own domain** (e.g. `letseditpdf.com`). After you add the domain in **Repo → Settings → Pages → Custom domain** and DNS is verified:
+
+1. Add **Actions** secrets (same place as `VITE_API_BASE_URL`):
+   - **`VITE_SITE_URL`** — your public origin with a trailing slash, e.g. `https://letseditpdf.com/`
+   - **`VITE_BASE_PATH`** — for a site served at the domain root, use `/` (one slash). Omit both secrets to keep the default `https://<user>.github.io/<repo>/` behavior.
+2. Re-run **Deploy frontend to GitHub Pages**.
+
+Local production build with a custom domain:  
+`cd frontend && VITE_BASE_PATH=/ VITE_SITE_URL=https://letseditpdf.com/ VITE_API_BASE_URL=https://your-api.example.com npm run build`
+
 Local build matching Pages:  
 `cd frontend && VITE_BASE_PATH=/edit_your_pdf/ VITE_API_BASE_URL=https://your-api.example.com npm run build`
 
