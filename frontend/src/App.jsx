@@ -7,6 +7,7 @@ import { apiUrl, isApiBaseConfigured } from './lib/apiBase'
 export default function App() {
   const [sessionId, setSessionId] = useState(null)
   const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
 
   useEffect(() => {
     pageView(sessionId ? '/edit' : '/', sessionId ? 'Edit PDF' : 'Edit Your PDF')
@@ -14,6 +15,7 @@ export default function App() {
 
   const onFileSelected = useCallback(async (file) => {
     setUploading(true)
+    setUploadProgress(0)
     const uploadUrl = apiUrl('/upload')
     try {
       if (import.meta.env.PROD && !isApiBaseConfigured()) {
@@ -21,24 +23,40 @@ export default function App() {
       }
       const fd = new FormData()
       fd.append('file', file)
-      const res = await fetch(uploadUrl, { method: 'POST', body: fd })
-      const text = await res.text()
+      const xhr = new XMLHttpRequest()
+      const { status, statusText, text } = await new Promise((resolve, reject) => {
+        xhr.open('POST', uploadUrl, true)
+        xhr.upload.onprogress = (ev) => {
+          if (!ev.lengthComputable) return
+          const pct = Math.min(100, Math.max(0, Math.round((ev.loaded / ev.total) * 100)))
+          setUploadProgress(pct)
+        }
+        xhr.onerror = () => reject(new TypeError('Network request failed'))
+        xhr.onload = () =>
+          resolve({
+            status: xhr.status,
+            statusText: xhr.statusText,
+            text: xhr.responseText || '',
+          })
+        xhr.send(fd)
+      })
       let data = {}
       try {
         data = text ? JSON.parse(text) : {}
       } catch {
         /* non-JSON e.g. HTML error page */
       }
-      if (!res.ok) {
+      if (status < 200 || status >= 300) {
         const hint = text && !data.error ? text.replace(/<[^>]+>/g, ' ').slice(0, 280).trim() : ''
         throw new Error(
           data.error ||
-            `HTTP ${res.status} ${res.statusText}\nURL: ${uploadUrl}${hint ? `\n${hint}` : ''}`
+            `HTTP ${status} ${statusText}\nURL: ${uploadUrl}${hint ? `\n${hint}` : ''}`
         )
       }
       if (!data.sessionId) {
         throw new Error(`No sessionId from API.\nURL: ${uploadUrl}\nResponse: ${text.slice(0, 200)}`)
       }
+      setUploadProgress(100)
       setSessionId(data.sessionId)
     } catch (e) {
       console.error(e)
@@ -61,11 +79,18 @@ export default function App() {
       }
     } finally {
       setUploading(false)
+      setUploadProgress(0)
     }
   }, [])
 
   if (!sessionId) {
-    return <LandingPage onFileSelected={onFileSelected} loading={uploading} />
+    return (
+      <LandingPage
+        onFileSelected={onFileSelected}
+        loading={uploading}
+        uploadProgress={uploadProgress}
+      />
+    )
   }
 
   return (
