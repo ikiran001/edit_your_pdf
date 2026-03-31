@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { isApiBaseConfigured } from '../lib/apiBase'
 
-export default function LandingPage({ onFileSelected, loading }) {
+export default function LandingPage({ onFileSelected, loading, uploadProgress = 0 }) {
   const [dragOver, setDragOver] = useState(false)
 
   const onDrop = useCallback(
@@ -117,6 +117,39 @@ export default function LandingPage({ onFileSelected, loading }) {
           )}
         </div>
       </main>
+      {loading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 p-4 backdrop-blur-[1px]">
+          <div className="w-full max-w-2xl rounded-3xl bg-white px-10 py-9 text-center shadow-2xl dark:bg-zinc-900">
+            <div className="mx-auto mb-6 flex h-28 w-28 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800">
+              <svg
+                viewBox="0 0 24 24"
+                className="h-14 w-14 text-indigo-600"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <path d="M12 11v6" />
+                <path d="m9.5 14.5 2.5 2.5 2.5-2.5" />
+              </svg>
+            </div>
+            <p className="text-4xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+              Your file is uploading{' '}
+              <span className="text-indigo-600">{Math.max(1, uploadProgress)}%</span>
+            </p>
+            <div className="mt-7 h-4 w-full rounded-full bg-zinc-200 dark:bg-zinc-700">
+              <div
+                className="h-full rounded-full bg-indigo-600 transition-[width] duration-150 ease-out"
+                style={{ width: `${Math.max(1, uploadProgress)}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
