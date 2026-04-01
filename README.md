@@ -5,7 +5,7 @@ Full-stack **PDF toolkit**: home hub with tool cards, **Edit PDF** (annotate + n
 ## Stack
 
 - **Frontend:** React (Vite), React Router, Tailwind CSS v4, pdf.js, pdf-lib (browser tools), Lucide, JSZip
-- **Backend:** Node.js, Express, multer, pdf-lib; **Unlock PDF** uses system **`qpdf`** (must be on `PATH`)
+- **Backend:** Node.js, Express, multer, pdf-lib; **Unlock PDF** uses **`qpdf`** when installed, otherwise **Ghostscript** (`gs`) — enough for hosts like Render’s native Node image
 
 ## Frontend layout (loosely coupled tools)
 
@@ -18,7 +18,7 @@ Full-stack **PDF toolkit**: home hub with tool cards, **Edit PDF** (annotate + n
 
 Terminal 1 — API (port 3001):
 
-Install [qpdf](https://qpdf.sourceforge.io/) first (e.g. `brew install qpdf` on macOS, `apt install qpdf` on Debian/Ubuntu). Unlock PDF will return HTTP 503 if `qpdf` is missing.
+Install **`qpdf`** for best compatibility (e.g. `brew install qpdf`, `apt install qpdf`). If `qpdf` is missing but **`gs`** (Ghostscript) is on `PATH`, unlock still works.
 
 ```bash
 cd backend && npm install && npm run dev
@@ -41,7 +41,7 @@ Open `http://localhost:5173`.
 | `GET` | `/editor-state/:sessionId` | JSON `{ nativeTextEdits, edits }` for hydrating the editor after reload (persisted under `uploads/<sessionId>/`). |
 | `POST` | `/edit` | JSON `{ sessionId, edits, applyTextSwap?, nativeTextEdits? }` → writes `edited.pdf`. Each save **rebuilds from `original.pdf`** plus merged persisted native edits and annotations so inline text is not stacked. Merges `nativeTextEdits` into `native-text-edits.json` and annotation `edits` into `session-edits.json` when the client sends non-empty pages. |
 | `GET` | `/download?sessionId=` | download edited PDF (or original if never edited) |
-| `POST` | `/unlock-pdf` | multipart fields `file` (PDF) and `password` → **decrypted PDF** (`unlocked_<timestamp>.pdf` suggested client name). Uses **`qpdf --decrypt`** on the server; wrong password → `401` JSON `{ error }`. |
+| `POST` | `/unlock-pdf` | multipart fields `file` (PDF) and `password` → **decrypted PDF**. Prefers **`qpdf --decrypt`**, falls back to **Ghostscript** when `qpdf` is missing (e.g. Render free Node). Wrong password → `401`. |
 
 Uploads live under `backend/uploads/<sessionId>/` and are removed automatically after about one hour.
 
@@ -129,7 +129,9 @@ The **Unlock PDF** route shells out to **`qpdf`**. Render’s default Node image
 
 Or use the repo **`render.yaml`** as a [Blueprint](https://render.com/docs/blueprint-spec).
 
-After deploy, open **`https://<your-service>.onrender.com/health`** — you should see JSON with **`"qpdf": true`** and **`qpdfVersion`**. If **`qpdf` is false**, the image still has no `qpdf` (wrong Dockerfile/context).
+After deploy, open **`https://<your-service>.onrender.com/health`**. You want **`"unlock": "qpdf"`** or **`"unlock": "ghostscript"`**. If **`"unlock": "none"`**, neither tool is available.
+
+**Render free (native Node, no Docker):** you do **not** need `apt-get` in the build. Use **Build Command:** `npm install` (or `bash render-build.sh`, which skips apt without sudo). Ghostscript is included on Render’s **runtime**; unlock uses it when `qpdf` is absent.
 
 **Optional env:** `QPDF_BIN` — absolute path to the `qpdf` binary if it is not on `PATH`.
 

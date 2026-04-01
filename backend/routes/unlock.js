@@ -5,6 +5,7 @@ import path from 'path';
 import os from 'os';
 import { spawn } from 'child_process';
 import { getQpdfBinary } from '../utils/resolveQpdf.js';
+import { getGhostscriptBinary } from '../utils/resolveGhostscript.js';
 
 const MAX_BYTES = 52 * 1024 * 1024;
 
@@ -22,14 +23,7 @@ const mem = multer({
   },
 }).single('file');
 
-/**
- * Run qpdf; rejects with { code, stderr } on failure.
- */
-function qpdf(args) {
-  const bin = getQpdfBinary();
-  if (!bin) {
-    return Promise.reject(Object.assign(new Error('spawn qpdf ENOENT'), { code: 'ENOENT' }));
-  }
+function runProcess(bin, args) {
   return new Promise((resolve, reject) => {
     const child = spawn(bin, args, {
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -45,6 +39,9 @@ function qpdf(args) {
     child.stderr?.on('data', (chunk) => {
       stderr += chunk.toString();
     });
+    child.stdout?.on('data', (chunk) => {
+      stderr += chunk.toString();
+    });
     child.on('error', (err) => {
       done(() => reject(err));
     });
@@ -53,7 +50,7 @@ function qpdf(args) {
       else
         done(() =>
           reject(
-            Object.assign(new Error(stderr.trim() || `qpdf exited with code ${code}`), {
+            Object.assign(new Error(stderr.trim() || `${bin} exited with code ${code}`), {
               exitCode: code,
               stderr,
             })
@@ -63,6 +60,51 @@ function qpdf(args) {
   });
 }
 
+/**
+ * qpdf --password-file + --decrypt (preferred).
+ */
+function decryptWithQpdf(inPath, outPath, pwPath) {
+  const bin = getQpdfBinary();
+  if (!bin) {
+    return Promise.reject(Object.assign(new Error('qpdf not found'), { code: 'ENOENT' }));
+  }
+  return runProcess(bin, [`--password-file=${pwPath}`, '--decrypt', inPath, outPath]);
+}
+
+/**
+ * Ghostscript: rewrite PDF without encryption (Render native has `gs` on PATH).
+ */
+function decryptWithGhostscript(inPath, outPath, password) {
+  const bin = getGhostscriptBinary();
+  if (!bin) {
+    return Promise.reject(Object.assign(new Error('gs not found'), { code: 'ENOENT' }));
+  }
+  return runProcess(bin, [
+    '-dNOPAUSE',
+    '-dBATCH',
+    '-q',
+    '-sDEVICE=pdfwrite',
+    '-dCompatibilityLevel=1.4',
+    `-sOutputFile=${outPath}`,
+    `-sPDFPassword=${password}`,
+    '-f',
+    inPath,
+  ]);
+}
+
+function isWrongPassword(stderr, message) {
+  const s = `${stderr || ''} ${message || ''}`.toLowerCase();
+  return (
+    /invalid password|incorrect password|password.*failed|check.*password|bad password|cannot decrypt|wrong password|owner password|incorrect.*owner|could not open|cannot open pdf|invalidfileaccess|no pdf file opened/i.test(
+      s
+    )
+  );
+}
+
+function isNoBackendError(e) {
+  return e?.code === 'ENOENT' || /not found|enoent/i.test(String(e.message || ''));
+}
+
 function logSafeFilename(name) {
   if (!name || typeof name !== 'string') return '(unknown)';
   return name.replace(/[\u0000-\u001f]/g, '').slice(0, 200);
@@ -70,7 +112,7 @@ function logSafeFilename(name) {
 
 /**
  * POST /unlock-pdf — multipart: field `file` (PDF), field `password` (string).
- * Returns decrypted PDF bytes (no /Encrypt). Requires `qpdf` on PATH.
+ * Uses qpdf when available, else Ghostscript (e.g. Render native without Docker).
  */
 router.post('/unlock-pdf', (req, res) => {
   mem(req, res, async (err) => {
@@ -106,35 +148,46 @@ router.post('/unlock-pdf', (req, res) => {
       await fs.promises.writeFile(inPath, req.file.buffer);
       await fs.promises.writeFile(pwPath, password, { mode: 0o600 });
 
-      const args = [`--password-file=${pwPath}`, '--decrypt', inPath, outPath];
+      let backend = 'qpdf';
       try {
-        await qpdf(args);
-      } catch (e) {
-        if (e && (e.code === 'ENOENT' || /ENOENT/i.test(String(e.message)))) {
-          console.error('[unlock-pdf] qpdf not found on PATH — install qpdf (brew install qpdf / apt install qpdf)');
-          return res.status(503).json({
+        await decryptWithQpdf(inPath, outPath, pwPath);
+      } catch (qErr) {
+        if (isNoBackendError(qErr) || /qpdf not found/i.test(String(qErr.message))) {
+          console.log('[unlock-pdf] qpdf unavailable, trying ghostscript');
+          backend = 'ghostscript';
+          try {
+            await decryptWithGhostscript(inPath, outPath, password);
+          } catch (gErr) {
+            if (isNoBackendError(gErr)) {
+              console.error('[unlock-pdf] neither qpdf nor ghostscript available');
+              return res.status(503).json({
+                error:
+                  'Unlock is not available on this server (need qpdf or Ghostscript). On Render, use the default Node build (npm install) — Ghostscript is included — or deploy with Docker.',
+              });
+            }
+            const gsText = (gErr.stderr || gErr.message || '').toString();
+            if (isWrongPassword(gsText, gErr.message)) {
+              console.warn('[unlock-pdf] password validation: FAILED (ghostscript)');
+              return res.status(401).json({ error: 'Wrong password. The PDF could not be decrypted.' });
+            }
+            console.error('[unlock-pdf] ghostscript error:', gsText || gErr);
+            return res.status(422).json({
+              error:
+                'Could not remove encryption from this PDF. It may use encryption Ghostscript cannot open — try qpdf locally or a desktop PDF tool.',
+            });
+          }
+        } else {
+          const stderr = (qErr.stderr || qErr.message || '').toString();
+          if (isWrongPassword(stderr, qErr.message)) {
+            console.warn('[unlock-pdf] password validation: FAILED (qpdf)');
+            return res.status(401).json({ error: 'Wrong password. The PDF could not be decrypted.' });
+          }
+          console.error('[unlock-pdf] qpdf error:', qErr.stderr || qErr.message || qErr);
+          return res.status(422).json({
             error:
-              'Unlock service is not available: qpdf is not installed on the server. Install qpdf and restart the API.',
+              'Could not remove encryption from this PDF. It may use an unsupported cipher or be corrupted. Try opening it in a desktop PDF tool.',
           });
         }
-
-        const stderr = (e.stderr || e.message || '').toString().toLowerCase();
-        const wrongPw =
-          /invalid password|incorrect password|password.*failed|check.*password|bad password/i.test(stderr) ||
-          /invalid password|incorrect password|password.*failed|check.*password|bad password/i.test(
-            String(e.message)
-          );
-
-        if (wrongPw) {
-          console.warn('[unlock-pdf] password validation: FAILED (invalid password)');
-          return res.status(401).json({ error: 'Wrong password. The PDF could not be decrypted.' });
-        }
-
-        console.error('[unlock-pdf] qpdf error:', e.stderr || e.message || e);
-        return res.status(422).json({
-          error:
-            'Could not remove encryption from this PDF. It may use an unsupported cipher or be corrupted. Try opening it in a desktop PDF tool.',
-        });
       }
 
       const stat = await fs.promises.stat(outPath);
@@ -143,7 +196,7 @@ router.post('/unlock-pdf', (req, res) => {
         return res.status(500).json({ error: 'Unlock produced an empty file.' });
       }
 
-      console.log('[unlock-pdf] password validation: OK');
+      console.log(`[unlock-pdf] password validation: OK (via ${backend})`);
       console.log(`[unlock-pdf] output: ${outName} bytes=${stat.size}`);
 
       const outBuf = await fs.promises.readFile(outPath);

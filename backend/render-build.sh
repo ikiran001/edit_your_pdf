@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Native Render Web Service (no Docker): install qpdf during build, then npm install.
-# Dashboard: Root Directory = backend, Build Command = bash render-build.sh, Start Command = npm start
+# Render / CI: install qpdf when root/sudo exists; otherwise only npm install.
+# Render native builders have no apt privileges — unlock still works via Ghostscript at runtime.
 set -euo pipefail
 
 cd "$(dirname "$0")"
@@ -10,17 +10,17 @@ if command -v apt-get >/dev/null 2>&1; then
     apt-get update
     apt-get install -y --no-install-recommends qpdf
     rm -rf /var/lib/apt/lists/*
-  elif command -v sudo >/dev/null 2>&1; then
+    echo "render-build.sh: installed qpdf (root)"
+  elif command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
     sudo apt-get update
     sudo apt-get install -y --no-install-recommends qpdf
     sudo rm -rf /var/lib/apt/lists/*
+    echo "render-build.sh: installed qpdf (sudo)"
   else
-    echo "render-build.sh: no root/sudo; cannot apt-get install qpdf. Use Docker deploy (backend/Dockerfile) instead." >&2
-    exit 1
+    echo "render-build.sh: skipping apt (no root/sudo). On Render native, /unlock-pdf uses Ghostscript; optional: deploy with Docker for qpdf."
   fi
 else
-  echo "render-build.sh: apt-get not found. Use Docker (backend/Dockerfile) on Render." >&2
-  exit 1
+  echo "render-build.sh: no apt-get; continuing with npm install only"
 fi
 
 npm install
