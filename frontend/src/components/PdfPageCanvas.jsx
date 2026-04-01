@@ -675,6 +675,8 @@ export default function PdfPageCanvas({
       />
       {showTextLayer && cw > 0 && ch > 0 && (
         <div
+          role="application"
+          aria-label="Click PDF text to edit"
           className="pointer-events-none absolute left-0 top-0 z-[15]"
           style={{ width: cw, height: ch }}
         >

@@ -60,6 +60,9 @@ jobs:
             export VITE_BASE_PATH="/${{ github.event.repository.name }}/"
           fi
           npm ci && npm run build
+      - name: SPA fallback (GitHub Pages client-side routes)
+        working-directory: frontend/dist
+        run: cp index.html 404.html
       - uses: actions/upload-pages-artifact@v3
         with:
           path: frontend/dist

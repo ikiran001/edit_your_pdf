@@ -1,0 +1,54 @@
+import { useEffect } from 'react'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import ToolkitHomePage from '../features/toolkit-home/ToolkitHomePage.jsx'
+import EditPdfPage from '../features/edit-pdf/EditPdfPage.jsx'
+import PdfToJpgPage from '../features/pdf-to-jpg/PdfToJpgPage.jsx'
+import JpgToPdfPage from '../features/jpg-to-pdf/JpgToPdfPage.jsx'
+import SignPdfPage from '../features/sign-pdf/SignPdfPage.jsx'
+import UnlockPdfPage from '../features/unlock-pdf/UnlockPdfPage.jsx'
+import ComingSoonToolPage from '../features/placeholder/ComingSoonToolPage.jsx'
+import { pageView } from '../lib/analytics.js'
+
+function RouteAnalytics() {
+  const loc = useLocation()
+  useEffect(() => {
+    pageView(loc.pathname, document.title)
+  }, [loc.pathname])
+  return null
+}
+
+export default function AppRoutes() {
+  const raw = import.meta.env.BASE_URL || '/'
+  const basename = raw === '/' ? undefined : raw.replace(/\/$/, '')
+  return (
+    <BrowserRouter basename={basename}>
+      <RouteAnalytics />
+      <Routes>
+        <Route path="/" element={<ToolkitHomePage />} />
+        <Route path="/tools/edit-pdf" element={<EditPdfPage />} />
+        <Route path="/tools/pdf-to-jpg" element={<PdfToJpgPage />} />
+        <Route path="/tools/jpg-to-pdf" element={<JpgToPdfPage />} />
+        <Route path="/tools/sign-pdf" element={<SignPdfPage />} />
+        <Route path="/tools/unlock-pdf" element={<UnlockPdfPage />} />
+        <Route
+          path="/tools/pdf-to-word"
+          element={
+            <ComingSoonToolPage title="PDF to Word">
+              High-fidelity PDF→DOCX needs a server converter. This repo will add an isolated
+              backend route when ready, without touching the Edit PDF pipeline.
+            </ComingSoonToolPage>
+          }
+        />
+        <Route
+          path="/tools/word-to-pdf"
+          element={
+            <ComingSoonToolPage title="Word to PDF">
+              DOCX→PDF is best done with LibreOffice or a document API on the server. A future
+              `features/word-to-pdf` service will call that API only.
+            </ComingSoonToolPage>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
+  )
+}

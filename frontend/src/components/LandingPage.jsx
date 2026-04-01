@@ -1,7 +1,13 @@
 import { useCallback, useState } from 'react'
 import { isApiBaseConfigured } from '../lib/apiBase'
 
-export default function LandingPage({ onFileSelected, loading, uploadProgress = 0 }) {
+export default function LandingPage({
+  onFileSelected,
+  loading,
+  uploadProgress = 0,
+  /** When true, omit page header/background (used inside ToolPageShell). */
+  embeddedInToolShell = false,
+}) {
   const [dragOver, setDragOver] = useState(false)
 
   const onDrop = useCallback(
@@ -14,26 +20,42 @@ export default function LandingPage({ onFileSelected, loading, uploadProgress = 
     [onFileSelected]
   )
 
-  return (
-    <div className="flex min-h-svh flex-col bg-gradient-to-b from-zinc-50 to-zinc-100 text-zinc-900 dark:from-zinc-950 dark:to-zinc-900 dark:text-zinc-50">
-      <header className="border-b border-zinc-200/80 bg-white/70 px-6 py-4 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/70">
-        <h1 className="text-xl font-semibold tracking-tight">letsEditPDF</h1>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+  const inner = (
+    <>
+      {!embeddedInToolShell ? (
+        <header className="border-b border-zinc-200/80 bg-white/70 px-6 py-4 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/70">
+          <h1 className="text-xl font-semibold tracking-tight">letsEditPDF</h1>
+          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+            {import.meta.env.PROD && !isApiBaseConfigured() ? (
+              <>
+                This copy is hosted on <strong>GitHub Pages</strong> (static files only). Uploads need a
+                deployed API — set the <code className="text-xs">VITE_API_BASE_URL</code> secret and
+                redeploy (see README).
+              </>
+            ) : (
+              <>
+                Upload a PDF, use <strong>Edit text</strong> to change existing wording (like Word) or
+                other tools to annotate, then save or download. No install or account — edit in your
+                browser and download when you&apos;re done.
+              </>
+            )}
+          </p>
+        </header>
+      ) : (
+        <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
           {import.meta.env.PROD && !isApiBaseConfigured() ? (
             <>
-              This copy is hosted on <strong>GitHub Pages</strong> (static files only). Uploads need a
-              deployed API — set the <code className="text-xs">VITE_API_BASE_URL</code> secret and
-              redeploy (see README).
+              GitHub Pages needs <code className="text-xs">VITE_API_BASE_URL</code> for uploads. See
+              README.
             </>
           ) : (
             <>
-              Upload a PDF, use <strong>Edit text</strong> to change existing wording (like Word) or
-              other tools to annotate, then save or download. No install or account — edit in your
-              browser and download when you&apos;re done.
+              Upload a PDF to open the editor. Use <strong>Edit text</strong>, draw, highlight, then
+              save or download.
             </>
           )}
         </p>
-      </header>
+      )}
 
       {import.meta.env.PROD && !isApiBaseConfigured() && (
         <div
@@ -117,7 +139,7 @@ export default function LandingPage({ onFileSelected, loading, uploadProgress = 
           )}
         </div>
       </main>
-      {loading && (
+      {loading ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 p-4 backdrop-blur-[1px]">
           <div className="w-full max-w-2xl rounded-3xl bg-white px-10 py-9 text-center shadow-2xl dark:bg-zinc-900">
             <div className="mx-auto mb-6 flex h-28 w-28 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800">
@@ -149,7 +171,17 @@ export default function LandingPage({ onFileSelected, loading, uploadProgress = 
             </div>
           </div>
         </div>
-      )}
+      ) : null}
+    </>
+  )
+
+  if (embeddedInToolShell) {
+    return <div className="flex flex-col">{inner}</div>
+  }
+
+  return (
+    <div className="flex min-h-svh flex-col bg-gradient-to-b from-zinc-50 to-zinc-100 text-zinc-900 dark:from-zinc-950 dark:to-zinc-900 dark:text-zinc-50">
+      {inner}
     </div>
   )
 }

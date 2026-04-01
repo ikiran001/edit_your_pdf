@@ -48,7 +48,7 @@ async function main() {
     }
   })
 
-  await page.goto('http://127.0.0.1:5173', {
+  await page.goto('http://127.0.0.1:5173/tools/edit-pdf', {
     waitUntil: 'domcontentloaded',
     timeout: 30000,
   })
@@ -71,23 +71,19 @@ async function main() {
     { timeout: 30000 }
   )
 
-  const layer = page.getByRole('application', { name: 'Click PDF text to edit' })
-  await layer.waitFor({ state: 'visible', timeout: 15000 })
-  const b = await layer.boundingBox()
-  if (!b) throw new Error('no hit layer')
+  await page.getByRole('application', { name: 'Click PDF text to edit' }).waitFor({ state: 'visible', timeout: 15000 })
+  const blocks = page.locator('[data-text-block-id]')
+  const n = await blocks.count()
+  if (n < 1) throw new Error('no text blocks in PDF (need text-based PDF)')
 
-  const tryPositions = [
-    [0.5, 0.07],
-    [0.35, 0.09],
-    [0.22, 0.11],
-    [0.5, 0.12],
-    [0.25, 0.15],
-  ]
   let opened = false
-  for (const [px, py] of tryPositions) {
-    await layer.click({ position: { x: b.width * px, y: b.height * py } })
+  for (let i = 0; i < Math.min(n, 8); i++) {
+    const block = blocks.nth(i)
+    const b = await block.boundingBox()
+    if (!b) continue
+    await block.click({ position: { x: Math.min(12, b.width / 2), y: Math.min(12, b.height / 2) } })
     await page.waitForTimeout(400)
-    if ((await page.locator('textarea').count()) > 0) {
+    if ((await page.locator('[data-pdf-inline-editor-root="true"]').count()) > 0) {
       opened = true
       break
     }
@@ -98,12 +94,14 @@ async function main() {
     )
   }
 
-  const ta = page.locator('textarea').first()
-  await ta.waitFor({ state: 'visible', timeout: 5000 })
-  await ta.fill('EDITED_GUIDE_E2E_VERIFIED')
+  const editor = page.locator('[data-pdf-inline-editor-root="true"]').first()
+  await editor.waitFor({ state: 'visible', timeout: 5000 })
+  await editor.click()
+  await page.keyboard.press('Control+A')
+  await page.keyboard.type('EDITED_GUIDE_E2E_VERIFIED')
 
-  await page.keyboard.press('Enter')
-  await ta.waitFor({ state: 'detached', timeout: 5000 })
+  await page.keyboard.press('Control+Enter')
+  await page.locator('[data-pdf-inline-editor-root="true"]').waitFor({ state: 'detached', timeout: 8000 })
 
   const downloadPromise = page.waitForEvent('download', { timeout: 20000 })
   await page.getByRole('button', { name: 'Download PDF' }).click()

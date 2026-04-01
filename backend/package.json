@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "verify:edit": "node scripts/verify-edit-pipeline.mjs"
+    "verify:edit": "node scripts/verify-edit-pipeline.mjs",
+    "verify:unlock": "node scripts/verify-unlock-pdf.mjs"
   },
   "dependencies": {
     "cors": "^2.8.5",
