@@ -216,7 +216,6 @@ export default function PdfEditor({ sessionId, onBack }) {
     const edits = buildEditsPayload(pagesItemsRef.current)
     const nativePayload = nativeTextEditsRef.current
     if (import.meta.env.DEV) {
-      // eslint-disable-next-line no-console
       console.debug('[save] POST /edit', {
         annotationPages: edits.pages?.length ?? 0,
         nativeTextEdits: nativePayload.length,
@@ -250,7 +249,6 @@ export default function PdfEditor({ sessionId, onBack }) {
       )
     }
     if (import.meta.env.DEV) {
-      // eslint-disable-next-line no-console
       console.debug('[save] /edit ok', res.status)
     }
   }

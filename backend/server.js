@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import uploadRouter from './routes/upload.js';
 import editRouter from './routes/edit.js';
 import downloadRouter from './routes/download.js';
+import unlockRouter from './routes/unlock.js';
 import { startSessionCleanup } from './utils/sessionCleanup.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -26,6 +27,7 @@ app.use(
 app.use(uploadRouter);
 app.use(editRouter);
 app.use(downloadRouter);
+app.use(unlockRouter);
 
 /** Serve PDF for pdf.js: latest edited file when present, else original upload. */
 app.get('/pdf/:sessionId', (req, res) => {

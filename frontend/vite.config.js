@@ -14,6 +14,7 @@ export default defineConfig({
       '/editor-state': { target: 'http://localhost:3001', changeOrigin: true },
       '/download': { target: 'http://localhost:3001', changeOrigin: true },
       '/pdf': { target: 'http://localhost:3001', changeOrigin: true },
+      '/unlock-pdf': { target: 'http://localhost:3001', changeOrigin: true },
     },
   },
   preview: {
@@ -23,6 +24,7 @@ export default defineConfig({
       '/editor-state': { target: 'http://localhost:3001', changeOrigin: true },
       '/download': { target: 'http://localhost:3001', changeOrigin: true },
       '/pdf': { target: 'http://localhost:3001', changeOrigin: true },
+      '/unlock-pdf': { target: 'http://localhost:3001', changeOrigin: true },
     },
   },
 })

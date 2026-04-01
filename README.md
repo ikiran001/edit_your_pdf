@@ -1,21 +1,30 @@
 # Edit Your PDF
 
-Full-stack PDF editor MVP: upload a PDF, annotate in the browser with **pdf.js**, merge changes with **pdf-lib** on the server, then download.
+Full-stack **PDF toolkit**: home hub with tool cards, **Edit PDF** (annotate + native text, server-backed), plus client-side **PDF→JPG**, **JPG→PDF**, **sign**, **unlock**, and placeholders for Word conversions.
 
 ## Stack
 
-- **Frontend:** React (Vite), Tailwind CSS v4, pdf.js
-- **Backend:** Node.js, Express, multer, pdf-lib
+- **Frontend:** React (Vite), React Router, Tailwind CSS v4, pdf.js, pdf-lib (browser tools), Lucide, JSZip
+- **Backend:** Node.js, Express, multer, pdf-lib; **Unlock PDF** uses system **`qpdf`** (must be on `PATH`)
+
+## Frontend layout (loosely coupled tools)
+
+- **`src/app/`** — routing only (`AppRoutes.jsx`).
+- **`src/features/<tool-id>/`** — each tool in its own folder (page + optional `*Core.js`). Prefer **no imports** between feature folders; share UI via `src/shared/`.
+- **`src/shared/`** — reusable components (`ToolCard`, `ToolPageShell`, `FileDropzone`, …) and `constants/toolRegistry.js`.
+- **Editor implementation** — existing `src/components/PdfEditor.jsx`, `PdfPageCanvas.jsx`, … unchanged in behavior; mounted from `features/edit-pdf/`.
 
 ## Run locally
 
 Terminal 1 — API (port 3001):
 
+Install [qpdf](https://qpdf.sourceforge.io/) first (e.g. `brew install qpdf` on macOS, `apt install qpdf` on Debian/Ubuntu). Unlock PDF will return HTTP 503 if `qpdf` is missing.
+
 ```bash
 cd backend && npm install && npm run dev
 ```
 
-Terminal 2 — UI (port 5173, proxies `/upload`, `/edit`, `/editor-state`, `/download`, `/pdf` to 3001):
+Terminal 2 — UI (port 5173, proxies `/upload`, `/edit`, `/editor-state`, `/download`, `/pdf`, `/unlock-pdf` to 3001):
 
 ```bash
 cd frontend && npm install && npm run dev
@@ -32,6 +41,7 @@ Open `http://localhost:5173`.
 | `GET` | `/editor-state/:sessionId` | JSON `{ nativeTextEdits, edits }` for hydrating the editor after reload (persisted under `uploads/<sessionId>/`). |
 | `POST` | `/edit` | JSON `{ sessionId, edits, applyTextSwap?, nativeTextEdits? }` → writes `edited.pdf`. Each save **rebuilds from `original.pdf`** plus merged persisted native edits and annotations so inline text is not stacked. Merges `nativeTextEdits` into `native-text-edits.json` and annotation `edits` into `session-edits.json` when the client sends non-empty pages. |
 | `GET` | `/download?sessionId=` | download edited PDF (or original if never edited) |
+| `POST` | `/unlock-pdf` | multipart fields `file` (PDF) and `password` → **decrypted PDF** (`unlocked_<timestamp>.pdf` suggested client name). Uses **`qpdf --decrypt`** on the server; wrong password → `401` JSON `{ error }`. |
 
 Uploads live under `backend/uploads/<sessionId>/` and are removed automatically after about one hour.
 
