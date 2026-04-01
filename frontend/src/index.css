@@ -24,11 +24,18 @@ body,
   min-height: 100svh;
 }
 
-/* Contenteditable: avoid synthetic bold/italic that drifts from PDF metrics */
+/* Contenteditable: avoid synthetic bold/italic that drifts from PDF metrics.
+   Opaque light “paper” masks pdf.js text under the box (avoids double text). Always light
+   surface even in app dark mode so typical black PDF text stays readable. */
 .pdf-text-layer-editor {
   font-synthesis: none;
   text-rendering: geometricPrecision;
   -webkit-text-fill-color: currentColor;
+  color-scheme: light;
+}
+
+.pdf-text-layer-editor--paper {
+  background-color: #ffffff !important;
 }
 
 .pdf-text-layer-editor::selection {
@@ -43,7 +50,7 @@ body,
 .pdf-inline-editor {
   box-sizing: border-box;
   border: 1px dashed #4a90e2;
-  background: rgba(74, 144, 226, 0.1);
+  background: transparent;
   box-shadow: none;
   border-radius: 2px;
 }
@@ -56,9 +63,3 @@ body,
   background: rgba(74, 144, 226, 0.22);
 }
 
-/* Keep text color from inline styles (toolbar); only soften background in dark UI */
-@media (prefers-color-scheme: dark) {
-  .pdf-inline-editor {
-    background: rgba(74, 144, 226, 0.14);
-  }
-}
