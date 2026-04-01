@@ -44,6 +44,7 @@ async function main() {
 
   const nativeTextEdits = [
     {
+      key: '0:72:682:700',
       pageIndex: 0,
       x: 72,
       y: 682,

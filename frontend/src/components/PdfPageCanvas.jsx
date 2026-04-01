@@ -14,6 +14,35 @@ function normalizeNativeCompare(s) {
 }
 
 /**
+ * Find persisted native replacement for this line (block ids can change after reload; PDF x/y/baseline are stable).
+ */
+function sessionNativeStringForBlock(block, pageIndex, sessionNatives) {
+  if (!sessionNatives?.length) return null
+  const bx = Number(block.pdf?.x)
+  const by = Number(block.pdf?.y)
+  const bb = Number(block.pdf?.baseline)
+  if (!Number.isFinite(bx) || !Number.isFinite(by) || !Number.isFinite(bb)) return null
+  const eps = 1.5
+  for (const n of sessionNatives) {
+    if (Number(n.pageIndex) !== pageIndex) continue
+    const nx = Number(n.x)
+    const ny = Number(n.y)
+    const nb = Number(n.baseline)
+    if (
+      Number.isFinite(nx) &&
+      Number.isFinite(ny) &&
+      Number.isFinite(nb) &&
+      Math.abs(nx - bx) < eps &&
+      Math.abs(ny - by) < eps &&
+      Math.abs(nb - bb) < eps
+    ) {
+      return n.text != null ? String(n.text) : null
+    }
+  }
+  return null
+}
+
+/**
  * Renders one PDF page with pdf.js and an interaction overlay.
  * Annotations use normalized coords (0–1, top-left origin) for pdf-lib on the server.
  */
@@ -26,6 +55,8 @@ export default function PdfPageCanvas({
   onNativeTextEdit,
   /** Parent SSOT: stable block id → display string (from pdf.js once, then overrides). */
   blockTextOverrides = {},
+  /** Server-persisted native edits; used so display text is the saved string, not pdf.js duplicate concat. */
+  sessionNativeTextEdits = [],
   textFormat,
   textFormatRef,
   onBeginNativeTextEdit,
@@ -49,11 +80,14 @@ export default function PdfPageCanvas({
 
   const textBlocks = useMemo(() => {
     const o = blockTextOverrides || {}
-    return baseTextBlocks.map((b) => ({
-      ...b,
-      str: Object.prototype.hasOwnProperty.call(o, b.id) ? o[b.id] : b.str,
-    }))
-  }, [baseTextBlocks, blockTextOverrides])
+    return baseTextBlocks.map((b) => {
+      const fromSession = sessionNativeStringForBlock(b, pageIndex, sessionNativeTextEdits)
+      let str = b.str
+      if (fromSession != null) str = fromSession
+      if (Object.prototype.hasOwnProperty.call(o, b.id)) str = o[b.id]
+      return { ...b, str }
+    })
+  }, [baseTextBlocks, blockTextOverrides, pageIndex, sessionNativeTextEdits])
   const textBlocksRef = useRef(textBlocks)
   const [nativeEdit, setNativeEdit] = useState(null)
   const nativeEditRef = useRef(null)
