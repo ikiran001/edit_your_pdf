@@ -1,0 +1,8 @@
+frontend
+.git
+.github
+**/node_modules
+backend/node_modules
+backend/uploads
+*.md
+test-artifacts

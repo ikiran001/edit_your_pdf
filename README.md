@@ -119,14 +119,24 @@ GitHub only stores code unless you use Pages for the **frontend** as above. You 
 
 The **Unlock PDF** route shells out to **`qpdf`**. Render’s default Node image does **not** include it, so you must install it at build time or use Docker.
 
-**Recommended — Docker**
+**Recommended — Docker (repo root)** — fixes “qpdf not installed” when the service was connected to the **whole Git repo** (not only `backend/`).
 
-- In Render: **New → Web Service** → connect the repo → **Environment: Docker**.
+- In Render: open your Web Service → **Settings**.
+- **Environment:** **Docker** (not “Node”).
+- **Dockerfile path:** `Dockerfile` (file at the **repository root**).
+- **Docker build context:** `.` (repo root).
+- **Start command:** leave empty (the Dockerfile already runs `node server.js`). Render sets `PORT` automatically.
+
+Or use the repo **`render.yaml`** as a [Blueprint](https://render.com/docs/blueprint-spec).
+
+After deploy, open **`https://<your-service>.onrender.com/health`** — you should see JSON with **`"qpdf": true`** and **`qpdfVersion`**. If **`qpdf` is false**, the image still has no `qpdf` (wrong Dockerfile/context).
+
+**Optional env:** `QPDF_BIN` — absolute path to the `qpdf` binary if it is not on `PATH`.
+
+**Alternative — Docker (`backend/` only)**
+
 - **Dockerfile path:** `backend/Dockerfile`  
-- **Docker build context:** `backend`  
-- **Start command:** already set in the Dockerfile (`node server.js`). Render injects `PORT`; `server.js` reads it.
-
-Or use the repo **`render.yaml`** as a [Blueprint](https://render.com/docs/blueprint-spec) (Docker-based service).
+- **Docker build context:** `backend`
 
 **Alternative — native Node build**
 
@@ -134,13 +144,15 @@ Or use the repo **`render.yaml`** as a [Blueprint](https://render.com/docs/bluep
 - **Build command:** `bash render-build.sh` (installs `qpdf` via `apt-get`, then `npm install`)
 - **Start command:** `npm start`
 
-On every deploy, check logs for **`[qpdf] OK —`** (version line). If you see **`[qpdf] NOT on PATH`**, Unlock PDF will return **503** until `qpdf` is installed correctly.
+On every deploy, check logs for **`[qpdf] OK —`** (full path + version). If you see **`[qpdf] NOT FOUND`**, Unlock PDF will return **503** until `qpdf` is installed correctly.
 
-Local Docker check:
+Local Docker check (repo root):
 
 ```bash
-docker build -t edit-pdf-api ./backend && docker run --rm -p 3001:3001 -e PORT=3001 edit-pdf-api
+docker build -t edit-pdf-api . && docker run --rm -p 3001:3001 -e PORT=3001 edit-pdf-api
 ```
+
+Then visit `http://localhost:3001/health`.
 2. **Frontend** on [Vercel](https://vercel.com) or [Netlify](https://netlify.com): connect the GitHub repo, root `frontend/`, build `npm run build`, output `dist`. Add an environment variable **`VITE_API_BASE_URL`** = your API’s public URL, e.g. `https://edit-pdf-api.onrender.com` (no trailing slash). Redeploy after the API URL is live.
 
 Locally, leave `VITE_API_BASE_URL` unset; Vite’s dev proxy still sends `/upload`, `/edit`, etc. to port 3001.
