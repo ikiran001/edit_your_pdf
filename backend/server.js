@@ -10,6 +10,7 @@ import downloadRouter from './routes/download.js';
 import unlockRouter from './routes/unlock.js';
 import { startSessionCleanup } from './utils/sessionCleanup.js';
 import { getQpdfBinary } from './utils/resolveQpdf.js';
+import { getGhostscriptBinary } from './utils/resolveGhostscript.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const uploadsDir = path.join(__dirname, 'uploads');
@@ -28,25 +29,48 @@ app.use(
 
 /** Production check: GET https://your-api.onrender.com/health */
 app.get('/health', (_req, res) => {
-  const bin = getQpdfBinary();
-  let version = null;
-  if (bin) {
+  const qpdfBin = getQpdfBinary();
+  let qpdfVersion = null;
+  if (qpdfBin) {
     try {
-      version = execFileSync(bin, ['--version'], {
+      qpdfVersion = execFileSync(qpdfBin, ['--version'], {
         encoding: 'utf8',
         stdio: ['ignore', 'pipe', 'ignore'],
       })
         .trim()
         .split('\n')[0];
     } catch {
-      version = null;
+      qpdfVersion = null;
     }
   }
+
+  const gsBin = getGhostscriptBinary();
+  let gsVersion = null;
+  if (gsBin) {
+    try {
+      gsVersion = execFileSync(gsBin, ['--version'], {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'ignore'],
+      })
+        .trim()
+        .split('\n')[0];
+    } catch {
+      gsVersion = null;
+    }
+  }
+
+  const unlock =
+    qpdfBin && qpdfVersion ? 'qpdf' : gsBin && gsVersion ? 'ghostscript' : 'none';
+
   res.json({
     ok: true,
-    qpdf: Boolean(bin && version),
-    qpdfPath: bin,
-    qpdfVersion: version,
+    qpdf: Boolean(qpdfBin && qpdfVersion),
+    qpdfPath: qpdfBin,
+    qpdfVersion,
+    ghostscript: Boolean(gsBin && gsVersion),
+    ghostscriptPath: gsBin,
+    ghostscriptVersion: gsVersion,
+    unlock,
   });
 });
 
@@ -69,27 +93,42 @@ app.get('/pdf/:sessionId', (req, res) => {
 
 startSessionCleanup(uploadsDir);
 
-function logQpdfAvailability() {
-  const bin = getQpdfBinary();
-  if (!bin) {
-    console.warn(
-      '[qpdf] NOT FOUND — POST /unlock-pdf will return 503. Install qpdf (Dockerfile at repo root or backend/) or set QPDF_BIN. Check GET /health.'
-    );
-    return;
+function logUnlockBackends() {
+  const q = getQpdfBinary();
+  if (q) {
+    try {
+      const v = execFileSync(q, ['--version'], {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'ignore'],
+      })
+        .trim()
+        .split('\n')[0];
+      console.log('[unlock] qpdf —', q, '—', v);
+    } catch {
+      console.warn('[unlock] qpdf path set but --version failed:', q);
+    }
+  } else {
+    console.log('[unlock] qpdf not on PATH (optional if Ghostscript is available)');
   }
-  try {
-    const v = execFileSync(bin, ['--version'], {
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'ignore'],
-    })
-      .trim()
-      .split('\n')[0];
-    console.log('[qpdf] OK —', bin, '—', v);
-  } catch {
-    console.warn('[qpdf] binary present but --version failed:', bin);
+
+  const g = getGhostscriptBinary();
+  if (g) {
+    try {
+      const v = execFileSync(g, ['--version'], {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'ignore'],
+      })
+        .trim()
+        .split('\n')[0];
+      console.log('[unlock] ghostscript —', g, '—', v);
+    } catch {
+      console.warn('[unlock] ghostscript path set but --version failed:', g);
+    }
+  } else {
+    console.warn('[unlock] ghostscript not found — install gs or qpdf for /unlock-pdf');
   }
 }
-logQpdfAvailability();
+logUnlockBackends();
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
