@@ -1,0 +1,11 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+# Deploy: connect repo → New Blueprint → select render.yaml
+services:
+  - type: web
+    name: edit-your-pdf-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    envVars:
+      - key: NODE_ENV
+        value: production

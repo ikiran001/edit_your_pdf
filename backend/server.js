@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
+import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import uploadRouter from './routes/upload.js';
 import editRouter from './routes/edit.js';
@@ -42,6 +43,22 @@ app.get('/pdf/:sessionId', (req, res) => {
 });
 
 startSessionCleanup(uploadsDir);
+
+function logQpdfAvailability() {
+  try {
+    const out = execSync('qpdf --version', {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    const line = out.trim().split('\n')[0] || out.trim();
+    console.log('[qpdf] OK —', line);
+  } catch {
+    console.warn(
+      '[qpdf] NOT on PATH — POST /unlock-pdf will return 503 until qpdf is installed (see backend/Dockerfile or render-build.sh).'
+    );
+  }
+}
+logQpdfAvailability();
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
