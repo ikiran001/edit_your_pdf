@@ -1,11 +1,12 @@
 # Render Blueprint — https://render.com/docs/blueprint-spec
-# Deploy: connect repo → New Blueprint → select render.yaml
+# Uses repo-root Dockerfile so the service works when the repo is the Git root
+# (avoids empty image when context was wrong).
 services:
   - type: web
     name: edit-your-pdf-api
     runtime: docker
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     envVars:
       - key: NODE_ENV
         value: production

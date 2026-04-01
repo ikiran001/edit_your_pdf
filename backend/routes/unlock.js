@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { spawn } from 'child_process';
+import { getQpdfBinary } from '../utils/resolveQpdf.js';
 
 const MAX_BYTES = 52 * 1024 * 1024;
 
@@ -25,8 +26,12 @@ const mem = multer({
  * Run qpdf; rejects with { code, stderr } on failure.
  */
 function qpdf(args) {
+  const bin = getQpdfBinary();
+  if (!bin) {
+    return Promise.reject(Object.assign(new Error('spawn qpdf ENOENT'), { code: 'ENOENT' }));
+  }
   return new Promise((resolve, reject) => {
-    const child = spawn('qpdf', args, {
+    const child = spawn(bin, args, {
       stdio: ['ignore', 'pipe', 'pipe'],
       env: { ...process.env },
     });
