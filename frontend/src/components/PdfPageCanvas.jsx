@@ -5,6 +5,14 @@ import { cssDisplayFontFromPdf, defaultTextFormat } from '../lib/textFormatDefau
 
 const RENDER_SCALE = 1.35
 
+/** Normalize for comparing contenteditable value vs baseline (opening string). */
+function normalizeNativeCompare(s) {
+  return String(s ?? '')
+    .replace(/\u00a0/g, ' ')
+    .replace(/\r\n/g, '\n')
+    .trim()
+}
+
 /**
  * Renders one PDF page with pdf.js and an interaction overlay.
  * Annotations use normalized coords (0–1, top-left origin) for pdf-lib on the server.
@@ -53,6 +61,8 @@ export default function PdfPageCanvas({
   const nativeBlurTimerRef = useRef(null)
   /** Debounce parent `onNativeTextEdit` so typing does not re-render the whole page every key. */
   const nativeSyncTimerRef = useRef(null)
+  /** String shown when the inline editor opened — skip parent updates if unchanged (avoids stacking duplicate drawText on save). */
+  const nativeOpenBaselineStrRef = useRef('')
   const [hoverBlockId, setHoverBlockId] = useState(null)
 
   useEffect(() => {
@@ -478,6 +488,9 @@ export default function PdfPageCanvas({
         window.clearTimeout(nativeSyncTimerRef.current)
         nativeSyncTimerRef.current = null
       }
+      const id = block.id
+      nativeOpenBaselineStrRef.current =
+        textBlocksRef.current.find((b) => b.id === id)?.str ?? ''
       onBeginNativeTextEdit?.(block)
       setNativeEdit({ block })
     },
@@ -559,7 +572,11 @@ export default function PdfPageCanvas({
         if (nativeEditRef.current?.block?.id !== blockId) return
         const el = nativeEditorElRef.current
         if (!el) return
-        onNativeTextEdit?.(buildNativePayload(block, el.innerText ?? ''))
+        const raw = el.innerText ?? ''
+        if (normalizeNativeCompare(raw) === normalizeNativeCompare(nativeOpenBaselineStrRef.current)) {
+          return
+        }
+        onNativeTextEdit?.(buildNativePayload(block, raw))
       }, 280)
     },
     [onNativeTextEdit, buildNativePayload]
@@ -580,6 +597,11 @@ export default function PdfPageCanvas({
       nativeEditRef.current = null
       const { block } = current
       setNativeEdit(null)
+      const baseline = nativeOpenBaselineStrRef.current
+      nativeOpenBaselineStrRef.current = ''
+      if (normalizeNativeCompare(value) === normalizeNativeCompare(baseline)) {
+        return
+      }
       onNativeTextEdit?.(buildNativePayload(block, value))
     },
     [onNativeTextEdit, buildNativePayload, flushNativeSyncTimer]
@@ -755,6 +777,7 @@ export default function PdfPageCanvas({
                         nativeBlurTimerRef.current = null
                       }
                       flushNativeSyncTimer()
+                      nativeOpenBaselineStrRef.current = ''
                       nativeEditRef.current = null
                       setNativeEdit(null)
                     }

@@ -1,4 +1,21 @@
 /**
+ * Last write wins per `key` (or fallback spatial id) so duplicate payloads cannot stack the same line.
+ */
+function dedupeNativeTextEdits(list) {
+  if (!list?.length) return [];
+  const last = new Map();
+  for (const nt of list) {
+    const p = Number(nt.pageIndex);
+    if (!Number.isFinite(p)) continue;
+    const spatial = `${nt.x}:${nt.y}:${nt.baseline}`;
+    const k =
+      typeof nt.key === 'string' && nt.key.length ? `${p}:${nt.key}` : `${p}:${spatial}`;
+    last.set(k, nt);
+  }
+  return [...last.values()];
+}
+
+/**
  * Merges `nativeTextEdits` (Word-style replacements) before other page items so masks draw first.
  */
 export function mergeEditsWithNative(edits, nativeTextEdits) {
@@ -10,7 +27,7 @@ export function mergeEditsWithNative(edits, nativeTextEdits) {
     return map.get(n);
   };
 
-  for (const nt of nativeTextEdits || []) {
+  for (const nt of dedupeNativeTextEdits(nativeTextEdits || [])) {
     const p = Number(nt.pageIndex);
     if (!Number.isFinite(p)) continue;
     ensure(p).push({
