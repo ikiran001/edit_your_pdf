@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { spawn } from 'child_process';
+import { PDFDocument } from 'pdf-lib';
 import { getQpdfBinary } from '../utils/resolveQpdf.js';
 import { getGhostscriptBinary } from '../utils/resolveGhostscript.js';
 
@@ -46,7 +47,7 @@ function runProcess(bin, args) {
       done(() => reject(err));
     });
     child.on('close', (code) => {
-      if (code === 0) done(() => resolve());
+      if (code === 0) done(() => resolve({ stderr }));
       else
         done(() =>
           reject(
@@ -79,10 +80,10 @@ function decryptWithGhostscript(inPath, outPath, password) {
   if (!bin) {
     return Promise.reject(Object.assign(new Error('gs not found'), { code: 'ENOENT' }));
   }
+  // No -q: wrong-password cases often only appear on stderr while still writing a blank PDF.
   return runProcess(bin, [
     '-dNOPAUSE',
     '-dBATCH',
-    '-q',
     '-sDEVICE=pdfwrite',
     '-dCompatibilityLevel=1.4',
     `-sOutputFile=${outPath}`,
@@ -95,10 +96,61 @@ function decryptWithGhostscript(inPath, outPath, password) {
 function isWrongPassword(stderr, message) {
   const s = `${stderr || ''} ${message || ''}`.toLowerCase();
   return (
-    /invalid password|incorrect password|password.*failed|check.*password|bad password|cannot decrypt|wrong password|owner password|incorrect.*owner|could not open|cannot open pdf|invalidfileaccess|no pdf file opened/i.test(
+    /invalid password|incorrect password|password.*failed|check.*password|bad password|cannot decrypt|wrong password|owner password|incorrect.*owner|could not open|cannot open pdf|invalidfileaccess|no pdf file opened|cannot decrypt pdf|incorrect password supplied|pdf file has an encryption dictionary/i.test(
       s
     )
   );
+}
+
+/**
+ * Ghostscript often exits 0 with a blank or 1-page shell when the password is wrong.
+ * qpdf usually fails fast, but we still validate for consistent behavior.
+ */
+async function validateUnlockedPdf(inputBuf, outputBuf) {
+  const head = outputBuf.subarray(0, Math.min(5, outputBuf.length)).toString('latin1');
+  if (!head.startsWith('%PDF')) {
+    return { ok: false, reason: 'invalid' };
+  }
+
+  let inputPageCount = null;
+  try {
+    const inDoc = await PDFDocument.load(inputBuf, { ignoreEncryption: true });
+    inputPageCount = inDoc.getPageCount();
+  } catch {
+    /* ignore — compare only when we know input structure */
+  }
+
+  let outDoc;
+  try {
+    outDoc = await PDFDocument.load(outputBuf);
+  } catch (e) {
+    const msg = String(e?.message || e).toLowerCase();
+    if (/password|encrypt|must be open|handler|encrypted/i.test(msg)) {
+      return { ok: false, reason: 'password' };
+    }
+    return { ok: false, reason: 'invalid' };
+  }
+
+  const outPages = outDoc.getPageCount();
+  if (outPages < 1) {
+    return { ok: false, reason: 'password' };
+  }
+
+  if (inputPageCount != null && inputPageCount > 0 && outPages !== inputPageCount) {
+    return { ok: false, reason: 'password' };
+  }
+
+  // Single-page PDF: Ghostscript may still exit 0 with one empty page when the password is wrong.
+  if (
+    inputPageCount === 1 &&
+    outPages === 1 &&
+    inputBuf.length > 12000 &&
+    outputBuf.length < Math.min(4500, inputBuf.length * 0.2)
+  ) {
+    return { ok: false, reason: 'password' };
+  }
+
+  return { ok: true };
 }
 
 function isNoBackendError(e) {
@@ -150,13 +202,21 @@ router.post('/unlock-pdf', (req, res) => {
 
       let backend = 'qpdf';
       try {
-        await decryptWithQpdf(inPath, outPath, pwPath);
+        const qRes = await decryptWithQpdf(inPath, outPath, pwPath);
+        if (isWrongPassword(qRes.stderr)) {
+          console.warn('[unlock-pdf] password validation: FAILED (qpdf stderr)');
+          return res.status(401).json({ error: 'Wrong password. The PDF could not be decrypted.' });
+        }
       } catch (qErr) {
         if (isNoBackendError(qErr) || /qpdf not found/i.test(String(qErr.message))) {
           console.log('[unlock-pdf] qpdf unavailable, trying ghostscript');
           backend = 'ghostscript';
           try {
-            await decryptWithGhostscript(inPath, outPath, password);
+            const gRes = await decryptWithGhostscript(inPath, outPath, password);
+            if (isWrongPassword(gRes.stderr)) {
+              console.warn('[unlock-pdf] password validation: FAILED (ghostscript stderr)');
+              return res.status(401).json({ error: 'Wrong password. The PDF could not be decrypted.' });
+            }
           } catch (gErr) {
             if (isNoBackendError(gErr)) {
               console.error('[unlock-pdf] neither qpdf nor ghostscript available');
@@ -193,13 +253,25 @@ router.post('/unlock-pdf', (req, res) => {
       const stat = await fs.promises.stat(outPath);
       if (!stat.isFile() || stat.size === 0) {
         console.error('[unlock-pdf] output missing or empty');
-        return res.status(500).json({ error: 'Unlock produced an empty file.' });
+        return res.status(401).json({ error: 'Wrong password. The PDF could not be decrypted.' });
+      }
+
+      const outBuf = await fs.promises.readFile(outPath);
+      const validation = await validateUnlockedPdf(req.file.buffer, outBuf);
+      if (!validation.ok) {
+        if (validation.reason === 'password') {
+          console.warn(`[unlock-pdf] password validation: FAILED (${backend}, pdf-lib check)`);
+          return res.status(401).json({ error: 'Wrong password. The PDF could not be decrypted.' });
+        }
+        console.error('[unlock-pdf] unlock output failed validation');
+        return res.status(422).json({
+          error:
+            'Could not produce a valid decrypted PDF. The file may be corrupted or use unsupported encryption.',
+        });
       }
 
       console.log(`[unlock-pdf] password validation: OK (via ${backend})`);
       console.log(`[unlock-pdf] output: ${outName} bytes=${stat.size}`);
-
-      const outBuf = await fs.promises.readFile(outPath);
 
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="${outName}"`);
