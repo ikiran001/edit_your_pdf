@@ -2,6 +2,15 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Brand accent — raspberry / magenta (selection & highlights, not PDF canvas). */
+:root {
+  --fx-raspberry: #c1336e;
+  --fx-raspberry-soft: rgba(193, 51, 110, 0.28);
+  --fx-raspberry-muted: rgba(193, 51, 110, 0.18);
+  --fx-plum-deep: #0f0614;
+  --fx-plum-glass: rgba(32, 12, 28, 0.78);
+}
+
 @keyframes toolkitFade {
   from {
     opacity: 0;
@@ -22,6 +31,96 @@ body,
 
 #root {
   min-height: 100svh;
+  position: relative;
+  z-index: 1;
+}
+
+/* App shell: deep space + soft grid (decorative; pointer-events none). */
+body.theme-dark {
+  background-color: var(--fx-plum-deep);
+  background-image:
+    radial-gradient(ellipse 140% 80% at 50% -30%, rgba(193, 51, 110, 0.14), transparent 52%),
+    radial-gradient(ellipse 140% 80% at 50% -30%, rgba(99, 102, 241, 0.18), transparent 55%),
+    radial-gradient(ellipse 100% 60% at 100% 0%, rgba(34, 211, 238, 0.08), transparent 50%),
+    radial-gradient(ellipse 80% 50% at 0% 100%, rgba(193, 51, 110, 0.1), transparent 48%),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(79, 70, 229, 0.1), transparent 45%);
+  background-attachment: fixed;
+}
+
+body.theme-dark::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(99, 102, 241, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99, 102, 241, 0.045) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 85% 75% at 50% 35%, black 0%, transparent 72%);
+  -webkit-mask-image: radial-gradient(ellipse 85% 75% at 50% 35%, black 0%, transparent 72%);
+}
+
+body.theme-light {
+  background-color: #f8fafc;
+  background-image:
+    linear-gradient(180deg, #f8fafc 0%, #ffffff 42%, #eef2ff 100%),
+    radial-gradient(ellipse 120% 70% at 50% -20%, rgba(99, 102, 241, 0.09), transparent 55%),
+    radial-gradient(ellipse 80% 50% at 100% 100%, rgba(34, 211, 238, 0.06), transparent 50%);
+  background-attachment: fixed;
+}
+
+body.theme-light::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(99, 102, 241, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99, 102, 241, 0.035) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse 90% 80% at 50% 40%, black 15%, transparent 68%);
+  -webkit-mask-image: radial-gradient(ellipse 90% 80% at 50% 40%, black 15%, transparent 68%);
+}
+
+/* Futuristic glass header — use with html.dark for dark variant. */
+.fx-glass-header {
+  border-bottom: 1px solid rgba(99, 102, 241, 0.14);
+  background-color: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    0 1px 0 0 rgba(99, 102, 241, 0.08),
+    0 10px 36px -10px rgba(99, 102, 241, 0.14);
+}
+
+html.dark .fx-glass-header {
+  position: relative;
+  border-bottom-color: rgba(193, 51, 110, 0.22);
+  background-color: var(--fx-plum-glass);
+  box-shadow:
+    0 1px 0 0 rgba(193, 51, 110, 0.15),
+    0 14px 48px -14px rgba(0, 0, 0, 0.45),
+    0 0 80px -24px rgba(193, 51, 110, 0.12),
+    0 0 60px -20px rgba(99, 102, 241, 0.12);
+}
+
+/* Subtle grain on dark glass (organic feel, very light). */
+html.dark .fx-glass-header::after {
+  content: '';
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.2;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='a'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23a)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+
+html.dark .fx-glass-header > * {
+  position: relative;
+  z-index: 1;
 }
 
 /* Contenteditable: avoid synthetic bold/italic that drifts from PDF metrics.
@@ -38,28 +137,56 @@ body,
   background-color: #ffffff !important;
 }
 
-.pdf-text-layer-editor::selection {
-  background: rgba(74, 144, 226, 0.22);
+::selection {
+  background: var(--fx-raspberry-muted);
+  color: inherit;
 }
 
-.pdf-text-layer-editor::-moz-selection {
-  background: rgba(74, 144, 226, 0.22);
+::-moz-selection {
+  background: var(--fx-raspberry-muted);
+  color: inherit;
+}
+
+/* Dark UI: stronger raspberry highlight (not black/gray). */
+html.dark ::selection {
+  background: rgba(193, 51, 110, 0.45);
+  color: #fdf2f8;
+}
+
+html.dark ::-moz-selection {
+  background: rgba(193, 51, 110, 0.45);
+  color: #fdf2f8;
+}
+
+/* PDF inline editor sits on white paper — always soft raspberry, beats rules above. */
+.pdf-text-layer-editor::selection,
+html.dark .pdf-text-layer-editor::selection {
+  background: var(--fx-raspberry-soft);
+  color: inherit;
+}
+
+.pdf-text-layer-editor::-moz-selection,
+html.dark .pdf-text-layer-editor::-moz-selection {
+  background: var(--fx-raspberry-soft);
+  color: inherit;
 }
 
 /* Legacy textarea class (kept if reused elsewhere) */
 .pdf-inline-editor {
   box-sizing: border-box;
-  border: 1px dashed #4a90e2;
+  border: 1px dashed #c1336e;
   background: transparent;
   box-shadow: none;
   border-radius: 2px;
 }
 
 .pdf-inline-editor::selection {
-  background: rgba(74, 144, 226, 0.22);
+  background: var(--fx-raspberry-soft);
+  color: inherit;
 }
 
 .pdf-inline-editor::-moz-selection {
-  background: rgba(74, 144, 226, 0.22);
+  background: var(--fx-raspberry-soft);
+  color: inherit;
 }
 

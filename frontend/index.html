@@ -7,7 +7,7 @@
       name="description"
       content="Edit your PDF online for free. Upload a PDF, change text and annotate in your browser, then download. No install, no watermark."
     />
-    <meta name="theme-color" content="#4f46e5" />
+    <meta name="theme-color" content="#0f0614" />
     <meta name="application-name" content="letsEditPDF" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
@@ -51,6 +51,23 @@
     </script>
   </head>
   <body>
+    <script>
+      ;(function () {
+        try {
+          var k = 'letsEditPDF-theme'
+          var v = localStorage.getItem(k)
+          var light = v === 'light'
+          var root = document.documentElement
+          var b = document.body
+          root.classList.toggle('dark', !light)
+          b.classList.remove('theme-dark', 'theme-light')
+          b.classList.add(light ? 'theme-light' : 'theme-dark')
+        } catch (e) {
+          document.documentElement.classList.add('dark')
+          document.body.classList.add('theme-dark')
+        }
+      })()
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

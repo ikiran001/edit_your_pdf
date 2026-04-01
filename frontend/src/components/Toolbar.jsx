@@ -1,3 +1,5 @@
+import ThemeToggle from '../shared/components/ThemeToggle.jsx'
+
 const tools = [
   { id: 'editText', label: 'Edit text' },
   { id: 'text', label: 'Text' },
@@ -23,7 +25,7 @@ export default function Toolbar({
   onApplyTextSwapChange,
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-2 border-b border-zinc-200 bg-white/90 px-3 py-2 shadow-sm backdrop-blur-sm dark:border-zinc-700 dark:bg-zinc-900/90">
+    <div className="fx-glass-header flex flex-wrap items-center gap-2 px-3 py-2">
       <div className="mr-2 text-sm font-medium text-zinc-600 dark:text-zinc-300">Tools</div>
       {onEditTextModeChange && (
         <button
@@ -71,6 +73,7 @@ export default function Toolbar({
         Redo
       </button>
       <div className="ml-auto flex flex-wrap items-center gap-3">
+        <ThemeToggle />
         <label className="flex max-w-[min(100%,16rem)] cursor-pointer items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400 md:max-w-none">
           <input
             type="checkbox"

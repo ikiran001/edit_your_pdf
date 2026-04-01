@@ -189,7 +189,7 @@ export default function SignatureCreationModal({ open, onClose, onDone }) {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-[#1a0a14]/45 p-4 backdrop-blur-sm dark:bg-[#0f0614]/60"
       role="dialog"
       aria-modal="true"
       aria-labelledby="sig-modal-title"

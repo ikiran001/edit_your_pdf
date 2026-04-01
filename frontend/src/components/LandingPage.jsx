@@ -23,8 +23,10 @@ export default function LandingPage({
   const inner = (
     <>
       {!embeddedInToolShell ? (
-        <header className="border-b border-zinc-200/80 bg-white/70 px-6 py-4 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/70">
-          <h1 className="text-xl font-semibold tracking-tight">letsEditPDF</h1>
+        <header className="fx-glass-header px-6 py-4">
+          <h1 className="bg-gradient-to-r from-zinc-900 to-indigo-700 bg-clip-text text-xl font-semibold tracking-tight text-transparent dark:from-white dark:to-cyan-200/90">
+            letsEditPDF
+          </h1>
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
             {import.meta.env.PROD && !isApiBaseConfigured() ? (
               <>
@@ -96,8 +98,8 @@ export default function LandingPage({
           }}
           className={`flex w-full max-w-xl cursor-pointer flex-col items-center rounded-2xl border-2 border-dashed px-8 py-16 text-center transition ${
             dragOver
-              ? 'border-indigo-500 bg-indigo-50/80 dark:bg-indigo-950/40'
-              : 'border-zinc-300 bg-white/80 hover:border-indigo-400 dark:border-zinc-600 dark:bg-zinc-900/50'
+              ? 'border-cyan-500 bg-indigo-50/90 shadow-lg shadow-indigo-500/20 dark:border-cyan-400 dark:bg-indigo-950/50 dark:shadow-[0_0_40px_rgba(34,211,238,0.15)]'
+              : 'border-indigo-200/80 bg-white/85 shadow-sm shadow-indigo-500/5 hover:border-indigo-400 hover:shadow-md hover:shadow-indigo-500/10 dark:border-indigo-500/30 dark:bg-zinc-950/60 dark:hover:border-cyan-500/40 dark:hover:shadow-[0_0_32px_rgba(99,102,241,0.12)]'
           }`}
           onClick={() => document.getElementById('pdf-file-input')?.click()}
         >
@@ -127,7 +129,7 @@ export default function LandingPage({
               <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">or click to browse</p>
               <button
                 type="button"
-                className="mt-6 rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-indigo-700"
+                className="mt-6 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/35 transition hover:from-indigo-500 hover:to-violet-500 hover:shadow-indigo-500/45 dark:shadow-[0_0_28px_rgba(99,102,241,0.35)]"
                 onClick={(e) => {
                   e.stopPropagation()
                   document.getElementById('pdf-file-input')?.click()
@@ -140,7 +142,7 @@ export default function LandingPage({
         </div>
       </main>
       {loading ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 p-4 backdrop-blur-[1px]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1a0a14]/35 p-4 backdrop-blur-[2px] dark:bg-[#120510]/50">
           <div className="w-full max-w-2xl rounded-3xl bg-white px-10 py-9 text-center shadow-2xl dark:bg-zinc-900">
             <div className="mx-auto mb-6 flex h-28 w-28 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800">
               <svg
@@ -180,7 +182,7 @@ export default function LandingPage({
   }
 
   return (
-    <div className="flex min-h-svh flex-col bg-gradient-to-b from-zinc-50 to-zinc-100 text-zinc-900 dark:from-zinc-950 dark:to-zinc-900 dark:text-zinc-50">
+    <div className="flex min-h-svh flex-col bg-transparent text-zinc-900 dark:text-zinc-100">
       {inner}
     </div>
   )

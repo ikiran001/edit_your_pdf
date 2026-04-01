@@ -11,8 +11,8 @@ export default function ThumbnailSidebar({
   pageRefs,
 }) {
   return (
-    <aside className="hidden w-36 shrink-0 overflow-y-auto border-r border-zinc-200 bg-zinc-50 p-2 md:block dark:border-zinc-700 dark:bg-zinc-900/80">
-      <div className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500">
+    <aside className="hidden w-36 shrink-0 overflow-y-auto border-r border-indigo-200/50 bg-zinc-50/95 p-2 md:block dark:border-indigo-500/15 dark:bg-zinc-950/90">
+      <div className="mb-2 font-mono text-[10px] font-medium uppercase tracking-wider text-indigo-600 dark:text-cyan-500/80">
         Pages
       </div>
       <ul className="flex flex-col gap-2">
