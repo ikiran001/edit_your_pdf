@@ -12,7 +12,7 @@ function ToggleBtn({ active, children, onClick, title }) {
       onClick={onClick}
       className={`min-w-[2rem] rounded-md border px-2 py-1.5 text-sm font-semibold transition ${
         active
-          ? 'border-indigo-600 bg-indigo-600 text-white'
+          ? 'border-[#b03060] bg-gradient-to-br from-[#c1336e] to-[#9d2958] text-white shadow-sm shadow-[#c1336e]/30'
           : 'border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700'
       }`}
     >
@@ -30,7 +30,7 @@ export default function TextFormatToolbar({ format, onChange, disabled }) {
   return (
     <aside
       data-text-format-panel
-      className="flex w-[min(100%,18rem)] shrink-0 flex-col border-l border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900"
+      className="flex w-[min(100%,18rem)] shrink-0 flex-col border-l border-indigo-200/60 bg-white/95 dark:border-indigo-500/15 dark:bg-zinc-950/95"
       aria-label="Text formatting"
     >
       <div className="border-b border-zinc-200 px-3 py-2 dark:border-zinc-700">

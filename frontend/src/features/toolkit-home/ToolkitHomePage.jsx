@@ -6,15 +6,17 @@ import { TOOL_REGISTRY } from '../../shared/constants/toolRegistry.js'
 
 export default function ToolkitHomePage() {
   return (
-    <div className="min-h-svh bg-gradient-to-br from-zinc-50 via-white to-indigo-100/40 text-zinc-900 dark:from-zinc-950 dark:via-zinc-900 dark:to-indigo-950/40 dark:text-zinc-50">
-      <header className="border-b border-zinc-200/80 bg-white/70 px-4 py-5 backdrop-blur-md dark:border-zinc-800/80 dark:bg-zinc-950/70 md:px-10">
+    <div className="min-h-svh bg-transparent text-zinc-900 dark:text-zinc-100">
+      <header className="fx-glass-header px-4 py-5 md:px-10">
         <div className="mx-auto flex max-w-6xl items-start justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
-              <Sparkles className="h-5 w-5" aria-hidden />
-              <span className="text-xs font-semibold uppercase tracking-wider">letsEditPDF</span>
+            <div className="flex items-center gap-2 text-indigo-600 dark:text-cyan-400">
+              <Sparkles className="h-5 w-5 drop-shadow-[0_0_8px_rgba(34,211,238,0.45)]" aria-hidden />
+              <span className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-indigo-700 dark:text-cyan-300/90">
+                letsEditPDF
+              </span>
             </div>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight text-zinc-900 md:text-4xl dark:text-white">
+            <h1 className="mt-3 bg-gradient-to-r from-zinc-900 via-indigo-700 to-violet-700 bg-clip-text text-3xl font-bold tracking-tight text-transparent md:text-4xl dark:from-white dark:via-cyan-200 dark:to-indigo-300">
               PDF toolkit
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-zinc-600 md:text-base dark:text-zinc-400">
@@ -30,7 +32,7 @@ export default function ToolkitHomePage() {
         className="mx-auto max-w-6xl px-4 py-10 md:px-10 md:py-14"
         style={{ animation: 'toolkitFade 0.6s ease-out both' }}
       >
-        <h2 className="mb-6 text-sm font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+        <h2 className="mb-6 font-mono text-sm font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-cyan-400/85">
           Choose a tool
         </h2>
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
@@ -41,7 +43,10 @@ export default function ToolkitHomePage() {
           ))}
         </div>
         <p className="mt-12 text-center text-xs text-zinc-500 dark:text-zinc-500">
-          <Link to="/tools/edit-pdf" className="text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400">
+          <Link
+            to="/tools/edit-pdf"
+            className="text-indigo-600 underline-offset-2 transition hover:text-violet-600 hover:underline dark:text-cyan-400 dark:hover:text-cyan-300"
+          >
             Jump straight to Edit PDF
           </Link>
           {' · '}

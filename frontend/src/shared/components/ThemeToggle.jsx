@@ -1,41 +1,18 @@
-import { useState } from 'react'
 import { Moon, Sun } from 'lucide-react'
-
-const STORAGE_KEY = 'letsEditPDF-theme'
-
-function readInitialDark() {
-  if (typeof window === 'undefined') return false
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (stored === 'dark') {
-    document.documentElement.classList.add('dark')
-    return true
-  }
-  if (stored === 'light') {
-    document.documentElement.classList.remove('dark')
-    return false
-  }
-  return document.documentElement.classList.contains('dark')
-}
+import { useTheme } from '../../context/ThemeContext.jsx'
 
 export default function ThemeToggle() {
-  const [dark, setDark] = useState(readInitialDark)
-
-  const toggle = () => {
-    const el = document.documentElement
-    const next = !el.classList.contains('dark')
-    el.classList.toggle('dark', next)
-    localStorage.setItem(STORAGE_KEY, next ? 'dark' : 'light')
-    setDark(next)
-  }
+  const { dark, toggle } = useTheme()
 
   return (
     <button
       type="button"
       onClick={toggle}
-      className="flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-700 shadow-sm transition hover:border-indigo-300 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-indigo-200/80 bg-white text-zinc-700 shadow-sm shadow-indigo-500/10 transition hover:border-cyan-400/60 hover:shadow-md hover:shadow-indigo-500/20 dark:border-indigo-500/30 dark:bg-zinc-900/95 dark:text-cyan-100 dark:shadow-[0_0_20px_rgba(99,102,241,0.2)] dark:hover:border-cyan-400/40"
       aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+      title={dark ? 'Light mode' : 'Dark mode'}
     >
-      {dark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+      {dark ? <Sun className="h-5 w-5" aria-hidden /> : <Moon className="h-5 w-5" aria-hidden />}
     </button>
   )
 }

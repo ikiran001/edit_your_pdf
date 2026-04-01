@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
 import { apiUrl } from '../lib/apiBase'
 import { usePagesHistory } from '../hooks/usePagesHistory'
+import ThemeToggle from '../shared/components/ThemeToggle.jsx'
 import Toolbar from './Toolbar'
 import ThumbnailSidebar from './ThumbnailSidebar'
 import PdfPageCanvas from './PdfPageCanvas'
@@ -305,8 +306,11 @@ export default function PdfEditor({ sessionId, onBack }) {
 
   if (loadError) {
     return (
-      <div className="flex min-h-svh flex-col items-center justify-center gap-4 p-6">
-        <p className="text-red-600">{loadError}</p>
+      <div className="relative flex min-h-svh flex-col items-center justify-center gap-4 p-6">
+        <div className="fixed right-4 top-4 z-[200]">
+          <ThemeToggle />
+        </div>
+        <p className="text-red-600 dark:text-red-400">{loadError}</p>
         <button
           type="button"
           className="rounded-lg bg-zinc-200 px-4 py-2 text-sm dark:bg-zinc-700"
@@ -320,7 +324,10 @@ export default function PdfEditor({ sessionId, onBack }) {
 
   if (!pdfDoc) {
     return (
-      <div className="flex min-h-svh items-center justify-center gap-3 bg-zinc-50 dark:bg-zinc-950">
+      <div className="relative flex min-h-svh items-center justify-center gap-3 bg-zinc-50 dark:bg-zinc-950">
+        <div className="fixed right-4 top-4 z-[200]">
+          <ThemeToggle />
+        </div>
         <div className="h-9 w-9 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
         <span className="text-sm text-zinc-600 dark:text-zinc-400">Loading PDF…</span>
       </div>
@@ -328,7 +335,7 @@ export default function PdfEditor({ sessionId, onBack }) {
   }
 
   return (
-    <div className="flex h-svh flex-col bg-zinc-100 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
+    <div className="flex h-svh flex-col bg-zinc-100/95 text-zinc-900 dark:bg-zinc-950/80 dark:text-zinc-100">
       <Toolbar
         activeTool={activeTool}
         onToolChange={setActiveTool}
