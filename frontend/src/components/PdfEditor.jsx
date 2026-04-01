@@ -28,6 +28,23 @@ function buildEditsPayload(pagesItems) {
   return { pages }
 }
 
+/** Restore usePagesHistory.present from server `edits` payload (re-adds client-only ids). */
+function editsPayloadToPresentMap(edits) {
+  const out = {}
+  for (const g of edits?.pages || []) {
+    if (!Number.isFinite(g.pageIndex)) continue
+    const items = (g.items || []).map((it) => ({
+      ...it,
+      id:
+        typeof crypto !== 'undefined' && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    }))
+    out[String(g.pageIndex)] = items
+  }
+  return out
+}
+
 export default function PdfEditor({ sessionId, onBack }) {
   const [pdfDoc, setPdfDoc] = useState(null)
   const [loadError, setLoadError] = useState(null)
@@ -73,13 +90,29 @@ export default function PdfEditor({ sessionId, onBack }) {
     ;(async () => {
       try {
         const task = getDocument({ url: pdfUrl, withCredentials: false })
-        const doc = await task.promise
+        const [doc, stRes] = await Promise.all([
+          task.promise,
+          fetch(apiUrl(`/editor-state/${encodeURIComponent(sessionId)}`))
+            .then((r) => (r.ok ? r.json() : { nativeTextEdits: [], edits: { pages: [] } }))
+            .catch(() => ({ nativeTextEdits: [], edits: { pages: [] } })),
+        ])
         if (cancelled) return
         setPdfDoc(doc)
-        reset({})
-        nativeTextEditsRef.current = []
-        setNativeTextEdits([])
-        setBlockTextOverrides({})
+
+        const natives = stRes.nativeTextEdits || []
+        nativeTextEditsRef.current = natives
+        setNativeTextEdits(natives)
+        const over = {}
+        for (const e of natives) {
+          if (e.blockId) over[e.blockId] = e.text ?? ''
+        }
+        setBlockTextOverrides(over)
+
+        if (stRes.edits?.pages?.length) {
+          reset(editsPayloadToPresentMap(stRes.edits))
+        } else {
+          reset({})
+        }
       } catch (e) {
         if (!cancelled) setLoadError(e?.message || 'Failed to load PDF')
       }
@@ -181,6 +214,17 @@ export default function PdfEditor({ sessionId, onBack }) {
 
   const persistPdfToServer = async () => {
     const edits = buildEditsPayload(pagesItemsRef.current)
+    const nativePayload = nativeTextEditsRef.current
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.debug('[save] POST /edit', {
+        annotationPages: edits.pages?.length ?? 0,
+        nativeTextEdits: nativePayload.length,
+        sampleNative: nativePayload[0]
+          ? { key: nativePayload[0].key, textLen: (nativePayload[0].text || '').length }
+          : null,
+      })
+    }
     const res = await fetch(apiUrl('/edit'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -188,7 +232,7 @@ export default function PdfEditor({ sessionId, onBack }) {
         sessionId,
         edits,
         applyTextSwap,
-        nativeTextEdits: nativeTextEditsRef.current,
+        nativeTextEdits: nativePayload,
       }),
     })
     const raw = await res.text()
@@ -204,6 +248,10 @@ export default function PdfEditor({ sessionId, onBack }) {
         errMsg ||
           `Save failed (${res.status}). Is the API running on port 3001?`
       )
+    }
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.debug('[save] /edit ok', res.status)
     }
   }
 
@@ -364,6 +412,7 @@ export default function PdfEditor({ sessionId, onBack }) {
                       items={pagesItems[i] || []}
                       onUpdateItems={updatePage(i)}
                       blockTextOverrides={blockTextOverrides}
+                      sessionNativeTextEdits={nativeTextEdits}
                       onNativeTextEdit={(payload) => addNativeTextEdit(i, payload)}
                       textFormat={textFormat}
                       textFormatRef={textFormatRef}

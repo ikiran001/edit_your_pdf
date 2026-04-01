@@ -15,7 +15,7 @@ Terminal 1 — API (port 3001):
 cd backend && npm install && npm run dev
 ```
 
-Terminal 2 — UI (port 5173, proxies `/upload`, `/edit`, `/download`, `/pdf` to 3001):
+Terminal 2 — UI (port 5173, proxies `/upload`, `/edit`, `/editor-state`, `/download`, `/pdf` to 3001):
 
 ```bash
 cd frontend && npm install && npm run dev
@@ -29,7 +29,8 @@ Open `http://localhost:5173`.
 |--------|------|---------|
 | `POST` | `/upload` | multipart field `file` → `{ sessionId }` |
 | `GET` | `/pdf/:sessionId` | original PDF for pdf.js |
-| `POST` | `/edit` | JSON `{ sessionId, edits, applyTextSwap?, nativeTextEdits? }` → writes `edited.pdf`. Optional `nativeTextEdits[]` carries Word-style replacements (PDF coords + font size + string) from the **Edit text** tool; see `mergeEdits.js` + `nativeText` in `applyEdits.js`. If `applyTextSwap` is true, default phrase rules run in `applyTextReplacements.js`. |
+| `GET` | `/editor-state/:sessionId` | JSON `{ nativeTextEdits, edits }` for hydrating the editor after reload (persisted under `uploads/<sessionId>/`). |
+| `POST` | `/edit` | JSON `{ sessionId, edits, applyTextSwap?, nativeTextEdits? }` → writes `edited.pdf`. Each save **rebuilds from `original.pdf`** plus merged persisted native edits and annotations so inline text is not stacked. Merges `nativeTextEdits` into `native-text-edits.json` and annotation `edits` into `session-edits.json` when the client sends non-empty pages. |
 | `GET` | `/download?sessionId=` | download edited PDF (or original if never edited) |
 
 Uploads live under `backend/uploads/<sessionId>/` and are removed automatically after about one hour.

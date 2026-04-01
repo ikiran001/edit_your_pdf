@@ -8,6 +8,14 @@ import {
   defaultEditorToLoveRules,
 } from '../services/applyTextReplacements.js';
 import { mergeEditsWithNative } from '../utils/mergeEdits.js';
+import {
+  loadNativeTextEdits,
+  saveNativeTextEdits,
+  mergeNativeTextEdits,
+  loadSessionEdits,
+  saveSessionEdits,
+  sessionHasAnnotationItems,
+} from '../utils/sessionEditPersistence.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const uploadsRoot = path.join(__dirname, '..', 'uploads');
@@ -20,8 +28,28 @@ function isValidPdfBytes(buf) {
 
 const router = Router();
 
+const debugEdit = process.env.DEBUG_PDF_EDIT === '1' || process.env.DEBUG_PDF_EDIT === 'true';
+
+/**
+ * GET /editor-state/:sessionId — persisted native text edits + annotation payload for client hydration.
+ */
+router.get('/editor-state/:sessionId', (req, res) => {
+  const sessionId = req.params.sessionId;
+  if (!sessionId || typeof sessionId !== 'string') {
+    return res.status(400).json({ error: 'sessionId required' });
+  }
+  const dir = path.join(uploadsRoot, sessionId);
+  if (!fs.existsSync(dir)) return res.status(404).json({ error: 'Session not found' });
+  const nativeTextEdits = loadNativeTextEdits(uploadsRoot, sessionId);
+  const edits = loadSessionEdits(uploadsRoot, sessionId);
+  return res.json({ nativeTextEdits, edits });
+});
+
 /**
  * POST /edit — applies client edit payload with pdf-lib, writes edited.pdf for the session.
+ *
+ * Always rebuilds from original.pdf + persisted state so native text and masks are not stacked
+ * on every save (which caused duplicated text in pdf.js and growing strings).
  */
 router.post('/edit', express.json({ limit: '50mb' }), async (req, res) => {
   const { sessionId, edits, applyTextSwap, textReplaceRules, nativeTextEdits } =
@@ -36,18 +64,19 @@ router.post('/edit', express.json({ limit: '50mb' }), async (req, res) => {
     return res.status(404).json({ error: 'Session or PDF not found' });
   }
   try {
-    // Chain edits: after the first save, client clears in-memory native edits and reloads from
-    // edited.pdf — the next POST must start from the latest file, not original, or changes revert.
-    let pdfBytes;
-    if (fs.existsSync(editedPath)) {
-      try {
-        pdfBytes = fs.readFileSync(editedPath);
-      } catch {
-        pdfBytes = fs.readFileSync(originalPath);
-      }
+    const persistedNative = loadNativeTextEdits(uploadsRoot, sessionId);
+    const mergedNative = mergeNativeTextEdits(persistedNative, nativeTextEdits || []);
+    saveNativeTextEdits(uploadsRoot, sessionId, mergedNative);
+
+    let pagesEdits = edits && typeof edits === 'object' ? edits : { pages: [] };
+    if (sessionHasAnnotationItems(pagesEdits)) {
+      saveSessionEdits(uploadsRoot, sessionId, pagesEdits);
     } else {
-      pdfBytes = fs.readFileSync(originalPath);
+      pagesEdits = loadSessionEdits(uploadsRoot, sessionId);
     }
+
+    let pdfBytes = fs.readFileSync(originalPath);
+
     const rules =
       Array.isArray(textReplaceRules) && textReplaceRules.length
         ? textReplaceRules
@@ -65,13 +94,23 @@ router.post('/edit', express.json({ limit: '50mb' }), async (req, res) => {
           );
         }
       } catch (replErr) {
-        // pdf.js text scan often fails on complex PDFs (e.g. resumes); do not block save/download.
         console.error('edit: applyTextReplacements skipped:', replErr);
       }
     }
-    const merged = mergeEditsWithNative(edits || { pages: [] }, nativeTextEdits);
+
+    const merged = mergeEditsWithNative(pagesEdits || { pages: [] }, mergedNative);
     const out = await applyEditsToPdf(pdfBytes, merged);
     fs.writeFileSync(outPath, out);
+
+    if (debugEdit) {
+      const nItems = (mergedNative || []).length;
+      const annPages = (pagesEdits?.pages || []).filter((g) => (g.items || []).length > 0)
+        .length;
+      console.info(
+        `[edit] session=${sessionId.slice(0, 8)}… native=${nItems} annotationPages=${annPages} bytesOut=${out.length}`,
+      );
+    }
+
     return res.json({ ok: true });
   } catch (e) {
     console.error('edit:', e);
