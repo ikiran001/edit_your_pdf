@@ -20,9 +20,8 @@ export default function SignatureCreationModal({ open, onClose, onDone }) {
     if (!c) return
     c.width = 560
     c.height = 200
-    const ctx = c.getContext('2d')
-    ctx.fillStyle = '#ffffff'
-    ctx.fillRect(0, 0, c.width, c.height)
+    const ctx = c.getContext('2d', { alpha: true })
+    if (ctx) ctx.clearRect(0, 0, c.width, c.height)
   }, [])
 
   useEffect(() => {
@@ -91,7 +90,7 @@ export default function SignatureCreationModal({ open, onClose, onDone }) {
     drawing.current = true
     setError(null)
     const c = canvasRef.current
-    const ctx = c?.getContext('2d')
+    const ctx = c?.getContext('2d', { alpha: true })
     if (!ctx) return
     const { x, y } = padCoords(e.clientX, e.clientY)
     ctx.beginPath()
@@ -104,7 +103,7 @@ export default function SignatureCreationModal({ open, onClose, onDone }) {
 
   const onPadMove = (e) => {
     if (!drawing.current) return
-    const ctx = canvasRef.current?.getContext('2d')
+    const ctx = canvasRef.current?.getContext('2d', { alpha: true })
     if (!ctx) return
     const { x, y } = padCoords(e.clientX, e.clientY)
     ctx.lineTo(x, y)
@@ -121,9 +120,9 @@ export default function SignatureCreationModal({ open, onClose, onDone }) {
     const c = document.createElement('canvas')
     c.width = 560
     c.height = 160
-    const ctx = c.getContext('2d')
-    ctx.fillStyle = '#ffffff'
-    ctx.fillRect(0, 0, c.width, c.height)
+    const ctx = c.getContext('2d', { alpha: true })
+    if (!ctx) throw new Error('Could not create signature canvas')
+    ctx.clearRect(0, 0, c.width, c.height)
     try {
       await document.fonts.load('600 40px "Dancing Script"')
     } catch {
@@ -147,7 +146,7 @@ export default function SignatureCreationModal({ open, onClose, onDone }) {
       if (tab === 'draw') {
         const c = canvasRef.current
         if (!c || !c.width || !c.height) throw new Error('Signature pad is not ready')
-        const ctx = c.getContext('2d')
+        const ctx = c.getContext('2d', { alpha: true })
         if (!ctx) throw new Error('Signature pad is not ready')
         if (!canvasHasInk(ctx, c.width, c.height)) {
           throw new Error('Draw your signature on the pad')
@@ -156,21 +155,24 @@ export default function SignatureCreationModal({ open, onClose, onDone }) {
         const res = await fetch(dataUrl)
         pngBytes = new Uint8Array(await res.arrayBuffer())
       } else if (tab === 'upload') {
-        if (!imgFile) throw new Error('Choose a signature image (PNG or JPEG)')
+        if (!imgFile) throw new Error('Choose a PNG signature image')
         const bytes = await imgFile.arrayBuffer()
-        if (imgFile.type.includes('jpeg') || imgFile.type.includes('jpg')) {
-          const bmp = await createImageBitmap(new Blob([bytes], { type: imgFile.type }))
-          const c = document.createElement('canvas')
-          c.width = bmp.width
-          c.height = bmp.height
-          const ctx = c.getContext('2d')
-          ctx.drawImage(bmp, 0, 0)
-          const dataUrl = c.toDataURL('image/png')
-          const res = await fetch(dataUrl)
-          pngBytes = new Uint8Array(await res.arrayBuffer())
-        } else {
-          pngBytes = new Uint8Array(bytes)
+        const u8 = new Uint8Array(bytes)
+        const pngMagic =
+          u8.length >= 8 &&
+          u8[0] === 0x89 &&
+          u8[1] === 0x50 &&
+          u8[2] === 0x4e &&
+          u8[3] === 0x47 &&
+          u8[4] === 0x0d &&
+          u8[5] === 0x0a &&
+          u8[6] === 0x1a &&
+          u8[7] === 0x0a
+        const isPng = imgFile.type === 'image/png' || /\.png$/i.test(imgFile.name || '') || pngMagic
+        if (!isPng) {
+          throw new Error('Use a PNG file so transparency is preserved (JPEG has no alpha).')
         }
+        pngBytes = new Uint8Array(bytes)
       } else if (tab === 'type') {
         pngBytes = await rasterizeTypeToPng()
       } else {
@@ -205,7 +207,9 @@ export default function SignatureCreationModal({ open, onClose, onDone }) {
         <h2 id="sig-modal-title" className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
           Add signature
         </h2>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Draw, upload an image, or type your name.</p>
+        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+          Draw, upload a PNG, or type your name — signatures keep a transparent background.
+        </p>
 
         <div className="mt-4 flex gap-2">
           {['draw', 'upload', 'type'].map((t) => (
@@ -233,10 +237,14 @@ export default function SignatureCreationModal({ open, onClose, onDone }) {
         <div className="mt-4">
           {tab === 'draw' ? (
             <>
-              <canvas
-                ref={canvasRef}
-                className="w-full max-w-full cursor-crosshair touch-none rounded-xl border border-zinc-300 bg-white dark:border-zinc-600"
-                onMouseDown={onPadDown}
+              <div
+                className="rounded-xl border border-zinc-300 bg-[length:12px_12px] bg-center dark:border-zinc-600 [background-image:repeating-conic-gradient(rgb(228_228_231)_0%_25%,rgb(250_250_250)_0%_50%)] dark:[background-image:repeating-conic-gradient(rgb(63_63_70)_0%_25%,rgb(39_39_42)_0%_50%)]"
+              >
+                <canvas
+                  ref={canvasRef}
+                  className="block w-full max-w-full cursor-crosshair touch-none rounded-[11px] bg-transparent"
+                  style={{ background: 'transparent' }}
+                  onMouseDown={onPadDown}
                 onMouseMove={onPadMove}
                 onMouseUp={onPadUp}
                 onMouseLeave={onPadUp}
@@ -251,7 +259,8 @@ export default function SignatureCreationModal({ open, onClose, onDone }) {
                   onPadMove({ clientX: e.touches[0].clientX, clientY: e.touches[0].clientY })
                 }}
                 onTouchEnd={onPadUp}
-              />
+                />
+              </div>
               <button
                 type="button"
                 onClick={clearPad}
@@ -266,7 +275,7 @@ export default function SignatureCreationModal({ open, onClose, onDone }) {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/png,image/jpeg"
+                accept="image/png,.png"
                 className="sr-only"
                 onChange={(e) => setImgFile(e.target.files?.[0] || null)}
               />
@@ -279,15 +288,18 @@ export default function SignatureCreationModal({ open, onClose, onDone }) {
                 <span className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
                   Click to upload signature image
                 </span>
-                <span className="text-xs text-zinc-500">PNG or JPEG</span>
+                <span className="text-xs text-zinc-500">PNG only — keeps transparency</span>
               </button>
               {imgPreviewUrl ? (
-                <div className="rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-600 dark:bg-zinc-950">
+                <div
+                  className="rounded-xl border border-zinc-200 bg-[length:12px_12px] bg-center p-3 dark:border-zinc-600 [background-image:repeating-conic-gradient(rgb(228_228_231)_0%_25%,rgb(250_250_250)_0%_50%)] dark:[background-image:repeating-conic-gradient(rgb(63_63_70)_0%_25%,rgb(39_39_42)_0%_50%)]"
+                >
                   <p className="mb-2 text-xs font-medium text-zinc-500">Preview</p>
                   <img
                     src={imgPreviewUrl}
                     alt="Signature preview"
-                    className="mx-auto max-h-32 max-w-full object-contain"
+                    className="mx-auto max-h-32 max-w-full bg-transparent object-contain"
+                    style={{ background: 'transparent' }}
                   />
                   <p className="mt-2 truncate text-center text-xs text-zinc-500">{imgFile?.name}</p>
                 </div>
