@@ -73,11 +73,13 @@ export async function defaultPlacementForPng(pngBytes, getViewportForPage, pageI
   return { nx, ny, nw, nh }
 }
 
-/** True if canvas has any non-white / visible ink (RGB channels; alpha is often 255 for strokes). */
+/** True if canvas has visible ink (opaque/semi-opaque non-white pixels; skips transparent background). */
 export function canvasHasInk(ctx, w, h) {
   if (!w || !h) return false
   const pix = ctx.getImageData(0, 0, w, h).data
   for (let i = 0; i < pix.length; i += 4) {
+    const a = pix[i + 3]
+    if (a < 12) continue
     const r = pix[i]
     const g = pix[i + 1]
     const b = pix[i + 2]

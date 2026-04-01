@@ -99,7 +99,7 @@ function SignatureBoxOverlay({
 
   return (
     <div
-      className="pointer-events-auto absolute z-30 border-2 border-indigo-500 bg-white/20 shadow-lg ring-2 ring-indigo-400/40 backdrop-blur-[1px]"
+      className="pointer-events-auto absolute z-30 border-2 border-indigo-500 bg-transparent shadow-lg ring-2 ring-indigo-400/40"
       style={{
         left: `${placement.nx * 100}%`,
         top: `${placement.ny * 100}%`,
@@ -113,8 +113,14 @@ function SignatureBoxOverlay({
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
     >
-      <div className="flex h-full w-full items-center justify-center overflow-hidden p-0.5">
-        <img src={previewUrl} alt="" className="max-h-full max-w-full select-none object-contain" draggable={false} />
+      <div className="flex h-full w-full items-center justify-center overflow-hidden bg-transparent p-0.5">
+        <img
+          src={previewUrl}
+          alt=""
+          className="max-h-full max-w-full select-none bg-transparent object-contain"
+          style={{ background: 'transparent' }}
+          draggable={false}
+        />
       </div>
       <button
         data-sig-close
