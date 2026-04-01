@@ -281,10 +281,15 @@ export function buildPageTextBlocks(runs, pageIndex = 0) {
   const merged = mergeRunsIntoLineBlocks(runs || [])
   const deduped = dedupeOverlappingLineBlocks(merged)
   const dedupedText = dedupeIdenticalOverlappingLineBlocks(deduped)
-  return dedupedText.map((b, idx) => ({
-    ...b,
-    id: `p${pageIndex}-line-${idx}-${Math.round(b.left)}-${Math.round(b.top)}`,
-  }))
+  return dedupedText.map((b) => {
+    const { pdf } = b
+    const bx = Math.round((pdf?.x ?? 0) * 100) / 100
+    const by = Math.round((pdf?.y ?? 0) * 100) / 100
+    const bb = Math.round((pdf?.baseline ?? 0) * 100) / 100
+    const bw = Math.round((pdf?.w ?? 0) * 100) / 100
+    const id = `p${pageIndex}-u${bx}_${by}_${bb}_w${bw}`
+    return { ...b, id }
+  })
 }
 
 export function hitTestTextBlockNearest(blocks, px, py, pad = 6) {

@@ -5,6 +5,27 @@ import { cssDisplayFontFromPdf, defaultTextFormat } from '../lib/textFormatDefau
 
 const RENDER_SCALE = 1.35
 
+/** Hex #RGB / #RRGGBB → rgba() for translucent highlights (no solid blocks). */
+function hexToRgba(hex, opacity) {
+  const h = String(hex || '#facc15').replace('#', '')
+  const full =
+    h.length === 3
+      ? h
+          .split('')
+          .map((c) => c + c)
+          .join('')
+      : h
+  const n = parseInt(full, 16)
+  if (!Number.isFinite(n)) return `rgba(250, 204, 21, ${opacity})`
+  const r = (n >> 16) & 255
+  const g = (n >> 8) & 255
+  const b = n & 255
+  let a = Number(opacity)
+  if (!Number.isFinite(a)) a = 0.35
+  a = Math.min(1, Math.max(0.05, a))
+  return `rgba(${r},${g},${b},${a})`
+}
+
 /** Normalize for comparing contenteditable value vs baseline (opening string). */
 function normalizeNativeCompare(s) {
   return String(s ?? '')
@@ -115,7 +136,8 @@ export default function PdfPageCanvas({
     if (!overlay || !pdfCv || !pdfCv.width) return
     overlay.width = pdfCv.width
     overlay.height = pdfCv.height
-    const ctx = overlay.getContext('2d')
+    const ctx = overlay.getContext('2d', { alpha: true })
+    if (!ctx) return
     const w = overlay.width
     const h = overlay.height
     ctx.clearRect(0, 0, w, h)
@@ -138,7 +160,9 @@ export default function PdfPageCanvas({
           break
         }
         case 'highlight': {
-          ctx.fillStyle = 'rgba(250, 204, 21, 0.35)'
+          const hiOp = Number(it.opacity)
+          const op = Number.isFinite(hiOp) ? Math.min(1, Math.max(0.05, hiOp)) : 0.35
+          ctx.fillStyle = hexToRgba(it.color, op)
           ctx.fillRect(it.x * w, it.y * h, it.w * w, it.h * h)
           break
         }
@@ -182,7 +206,7 @@ export default function PdfPageCanvas({
       const rw = Math.abs(draftBox.x1 - draftBox.x0) * w
       const rh = Math.abs(draftBox.y1 - draftBox.y0) * h
       if (draftBox.mode === 'highlight') {
-        ctx.fillStyle = 'rgba(250, 204, 21, 0.35)'
+        ctx.fillStyle = hexToRgba('#facc15', 0.35)
         ctx.fillRect(x, y, rw, rh)
       } else {
         ctx.strokeStyle = '#2563eb'
@@ -192,10 +216,13 @@ export default function PdfPageCanvas({
     }
   }, [items])
 
+  /* Single pipeline: render page → then extract text. Avoids ready flicker and races where a
+   * cancelled render leaves a partial canvas (torn underlines) while getTextContent runs again. */
   useEffect(() => {
     if (!pdfPage) return
     let cancelled = false
     const canvas = pdfCanvasRef.current
+    if (!canvas) return
     const scale = RENDER_SCALE
     const viewport = pdfPage.getViewport({ scale })
     const base = pdfPage.getViewport({ scale: 1 })
@@ -207,18 +234,35 @@ export default function PdfPageCanvas({
     }
     canvas.width = viewport.width
     canvas.height = viewport.height
-    const ctx = canvas.getContext('2d')
+    const ctx = canvas.getContext('2d', { alpha: false })
+    if (!ctx) {
+      setTextDiag({ count: 0, scanned: true, error: true })
+      setReady(true)
+      return () => {}
+    }
     const task = pdfPage.render({ canvasContext: ctx, viewport })
+
     task.promise
       .then(() => {
-        if (cancelled) return
+        if (cancelled) return null
+        return pdfPage.getTextContent()
+      })
+      .then((tc) => {
+        if (cancelled || tc == null) return
+        const runs = buildTextRuns(viewport, tc)
+        setTextRuns(runs)
+        setTextDiag({ count: runs.length, scanned: true })
         setReady(true)
       })
       .catch((e) => {
         if (cancelled) return
         if (e?.name === 'RenderingCancelledException') return
         console.error(e)
+        setTextRuns([])
+        setTextDiag({ count: 0, scanned: true, error: true })
+        setReady(true)
       })
+
     return () => {
       cancelled = true
       try {
@@ -226,40 +270,18 @@ export default function PdfPageCanvas({
       } catch {
         /* ignore */
       }
+      const c = pdfCanvasRef.current
+      const cx = c?.getContext?.('2d')
+      if (c && cx && c.width > 0 && c.height > 0) {
+        cx.setTransform(1, 0, 0, 1, 0, 0)
+        cx.fillStyle = '#ffffff'
+        cx.fillRect(0, 0, c.width, c.height)
+      }
       setReady(false)
+      setTextRuns([])
+      setTextDiag(null)
     }
   }, [pdfPage])
-
-  useEffect(() => {
-    /* eslint-disable react-hooks/set-state-in-effect -- reset extract state when page changes */
-    setTextRuns([])
-    setTextDiag(null)
-    /* eslint-enable react-hooks/set-state-in-effect */
-  }, [pdfPage])
-
-  // After the page has painted once, parse text once per pdfPage (no empty reset on StrictMode cleanup).
-  useEffect(() => {
-    if (!pdfPage || !ready) return
-    let cancelled = false
-    const viewport = pdfPage.getViewport({ scale: RENDER_SCALE })
-    pdfPage
-      .getTextContent()
-      .then((tc) => {
-        if (cancelled) return
-        const runs = buildTextRuns(viewport, tc)
-        setTextRuns(runs)
-        setTextDiag({ count: runs.length, scanned: true })
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setTextRuns([])
-          setTextDiag({ count: 0, scanned: true, error: true })
-        }
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [pdfPage, ready])
 
   useEffect(() => {
     if (tool !== 'editText' || !editTextMode) {
@@ -665,9 +687,10 @@ export default function PdfPageCanvas({
       />
       <canvas
         ref={overlayRef}
-        className={`absolute left-0 top-0 touch-none ${
+        className={`absolute left-0 top-0 touch-none bg-transparent ${
           overlayActive ? 'z-10 cursor-crosshair' : 'pointer-events-none z-[1]'
         }`}
+        style={{ background: 'transparent' }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -700,12 +723,6 @@ export default function PdfPageCanvas({
                 title={isEditing ? undefined : 'Click to edit'}
                 data-text-block-id={block.id}
               >
-                {isEditing && (
-                  <div
-                    className="pointer-events-none absolute inset-0 z-0 min-h-full min-w-full rounded-sm bg-white"
-                    aria-hidden
-                  />
-                )}
                 <div
                   key={isEditing ? `${block.id}__editing` : `${block.id}__idle`}
                   ref={(el) => {
@@ -721,7 +738,7 @@ export default function PdfPageCanvas({
                     isEditing ? 'select-text' : 'select-none'
                   } ${
                     isEditing
-                      ? 'pdf-text-layer-editor cursor-text border border-solid border-[#4A90E2] bg-white'
+                      ? 'pdf-text-layer-editor pdf-text-layer-editor--paper cursor-text rounded-sm border border-solid border-[#4A90E2] bg-white'
                       : `cursor-text border border-transparent bg-transparent ${
                           hoverBlockId === block.id ? 'border border-dashed border-[#ccc]' : ''
                         }`
@@ -729,6 +746,8 @@ export default function PdfPageCanvas({
                   style={
                     isEditing
                       ? {
+                          colorScheme: 'light',
+                          backgroundColor: '#ffffff',
                           fontSize: `${editorFontCssPx}px`,
                           lineHeight: 'normal',
                           fontFamily: editFontFamily,
@@ -795,6 +814,8 @@ export default function PdfPageCanvas({
                     const el = e.currentTarget
                     const f = textFormat ?? defaultTextFormat()
                     const vfs = f.fontSizeCss ?? block.fontSizePx
+                    el.style.colorScheme = 'light'
+                    el.style.backgroundColor = '#ffffff'
                     el.style.fontSize = `${Math.max(6, Math.min(240, vfs * sx))}px`
                     el.style.fontFamily = cssDisplayFontFromPdf(block.pdfFontFamily, f.fontFamily)
                     el.style.color = f.color
@@ -846,7 +867,7 @@ export default function PdfPageCanvas({
       {textDraft && cw > 0 && (
         <input
           autoFocus
-          className="absolute z-20 min-w-[120px] rounded border border-indigo-400 bg-white/95 px-2 py-1 text-sm shadow dark:bg-zinc-900"
+          className="absolute z-20 min-w-[120px] rounded border-2 border-indigo-500 bg-transparent px-2 py-1 text-sm text-zinc-900 shadow-none placeholder:text-zinc-500 dark:border-indigo-400 dark:text-zinc-100 dark:placeholder:text-zinc-400"
           style={{
             left: textDraft.nx * cw,
             top: textDraft.ny * ch,

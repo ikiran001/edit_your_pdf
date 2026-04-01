@@ -151,6 +151,7 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
             maskY = cy - maskH / 2;
           }
 
+          /* Paint-out original glyphs (PDF content stream is unchanged). Not an annotation fill — avoids double text. */
           page.drawRectangle({
             x: maskX,
             y: maskY,
