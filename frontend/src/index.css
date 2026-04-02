@@ -123,11 +123,10 @@ html.dark .fx-glass-header > * {
   z-index: 1;
 }
 
-/* Contenteditable: avoid synthetic bold/italic that drifts from PDF metrics.
-   Opaque light “paper” masks pdf.js text under the box (avoids double text). Always light
-   surface even in app dark mode so typical black PDF text stays readable. */
+/* Contenteditable: opaque light “paper” masks pdf.js text under the box (avoids double text).
+   Do NOT use font-synthesis: none — it disables faux bold/italic so toolbar B/I appear broken
+   for typical PDF font-family stacks. Saved PDF still uses real StandardFonts (metrics may differ slightly). */
 .pdf-text-layer-editor {
-  font-synthesis: none;
   text-rendering: geometricPrecision;
   -webkit-text-fill-color: currentColor;
   color-scheme: light;
