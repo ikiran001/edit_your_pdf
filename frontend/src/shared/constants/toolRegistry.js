@@ -7,7 +7,7 @@ export const TOOL_REGISTRY = [
     id: 'sign-pdf',
     path: '/tools/sign-pdf',
     title: 'Sign PDF',
-    description: 'Place a draggable signature on the preview, then download.',
+    description: 'Sign any page, duplicate or copy/paste placements, then download.',
     implemented: true,
     icon: 'PenLine',
   },

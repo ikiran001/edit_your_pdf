@@ -43,7 +43,7 @@ export function clientToCanvasPoint(canvas, clientX, clientY) {
   }
 }
 
-function clamp(n, lo, hi) {
+export function clamp(n, lo, hi) {
   return Math.min(hi, Math.max(lo, n))
 }
 

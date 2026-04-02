@@ -12,6 +12,27 @@ function clamp(n, lo, hi) {
   return Math.min(hi, Math.max(lo, n))
 }
 
+/** Pick the page row with the largest visible area in the browser viewport (reliable vs IntersectionObserver when several pages peek in). */
+function pageIndexWithLargestVisibleArea(pageNodesMap, numPages) {
+  let best = 0
+  let bestArea = -1
+  const vw = window.innerWidth
+  const vh = window.innerHeight
+  for (let i = 0; i < numPages; i++) {
+    const el = pageNodesMap.get(i)
+    if (!el) continue
+    const r = el.getBoundingClientRect()
+    const ix = Math.max(0, Math.min(r.right, vw) - Math.max(r.left, 0))
+    const iy = Math.max(0, Math.min(r.bottom, vh) - Math.max(r.top, 0))
+    const area = ix * iy
+    if (area > bestArea) {
+      bestArea = area
+      best = i
+    }
+  }
+  return best
+}
+
 function SignatureBoxOverlay({
   placement,
   previewUrl,
@@ -19,6 +40,9 @@ function SignatureBoxOverlay({
   viewport,
   onChange,
   onRemove,
+  isSelected,
+  onSelect,
+  onMoveEnd,
 }) {
   const dragRef = useRef(null)
 
@@ -36,6 +60,7 @@ function SignatureBoxOverlay({
   const onPointerDownDrag = (e) => {
     if (e.target.closest('[data-resize-handle]') || e.target.closest('[data-sig-close]')) return
     e.preventDefault()
+    onSelect?.(placement.id)
     e.currentTarget.setPointerCapture(e.pointerId)
     dragRef.current = {
       kind: 'move',
@@ -50,6 +75,7 @@ function SignatureBoxOverlay({
   const onPointerDownResize = (e) => {
     e.preventDefault()
     e.stopPropagation()
+    onSelect?.(placement.id)
     e.currentTarget.setPointerCapture(e.pointerId)
     dragRef.current = {
       kind: 'resize',
@@ -88,6 +114,9 @@ function SignatureBoxOverlay({
   const onPointerUp = (e) => {
     const d = dragRef.current
     if (d && d.pid === e.pointerId) {
+      if (d.kind === 'move' && onMoveEnd) {
+        onMoveEnd(placement, e.clientX, e.clientY)
+      }
       dragRef.current = null
       try {
         e.currentTarget.releasePointerCapture(e.pointerId)
@@ -99,7 +128,11 @@ function SignatureBoxOverlay({
 
   return (
     <div
-      className="pointer-events-auto absolute z-30 border-2 border-indigo-500 bg-transparent shadow-lg ring-2 ring-indigo-400/40"
+      className={`pointer-events-auto absolute z-30 border-2 bg-transparent shadow-lg ring-2 ${
+        isSelected
+          ? 'border-cyan-500 ring-cyan-400/50'
+          : 'border-indigo-500 ring-indigo-400/40'
+      }`}
       style={{
         left: `${placement.nx * 100}%`,
         top: `${placement.ny * 100}%`,
@@ -159,7 +192,12 @@ function PdfPageRow({
   placements,
   onPlacementChange,
   onRemovePlacement,
+  onPlacementMoveEnd,
   registerPageNode,
+  registerPageCanvas,
+  isFocusPage,
+  selectedPlacementId,
+  onSelectPlacement,
 }) {
   const canvasRef = useRef(null)
   const [canvasForOverlay, setCanvasForOverlay] = useState(null)
@@ -221,16 +259,21 @@ function PdfPageRow({
   return (
     <div
       ref={(el) => registerPageNode(pageIndex, el)}
-      className="relative mx-auto mb-8 w-full max-w-full shadow-md ring-1 ring-zinc-200 dark:ring-zinc-700"
+      className={`relative mx-auto mb-8 w-full max-w-full shadow-md ring-2 transition-shadow dark:ring-zinc-700 ${
+        isFocusPage
+          ? 'ring-indigo-500 dark:ring-indigo-500'
+          : 'ring-zinc-200 dark:ring-zinc-700'
+      }`}
       style={{ maxWidth: maxWidth ? `${maxWidth}px` : undefined }}
     >
       <div className="relative w-full">
         <canvas
           ref={(el) => {
             canvasRef.current = el
+            registerPageCanvas(pageIndex, el)
             setCanvasForOverlay(el)
           }}
-          className="block h-auto w-full bg-white dark:bg-zinc-100"
+          className="sign-pdf-page-canvas block h-auto w-full bg-white dark:bg-zinc-100"
           style={{ verticalAlign: 'top' }}
         />
         {viewport && signaturePreviewUrl && canvasForOverlay ? (
@@ -245,6 +288,9 @@ function PdfPageRow({
                   viewport={viewport}
                   onChange={onPlacementChange}
                   onRemove={onRemovePlacement}
+                  onMoveEnd={onPlacementMoveEnd}
+                  isSelected={selectedPlacementId === p.id}
+                  onSelect={onSelectPlacement}
                 />
               ))}
             </div>
@@ -253,6 +299,7 @@ function PdfPageRow({
       </div>
       <p className="border-t border-zinc-200 bg-zinc-50 px-2 py-1 text-center text-xs text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
         Page {pageIndex + 1}
+        {pagePlacements.length > 0 ? ` · ${pagePlacements.length} signature${pagePlacements.length === 1 ? '' : 's'}` : ''}
       </p>
     </div>
   )
@@ -261,15 +308,26 @@ function PdfPageRow({
 /**
  * @param {{
  *  file: File,
- *  signaturePng: Uint8Array | null,
+ *  signaturePreviewUrl: string | null,
  *  placements: Placement[],
  *  setPlacements: (p: Placement[] | ((prev: Placement[]) => Placement[])) => void,
  *  focusedPageIndex: number,
  *  setFocusedPageIndex: (n: number) => void,
+ *  selectedPlacementId: string | null,
+ *  onSelectPlacement: (id: string | null) => void,
  * }} props
  */
 const SignPdfViewer = forwardRef(function SignPdfViewer(
-  { file, signaturePreviewUrl, placements, setPlacements, focusedPageIndex, setFocusedPageIndex },
+  {
+    file,
+    signaturePreviewUrl,
+    placements,
+    setPlacements,
+    focusedPageIndex,
+    setFocusedPageIndex,
+    selectedPlacementId,
+    onSelectPlacement,
+  },
   ref
 ) {
   const [pdfDoc, setPdfDoc] = useState(null)
@@ -278,6 +336,7 @@ const SignPdfViewer = forwardRef(function SignPdfViewer(
   const [loadErr, setLoadErr] = useState(null)
   const containerRef = useRef(null)
   const pageNodesRef = useRef(new Map())
+  const pageCanvasRef = useRef(new Map())
 
   useEffect(() => {
     if (!file) {
@@ -321,26 +380,22 @@ const SignPdfViewer = forwardRef(function SignPdfViewer(
     return () => ro.disconnect()
   }, [pdfDoc])
 
-  useEffect(() => {
-    const nodes = pageNodesRef.current
-    if (nodes.size === 0 || numPages === 0) return undefined
-    const io = new IntersectionObserver(
-      (entries) => {
-        const hit = entries
-          .filter((e) => e.isIntersecting && e.intersectionRatio > 0.15)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0]
-        if (hit?.target?.dataset?.pageIndex != null) {
-          setFocusedPageIndex(Number(hit.target.dataset.pageIndex))
-        }
-      },
-      { threshold: [0.1, 0.25, 0.5] }
-    )
-    for (let i = 0; i < numPages; i++) {
-      const n = nodes.get(i)
-      if (n) io.observe(n)
-    }
-    return () => io.disconnect()
+  const updateFocusFromViewport = useCallback(() => {
+    if (numPages <= 0) return
+    const next = pageIndexWithLargestVisibleArea(pageNodesRef.current, numPages)
+    setFocusedPageIndex(next)
   }, [numPages, setFocusedPageIndex])
+
+  useEffect(() => {
+    if (numPages === 0) return undefined
+    updateFocusFromViewport()
+    window.addEventListener('scroll', updateFocusFromViewport, true)
+    window.addEventListener('resize', updateFocusFromViewport)
+    return () => {
+      window.removeEventListener('scroll', updateFocusFromViewport, true)
+      window.removeEventListener('resize', updateFocusFromViewport)
+    }
+  }, [numPages, updateFocusFromViewport])
 
   const registerPageNode = useCallback((pageIndex, el) => {
     if (el) {
@@ -349,6 +404,11 @@ const SignPdfViewer = forwardRef(function SignPdfViewer(
     } else {
       pageNodesRef.current.delete(pageIndex)
     }
+  }, [])
+
+  const registerPageCanvas = useCallback((pageIndex, el) => {
+    if (el) pageCanvasRef.current.set(pageIndex, el)
+    else pageCanvasRef.current.delete(pageIndex)
   }, [])
 
   const onPlacementChange = useCallback(
@@ -361,11 +421,48 @@ const SignPdfViewer = forwardRef(function SignPdfViewer(
   const onRemovePlacement = useCallback(
     (id) => {
       setPlacements((prev) => prev.filter((p) => p.id !== id))
+      onSelectPlacement((prevSel) => (prevSel === id ? null : prevSel))
     },
-    [setPlacements]
+    [setPlacements, onSelectPlacement]
   )
 
-  /** Same viewport math as canvas render — for embedding coordinates */
+  /** After a move, if pointer released over another page’s canvas, reparent and rebase position. */
+  const onPlacementMoveEnd = useCallback(
+    (placement, clientX, clientY) => {
+      let targetPage = null
+      for (let i = 0; i < numPages; i++) {
+        const canvas = pageCanvasRef.current.get(i)
+        if (!canvas) continue
+        const r = canvas.getBoundingClientRect()
+        if (
+          clientX >= r.left &&
+          clientX <= r.right &&
+          clientY >= r.top &&
+          clientY <= r.bottom
+        ) {
+          targetPage = i
+          break
+        }
+      }
+      if (targetPage === null || targetPage === placement.pageIndex) return
+
+      const canvas = pageCanvasRef.current.get(targetPage)
+      if (!canvas) return
+      const r = canvas.getBoundingClientRect()
+      const nw = placement.nw
+      const nh = placement.nh
+      let nx = (clientX - r.left) / Math.max(r.width, 1) - nw / 2
+      let ny = (clientY - r.top) / Math.max(r.height, 1) - nh / 2
+      nx = clamp(nx, 0, 1 - nw)
+      ny = clamp(ny, 0, 1 - nh)
+
+      setPlacements((prev) =>
+        prev.map((p) => (p.id === placement.id ? { ...p, pageIndex: targetPage, nx, ny } : p))
+      )
+    },
+    [numPages, setPlacements]
+  )
+
   const getViewportForPage = useCallback(
     async (pageIndex) => {
       if (!pdfDoc) return null
@@ -389,6 +486,27 @@ const SignPdfViewer = forwardRef(function SignPdfViewer(
 
   return (
     <div ref={containerRef} className="w-full">
+      <div className="mb-4 flex flex-wrap items-center justify-center gap-2">
+        <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Add / paste on page:</span>
+        {Array.from({ length: numPages }, (_, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => {
+              setFocusedPageIndex(i)
+              pageNodesRef.current.get(i)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            }}
+            className={`min-w-9 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+              focusedPageIndex === i
+                ? 'bg-indigo-600 text-white shadow-md'
+                : 'border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800'
+            }`}
+          >
+            {i + 1}
+          </button>
+        ))}
+      </div>
+
       {Array.from({ length: numPages }, (_, i) => (
         <PdfPageRow
           key={i}
@@ -399,10 +517,18 @@ const SignPdfViewer = forwardRef(function SignPdfViewer(
           placements={placements}
           onPlacementChange={onPlacementChange}
           onRemovePlacement={onRemovePlacement}
+          onPlacementMoveEnd={onPlacementMoveEnd}
           registerPageNode={registerPageNode}
+          registerPageCanvas={registerPageCanvas}
+          isFocusPage={focusedPageIndex === i}
+          selectedPlacementId={selectedPlacementId}
+          onSelectPlacement={onSelectPlacement}
         />
       ))}
-      <p className="text-center text-xs text-zinc-400">Focused page for new signatures: {focusedPageIndex + 1}</p>
+      <p className="text-center text-xs text-zinc-400">
+        New signatures and paste go on the highlighted page (ring). Scroll updates the active page; you can also pick a
+        page above. Drag a signature and release over another page to move it there.
+      </p>
     </div>
   )
 })
