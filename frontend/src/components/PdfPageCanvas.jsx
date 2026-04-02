@@ -34,6 +34,38 @@ function normalizeNativeCompare(s) {
     .trim()
 }
 
+function snapshotNativeFormat(f) {
+  const fmt = f ?? defaultTextFormat()
+  return {
+    bold: !!fmt.bold,
+    italic: !!fmt.italic,
+    underline: !!fmt.underline,
+    align: String(fmt.align || 'left'),
+    color: String(fmt.color || '#000000')
+      .trim()
+      .toLowerCase(),
+    opacity: Number(fmt.opacity ?? 1),
+    rotationDeg: Number(fmt.rotationDeg ?? 0),
+    fontFamily: String(fmt.fontFamily || 'Helvetica'),
+    fontSizeCss: Number(fmt.fontSizeCss) || 14,
+  }
+}
+
+function nativeFormatSnapshotsEqual(a, b) {
+  if (!a || !b) return false
+  return (
+    a.bold === b.bold &&
+    a.italic === b.italic &&
+    a.underline === b.underline &&
+    a.align === b.align &&
+    a.color === b.color &&
+    a.opacity === b.opacity &&
+    a.rotationDeg === b.rotationDeg &&
+    a.fontFamily === b.fontFamily &&
+    a.fontSizeCss === b.fontSizeCss
+  )
+}
+
 /**
  * Find persisted native replacement for this line (block ids can change after reload; PDF x/y/baseline are stable).
  */
@@ -118,6 +150,8 @@ export default function PdfPageCanvas({
   const nativeSyncTimerRef = useRef(null)
   /** String shown when the inline editor opened — skip parent updates if unchanged (avoids stacking duplicate drawText on save). */
   const nativeOpenBaselineStrRef = useRef('')
+  /** Toolbar snapshot at open — so bold/italic/underline-only edits still persist when text is unchanged. */
+  const nativeOpenBaselineFormatRef = useRef(null)
   const [hoverBlockId, setHoverBlockId] = useState(null)
 
   useEffect(() => {
@@ -127,6 +161,21 @@ export default function PdfPageCanvas({
   useLayoutEffect(() => {
     textBlocksRef.current = textBlocks
   }, [textBlocks])
+
+  /** Toolbar B / I / U (and related) must apply even when onInput does not run — push to the live contenteditable. */
+  useLayoutEffect(() => {
+    if (!nativeEdit) return
+    const el = nativeEditorElRef.current
+    if (!el) return
+    const f = textFormatRef?.current ?? textFormat ?? defaultTextFormat()
+    el.style.fontWeight = f.bold ? '700' : '400'
+    el.style.fontStyle = f.italic ? 'italic' : 'normal'
+    el.style.textDecoration = f.underline ? 'underline' : 'none'
+    el.style.textDecorationLine = f.underline ? 'underline' : 'none'
+    el.style.textAlign = f.align || 'left'
+    el.style.color = f.color || '#111827'
+    el.style.opacity = String(f.opacity ?? 1)
+  }, [nativeEdit, textFormat])
 
   const [textDiag, setTextDiag] = useState(null)
 
@@ -553,6 +602,18 @@ export default function PdfPageCanvas({
     [onBeginNativeTextEdit]
   )
 
+  /** Capture format once when edit opens only (`nativeEdit` deps — not `textFormat`, or toggling B/I/U would reset baseline). */
+  useLayoutEffect(() => {
+    if (!nativeEdit) {
+      nativeOpenBaselineFormatRef.current = null
+      return
+    }
+    nativeOpenBaselineFormatRef.current = snapshotNativeFormat(
+      textFormatRef?.current ?? textFormat ?? defaultTextFormat()
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- snapshot only on open/close; textFormat on that render is correct
+  }, [nativeEdit])
+
   /**
    * Seed from `textBlocksRef` (latest overrides), not `nativeEdit.block.str` (stale snapshot).
    * One rAF pass for focus if the keyed node mounts after the first layout read.
@@ -629,14 +690,23 @@ export default function PdfPageCanvas({
         const el = nativeEditorElRef.current
         if (!el) return
         const raw = el.innerText ?? ''
-        if (normalizeNativeCompare(raw) === normalizeNativeCompare(nativeOpenBaselineStrRef.current)) {
-          return
-        }
+        const textSame =
+          normalizeNativeCompare(raw) === normalizeNativeCompare(nativeOpenBaselineStrRef.current)
+        const openFmt = nativeOpenBaselineFormatRef.current
+        const curFmt = snapshotNativeFormat(textFormatRef?.current ?? defaultTextFormat())
+        const formatSame = openFmt && nativeFormatSnapshotsEqual(openFmt, curFmt)
+        if (textSame && formatSame) return
         onNativeTextEdit?.(buildNativePayload(block, raw))
       }, 280)
     },
     [onNativeTextEdit, buildNativePayload]
   )
+
+  /** Push toolbar-only changes (B/I/U, color, …) to parent even if the string never changed. */
+  useEffect(() => {
+    if (!nativeEdit) return
+    scheduleNativeSync(nativeEdit.block)
+  }, [textFormat, nativeEdit, scheduleNativeSync])
 
   const commitNativeEdit = useCallback(
     (value) => {
@@ -655,7 +725,12 @@ export default function PdfPageCanvas({
       setNativeEdit(null)
       const baseline = nativeOpenBaselineStrRef.current
       nativeOpenBaselineStrRef.current = ''
-      if (normalizeNativeCompare(value) === normalizeNativeCompare(baseline)) {
+      const openFmt = nativeOpenBaselineFormatRef.current
+      nativeOpenBaselineFormatRef.current = null
+      const textSame = normalizeNativeCompare(value) === normalizeNativeCompare(baseline)
+      const curFmt = snapshotNativeFormat(textFormatRef?.current ?? defaultTextFormat())
+      const formatSame = openFmt && nativeFormatSnapshotsEqual(openFmt, curFmt)
+      if (textSame && formatSame) {
         return
       }
       onNativeTextEdit?.(buildNativePayload(block, value))
