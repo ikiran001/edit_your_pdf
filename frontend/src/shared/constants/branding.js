@@ -1,17 +1,17 @@
 /** Single source of truth for product branding. */
-export const BRAND_NAME = 'TheBestPDF'
+export const BRAND_NAME = 'PDFly'
 export const TAGLINE = 'Free PDF tools. Fast, simple, no watermark.'
 
-export const DOC_TITLE_HOME = 'TheBestPDF – Free PDF Tools (No Watermark)'
+export const DOC_TITLE_HOME = 'PDFly - Edit, Sign & Convert PDFs'
 
 const TOOL_DOC_TITLES = {
-  '/tools/edit-pdf': 'TheBestPDF – Edit PDF',
-  '/tools/sign-pdf': 'TheBestPDF – Sign PDF',
-  '/tools/pdf-to-jpg': 'TheBestPDF – PDF to JPG',
-  '/tools/jpg-to-pdf': 'TheBestPDF – JPG to PDF',
-  '/tools/unlock-pdf': 'TheBestPDF – Unlock PDF',
-  '/tools/pdf-to-word': 'TheBestPDF – PDF to Word',
-  '/tools/word-to-pdf': 'TheBestPDF – Word to PDF',
+  '/tools/edit-pdf': 'PDFly - Edit PDF',
+  '/tools/sign-pdf': 'PDFly - Sign PDF',
+  '/tools/pdf-to-jpg': 'PDFly - PDF to JPG',
+  '/tools/jpg-to-pdf': 'PDFly - JPG to PDF',
+  '/tools/unlock-pdf': 'PDFly - Unlock PDF',
+  '/tools/pdf-to-word': 'PDFly - PDF to Word',
+  '/tools/word-to-pdf': 'PDFly - Word to PDF',
 }
 
 /**
@@ -23,15 +23,15 @@ export function docTitleForPath(pathname) {
 }
 
 export const MSG = {
-  uploading: 'Uploading to TheBestPDF…',
+  uploading: 'Uploading to PDFly…',
   processingFile: 'Processing your file…',
   finalizingPdf: 'Finalizing your PDF…',
   loadingPdf: 'Loading your PDF…',
-  fileReady: 'Your file is ready on TheBestPDF.',
-  savedSession: 'Saved — stored for this session on TheBestPDF.',
+  fileReady: 'Your file is ready on PDFly.',
+  savedSession: 'Saved — stored for this session on PDFly.',
 }
 
-/** e.g. "Edit PDF on TheBestPDF" */
+/** e.g. "Edit PDF on PDFly" */
 export function toolOnBrand(toolTitle) {
   return `${toolTitle} on ${BRAND_NAME}`
 }
