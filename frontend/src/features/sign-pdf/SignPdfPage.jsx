@@ -3,6 +3,17 @@ import { PDFDocument } from 'pdf-lib'
 import { ClipboardPaste, CopyPlus, PenLine } from 'lucide-react'
 import ToolPageShell from '../../shared/components/ToolPageShell.jsx'
 import FileDropzone from '../../shared/components/FileDropzone.jsx'
+import { useToolEngagement } from '../../hooks/useToolEngagement.js'
+import {
+  markFunnelUpload,
+  trackErrorOccurred,
+  trackFileDownloaded,
+  trackFileUploaded,
+  trackProcessingTime,
+  trackSignaturePlaced,
+  trackToolCompleted,
+} from '../../lib/analytics.js'
+import { ANALYTICS_TOOL } from '../../shared/constants/analyticsTools.js'
 import SignatureCreationModal from './SignatureCreationModal.jsx'
 import SignPdfViewer from './SignPdfViewer.jsx'
 import {
@@ -24,9 +35,11 @@ function downloadUint8(u8, name) {
 }
 
 const PLACE_OFFSET = 0.02
+const SIGN_TOOL = ANALYTICS_TOOL.sign_pdf
 
 export default function SignPdfPage() {
   const viewerRef = useRef(null)
+  const prevPlacementsLen = useRef(0)
   const placementClipboardRef = useRef(null)
   const [pdfFile, setPdfFile] = useState(null)
   const [signaturePng, setSignaturePng] = useState(null)
@@ -38,6 +51,21 @@ export default function SignPdfPage() {
   const [error, setError] = useState(null)
   /** Bumps when user copies a placement so the Paste button re-renders (ref alone does not). */
   const [clipboardRev, setClipboardRev] = useState(0)
+
+  useToolEngagement(SIGN_TOOL, Boolean(pdfFile))
+
+  useEffect(() => {
+    prevPlacementsLen.current = 0
+  }, [pdfFile])
+
+  useEffect(() => {
+    if (!pdfFile) return
+    if (placements.length > prevPlacementsLen.current) {
+      const last = placements[placements.length - 1]
+      if (last) trackSignaturePlaced(last.pageIndex + 1)
+    }
+    prevPlacementsLen.current = placements.length
+  }, [placements, pdfFile])
 
   const signaturePreviewUrl = useMemo(
     () => (signaturePng?.length ? uint8ToDataUrlPng(signaturePng) : null),
@@ -137,6 +165,7 @@ export default function SignPdfPage() {
 
     setBusy(true)
     setError(null)
+    const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
     try {
       const pdfBytes = await pdfFile.arrayBuffer()
       const doc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true })
@@ -161,9 +190,20 @@ export default function SignPdfPage() {
       }
 
       const out = await doc.save()
+      const pageCount = doc.getPageCount()
       downloadUint8(out, pdfFile.name.replace(/\.pdf$/i, '') + '-signed.pdf')
+      trackToolCompleted(SIGN_TOOL, true)
+      trackFileDownloaded({
+        tool: SIGN_TOOL,
+        file_size: out.byteLength / 1024,
+        total_pages: pageCount,
+      })
+      const elapsed =
+        (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0
+      trackProcessingTime(SIGN_TOOL, elapsed)
     } catch (e) {
       console.error(e)
+      trackErrorOccurred(SIGN_TOOL, e?.message || 'sign_apply_failed')
       setError(e?.message || 'Could not embed signature')
     } finally {
       setBusy(false)
@@ -190,7 +230,16 @@ export default function SignPdfPage() {
         accept="application/pdf"
         disabled={busy}
         onFiles={(f) => {
-          setPdfFile(f[0])
+          const next = f[0]
+          if (next) {
+            markFunnelUpload(SIGN_TOOL)
+            trackFileUploaded({
+              file_type: 'pdf',
+              file_size: next.size / 1024,
+              tool: SIGN_TOOL,
+            })
+          }
+          setPdfFile(next)
           setPlacements([])
           setSignaturePng(null)
           setSelectedPlacementId(null)

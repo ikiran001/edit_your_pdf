@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Upload, X } from 'lucide-react'
+import { trackSignatureAdded } from '../../lib/analytics.js'
 import { canvasHasInk } from './signPdfGeometry.js'
 
 /**
@@ -178,6 +179,7 @@ export default function SignatureCreationModal({ open, onClose, onDone }) {
       } else {
         throw new Error('Select a tab')
       }
+      trackSignatureAdded(tab)
       await Promise.resolve(onDone(pngBytes))
       onClose()
     } catch (e) {
