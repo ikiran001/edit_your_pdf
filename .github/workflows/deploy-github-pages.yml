@@ -43,12 +43,16 @@ jobs:
       # Optional secrets for a custom domain (see README):
       #   VITE_SITE_URL = https://yourdomain.com/   (trailing slash)
       #   VITE_BASE_PATH = /                        (root path; default is /repo-name/ for github.io)
+      #   VITE_GA_MEASUREMENT_ID = G-XXXXXXXXXX     (must match GA4 Admin → Data streams; overrides frontend/.env.production)
       - name: Build
         working-directory: frontend
         env:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
           VITE_GOOGLE_SITE_VERIFICATION: ${{ secrets.VITE_GOOGLE_SITE_VERIFICATION }}
         run: |
+          if [ -n "${{ secrets.VITE_GA_MEASUREMENT_ID }}" ]; then
+            export VITE_GA_MEASUREMENT_ID="${{ secrets.VITE_GA_MEASUREMENT_ID }}"
+          fi
           if [ -n "${{ secrets.VITE_SITE_URL }}" ]; then
             export VITE_SITE_URL="${{ secrets.VITE_SITE_URL }}"
           else
@@ -60,6 +64,20 @@ jobs:
             export VITE_BASE_PATH="/${{ github.event.repository.name }}/"
           fi
           npm ci && npm run build
+      - name: Verify GA4 Measurement ID in bundle
+        working-directory: frontend
+        run: |
+          shopt -s nullglob
+          js=(dist/assets/*.js)
+          if [ ${#js[@]} -eq 0 ]; then
+            echo "::warning::No dist/assets/*.js — unexpected build output."
+            exit 0
+          fi
+          if grep -qE 'G-[A-Z0-9]{6,15}' "${js[@]}" 2>/dev/null; then
+            echo "GA4: Measurement ID pattern found in built JS (custom events will use gtag when users interact)."
+          else
+            echo "::warning::No G-xxxxxxxxxx pattern in dist JS — custom events will not fire. Add Actions secret VITE_GA_MEASUREMENT_ID (GA4 → Admin → Data streams) or set VITE_GA_MEASUREMENT_ID in frontend/.env.production."
+          fi
       - name: SPA fallback (GitHub Pages client-side routes)
         working-directory: frontend/dist
         run: cp index.html 404.html

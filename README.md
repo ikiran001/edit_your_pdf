@@ -60,7 +60,8 @@ GitHub does **not** run your Node/Express API. It can only host the **built Reac
 3. Repo **Settings → Secrets and variables → Actions → New repository secret**:  
    - Name: `VITE_API_BASE_URL`  
    - Value: your public API URL, e.g. `https://your-api.onrender.com` (required for upload/edit/save; Pages alone cannot run the backend).
-4. Push to `main` or `master` (or run the workflow manually). After the workflow finishes, open the URL above.
+4. **(Recommended for GA4)** Add another secret **`VITE_GA_MEASUREMENT_ID`** with the exact **Measurement ID** from GA4 **Admin → Data streams → your Web stream** (format `G-XXXXXXXXXX`). This is baked into the JS at build time. If you skip it, the build still uses **`frontend/.env.production`** when that file is in the repo — but the ID there must be the **same property** you open in Analytics or you will not see custom events (`feature_used`, `file_uploaded`, etc.) under “Website_pdf_editor”.
+5. Push to `main` or `master` (or run the workflow manually). After the workflow finishes, open the URL above.
 
 ### Custom domain (cleaner URL + better Google branding)
 
@@ -69,6 +70,7 @@ Search results will keep showing `github.io/...` until you use your **own domain
 1. Add **Actions** secrets (same place as `VITE_API_BASE_URL`):
    - **`VITE_SITE_URL`** — your public origin with a trailing slash, e.g. `https://letseditpdf.com/`
    - **`VITE_BASE_PATH`** — for a site served at the domain root, use `/` (one slash). Omit both secrets to keep the default `https://<user>.github.io/<repo>/` behavior.
+   - **`VITE_GA_MEASUREMENT_ID`** — optional but strongly recommended: your GA4 `G-…` ID so production always matches the property you check in Realtime.
 2. Re-run **Deploy frontend to GitHub Pages**.
 
 Local production build with a custom domain:  
@@ -79,11 +81,17 @@ Local build matching Pages:
 
 ### Google Analytics (optional)
 
-The app loads **GA4** via [gtag.js](https://developers.google.com/tag-platform/gtagjs) (`src/lib/analytics.js`). The Measurement ID is set in **`frontend/.env.production`** as `VITE_GA_MEASUREMENT_ID` and baked in at **`npm run build`** (including GitHub Pages).
+The app loads **GA4** via [gtag.js](https://developers.google.com/tag-platform/gtagjs) (`src/lib/analytics.js`). The Measurement ID must be present **when the frontend is built** (`npm run build` / GitHub Actions). Custom events (`feature_used`, `file_uploaded`, `file_downloaded`, etc.) only fire if that ID is non-empty in the bundle.
 
-To use a different property, edit that file (or override with `VITE_GA_MEASUREMENT_ID=…` in the shell when building). For **`npm run dev`**, Vite does not load `.env.production`; use **`frontend/.env.local`** with the same variable if you want hits while developing.
+**Ways to set it**
 
-Virtual page paths sent to GA: `/` (landing) and `/edit` (after upload).
+1. **GitHub Actions:** repository secret **`VITE_GA_MEASUREMENT_ID`** = the **Web** stream Measurement ID from GA4 **Admin → Data streams** (same property where you watch Realtime). The deploy workflow exports it for the build and prints a log line confirming a `G-…` pattern exists in `dist`.
+2. **File:** **`frontend/.env.production`** — `VITE_GA_MEASUREMENT_ID=G-…` (used when the secret is not set). Keep this ID aligned with the GA4 property you actually use.
+3. **Local shell:** `VITE_GA_MEASUREMENT_ID=G-… npm run build`
+
+For **`npm run dev`**, Vite does not load `.env.production`; use **`frontend/.env.local`** with the same variable if you want hits while developing.
+
+**SPA page paths:** route changes call `pageView` with the current pathname (e.g. `/`, `/tools/edit-pdf`).
 
 ### Google Search Console verification (HTML meta tag)
 
