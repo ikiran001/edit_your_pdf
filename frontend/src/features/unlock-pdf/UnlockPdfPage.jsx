@@ -12,6 +12,7 @@ import {
   trackToolCompleted,
 } from '../../lib/analytics.js'
 import { ANALYTICS_TOOL } from '../../shared/constants/analyticsTools.js'
+import { MSG } from '../../shared/constants/branding.js'
 
 const UNLOCK_TOOL = ANALYTICS_TOOL.unlock_pdf
 
@@ -30,6 +31,7 @@ export default function UnlockPdfPage() {
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
+  const [fileReadyHint, setFileReadyHint] = useState(null)
 
   useToolEngagement(UNLOCK_TOOL, true)
 
@@ -51,6 +53,7 @@ export default function UnlockPdfPage() {
 
     setBusy(true)
     setError(null)
+    setFileReadyHint(null)
     const inputLabel = file.name || '(unnamed.pdf)'
     console.log('[unlock-pdf] input file:', inputLabel, 'size:', file.size)
     const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
@@ -98,6 +101,8 @@ export default function UnlockPdfPage() {
       console.log('[unlock-pdf] password validation: OK')
       console.log('[unlock-pdf] output file:', outName, 'bytes:', blob.size)
       downloadBlob(blob, outName)
+      setFileReadyHint(MSG.fileReady)
+      window.setTimeout(() => setFileReadyHint(null), 6000)
       trackToolCompleted(UNLOCK_TOOL, true)
       trackFileDownloaded({
         tool: UNLOCK_TOOL,
@@ -120,6 +125,14 @@ export default function UnlockPdfPage() {
 
   return (
     <ToolPageShell title="Unlock PDF" subtitle="Decrypt with the document password and download a copy with encryption removed (server uses qpdf).">
+      {fileReadyHint && (
+        <div
+          role="status"
+          className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-100"
+        >
+          {fileReadyHint}
+        </div>
+      )}
       {error && (
         <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900 dark:bg-red-950/50 dark:text-red-100">
           {error}
@@ -139,6 +152,7 @@ export default function UnlockPdfPage() {
             })
           }
           setFile(next)
+          setFileReadyHint(null)
         }}
         label={file ? file.name : 'Drop encrypted PDF here'}
       />
@@ -159,7 +173,7 @@ export default function UnlockPdfPage() {
         onClick={unlock}
         className="mt-6 rounded-xl bg-indigo-600 px-8 py-3 text-sm font-semibold text-white shadow-lg disabled:opacity-50"
       >
-        {busy ? 'Unlocking…' : 'Unlock and download'}
+        {busy ? MSG.processingFile : 'Unlock and download'}
       </button>
       <p className="mt-6 text-xs text-zinc-500 dark:text-zinc-400">
         The PDF is decrypted and rewritten on the server with{' '}

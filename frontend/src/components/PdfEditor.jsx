@@ -14,6 +14,7 @@ import {
   trackProcessingTime,
   trackToolCompleted,
 } from '../lib/analytics.js'
+import { MSG } from '../shared/constants/branding.js'
 
 const EDIT_TOOL = 'edit_pdf'
 
@@ -283,8 +284,8 @@ export default function PdfEditor({ sessionId, onBack }) {
     try {
       await persistPdfToServer()
       reloadPdfFromServer()
-      setSaveHint('Saved — edits are stored for this session.')
-      window.setTimeout(() => setSaveHint(null), 4000)
+      setSaveHint(MSG.savedSession)
+      window.setTimeout(() => setSaveHint(null), 5000)
       trackToolCompleted(EDIT_TOOL, true)
       const elapsed =
         (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0
@@ -319,7 +320,8 @@ export default function PdfEditor({ sessionId, onBack }) {
       URL.revokeObjectURL(href)
 
       reloadPdfFromServer()
-      setSaveHint(null)
+      setSaveHint(MSG.fileReady)
+      window.setTimeout(() => setSaveHint(null), 6000)
       trackToolCompleted(EDIT_TOOL, true)
       trackFileDownloaded({
         tool: EDIT_TOOL,
@@ -363,7 +365,7 @@ export default function PdfEditor({ sessionId, onBack }) {
           <ThemeToggle />
         </div>
         <div className="h-9 w-9 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
-        <span className="text-sm text-zinc-600 dark:text-zinc-400">Loading PDF…</span>
+        <span className="text-sm text-zinc-600 dark:text-zinc-400">{MSG.loadingPdf}</span>
       </div>
     )
   }

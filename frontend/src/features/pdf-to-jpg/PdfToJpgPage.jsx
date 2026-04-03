@@ -12,6 +12,7 @@ import {
   trackToolCompleted,
 } from '../../lib/analytics.js'
 import { ANALYTICS_TOOL } from '../../shared/constants/analyticsTools.js'
+import { MSG } from '../../shared/constants/branding.js'
 import { pdfToJpegBlobs } from './pdfToJpgCore.js'
 
 const JPG_TOOL = ANALYTICS_TOOL.pdf_to_jpg
@@ -29,6 +30,7 @@ function downloadBlob(blob, name) {
 export default function PdfToJpgPage() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
+  const [fileReadyHint, setFileReadyHint] = useState(null)
   const [scale, setScale] = useState(2)
 
   useToolEngagement(JPG_TOOL, true)
@@ -38,6 +40,7 @@ export default function PdfToJpgPage() {
       const file = files[0]
       if (!file || file.type !== 'application/pdf') return
       setError(null)
+      setFileReadyHint(null)
       setBusy(true)
       const base = file.name.replace(/\.pdf$/i, '') || 'document'
       markFunnelUpload(JPG_TOOL)
@@ -65,6 +68,8 @@ export default function PdfToJpgPage() {
         const elapsed =
           (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0
         trackProcessingTime(JPG_TOOL, elapsed)
+        setFileReadyHint(MSG.fileReady)
+        window.setTimeout(() => setFileReadyHint(null), 6000)
       } catch (e) {
         console.error(e)
         trackErrorOccurred(JPG_TOOL, e?.message || 'conversion_failed')
@@ -78,6 +83,14 @@ export default function PdfToJpgPage() {
 
   return (
     <ToolPageShell title="PDF to JPG" subtitle="Export every page as JPEG in one ZIP.">
+      {fileReadyHint && (
+        <div
+          role="status"
+          className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-100"
+        >
+          {fileReadyHint}
+        </div>
+      )}
       {error && (
         <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900 dark:bg-red-950/50 dark:text-red-100">
           {error}
@@ -105,7 +118,7 @@ export default function PdfToJpgPage() {
         accept="application/pdf"
         disabled={busy}
         onFiles={onPdf}
-        label={busy ? 'Converting…' : 'Drop a PDF here or click to browse'}
+        label={busy ? MSG.processingFile : 'Drop a PDF here or click to browse'}
       />
       {busy && (
         <div className="mt-6 flex justify-center">

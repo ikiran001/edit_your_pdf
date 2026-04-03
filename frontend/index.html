@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Edit your PDF online for free. Upload a PDF, change text and annotate in your browser, then download. No install, no watermark."
+      content="TheBestPDF — Free PDF tools. Fast, simple, no watermark. Edit, sign, convert, and unlock PDFs in your browser."
     />
     <meta name="theme-color" content="#0f0614" />
-    <meta name="application-name" content="letsEditPDF" />
+    <meta name="application-name" content="TheBestPDF" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
@@ -22,30 +22,30 @@
       rel="stylesheet"
     />
     <link rel="canonical" href="%VITE_SITE_URL%" />
-    <meta property="og:title" content="letsEditPDF — Edit your PDF free online" />
+    <meta property="og:title" content="TheBestPDF – Free PDF Tools (No Watermark)" />
     <meta
       property="og:description"
-      content="Free online PDF editor: edit text and annotate PDFs in your browser, then download. No install."
+      content="Free PDF tools. Fast, simple, no watermark. Edit, sign, convert, and unlock PDFs in your browser."
     />
     <meta property="og:url" content="%VITE_SITE_URL%" />
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="letsEditPDF" />
+    <meta property="og:site_name" content="TheBestPDF" />
     <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="letsEditPDF — Edit your PDF free online" />
+    <meta name="twitter:title" content="TheBestPDF – Free PDF Tools (No Watermark)" />
     <meta
       name="twitter:description"
-      content="Free online PDF editor: edit text and annotate PDFs in your browser, then download. No install."
+      content="Free PDF tools. Fast, simple, no watermark. Edit, sign, convert, and unlock PDFs in your browser."
     />
     <!-- Google Search Console: set VITE_GOOGLE_SITE_VERIFICATION at build (see README), or replace the placeholder below with your full `content` value from Google. -->
     <meta name="google-site-verification" content="ef1-peQCO4zwQvjOfXWLxpmoLmoipr1JfnsaNXA9mmo" />
-    <title>letsEditPDF — Edit your PDF free online</title>
+    <title>TheBestPDF – Free PDF Tools (No Watermark)</title>
     <!-- WebSite name is the brand Google may show as the result "site name" (best with a custom domain). -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
         "@type": "WebSite",
-        "name": "letsEditPDF",
-        "alternateName": "Edit your PDF free online — edit text and annotate in your browser",
+        "name": "TheBestPDF",
+        "alternateName": "Free PDF tools. Fast, simple, no watermark.",
         "url": "%VITE_SITE_URL%"
       }
     </script>
@@ -54,8 +54,17 @@
     <script>
       ;(function () {
         try {
-          var k = 'letsEditPDF-theme'
+          var k = 'TheBestPDF-theme'
           var v = localStorage.getItem(k)
+          if (v == null) {
+            var leg = localStorage.getItem('letsEditPDF-theme')
+            if (leg != null) {
+              v = leg
+              try {
+                localStorage.setItem(k, leg)
+              } catch (e2) {}
+            }
+          }
           var light = v === 'light'
           var root = document.documentElement
           var b = document.body
