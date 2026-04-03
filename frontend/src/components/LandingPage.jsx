@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { isApiBaseConfigured } from '../lib/apiBase'
 import { trackUploadCtaClick } from '../lib/analytics.js'
+import { BRAND_NAME, MSG } from '../shared/constants/branding.js'
 
 export default function LandingPage({
   onFileSelected,
@@ -28,7 +29,7 @@ export default function LandingPage({
       {!embeddedInToolShell ? (
         <header className="fx-glass-header px-6 py-4">
           <h1 className="bg-gradient-to-r from-zinc-900 to-indigo-700 bg-clip-text text-xl font-semibold tracking-tight text-transparent dark:from-white dark:to-cyan-200/90">
-            letsEditPDF
+            {BRAND_NAME}
           </h1>
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
             {import.meta.env.PROD && !isApiBaseConfigured() ? (
@@ -120,9 +121,7 @@ export default function LandingPage({
           {loading ? (
             <div className="flex flex-col items-center gap-3">
               <div className="h-10 w-10 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
-              <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Uploading and loading PDF…
-              </p>
+              <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{MSG.uploading}</p>
             </div>
           ) : (
             <>

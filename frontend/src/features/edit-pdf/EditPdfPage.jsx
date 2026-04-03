@@ -11,8 +11,10 @@ import {
 import { ANALYTICS_TOOL } from '../../shared/constants/analyticsTools.js'
 import { useToolEngagement } from '../../hooks/useToolEngagement.js'
 import { usePdfSessionUpload } from './usePdfSessionUpload.js'
+import { docTitleForPath } from '../../shared/constants/branding.js'
 
 const EDIT_TOOL = ANALYTICS_TOOL.edit_pdf
+const EDIT_DOC_TITLE = docTitleForPath('/tools/edit-pdf')
 
 export default function EditPdfPage() {
   const [sessionId, setSessionId] = useState(null)
@@ -21,7 +23,11 @@ export default function EditPdfPage() {
   useToolEngagement(EDIT_TOOL, Boolean(sessionId))
 
   useEffect(() => {
-    pageView(sessionId ? '/tools/edit-pdf/editor' : '/tools/edit-pdf', sessionId ? 'Edit PDF' : 'Edit PDF upload')
+    document.title = EDIT_DOC_TITLE
+    pageView(
+      sessionId ? '/tools/edit-pdf/editor' : '/tools/edit-pdf',
+      EDIT_DOC_TITLE
+    )
   }, [sessionId])
 
   const onFileSelected = useCallback(

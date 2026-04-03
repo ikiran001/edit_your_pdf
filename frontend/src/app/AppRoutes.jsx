@@ -8,11 +8,14 @@ import SignPdfPage from '../features/sign-pdf/SignPdfPage.jsx'
 import UnlockPdfPage from '../features/unlock-pdf/UnlockPdfPage.jsx'
 import ComingSoonToolPage from '../features/placeholder/ComingSoonToolPage.jsx'
 import { pageView } from '../lib/analytics.js'
+import { docTitleForPath } from '../shared/constants/branding.js'
 
 function RouteAnalytics() {
   const loc = useLocation()
   useEffect(() => {
-    pageView(loc.pathname, document.title)
+    const t = docTitleForPath(loc.pathname)
+    document.title = t
+    pageView(loc.pathname, t)
   }, [loc.pathname])
   return null
 }

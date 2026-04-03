@@ -1,4 +1,6 @@
 import ThemeToggle from '../shared/components/ThemeToggle.jsx'
+import BrandLogoLink from '../shared/components/BrandLogoLink.jsx'
+import { BRAND_NAME, MSG } from '../shared/constants/branding.js'
 
 const tools = [
   { id: 'editText', label: 'Edit text' },
@@ -26,6 +28,7 @@ export default function Toolbar({
 }) {
   return (
     <div className="fx-glass-header flex flex-wrap items-center gap-2 px-3 py-2">
+      <BrandLogoLink className="mr-1 min-w-0 max-w-[10rem] shrink-0 sm:max-w-none" />
       <div className="mr-2 text-sm font-medium text-zinc-600 dark:text-zinc-300">Tools</div>
       {onEditTextModeChange && (
         <button
@@ -86,22 +89,29 @@ export default function Toolbar({
           </span>
           <span className="sm:hidden">Text swap</span>
         </label>
-        <button
-          type="button"
-          onClick={onSave}
-          disabled={saving || downloading}
-          className="rounded-lg border border-emerald-700 bg-white px-4 py-1.5 text-sm font-semibold text-emerald-800 shadow-sm hover:bg-emerald-50 disabled:opacity-50 dark:border-emerald-500 dark:bg-zinc-900 dark:text-emerald-200 dark:hover:bg-emerald-950/40"
-        >
-          {saving ? 'Saving…' : 'Save PDF'}
-        </button>
-        <button
-          type="button"
-          onClick={onDownload}
-          disabled={saving || downloading}
-          className="rounded-lg bg-emerald-600 px-4 py-1.5 text-sm font-semibold text-white shadow hover:bg-emerald-700 disabled:opacity-50"
-        >
-          {downloading ? 'Preparing…' : 'Download PDF'}
-        </button>
+        <div className="flex flex-col items-stretch gap-1 sm:items-end">
+          <div className="flex flex-wrap justify-end gap-2">
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={saving || downloading}
+              className="rounded-lg border border-emerald-700 bg-white px-4 py-1.5 text-sm font-semibold text-emerald-800 shadow-sm hover:bg-emerald-50 disabled:opacity-50 dark:border-emerald-500 dark:bg-zinc-900 dark:text-emerald-200 dark:hover:bg-emerald-950/40"
+            >
+              {saving ? MSG.finalizingPdf : 'Save PDF'}
+            </button>
+            <button
+              type="button"
+              onClick={onDownload}
+              disabled={saving || downloading}
+              className="rounded-lg bg-emerald-600 px-4 py-1.5 text-sm font-semibold text-white shadow hover:bg-emerald-700 disabled:opacity-50"
+            >
+              {downloading ? MSG.processingFile : 'Download PDF'}
+            </button>
+          </div>
+          <span className="text-center text-[10px] font-medium text-zinc-400 sm:text-right dark:text-zinc-500">
+            {BRAND_NAME}
+          </span>
+        </div>
       </div>
     </div>
   )

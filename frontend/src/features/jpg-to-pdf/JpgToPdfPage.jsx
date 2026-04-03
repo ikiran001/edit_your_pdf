@@ -12,6 +12,7 @@ import {
   trackToolCompleted,
 } from '../../lib/analytics.js'
 import { ANALYTICS_TOOL } from '../../shared/constants/analyticsTools.js'
+import { MSG } from '../../shared/constants/branding.js'
 import { imagesToPdfBytes } from './jpgToPdfCore.js'
 
 const MERGE_TOOL = ANALYTICS_TOOL.merge_pdf
@@ -33,6 +34,7 @@ export default function JpgToPdfPage() {
   const [error, setError] = useState(null)
   const [dragId, setDragId] = useState(null)
   const funnelMarkedRef = useRef(false)
+  const [fileReadyHint, setFileReadyHint] = useState(null)
 
   useToolEngagement(MERGE_TOOL, true)
 
@@ -85,6 +87,7 @@ export default function JpgToPdfPage() {
   const buildPdf = async () => {
     if (!items.length) return
     setError(null)
+    setFileReadyHint(null)
     setBusy(true)
     const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
     try {
@@ -100,6 +103,8 @@ export default function JpgToPdfPage() {
       const elapsed =
         (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0
       trackProcessingTime(MERGE_TOOL, elapsed)
+      setFileReadyHint(MSG.fileReady)
+      window.setTimeout(() => setFileReadyHint(null), 6000)
     } catch (e) {
       console.error(e)
       trackErrorOccurred(MERGE_TOOL, e?.message || 'build_pdf_failed')
@@ -111,6 +116,14 @@ export default function JpgToPdfPage() {
 
   return (
     <ToolPageShell title="JPG to PDF" subtitle="Combine images in order. Drag rows to reorder.">
+      {fileReadyHint && (
+        <div
+          role="status"
+          className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-100"
+        >
+          {fileReadyHint}
+        </div>
+      )}
       {error && (
         <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900 dark:bg-red-950/50 dark:text-red-100">
           {error}
@@ -158,7 +171,7 @@ export default function JpgToPdfPage() {
             onClick={buildPdf}
             className="mt-6 w-full rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 hover:bg-indigo-700 disabled:opacity-50 sm:w-auto sm:px-10"
           >
-            {busy ? 'Building PDF…' : 'Download PDF'}
+            {busy ? MSG.finalizingPdf : 'Download PDF'}
           </button>
         </div>
       )}

@@ -1,7 +1,7 @@
 {
-  "name": "letsEditPDF Toolkit",
-  "short_name": "letsEditPDF",
-  "description": "PDF edit, convert, sign, and unlock tools",
+  "name": "TheBestPDF — Free PDF tools",
+  "short_name": "TheBestPDF",
+  "description": "Free PDF tools. Fast, simple, no watermark. Edit, sign, convert, unlock.",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#fafafa",

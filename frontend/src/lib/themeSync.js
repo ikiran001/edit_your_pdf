@@ -1,11 +1,24 @@
 /** Persisted UI theme (Tailwind uses class `dark` on <html>). */
-export const THEME_STORAGE_KEY = 'letsEditPDF-theme'
+export const THEME_STORAGE_KEY = 'TheBestPDF-theme'
+const LEGACY_THEME_KEY = 'letsEditPDF-theme'
 
 /** @returns {'dark' | 'light'} */
 export function getStoredThemeMode() {
   try {
     if (typeof localStorage === 'undefined') return 'dark'
-    return localStorage.getItem(THEME_STORAGE_KEY) === 'light' ? 'light' : 'dark'
+    let v = localStorage.getItem(THEME_STORAGE_KEY)
+    if (v == null) {
+      const leg = localStorage.getItem(LEGACY_THEME_KEY)
+      if (leg != null) {
+        v = leg
+        try {
+          localStorage.setItem(THEME_STORAGE_KEY, leg)
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+    return v === 'light' ? 'light' : 'dark'
   } catch {
     return 'dark'
   }

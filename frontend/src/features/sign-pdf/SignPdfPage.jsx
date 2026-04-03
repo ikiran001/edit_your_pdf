@@ -14,6 +14,7 @@ import {
   trackToolCompleted,
 } from '../../lib/analytics.js'
 import { ANALYTICS_TOOL } from '../../shared/constants/analyticsTools.js'
+import { MSG } from '../../shared/constants/branding.js'
 import SignatureCreationModal from './SignatureCreationModal.jsx'
 import SignPdfViewer from './SignPdfViewer.jsx'
 import {
@@ -49,6 +50,7 @@ export default function SignPdfPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
+  const [fileReadyHint, setFileReadyHint] = useState(null)
   /** Bumps when user copies a placement so the Paste button re-renders (ref alone does not). */
   const [clipboardRev, setClipboardRev] = useState(0)
 
@@ -165,6 +167,7 @@ export default function SignPdfPage() {
 
     setBusy(true)
     setError(null)
+    setFileReadyHint(null)
     const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
     try {
       const pdfBytes = await pdfFile.arrayBuffer()
@@ -201,6 +204,8 @@ export default function SignPdfPage() {
       const elapsed =
         (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0
       trackProcessingTime(SIGN_TOOL, elapsed)
+      setFileReadyHint(MSG.fileReady)
+      window.setTimeout(() => setFileReadyHint(null), 6000)
     } catch (e) {
       console.error(e)
       trackErrorOccurred(SIGN_TOOL, e?.message || 'sign_apply_failed')
@@ -218,6 +223,15 @@ export default function SignPdfPage() {
       subtitle="Place signatures on any page, duplicate or copy/paste, then download a signed PDF."
     >
       <SignatureCreationModal open={modalOpen} onClose={() => setModalOpen(false)} onDone={onSignatureDone} />
+
+      {fileReadyHint && (
+        <div
+          role="status"
+          className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-100"
+        >
+          {fileReadyHint}
+        </div>
+      )}
 
       {error && (
         <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900 dark:bg-red-950/50 dark:text-red-100">
@@ -240,6 +254,7 @@ export default function SignPdfPage() {
             })
           }
           setPdfFile(next)
+          setFileReadyHint(null)
           setPlacements([])
           setSignaturePng(null)
           setSelectedPlacementId(null)
@@ -285,7 +300,7 @@ export default function SignPdfPage() {
               onClick={applyAndDownload}
               className="rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-800 shadow-sm hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
             >
-              {busy ? 'Working…' : 'Apply & download'}
+              {busy ? MSG.processingFile : 'Apply & download'}
             </button>
           </div>
           <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
