@@ -2,7 +2,19 @@ import { useCallback, useState } from 'react'
 import JSZip from 'jszip'
 import ToolPageShell from '../../shared/components/ToolPageShell.jsx'
 import FileDropzone from '../../shared/components/FileDropzone.jsx'
+import { useToolEngagement } from '../../hooks/useToolEngagement.js'
+import {
+  markFunnelUpload,
+  trackErrorOccurred,
+  trackFileDownloaded,
+  trackFileUploaded,
+  trackProcessingTime,
+  trackToolCompleted,
+} from '../../lib/analytics.js'
+import { ANALYTICS_TOOL } from '../../shared/constants/analyticsTools.js'
 import { pdfToJpegBlobs } from './pdfToJpgCore.js'
+
+const JPG_TOOL = ANALYTICS_TOOL.pdf_to_jpg
 
 function downloadBlob(blob, name) {
   const url = URL.createObjectURL(blob)
@@ -19,6 +31,8 @@ export default function PdfToJpgPage() {
   const [error, setError] = useState(null)
   const [scale, setScale] = useState(2)
 
+  useToolEngagement(JPG_TOOL, true)
+
   const onPdf = useCallback(
     async (files) => {
       const file = files[0]
@@ -26,6 +40,13 @@ export default function PdfToJpgPage() {
       setError(null)
       setBusy(true)
       const base = file.name.replace(/\.pdf$/i, '') || 'document'
+      markFunnelUpload(JPG_TOOL)
+      trackFileUploaded({
+        file_type: 'pdf',
+        file_size: file.size / 1024,
+        tool: JPG_TOOL,
+      })
+      const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
       try {
         const buf = await file.arrayBuffer()
         const blobs = await pdfToJpegBlobs(buf, { scale, quality: 0.92 })
@@ -35,8 +56,18 @@ export default function PdfToJpgPage() {
         })
         const zblob = await zip.generateAsync({ type: 'blob' })
         downloadBlob(zblob, `${base}-pages.zip`)
+        trackToolCompleted(JPG_TOOL, true)
+        trackFileDownloaded({
+          tool: JPG_TOOL,
+          file_size: zblob.size / 1024,
+          total_pages: blobs.length,
+        })
+        const elapsed =
+          (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0
+        trackProcessingTime(JPG_TOOL, elapsed)
       } catch (e) {
         console.error(e)
+        trackErrorOccurred(JPG_TOOL, e?.message || 'conversion_failed')
         setError(e?.message || 'Conversion failed')
       } finally {
         setBusy(false)

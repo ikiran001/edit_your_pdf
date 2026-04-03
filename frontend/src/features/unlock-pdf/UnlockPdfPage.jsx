@@ -2,6 +2,18 @@ import { useState } from 'react'
 import { apiUrl, isApiBaseConfigured } from '../../lib/apiBase'
 import ToolPageShell from '../../shared/components/ToolPageShell.jsx'
 import FileDropzone from '../../shared/components/FileDropzone.jsx'
+import { useToolEngagement } from '../../hooks/useToolEngagement.js'
+import {
+  markFunnelUpload,
+  trackErrorOccurred,
+  trackFileDownloaded,
+  trackFileUploaded,
+  trackProcessingTime,
+  trackToolCompleted,
+} from '../../lib/analytics.js'
+import { ANALYTICS_TOOL } from '../../shared/constants/analyticsTools.js'
+
+const UNLOCK_TOOL = ANALYTICS_TOOL.unlock_pdf
 
 function downloadBlob(blob, name) {
   const url = URL.createObjectURL(blob)
@@ -18,6 +30,8 @@ export default function UnlockPdfPage() {
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
+
+  useToolEngagement(UNLOCK_TOOL, true)
 
   const unlock = async () => {
     if (!file) {
@@ -39,6 +53,7 @@ export default function UnlockPdfPage() {
     setError(null)
     const inputLabel = file.name || '(unnamed.pdf)'
     console.log('[unlock-pdf] input file:', inputLabel, 'size:', file.size)
+    const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
 
     try {
       const fd = new FormData()
@@ -65,6 +80,7 @@ export default function UnlockPdfPage() {
         } else {
           console.warn('[unlock-pdf] request failed:', res.status, msg)
         }
+        trackErrorOccurred(UNLOCK_TOOL, msg || `http_${res.status}`)
         setError(msg)
         return
       }
@@ -72,6 +88,7 @@ export default function UnlockPdfPage() {
       if (!contentType.includes('application/pdf')) {
         const text = await res.text()
         console.warn('[unlock-pdf] unexpected response:', contentType, text.slice(0, 200))
+        trackErrorOccurred(UNLOCK_TOOL, 'unexpected_response_type')
         setError('Server did not return a PDF. Is the API running with qpdf installed?')
         return
       }
@@ -81,8 +98,20 @@ export default function UnlockPdfPage() {
       console.log('[unlock-pdf] password validation: OK')
       console.log('[unlock-pdf] output file:', outName, 'bytes:', blob.size)
       downloadBlob(blob, outName)
+      trackToolCompleted(UNLOCK_TOOL, true)
+      trackFileDownloaded({
+        tool: UNLOCK_TOOL,
+        file_size: blob.size / 1024,
+      })
+      const elapsed =
+        (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0
+      trackProcessingTime(UNLOCK_TOOL, elapsed)
     } catch (e) {
       console.error('[unlock-pdf]', e)
+      trackErrorOccurred(
+        UNLOCK_TOOL,
+        e?.message === 'Failed to fetch' ? 'fetch_failed' : e?.message || 'unlock_failed'
+      )
       setError(e?.message === 'Failed to fetch' ? 'Could not reach the API. Start the backend (port 3001) or check your network.' : e?.message || 'Could not unlock PDF')
     } finally {
       setBusy(false)
@@ -99,7 +128,18 @@ export default function UnlockPdfPage() {
       <FileDropzone
         accept="application/pdf"
         disabled={busy}
-        onFiles={(f) => setFile(f[0])}
+        onFiles={(f) => {
+          const next = f[0]
+          if (next) {
+            markFunnelUpload(UNLOCK_TOOL)
+            trackFileUploaded({
+              file_type: 'pdf',
+              file_size: next.size / 1024,
+              tool: UNLOCK_TOOL,
+            })
+          }
+          setFile(next)
+        }}
         label={file ? file.name : 'Drop encrypted PDF here'}
       />
       <div className="mt-6 max-w-md">

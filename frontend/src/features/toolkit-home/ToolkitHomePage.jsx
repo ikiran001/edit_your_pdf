@@ -3,6 +3,8 @@ import { Sparkles } from 'lucide-react'
 import ToolCard from '../../shared/components/ToolCard.jsx'
 import ThemeToggle from '../../shared/components/ThemeToggle.jsx'
 import { TOOL_REGISTRY } from '../../shared/constants/toolRegistry.js'
+import { trackFeatureUsed } from '../../lib/analytics.js'
+import { ANALYTICS_TOOL } from '../../shared/constants/analyticsTools.js'
 
 export default function ToolkitHomePage() {
   return (
@@ -45,6 +47,7 @@ export default function ToolkitHomePage() {
         <p className="mt-12 text-center text-xs text-zinc-500 dark:text-zinc-500">
           <Link
             to="/tools/edit-pdf"
+            onClick={() => trackFeatureUsed(ANALYTICS_TOOL.edit_pdf)}
             className="text-indigo-600 underline-offset-2 transition hover:text-violet-600 hover:underline dark:text-cyan-400 dark:hover:text-cyan-300"
           >
             Jump straight to Edit PDF

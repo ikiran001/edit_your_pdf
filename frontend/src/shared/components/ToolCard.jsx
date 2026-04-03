@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
 import * as Icons from 'lucide-react'
+import { trackFeatureUsed } from '../../lib/analytics.js'
+import { REGISTRY_ID_TO_FEATURE } from '../constants/analyticsTools.js'
 
 export default function ToolCard({ tool }) {
   const Icon = Icons[tool.icon] || Icons.FileQuestion
@@ -39,9 +41,14 @@ export default function ToolCard({ tool }) {
     )
   }
 
+  const featureName = REGISTRY_ID_TO_FEATURE[tool.id]
+
   return (
     <Link
       to={tool.path}
+      onClick={() => {
+        if (featureName) trackFeatureUsed(featureName)
+      }}
       className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 dark:focus-visible:ring-cyan-400 dark:focus-visible:ring-offset-zinc-950"
     >
       {content}

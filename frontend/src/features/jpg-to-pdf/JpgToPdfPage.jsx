@@ -1,8 +1,20 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { GripVertical, Trash2 } from 'lucide-react'
 import ToolPageShell from '../../shared/components/ToolPageShell.jsx'
 import FileDropzone from '../../shared/components/FileDropzone.jsx'
+import { useToolEngagement } from '../../hooks/useToolEngagement.js'
+import {
+  markFunnelUpload,
+  trackErrorOccurred,
+  trackFileDownloaded,
+  trackFileUploaded,
+  trackProcessingTime,
+  trackToolCompleted,
+} from '../../lib/analytics.js'
+import { ANALYTICS_TOOL } from '../../shared/constants/analyticsTools.js'
 import { imagesToPdfBytes } from './jpgToPdfCore.js'
+
+const MERGE_TOOL = ANALYTICS_TOOL.merge_pdf
 
 function downloadUint8(u8, name) {
   const blob = new Blob([u8], { type: 'application/pdf' })
@@ -20,6 +32,9 @@ export default function JpgToPdfPage() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   const [dragId, setDragId] = useState(null)
+  const funnelMarkedRef = useRef(false)
+
+  useToolEngagement(MERGE_TOOL, true)
 
   const addFiles = useCallback((files) => {
     const imageFiles = files.filter(
@@ -28,6 +43,18 @@ export default function JpgToPdfPage() {
         f.type.startsWith('image/jpg') ||
         f.type.startsWith('image/png')
     )
+    if (imageFiles.length) {
+      if (!funnelMarkedRef.current) {
+        funnelMarkedRef.current = true
+        markFunnelUpload(MERGE_TOOL)
+      }
+      const batchKb = imageFiles.reduce((s, f) => s + f.size, 0) / 1024
+      trackFileUploaded({
+        file_type: 'image',
+        file_size: batchKb,
+        tool: MERGE_TOOL,
+      })
+    }
     setItems((prev) => [
       ...prev,
       ...imageFiles.map((file) => ({
@@ -59,12 +86,23 @@ export default function JpgToPdfPage() {
     if (!items.length) return
     setError(null)
     setBusy(true)
+    const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
     try {
       const ordered = items.map((x) => x.file)
       const bytes = await imagesToPdfBytes(ordered)
       downloadUint8(bytes, 'images.pdf')
+      trackToolCompleted(MERGE_TOOL, true)
+      trackFileDownloaded({
+        tool: MERGE_TOOL,
+        file_size: bytes.byteLength / 1024,
+        total_pages: ordered.length,
+      })
+      const elapsed =
+        (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0
+      trackProcessingTime(MERGE_TOOL, elapsed)
     } catch (e) {
       console.error(e)
+      trackErrorOccurred(MERGE_TOOL, e?.message || 'build_pdf_failed')
       setError(e?.message || 'Could not build PDF')
     } finally {
       setBusy(false)

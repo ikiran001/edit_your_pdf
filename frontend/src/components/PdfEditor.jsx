@@ -8,6 +8,14 @@ import ThumbnailSidebar from './ThumbnailSidebar'
 import PdfPageCanvas from './PdfPageCanvas'
 import TextFormatToolbar from './TextFormatToolbar'
 import { defaultTextFormat, formatFromTextBlock } from '../lib/textFormatDefaults'
+import {
+  trackErrorOccurred,
+  trackFileDownloaded,
+  trackProcessingTime,
+  trackToolCompleted,
+} from '../lib/analytics.js'
+
+const EDIT_TOOL = 'edit_pdf'
 
 /** Strip client-only fields before sending edits to the API / pdf-lib. */
 function toServerItem(it) {
@@ -122,6 +130,15 @@ export default function PdfEditor({ sessionId, onBack }) {
       cancelled = true
     }
   }, [sessionId, reset, pdfBust])
+
+  const loadErrorTracked = useRef(null)
+  useEffect(() => {
+    if (loadError && loadError !== loadErrorTracked.current) {
+      loadErrorTracked.current = loadError
+      trackErrorOccurred(EDIT_TOOL, loadError)
+    }
+    if (!loadError) loadErrorTracked.current = null
+  }, [loadError])
 
   useEffect(() => {
     const el = scrollRef.current
@@ -262,13 +279,19 @@ export default function PdfEditor({ sessionId, onBack }) {
   const handleSave = async () => {
     setSaving(true)
     setSaveHint(null)
+    const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
     try {
       await persistPdfToServer()
       reloadPdfFromServer()
       setSaveHint('Saved — edits are stored for this session.')
       window.setTimeout(() => setSaveHint(null), 4000)
+      trackToolCompleted(EDIT_TOOL, true)
+      const elapsed =
+        (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0
+      trackProcessingTime(EDIT_TOOL, elapsed)
     } catch (e) {
       console.error(e)
+      trackErrorOccurred(EDIT_TOOL, e?.message || 'save_failed')
       alert(e.message || 'Save failed')
     } finally {
       setSaving(false)
@@ -277,6 +300,7 @@ export default function PdfEditor({ sessionId, onBack }) {
 
   const handleDownload = async () => {
     setDownloading(true)
+    const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
     try {
       await persistPdfToServer()
       const dl = await fetch(
@@ -296,8 +320,18 @@ export default function PdfEditor({ sessionId, onBack }) {
 
       reloadPdfFromServer()
       setSaveHint(null)
+      trackToolCompleted(EDIT_TOOL, true)
+      trackFileDownloaded({
+        tool: EDIT_TOOL,
+        file_size: blob.size / 1024,
+        total_pages: numPages,
+      })
+      const elapsed =
+        (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0
+      trackProcessingTime(EDIT_TOOL, elapsed)
     } catch (e) {
       console.error(e)
+      trackErrorOccurred(EDIT_TOOL, e?.message || 'download_failed')
       alert(e.message || 'Download failed')
     } finally {
       setDownloading(false)
