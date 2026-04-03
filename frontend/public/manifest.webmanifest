@@ -1,7 +1,7 @@
 {
-  "name": "TheBestPDF — Free PDF tools",
-  "short_name": "TheBestPDF",
-  "description": "Free PDF tools. Fast, simple, no watermark. Edit, sign, convert, unlock.",
+  "name": "PDFly — Free PDF tools",
+  "short_name": "PDFly",
+  "description": "PDFly — Free PDF tools. Fast, simple, no watermark. Edit, sign, convert, unlock.",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#fafafa",

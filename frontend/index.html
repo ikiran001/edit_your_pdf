@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="TheBestPDF — Free PDF tools. Fast, simple, no watermark. Edit, sign, convert, and unlock PDFs in your browser."
+      content="PDFly — Free PDF tools. Fast, simple, no watermark. Edit, sign, convert, and unlock PDFs in your browser."
     />
     <meta name="theme-color" content="#0f0614" />
-    <meta name="application-name" content="TheBestPDF" />
+    <meta name="application-name" content="PDFly" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
@@ -22,29 +22,29 @@
       rel="stylesheet"
     />
     <link rel="canonical" href="%VITE_SITE_URL%" />
-    <meta property="og:title" content="TheBestPDF – Free PDF Tools (No Watermark)" />
+    <meta property="og:title" content="PDFly - Edit, Sign &amp; Convert PDFs" />
     <meta
       property="og:description"
-      content="Free PDF tools. Fast, simple, no watermark. Edit, sign, convert, and unlock PDFs in your browser."
+      content="PDFly — Free PDF tools. Fast, simple, no watermark. Edit, sign, convert, and unlock PDFs in your browser."
     />
     <meta property="og:url" content="%VITE_SITE_URL%" />
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="TheBestPDF" />
+    <meta property="og:site_name" content="PDFly" />
     <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="TheBestPDF – Free PDF Tools (No Watermark)" />
+    <meta name="twitter:title" content="PDFly - Edit, Sign &amp; Convert PDFs" />
     <meta
       name="twitter:description"
-      content="Free PDF tools. Fast, simple, no watermark. Edit, sign, convert, and unlock PDFs in your browser."
+      content="PDFly — Free PDF tools. Fast, simple, no watermark. Edit, sign, convert, and unlock PDFs in your browser."
     />
     <!-- Google Search Console: set VITE_GOOGLE_SITE_VERIFICATION at build (see README), or replace the placeholder below with your full `content` value from Google. -->
     <meta name="google-site-verification" content="ef1-peQCO4zwQvjOfXWLxpmoLmoipr1JfnsaNXA9mmo" />
-    <title>TheBestPDF – Free PDF Tools (No Watermark)</title>
+    <title>PDFly - Edit, Sign &amp; Convert PDFs</title>
     <!-- WebSite name is the brand Google may show as the result "site name" (best with a custom domain). -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
         "@type": "WebSite",
-        "name": "TheBestPDF",
+        "name": "PDFly",
         "alternateName": "Free PDF tools. Fast, simple, no watermark.",
         "url": "%VITE_SITE_URL%"
       }
@@ -54,10 +54,11 @@
     <script>
       ;(function () {
         try {
-          var k = 'TheBestPDF-theme'
+          var k = 'PDFly-theme'
           var v = localStorage.getItem(k)
           if (v == null) {
-            var leg = localStorage.getItem('letsEditPDF-theme')
+            var leg =
+              localStorage.getItem('TheBestPDF-theme') || localStorage.getItem('letsEditPDF-theme')
             if (leg != null) {
               v = leg
               try {

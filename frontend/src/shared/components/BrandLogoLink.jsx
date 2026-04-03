@@ -3,7 +3,7 @@ import { FileText } from 'lucide-react'
 import { BRAND_NAME } from '../constants/branding.js'
 
 /**
- * Navbar brand: [PDF icon] TheBestPDF → home. Compact, no layout shift.
+ * Navbar brand: [PDF icon] PDFly → home. Compact, no layout shift.
  */
 export default function BrandLogoLink({ className = '' }) {
   return (
