@@ -81,6 +81,18 @@ jobs:
       - name: SPA fallback (GitHub Pages client-side routes)
         working-directory: frontend/dist
         run: cp index.html 404.html
+      - name: Verify CNAME for custom domain (pdfly.pro)
+        working-directory: frontend/dist
+        run: |
+          if [ ! -f CNAME ]; then
+            echo "::error::dist/CNAME missing. Add frontend/public/CNAME (copied by Vite to dist)."
+            exit 1
+          fi
+          if ! grep -qx 'pdfly.pro' CNAME; then
+            echo "::error::dist/CNAME must contain exactly: pdfly.pro"
+            exit 1
+          fi
+          echo "OK: CNAME present for GitHub Pages custom domain."
       - uses: actions/upload-pages-artifact@v3
         with:
           path: frontend/dist
