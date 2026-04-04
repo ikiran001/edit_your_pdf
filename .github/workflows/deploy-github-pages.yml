@@ -58,11 +58,15 @@ jobs:
           else
             export VITE_SITE_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
           fi
+          # Asset base: project sites on github.io need /repo/; custom domains (e.g. pdfly.pro) are served at /
           if [ -n "${{ secrets.VITE_BASE_PATH }}" ]; then
             export VITE_BASE_PATH="${{ secrets.VITE_BASE_PATH }}"
+          elif [ -n "${{ secrets.VITE_SITE_URL }}" ] && ! echo "${{ secrets.VITE_SITE_URL }}" | grep -q 'github.io'; then
+            export VITE_BASE_PATH="/"
           else
             export VITE_BASE_PATH="/${{ github.event.repository.name }}/"
           fi
+          echo "VITE_BASE_PATH=$VITE_BASE_PATH (asset URLs in index.html)"
           npm ci && npm run build
       - name: Verify GA4 Measurement ID in bundle
         working-directory: frontend
