@@ -4,8 +4,12 @@
 export const ANALYTICS_TOOL = {
   edit_pdf: 'edit_pdf',
   sign_pdf: 'sign_pdf',
-  /** JPG → PDF (combine images); aligns with “Merge PDF” style journeys */
+  /** JPG → PDF (combine images) */
   merge_pdf: 'merge_pdf',
+  /** Merge multiple PDF files into one */
+  pdf_merge: 'pdf_merge',
+  split_pdf: 'split_pdf',
+  compress_pdf: 'compress_pdf',
   pdf_to_jpg: 'pdf_to_jpg',
   unlock_pdf: 'unlock_pdf',
 }
@@ -13,6 +17,9 @@ export const ANALYTICS_TOOL = {
 /** Toolkit registry `id` → analytics feature key for `feature_used` */
 export const REGISTRY_ID_TO_FEATURE = {
   'edit-pdf': ANALYTICS_TOOL.edit_pdf,
+  'merge-pdf': ANALYTICS_TOOL.pdf_merge,
+  'split-pdf': ANALYTICS_TOOL.split_pdf,
+  'compress-pdf': ANALYTICS_TOOL.compress_pdf,
   'sign-pdf': ANALYTICS_TOOL.sign_pdf,
   'pdf-to-jpg': ANALYTICS_TOOL.pdf_to_jpg,
   'jpg-to-pdf': ANALYTICS_TOOL.merge_pdf,
