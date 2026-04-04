@@ -40,10 +40,11 @@ jobs:
             echo "Then re-run this workflow."
             exit 1
           fi
-      # Optional secrets for a custom domain (see README):
-      #   VITE_SITE_URL = https://yourdomain.com/   (trailing slash)
-      #   VITE_BASE_PATH = /                        (root path; default is /repo-name/ for github.io)
-      #   VITE_GA_MEASUREMENT_ID = G-XXXXXXXXXX     (must match GA4 Admin → Data streams; overrides frontend/.env.production)
+      # Optional secrets (see README):
+      #   VITE_SITE_URL / VITE_BASE_PATH — only set these in GitHub when overriding frontend/.env.production.
+      #   For pdfly.pro (root deploy): do NOT set secrets; the committed .env.production uses VITE_BASE_PATH=/.
+      #   For username.github.io/repo/ only: set VITE_SITE_URL to that github.io URL so VITE_BASE_PATH=/repo/ is applied below.
+      #   VITE_GA_MEASUREMENT_ID = G-XXXXXXXXXX     (overrides frontend/.env.production)
       - name: Build
         working-directory: frontend
         env:
@@ -53,20 +54,15 @@ jobs:
           if [ -n "${{ secrets.VITE_GA_MEASUREMENT_ID }}" ]; then
             export VITE_GA_MEASUREMENT_ID="${{ secrets.VITE_GA_MEASUREMENT_ID }}"
           fi
+          # Do not default VITE_SITE_URL to github.io here — that overrides .env.production and breaks pdfly.pro (needs base /).
           if [ -n "${{ secrets.VITE_SITE_URL }}" ]; then
             export VITE_SITE_URL="${{ secrets.VITE_SITE_URL }}"
-          else
-            export VITE_SITE_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
           fi
-          # Asset base: project sites on github.io need /repo/; custom domains (e.g. pdfly.pro) are served at /
           if [ -n "${{ secrets.VITE_BASE_PATH }}" ]; then
             export VITE_BASE_PATH="${{ secrets.VITE_BASE_PATH }}"
-          elif [ -n "${{ secrets.VITE_SITE_URL }}" ] && ! echo "${{ secrets.VITE_SITE_URL }}" | grep -q 'github.io'; then
-            export VITE_BASE_PATH="/"
-          else
+          elif [ -n "${{ secrets.VITE_SITE_URL }}" ] && echo "${{ secrets.VITE_SITE_URL }}" | grep -q 'github.io'; then
             export VITE_BASE_PATH="/${{ github.event.repository.name }}/"
           fi
-          echo "VITE_BASE_PATH=$VITE_BASE_PATH (asset URLs in index.html)"
           npm ci && npm run build
       - name: Verify GA4 Measurement ID in bundle
         working-directory: frontend
