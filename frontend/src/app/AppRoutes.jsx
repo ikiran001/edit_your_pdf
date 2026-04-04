@@ -2,6 +2,9 @@ import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import ToolkitHomePage from '../features/toolkit-home/ToolkitHomePage.jsx'
 import EditPdfPage from '../features/edit-pdf/EditPdfPage.jsx'
+import MergePdfPage from '../features/merge-pdf/MergePdfPage.jsx'
+import SplitPdfPage from '../features/split-pdf/SplitPdfPage.jsx'
+import CompressPdfPage from '../features/compress-pdf/CompressPdfPage.jsx'
 import PdfToJpgPage from '../features/pdf-to-jpg/PdfToJpgPage.jsx'
 import JpgToPdfPage from '../features/jpg-to-pdf/JpgToPdfPage.jsx'
 import SignPdfPage from '../features/sign-pdf/SignPdfPage.jsx'
@@ -29,6 +32,9 @@ export default function AppRoutes() {
       <Routes>
         <Route path="/" element={<ToolkitHomePage />} />
         <Route path="/tools/edit-pdf" element={<EditPdfPage />} />
+        <Route path="/tools/merge-pdf" element={<MergePdfPage />} />
+        <Route path="/tools/split-pdf" element={<SplitPdfPage />} />
+        <Route path="/tools/compress-pdf" element={<CompressPdfPage />} />
         <Route path="/tools/pdf-to-jpg" element={<PdfToJpgPage />} />
         <Route path="/tools/jpg-to-pdf" element={<JpgToPdfPage />} />
         <Route path="/tools/sign-pdf" element={<SignPdfPage />} />

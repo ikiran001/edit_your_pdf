@@ -6,6 +6,9 @@ export const DOC_TITLE_HOME = 'PDFly - Edit, Sign & Convert PDFs'
 
 const TOOL_DOC_TITLES = {
   '/tools/edit-pdf': 'PDFly - Edit PDF',
+  '/tools/merge-pdf': 'PDFly - Merge PDF',
+  '/tools/split-pdf': 'PDFly - Split PDF',
+  '/tools/compress-pdf': 'PDFly - Compress PDF',
   '/tools/sign-pdf': 'PDFly - Sign PDF',
   '/tools/pdf-to-jpg': 'PDFly - PDF to JPG',
   '/tools/jpg-to-pdf': 'PDFly - JPG to PDF',

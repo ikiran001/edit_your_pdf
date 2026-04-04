@@ -1,6 +1,30 @@
 /** Toolkit cards + paths. Each tool: src/features/<id>/ */
 export const TOOL_REGISTRY = [
   { id: 'edit-pdf', path: '/tools/edit-pdf', title: 'Edit PDF', description: 'Change text, annotate, highlight, draw.', implemented: true, icon: 'FileEdit' },
+  {
+    id: 'merge-pdf',
+    path: '/tools/merge-pdf',
+    title: 'Merge PDF',
+    description: 'Combine multiple PDFs into one file.',
+    implemented: true,
+    icon: 'GitMerge',
+  },
+  {
+    id: 'split-pdf',
+    path: '/tools/split-pdf',
+    title: 'Split PDF',
+    description: 'Split by page ranges or extract every page.',
+    implemented: true,
+    icon: 'Scissors',
+  },
+  {
+    id: 'compress-pdf',
+    path: '/tools/compress-pdf',
+    title: 'Compress PDF',
+    description: 'Shrink PDFs with levels, compare sizes, batch ZIP.',
+    implemented: true,
+    icon: 'Minimize2',
+  },
   { id: 'pdf-to-jpg', path: '/tools/pdf-to-jpg', title: 'PDF to JPG', description: 'Export pages as JPEG. ZIP or single files.', implemented: true, icon: 'ImageDown' },
   { id: 'jpg-to-pdf', path: '/tools/jpg-to-pdf', title: 'JPG to PDF', description: 'Combine images. Drag to reorder.', implemented: true, icon: 'Images' },
   {
