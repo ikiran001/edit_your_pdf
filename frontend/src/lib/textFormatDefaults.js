@@ -58,7 +58,7 @@ export function defaultTextFormat() {
     italic: false,
     underline: false,
     align: 'left',
-    color: '#111827',
+    color: '#000000',
     opacity: 1,
     rotationDeg: 0,
   }
@@ -68,18 +68,27 @@ export function defaultTextFormat() {
  * Toolbar + editor defaults from a merged text line block (geometry + pdf.js styles).
  * pdf.js does not expose fill color per glyph — default black matches most body text.
  */
-export function formatFromTextBlock(block, prev) {
+/**
+ * @param {string} [sampleColorHex] — from rendered canvas when opening inline editor (pdf.js has no fill color).
+ */
+export function formatFromTextBlock(block, prev, sampleColorHex) {
   const base = { ...defaultTextFormat(), ...prev }
   if (!block) return base
   const fs = Math.round(Math.max(8, Math.min(200, block.fontSizePx || 14)))
   const pdfFam = block.pdfFontFamily || ''
   const server = block.serverFontFamily || mapPdfFontNameToServer(pdfFam)
   const fromName = parsePdfFontStyle(pdfFam)
+  const color =
+    (typeof sampleColorHex === 'string' && sampleColorHex.startsWith('#')
+      ? sampleColorHex
+      : null) ||
+    block.sourceColorHex ||
+    '#000000'
   return {
     ...base,
     fontSizeCss: fs,
     fontFamily: server,
-    color: block.sourceColorHex || '#000000',
+    color,
     bold: block.sourceBold ?? fromName.bold,
     italic: block.sourceItalic ?? fromName.italic,
   }
