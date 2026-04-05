@@ -126,13 +126,13 @@ export default function TextFormatToolbar({ format, onChange, disabled }) {
           <div className="flex items-center gap-2">
             <input
               type="color"
-              value={format.color?.match(/^#/) ? format.color.slice(0, 7) : '#111827'}
+              value={format.color?.match(/^#/) ? format.color.slice(0, 7) : '#000000'}
               onChange={(e) => patch({ color: e.target.value })}
               className="h-9 w-12 cursor-pointer rounded border border-zinc-300 bg-white p-0.5 dark:border-zinc-600"
             />
             <input
               type="text"
-              value={format.color || '#111827'}
+              value={format.color || '#000000'}
               onChange={(e) => patch({ color: e.target.value })}
               className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-white px-2 py-1.5 font-mono text-xs dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
               placeholder="#000000"

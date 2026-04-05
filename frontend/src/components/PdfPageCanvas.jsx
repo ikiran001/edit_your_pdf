@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { buildTextRuns } from '../lib/pdfTextRuns'
+import { sampleInkColorHex } from '../lib/sampleCanvasInkColor'
 import { buildPageTextBlocks } from '../lib/textLayerManager'
 import { cssDisplayFontFromPdf, defaultTextFormat } from '../lib/textFormatDefaults'
 
@@ -173,7 +174,7 @@ export default function PdfPageCanvas({
     el.style.textDecoration = f.underline ? 'underline' : 'none'
     el.style.textDecorationLine = f.underline ? 'underline' : 'none'
     el.style.textAlign = f.align || 'left'
-    el.style.color = f.color || '#111827'
+    el.style.color = f.color || '#000000'
     el.style.opacity = String(f.opacity ?? 1)
   }, [nativeEdit, textFormat])
 
@@ -596,7 +597,19 @@ export default function PdfPageCanvas({
       const id = block.id
       nativeOpenBaselineStrRef.current =
         textBlocksRef.current.find((b) => b.id === id)?.str ?? ''
-      onBeginNativeTextEdit?.(block)
+      const cv = pdfCanvasRef.current
+      let sampleColorHex = null
+      if (cv?.width) {
+        sampleColorHex = sampleInkColorHex(
+          cv,
+          block.left + block.width * 0.5,
+          block.top + block.height * 0.5
+        )
+      }
+      onBeginNativeTextEdit?.(
+        block,
+        sampleColorHex ? { sampleColorHex } : undefined
+      )
       setNativeEdit({ block })
     },
     [onBeginNativeTextEdit]

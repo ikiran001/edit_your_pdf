@@ -459,8 +459,10 @@ export default function PdfEditor({ sessionId, onBack }) {
                       textFormatRef={textFormatRef}
                       editTextMode={editTextMode}
                       onInlineEditorActiveChange={setInlineTextEditorOpen}
-                      onBeginNativeTextEdit={(block) =>
-                        setTextFormat((prev) => formatFromTextBlock(block, prev))
+                      onBeginNativeTextEdit={(block, extras) =>
+                        setTextFormat((prev) =>
+                          formatFromTextBlock(block, prev, extras?.sampleColorHex)
+                        )
                       }
                     />
                   )}
