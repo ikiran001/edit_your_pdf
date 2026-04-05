@@ -11,6 +11,7 @@ import unlockRouter from './routes/unlock.js';
 import { startSessionCleanup } from './utils/sessionCleanup.js';
 import { getQpdfBinary } from './utils/resolveQpdf.js';
 import { getGhostscriptBinary } from './utils/resolveGhostscript.js';
+import { ensureNotoFontsReady } from './services/pdfUnicodeFonts.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const uploadsDir = path.join(__dirname, 'uploads');
@@ -133,4 +134,8 @@ logUnlockBackends();
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`PDF editor API http://localhost:${PORT}`);
+  ensureNotoFontsReady().then((ok) => {
+    if (ok) console.log('[fonts] Noto ready for Hindi/Marathi PDF text');
+    else console.warn('[fonts] Noto not available — Unicode edits may be blank until fonts download succeeds');
+  });
 });

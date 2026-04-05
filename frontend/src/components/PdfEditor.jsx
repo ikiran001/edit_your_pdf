@@ -73,6 +73,8 @@ export default function PdfEditor({ sessionId, onBack }) {
   const pagesItemsRef = useRef({})
   const nativeTextEditsRef = useRef([])
   const [nativeTextEdits, setNativeTextEdits] = useState([])
+  const autosaveTimerRef = useRef(null)
+  const autosaveInFlightRef = useRef(false)
   /** Single source of truth for on-canvas text: block id → latest string (survives re-parse / re-render). */
   const [blockTextOverrides, setBlockTextOverrides] = useState({})
   const [textFormat, setTextFormat] = useState(defaultTextFormat)
@@ -181,57 +183,14 @@ export default function PdfEditor({ sessionId, onBack }) {
     return Array.from({ length: numPages }, (_, i) => i)
   }, [pdfDoc, numPages])
 
-  const addNativeTextEdit = useCallback((pageIndex, payload) => {
-    const {
-      blockId,
-      pdf,
-      norm,
-      text,
-      fontSize,
-      fontFamily,
-      bold,
-      italic,
-      underline,
-      align,
-      color,
-      opacity,
-      rotationDeg,
-    } = payload
-    const key = `${pageIndex}:${pdf.x}:${pdf.y}:${pdf.baseline}`
-    const prev = nativeTextEditsRef.current
-    const rest = prev.filter((e) => e.key !== key)
-    const next = [
-      ...rest,
-      {
-        key,
-        pageIndex,
-        x: pdf.x,
-        y: pdf.y,
-        w: pdf.w,
-        h: pdf.h,
-        baseline: pdf.baseline,
-        fontSize: fontSize ?? pdf.fontSize,
-        norm,
-        text,
-        fontFamily,
-        bold,
-        italic,
-        underline,
-        align,
-        color,
-        opacity,
-        rotationDeg,
-      },
-    ]
-    if (blockId) {
-      setBlockTextOverrides((prev) => (prev[blockId] === text ? prev : { ...prev, [blockId]: text }))
+  const cancelScheduledAutosave = useCallback(() => {
+    if (autosaveTimerRef.current != null) {
+      window.clearTimeout(autosaveTimerRef.current)
+      autosaveTimerRef.current = null
     }
-    // Keep ref in sync immediately so “Download” in the same gesture as textarea blur still sends edits.
-    nativeTextEditsRef.current = next
-    setNativeTextEdits(next)
   }, [])
 
-  const persistPdfToServer = async () => {
+  const persistPdfToServer = useCallback(async () => {
     const edits = buildEditsPayload(pagesItemsRef.current)
     const nativePayload = nativeTextEditsRef.current
     if (import.meta.env.DEV) {
@@ -270,14 +229,93 @@ export default function PdfEditor({ sessionId, onBack }) {
     if (import.meta.env.DEV) {
       console.debug('[save] /edit ok', res.status)
     }
-  }
+  }, [sessionId, applyTextSwap])
 
-  const reloadPdfFromServer = () => {
+  const reloadPdfFromServer = useCallback(() => {
     setPdfDoc(null)
     setPdfBust((v) => v + 1)
-  }
+  }, [])
+
+  /** After inline text changes (e.g. click outside the line), sync session + PDF like Save PDF — debounced. */
+  const scheduleSessionAutosave = useCallback(() => {
+    cancelScheduledAutosave()
+    autosaveTimerRef.current = window.setTimeout(async () => {
+      autosaveTimerRef.current = null
+      if (autosaveInFlightRef.current) return
+      autosaveInFlightRef.current = true
+      try {
+        await persistPdfToServer()
+        reloadPdfFromServer()
+        setSaveHint(MSG.autoSavedSession)
+        window.setTimeout(() => setSaveHint(null), 4500)
+      } catch (e) {
+        console.error('[autosave]', e)
+        setSaveHint(MSG.autoSaveFailed)
+        window.setTimeout(() => setSaveHint(null), 6000)
+      } finally {
+        autosaveInFlightRef.current = false
+      }
+    }, 850)
+  }, [cancelScheduledAutosave, persistPdfToServer, reloadPdfFromServer])
+
+  useEffect(() => () => cancelScheduledAutosave(), [cancelScheduledAutosave])
+
+  const addNativeTextEdit = useCallback(
+    (pageIndex, payload) => {
+      const {
+        blockId,
+        pdf,
+        norm,
+        text,
+        fontSize,
+        fontFamily,
+        bold,
+        italic,
+        underline,
+        align,
+        color,
+        opacity,
+        rotationDeg,
+      } = payload
+      const key = `${pageIndex}:${pdf.x}:${pdf.y}:${pdf.baseline}`
+      const prev = nativeTextEditsRef.current
+      const rest = prev.filter((e) => e.key !== key)
+      const next = [
+        ...rest,
+        {
+          key,
+          pageIndex,
+          x: pdf.x,
+          y: pdf.y,
+          w: pdf.w,
+          h: pdf.h,
+          baseline: pdf.baseline,
+          fontSize: fontSize ?? pdf.fontSize,
+          norm,
+          text,
+          fontFamily,
+          bold,
+          italic,
+          underline,
+          align,
+          color,
+          opacity,
+          rotationDeg,
+        },
+      ]
+      if (blockId) {
+        setBlockTextOverrides((prev) => (prev[blockId] === text ? prev : { ...prev, [blockId]: text }))
+      }
+      // Keep ref in sync immediately so “Download” in the same gesture as textarea blur still sends edits.
+      nativeTextEditsRef.current = next
+      setNativeTextEdits(next)
+      scheduleSessionAutosave()
+    },
+    [scheduleSessionAutosave]
+  )
 
   const handleSave = async () => {
+    cancelScheduledAutosave()
     setSaving(true)
     setSaveHint(null)
     const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
@@ -300,6 +338,7 @@ export default function PdfEditor({ sessionId, onBack }) {
   }
 
   const handleDownload = async () => {
+    cancelScheduledAutosave()
     setDownloading(true)
     const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
     try {
@@ -429,8 +468,12 @@ export default function PdfEditor({ sessionId, onBack }) {
               <p className="mt-1 mb-0 text-amber-900/90 dark:text-amber-100/90">
                 Use <strong>Edit text</strong> to change existing PDF wording (matched size), or{' '}
                 <strong>Text</strong> / <strong>Draw</strong> / <strong>Highlight</strong> /{' '}
-                <strong>Rectangle</strong> for markup. Edits to existing text apply when you click{' '}
-                <strong>Save PDF</strong> (store on server) or <strong>Download PDF</strong> (save + file). Optional bulk swap “PDF editor” → “PDF love” uses the checkbox.
+                <strong>Rectangle</strong> for markup. When you finish a line (click outside or press{' '}
+                <kbd className="rounded bg-amber-200/80 px-1 dark:bg-amber-900/50">Ctrl+Enter</kbd>
+                ), your text is saved to this session automatically — no need to press{' '}
+                <strong>Save PDF</strong> first. Use <strong>Save PDF</strong> or{' '}
+                <strong>Download PDF</strong> anytime for a full sync or file download. Optional bulk swap
+                “PDF editor” → “PDF love” uses the checkbox.
               </p>
             </div>
           )}

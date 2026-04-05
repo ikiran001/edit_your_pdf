@@ -5,6 +5,103 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FONTS_DIR = path.join(__dirname, '../fonts');
 
+/** Same files as `scripts/fetch-noto-fonts.mjs` — used when `backend/fonts/*.ttf` are missing in production. */
+const NOTO_FONT_SOURCES = [
+  [
+    'https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSans',
+    'NotoSans-Regular.ttf',
+  ],
+  [
+    'https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSans',
+    'NotoSans-Bold.ttf',
+  ],
+  [
+    'https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSans',
+    'NotoSans-Italic.ttf',
+  ],
+  [
+    'https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSans',
+    'NotoSans-BoldItalic.ttf',
+  ],
+  [
+    'https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSansDevanagari',
+    'NotoSansDevanagari-Regular.ttf',
+  ],
+  [
+    'https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSansDevanagari',
+    'NotoSansDevanagari-Bold.ttf',
+  ],
+];
+
+let ensureNotoPromise = null;
+
+export function invalidateNotoFontCache() {
+  latinMemo = undefined;
+  devaMemo = undefined;
+}
+
+function allRequiredNotoFilesOnDisk() {
+  for (const [, fname] of NOTO_FONT_SOURCES) {
+    const p = path.join(FONTS_DIR, fname);
+    try {
+      if (!fs.existsSync(p)) return false;
+      if (fs.statSync(p).size < 2048) return false;
+    } catch {
+      return false;
+    }
+  }
+  return true;
+}
+
+async function downloadMissingNotoFonts() {
+  fs.mkdirSync(FONTS_DIR, { recursive: true });
+  for (const [base, fname] of NOTO_FONT_SOURCES) {
+    const dest = path.join(FONTS_DIR, fname);
+    if (fs.existsSync(dest) && fs.statSync(dest).size > 2048) continue;
+    const url = `${base}/${fname}`;
+    const res = await fetch(url, { redirect: 'follow' });
+    if (!res.ok) {
+      throw new Error(`Failed to fetch ${fname}: HTTP ${res.status}`);
+    }
+    const buf = Buffer.from(await res.arrayBuffer());
+    fs.writeFileSync(dest, buf);
+  }
+}
+
+/**
+ * Ensures Noto TTFs exist (downloads into backend/fonts on first use if missing).
+ * Required for Hindi/Marathi in pdf-lib; without them the server falls back to Helvetica → "?" in PDFs.
+ */
+export async function ensureNotoFontsReady() {
+  if (allRequiredNotoFilesOnDisk()) {
+    const ok = !!(loadLatinNotoBytesIfComplete() && loadDevanagariNotoBytesIfComplete());
+    if (ok) return true;
+    invalidateNotoFontCache();
+  }
+  if (!ensureNotoPromise) {
+    ensureNotoPromise = (async () => {
+      try {
+        invalidateNotoFontCache();
+        await downloadMissingNotoFonts();
+        invalidateNotoFontCache();
+        const ok = !!(loadLatinNotoBytesIfComplete() && loadDevanagariNotoBytesIfComplete());
+        if (!ok) {
+          console.error(
+            '[pdfUnicodeFonts] Noto fonts still unavailable after download — check disk permissions and outbound HTTPS'
+          );
+          ensureNotoPromise = null;
+        }
+        return ok;
+      } catch (e) {
+        console.error('[pdfUnicodeFonts] Noto font download failed:', e?.message || e);
+        ensureNotoPromise = null;
+        return false;
+      }
+    })();
+  }
+  return ensureNotoPromise;
+}
+
 /** True when string needs more than basic ASCII (Latin-1+ symbols, Indic scripts, etc.). */
 export function needsNonAsciiText(s) {
   return /[^\u0000-\u007f]/.test(String(s ?? ''));
@@ -163,6 +260,7 @@ export function drawTextDevanagariBestEffort(page, raw, drawOpts) {
  */
 export async function embedUnicodeFontIfAvailable(doc, fontkitModule, raw, bold, italic, state) {
   if (!needsNonAsciiText(raw)) return null;
+  await ensureNotoFontsReady();
   let { script, bytesKey } = pickNotoVariantKey(raw, bold, italic);
   let bytes = getNotoBytesForVariant(script, bytesKey);
   let cacheKey = `${script}:${bytesKey}`;

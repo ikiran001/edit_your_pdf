@@ -6,6 +6,7 @@ import {
   containsDevanagari,
   drawTextDevanagariBestEffort,
   embedUnicodeFontIfAvailable,
+  needsNonAsciiText,
 } from './pdfUnicodeFonts.js';
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 
@@ -156,9 +157,11 @@ export async function applyTextReplacements(pdfBytes, rules) {
         page.drawText(raw, drawOpts);
       }
     } catch {
-      if (!uni) {
+      if (!uni && !needsNonAsciiText(raw)) {
         const safe = raw.replace(/[^\x20-\x7E]/g, '?');
         if (safe) page.drawText(safe, drawOpts);
+      } else if (!uni && needsNonAsciiText(raw)) {
+        console.warn('[applyTextReplacements] non-ASCII skipped (no embedded Unicode font)');
       }
     }
   }

@@ -5,6 +5,7 @@ import {
   containsDevanagari,
   drawTextDevanagariBestEffort,
   embedUnicodeFontIfAvailable,
+  needsNonAsciiText,
   widthOfTextDevanagariBestEffort,
 } from './pdfUnicodeFonts.js';
 
@@ -135,6 +136,8 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
             } catch {
               if (isUnicodeEmbedded) {
                 textW = estimateUnicodeTextWidth(raw, fontSizePt);
+              } else if (needsNonAsciiText(raw)) {
+                textW = estimateUnicodeTextWidth(raw, fontSizePt);
               } else {
                 const safe = raw.replace(/[^\x20-\x7E]/g, '?');
                 textW = safe.length ? tFont.widthOfTextAtSize(safe, fontSizePt) : 0;
@@ -240,6 +243,11 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
           } catch (drawErr) {
             if (isUnicodeEmbedded) {
               console.warn('[applyEdits] nativeText unicode draw failed:', drawErr?.message);
+            } else if (needsNonAsciiText(raw)) {
+              console.warn(
+                '[applyEdits] nativeText non-ASCII skipped (no embedded Unicode font):',
+                drawErr?.message
+              );
             } else {
               const safe = raw.replace(/[^\x20-\x7E]/g, '?');
               if (safe.length) {
@@ -283,7 +291,7 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
               color: parseHexColor(item.color),
             });
           } catch {
-            if (!uniAnnot) {
+            if (!uniAnnot && !needsNonAsciiText(raw)) {
               const safe = raw.replace(/[^\x20-\x7E]/g, '?');
               if (safe.length) {
                 page.drawText(safe, {
@@ -294,6 +302,8 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
                   color: parseHexColor(item.color),
                 });
               }
+            } else if (!uniAnnot && needsNonAsciiText(raw)) {
+              console.warn('[applyEdits] text annotation non-ASCII skipped (no embedded Unicode font)');
             }
           }
           break;
