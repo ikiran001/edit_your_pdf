@@ -2,7 +2,13 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { buildTextRuns } from '../lib/pdfTextRuns'
 import { sampleInkColorHex } from '../lib/sampleCanvasInkColor'
 import { buildPageTextBlocks } from '../lib/textLayerManager'
-import { cssDisplayFontFromPdf, defaultTextFormat } from '../lib/textFormatDefaults'
+import {
+  cssDisplayFontFromPdf,
+  defaultTextFormat,
+  formatFromTextBlock,
+  mapPdfFontNameToServer,
+  parsePdfFontStyle,
+} from '../lib/textFormatDefaults'
 
 const RENDER_SCALE = 1.35
 
@@ -153,6 +159,8 @@ export default function PdfPageCanvas({
   const nativeOpenBaselineStrRef = useRef('')
   /** Toolbar snapshot at open — so bold/italic/underline-only edits still persist when text is unchanged. */
   const nativeOpenBaselineFormatRef = useRef(null)
+  /** PDF user-space font size from the text item (`block.pdf.fontSize`) — authoritative for saved output. */
+  const nativeOpenBaselinePdfFontSizeRef = useRef(null)
   const [hoverBlockId, setHoverBlockId] = useState(null)
 
   useEffect(() => {
@@ -599,6 +607,9 @@ export default function PdfPageCanvas({
       const id = block.id
       nativeOpenBaselineStrRef.current =
         textBlocksRef.current.find((b) => b.id === id)?.str ?? ''
+      const pdfFs = Number(block.pdf?.fontSize)
+      nativeOpenBaselinePdfFontSizeRef.current =
+        Number.isFinite(pdfFs) && pdfFs > 0 ? pdfFs : null
       const cv = pdfCanvasRef.current
       let sampleColorHex = null
       if (cv?.width) {
@@ -608,19 +619,39 @@ export default function PdfPageCanvas({
           block.top + block.height * 0.5
         )
       }
-      onBeginNativeTextEdit?.(
-        block,
-        sampleColorHex ? { sampleColorHex } : undefined
-      )
+      const { pdfW, cssW } = metaRef.current
+      const pdfToCssScale = cssW > 0 ? pdfW / cssW : 1
+      const layoutHint = Number.isFinite(pdfToCssScale) && pdfToCssScale > 0 ? { pdfToCssScale } : undefined
+      const prevFmt = textFormatRef?.current ?? textFormat ?? defaultTextFormat()
+      try {
+        const presetFormat = formatFromTextBlock(
+          block,
+          prevFmt,
+          sampleColorHex ?? undefined,
+          layoutHint
+        )
+        onBeginNativeTextEdit?.(block, {
+          sampleColorHex: sampleColorHex ?? undefined,
+          presetFormat,
+          layoutHint,
+        })
+      } catch (err) {
+        console.error('formatFromTextBlock failed', err)
+        onBeginNativeTextEdit?.(block, {
+          sampleColorHex: sampleColorHex ?? undefined,
+          layoutHint,
+        })
+      }
       setNativeEdit({ block })
     },
-    [onBeginNativeTextEdit]
+    [onBeginNativeTextEdit, textFormat, textFormatRef]
   )
 
   /** Capture format once when edit opens only (`nativeEdit` deps — not `textFormat`, or toggling B/I/U would reset baseline). */
   useLayoutEffect(() => {
     if (!nativeEdit) {
       nativeOpenBaselineFormatRef.current = null
+      nativeOpenBaselinePdfFontSizeRef.current = null
       return
     }
     nativeOpenBaselineFormatRef.current = snapshotNativeFormat(
@@ -663,30 +694,52 @@ export default function PdfPageCanvas({
     return () => cancelAnimationFrame(raf)
   }, [nativeEdit])
 
-  const buildNativePayload = useCallback(
-    (block, text) => {
-      const fmt = textFormatRef?.current ?? textFormat ?? defaultTextFormat()
-      const { pdfW, cssW } = metaRef.current
-      const ratio = cssW > 0 ? pdfW / cssW : 1
-      const pdfFontSize = Math.max(4, Math.min(144, (fmt.fontSizeCss || 14) * ratio))
-      return {
-        blockId: block.id,
-        pdf: block.pdf,
-        norm: block.norm,
-        text,
-        fontSize: pdfFontSize,
-        fontFamily: fmt.fontFamily,
-        bold: !!fmt.bold,
-        italic: !!fmt.italic,
-        underline: !!fmt.underline,
-        align: fmt.align || 'left',
-        color: fmt.color || '#000000',
-        opacity: fmt.opacity ?? 1,
-        rotationDeg: fmt.rotationDeg ?? 0,
-      }
-    },
-    [textFormat, textFormatRef]
-  )
+  const buildNativePayload = useCallback((block, text) => {
+    const fmt = textFormatRef?.current ?? textFormat ?? defaultTextFormat()
+    const { pdfW, cssW } = metaRef.current
+    const ratio = cssW > 0 ? pdfW / cssW : 1
+    const curSnap = snapshotNativeFormat(fmt)
+    const openFmt = nativeOpenBaselineFormatRef.current
+    const openPdfFs = nativeOpenBaselinePdfFontSizeRef.current
+
+    const sizeToolbarTouched = !!(openFmt && openFmt.fontSizeCss !== curSnap.fontSizeCss)
+    const pdfFontSizeFromCss = Math.max(4, Math.min(144, (fmt.fontSizeCss || 14) * ratio))
+    const pdfFontSize =
+      !sizeToolbarTouched && openPdfFs != null && Number.isFinite(openPdfFs) && openPdfFs > 0
+        ? Math.max(4, Math.min(144, openPdfFs))
+        : pdfFontSizeFromCss
+
+    const bioTouched =
+      !openFmt ||
+      openFmt.bold !== curSnap.bold ||
+      openFmt.italic !== curSnap.italic ||
+      openFmt.fontFamily !== curSnap.fontFamily
+    const fromName = parsePdfFontStyle(block.pdfFontFamily || '')
+    const bold = bioTouched ? !!fmt.bold : !!(block.sourceBold || fromName.bold)
+    const italic = bioTouched ? !!fmt.italic : !!(block.sourceItalic || fromName.italic)
+    const fontFamily = bioTouched
+      ? String(fmt.fontFamily || 'Helvetica')
+      : String(block.serverFontFamily || mapPdfFontNameToServer(block.pdfFontFamily))
+
+    const alignTouched = openFmt && openFmt.align !== curSnap.align
+    const align = alignTouched ? fmt.align || 'left' : curSnap.align || fmt.align || 'left'
+
+    return {
+      blockId: block.id,
+      pdf: block.pdf,
+      norm: block.norm,
+      text,
+      fontSize: pdfFontSize,
+      fontFamily,
+      bold,
+      italic,
+      underline: !!fmt.underline,
+      align,
+      color: fmt.color || '#000000',
+      opacity: fmt.opacity ?? 1,
+      rotationDeg: fmt.rotationDeg ?? 0,
+    }
+  }, [textFormat, textFormatRef])
 
   const flushNativeSyncTimer = useCallback(() => {
     if (nativeSyncTimerRef.current != null) {
