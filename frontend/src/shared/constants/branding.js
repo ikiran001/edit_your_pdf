@@ -32,6 +32,9 @@ export const MSG = {
   loadingPdf: 'Loading your PDF…',
   fileReady: 'Your file is ready on PDFly.',
   savedSession: 'Saved — stored for this session on PDFly.',
+  /** Shown after native line text is persisted without clicking Save PDF. */
+  autoSavedSession: 'Text updated — saved to this session.',
+  autoSaveFailed: 'Could not auto-save. Use Save PDF or check your connection.',
 }
 
 /** e.g. "Edit PDF on PDFly" */
