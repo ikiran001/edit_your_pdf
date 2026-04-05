@@ -1,4 +1,23 @@
-import { mapPdfFontNameToServer, parsePdfFontStyle } from './textFormatDefaults'
+import { mapPdfFontNameToServer, mergePdfStyleHints } from './textFormatDefaults'
+
+function inferBoldFromGlyphWidth(s, wPdf, fontSizePdf, alreadyBold) {
+  if (alreadyBold || wPdf <= 0.5) return false
+  const nonSpace = s.replace(/\s/g, '')
+  if (nonSpace.length < 2) return false
+  const avg = wPdf / nonSpace.length
+  const emRatio = avg / Math.max(fontSizePdf, 1e-6)
+  return emRatio > 0.54
+}
+
+function runStyleFromPdfItem(rawPdfFontFamily, internalFontKey, s, wPdf, fontSizePdf) {
+  const hints = mergePdfStyleHints(rawPdfFontFamily, String(internalFontKey || ''))
+  const sourceBold = hints.bold || inferBoldFromGlyphWidth(s, wPdf, fontSizePdf, hints.bold)
+  return {
+    sourceBold,
+    sourceItalic: hints.italic,
+    sourceUnderline: hints.underline,
+  }
+}
 
 function tabularRowPartsFromString(str) {
   const s = str.trim()
@@ -33,7 +52,7 @@ function makeRunFromPdfSlice({
   asc,
   fontSizePdf,
   rawPdfFontFamily,
-  fromStyleName,
+  runStyle,
   vw,
   vh,
   vyBaseline,
@@ -63,8 +82,9 @@ function makeRunFromPdfSlice({
     baselineY: vyBaseline,
     pdfFontFamily: rawPdfFontFamily,
     serverFontFamily: mapPdfFontNameToServer(rawPdfFontFamily),
-    sourceBold: fromStyleName.bold,
-    sourceItalic: fromStyleName.italic,
+    sourceBold: runStyle.sourceBold,
+    sourceItalic: runStyle.sourceItalic,
+    sourceUnderline: runStyle.sourceUnderline,
     sourceColorHex: '#000000',
     left,
     top,
@@ -111,7 +131,6 @@ export function buildTextRuns(viewport, textContent) {
       12
     const st = item.fontName ? styles[item.fontName] : null
     const rawPdfFontFamily = st?.fontFamily || 'sans-serif'
-    const fromStyleName = parsePdfFontStyle(rawPdfFontFamily)
     let desc = fontSizePdf * 0.28
     let asc = fontSizePdf * 0.92
     if (st && typeof st.descent === 'number' && typeof st.ascent === 'number') {
@@ -127,6 +146,7 @@ export function buildTextRuns(viewport, textContent) {
     const e = item.transform[4]
     const f = item.transform[5]
     const wPdf = item.width || 0
+    const runStyle = runStyleFromPdfItem(rawPdfFontFamily, item.fontName, s, wPdf, fontSizePdf)
     const x0 = e
     const y0 = f - desc
     const x1 = e + wPdf
@@ -169,7 +189,7 @@ export function buildTextRuns(viewport, textContent) {
             asc,
             fontSizePdf,
             rawPdfFontFamily,
-            fromStyleName,
+            runStyle,
             vw,
             vh,
             vyBaseline,
@@ -189,8 +209,9 @@ export function buildTextRuns(viewport, textContent) {
       /** pdf.js TextStyle.fontFamily (e.g. Helvetica, Times New Roman). */
       pdfFontFamily: rawPdfFontFamily,
       serverFontFamily: mapPdfFontNameToServer(rawPdfFontFamily),
-      sourceBold: fromStyleName.bold,
-      sourceItalic: fromStyleName.italic,
+      sourceBold: runStyle.sourceBold,
+      sourceItalic: runStyle.sourceItalic,
+      sourceUnderline: runStyle.sourceUnderline,
       /** getTextContent does not include fill color; default matches typical PDF body text. */
       sourceColorHex: '#000000',
       left,

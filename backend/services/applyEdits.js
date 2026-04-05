@@ -1,4 +1,61 @@
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import fontkit from '@pdf-lib/fontkit';
 import { PDFDocument, StandardFonts, rgb, degrees } from 'pdf-lib';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+/** Coerce JSON / form quirks so `"false"` is not treated as true. */
+function asBool(v) {
+  if (v === true || v === 1) return true;
+  if (v === false || v === 0 || v == null) return false;
+  if (typeof v === 'string') {
+    const s = v.trim().toLowerCase();
+    if (s === 'true' || s === '1' || s === 'yes') return true;
+    return false;
+  }
+  return Boolean(v);
+}
+
+/**
+ * Optional full Noto Sans TTF set under backend/fonts/ (OFL). When all four files exist,
+ * native replacements use real bold/italic faces and broader Unicode than StandardFonts.
+ * Filenames: NotoSans-Regular.ttf, NotoSans-Bold.ttf, NotoSans-Italic.ttf, NotoSans-BoldItalic.ttf
+ */
+let optionalNotoBytesMemo = undefined;
+
+/** Custom TTF only when needed — embedding Noto adds ~hundreds of KB per variant. */
+function nativeTextNeedsNoto(raw) {
+  return /[^\u0000-\u007f]/.test(String(raw ?? ''));
+}
+
+function getOptionalNotoBytes() {
+  if (optionalNotoBytesMemo !== undefined) return optionalNotoBytesMemo;
+  const base = path.join(__dirname, '../fonts');
+  const names = {
+    normal: 'NotoSans-Regular.ttf',
+    bold: 'NotoSans-Bold.ttf',
+    italic: 'NotoSans-Italic.ttf',
+    bolditalic: 'NotoSans-BoldItalic.ttf',
+  };
+  try {
+    const out = {};
+    for (const [k, fname] of Object.entries(names)) {
+      const p = path.join(base, fname);
+      if (!fs.existsSync(p)) {
+        optionalNotoBytesMemo = null;
+        return null;
+      }
+      out[k] = new Uint8Array(fs.readFileSync(p));
+    }
+    optionalNotoBytesMemo = out;
+    return out;
+  } catch {
+    optionalNotoBytesMemo = null;
+    return null;
+  }
+}
 
 /**
  * Convert UI normalized coords (origin top-left, y down) to PDF user space
@@ -57,6 +114,8 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
   const font = await doc.embedFont(StandardFonts.Helvetica);
   const pages = doc.getPages();
   const nativeFontCache = new Map();
+  const notoEmbedded = new Map();
+  let notoFontkitRegistered = false;
 
   const pageGroups = editsPayload.pages || [];
 
@@ -71,30 +130,51 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
     for (const item of group.items || []) {
       switch (item.type) {
         case 'nativeText': {
-          const fs = Math.max(4, Math.min(144, Number(item.fontSize) || 12));
+          const fontSizePt = Math.max(4, Math.min(144, Number(item.fontSize) || 12));
           const raw = String(item.text ?? '');
-          const fontEnum = resolveNativeStandardFont(item.fontFamily, item.bold, item.italic);
-          let tFont = nativeFontCache.get(fontEnum);
+          const bold = asBool(item.bold);
+          const italic = asBool(item.italic);
+          const underline = asBool(item.underline);
+          const notoKey =
+            bold && italic ? 'bolditalic' : bold ? 'bold' : italic ? 'italic' : 'normal';
+
+          let tFont = null;
+          if (nativeTextNeedsNoto(raw)) {
+            const nb = getOptionalNotoBytes();
+            if (nb) {
+              if (!notoFontkitRegistered) {
+                doc.registerFontkit(fontkit);
+                notoFontkitRegistered = true;
+              }
+              if (!notoEmbedded.has(notoKey)) {
+                notoEmbedded.set(notoKey, await doc.embedFont(nb[notoKey]));
+              }
+              tFont = notoEmbedded.get(notoKey);
+            }
+          }
           if (!tFont) {
-            tFont = await doc.embedFont(fontEnum);
-            nativeFontCache.set(fontEnum, tFont);
+            const fontEnum = resolveNativeStandardFont(item.fontFamily, bold, italic);
+            tFont = nativeFontCache.get(fontEnum);
+            if (!tFont) {
+              tFont = await doc.embedFont(fontEnum);
+              nativeFontCache.set(fontEnum, tFont);
+            }
           }
 
           let textW = 0;
           try {
-            textW = raw.length ? tFont.widthOfTextAtSize(raw, fs) : 0;
+            textW = raw.length ? tFont.widthOfTextAtSize(raw, fontSizePt) : 0;
           } catch {
             const safe = raw.replace(/[^\x20-\x7E]/g, '?');
-            textW = safe.length ? tFont.widthOfTextAtSize(safe, fs) : 0;
+            textW = safe.length ? tFont.widthOfTextAtSize(safe, fontSizePt) : 0;
           }
-          const pad = Math.max(3, fs * 0.22);
+          const pad = Math.max(3, fontSizePt * 0.22);
           const textColor = parseHexColor(item.color);
           let opacity = Number(item.opacity);
           if (!Number.isFinite(opacity)) opacity = 1;
           opacity = Math.min(1, Math.max(0.05, opacity));
           const rotationDeg = Number(item.rotationDeg) || 0;
           const align = item.align === 'center' || item.align === 'right' ? item.align : 'left';
-          const underline = !!item.underline;
 
           let maskX;
           let maskY;
@@ -122,20 +202,20 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
             maskX = rect.x;
             maskY = rect.y;
             maskW = rect.width;
-            maskH = Math.max(rect.height, fs * 1.35);
+            maskH = Math.max(rect.height, fontSizePt * 1.35);
             textX = n.nx * W + 0.75;
             baselinePdf = (1 - n.baselineN) * H;
             const needW = textX + textW + pad - (maskX + maskW);
             if (needW > 0) maskW += needW;
-            maskW = Math.max(maskW, textW + pad * 2, fs * 0.5);
+            maskW = Math.max(maskW, textW + pad * 2, fontSizePt * 0.5);
           } else {
             const bx = Number(item.x) || 0;
             const by = Number(item.y) || 0;
             const bw = Math.abs(Number(item.w) || 1);
             const bh = Math.abs(Number(item.h) || 1);
             baselinePdf = Number(item.baseline) || by + bh * 0.75;
-            maskW = Math.max(bw, textW + pad * 2, fs * 0.5);
-            maskH = Math.max(bh + pad * 2, fs * 1.35);
+            maskW = Math.max(bw, textW + pad * 2, fontSizePt * 0.5);
+            maskH = Math.max(bh + pad * 2, fontSizePt * 1.35);
             maskX = bx - pad;
             maskY = by - pad;
             textX = Math.max(bx + 0.5, maskX + 1);
@@ -171,7 +251,7 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
           const drawOpts = {
             x: textX,
             y: baselinePdf,
-            size: fs,
+            size: fontSizePt,
             font: tFont,
             color: textColor,
             opacity,
@@ -188,11 +268,11 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
           }
 
           if (underline && Math.abs(rotationDeg) < 1) {
-            const uy = baselinePdf - Math.max(0.8, fs * 0.11);
+            const uy = baselinePdf - Math.max(0.8, fontSizePt * 0.11);
             page.drawLine({
               start: { x: textX, y: uy },
               end: { x: textX + textW, y: uy },
-              thickness: Math.max(0.5, fs * 0.06),
+              thickness: Math.max(0.5, fontSizePt * 0.06),
               color: textColor,
               opacity,
             });
