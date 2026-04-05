@@ -176,6 +176,8 @@ export default function PdfPageCanvas({
     el.style.textAlign = f.align || 'left'
     el.style.color = f.color || '#000000'
     el.style.opacity = String(f.opacity ?? 1)
+    el.style.whiteSpace = 'pre-wrap'
+    el.style.overflowWrap = 'break-word'
   }, [nativeEdit, textFormat])
 
   const [textDiag, setTextDiag] = useState(null)
@@ -789,7 +791,11 @@ export default function PdfPageCanvas({
           role="application"
           aria-label="Click PDF text to edit"
           className="pointer-events-none absolute left-0 top-0 z-[15]"
-          style={{ width: cw, height: ch }}
+          style={{
+            width: cw,
+            height: ch,
+            overflow: nativeEdit ? 'visible' : undefined,
+          }}
         >
           {textBlocks.map((block) => {
             const isEditing = nativeEdit?.block?.id === block.id
@@ -803,11 +809,28 @@ export default function PdfPageCanvas({
             const editorFontCssPx = Math.max(6, Math.min(240, viewportFont * sx))
             const rotDeg = fmt.rotationDeg ?? 0
             const editFontFamily = cssDisplayFontFromPdf(block.pdfFontFamily, fmt.fontFamily)
+            const editorLineHeightPx = Math.max(14, Math.round(editorFontCssPx * 1.2))
+            /* PDF block box can be shorter than one rendered line (line-height + border); without this the
+               contenteditable overflows vertically and always shows a scrollbar. */
+            const wrapperMinH = isEditing
+              ? Math.max(h, editorLineHeightPx + 4)
+              : h
+            /* No scrollbars: wrap inside PDF width and grow height; overflow stays hidden. */
+            const wrapperStyle = isEditing
+              ? {
+                  left,
+                  top,
+                  width: w,
+                  minHeight: wrapperMinH,
+                  height: 'auto',
+                  zIndex: 2,
+                }
+              : { left, top, width: w, minHeight: wrapperMinH }
             return (
               <div
                 key={block.id}
                 className="pointer-events-auto absolute"
-                style={{ left, top, width: w, minHeight: h }}
+                style={wrapperStyle}
                 title={isEditing ? undefined : 'Click to edit'}
                 data-text-block-id={block.id}
               >
@@ -822,9 +845,9 @@ export default function PdfPageCanvas({
                   contentEditable={isEditing}
                   suppressContentEditableWarning
                   {...(isEditing ? { 'data-pdf-inline-editor-root': true } : {})}
-                  className={`absolute inset-0 z-[1] overflow-auto outline-none transition-[border-color,background-color] duration-150 ${
-                    isEditing ? 'select-text' : 'select-none'
-                  } ${
+                  className={`z-[1] outline-none transition-[border-color,background-color] duration-150 ${
+                    isEditing ? 'relative overflow-hidden' : 'absolute inset-0 overflow-x-hidden overflow-y-hidden'
+                  } ${isEditing ? 'select-text box-border' : 'select-none'} ${
                     isEditing
                       ? 'pdf-text-layer-editor pdf-text-layer-editor--paper cursor-text rounded-sm border border-solid border-[#4A90E2] bg-white'
                       : `cursor-text border border-transparent bg-transparent ${
@@ -837,7 +860,7 @@ export default function PdfPageCanvas({
                           colorScheme: 'light',
                           backgroundColor: '#ffffff',
                           fontSize: `${editorFontCssPx}px`,
-                          lineHeight: 'normal',
+                          lineHeight: editorLineHeightPx + 'px',
                           fontFamily: editFontFamily,
                           fontWeight: fmt.bold ? 700 : 400,
                           fontStyle: fmt.italic ? 'italic' : 'normal',
@@ -848,7 +871,7 @@ export default function PdfPageCanvas({
                           transform: rotDeg ? `rotate(${rotDeg}deg)` : 'none',
                           transformOrigin: rotDeg ? 'top left' : undefined,
                           whiteSpace: 'pre-wrap',
-                          wordBreak: 'break-word',
+                          overflowWrap: 'break-word',
                         }
                       : {
                           color: 'transparent',
@@ -910,7 +933,10 @@ export default function PdfPageCanvas({
                     el.style.fontWeight = f.bold ? '700' : '400'
                     el.style.fontStyle = f.italic ? 'italic' : 'normal'
                     el.style.textDecoration = f.underline ? 'underline' : 'none'
-                    el.style.lineHeight = 'normal'
+                    const lh = Math.max(14, Math.round(Math.max(6, Math.min(240, vfs * sx)) * 1.2))
+                    el.style.lineHeight = `${lh}px`
+                    el.style.whiteSpace = 'pre-wrap'
+                    el.style.overflowWrap = 'break-word'
                     scheduleNativeSync(block)
                   }}
                   onKeyDown={(e) => {
