@@ -12,10 +12,18 @@ export function mapPdfFontNameToServer(pdfFontFamily) {
 }
 
 export function parsePdfFontStyle(pdfFontFamily) {
-  const s = String(pdfFontFamily || '')
+  const s = String(pdfFontFamily || '').slice(0, 512)
+  const lower = s.toLowerCase()
   return {
-    bold: /\b(bold|black|heavy|semibold|demibold)\b/i.test(s),
-    italic: /\b(italic|oblique)\b/i.test(s),
+    bold:
+      /bold|black|heavy|semibold|demibold/i.test(s) ||
+      /(?:^|[-_+])bd(?=[-_,\s]|$)/i.test(s) ||
+      /\b(700|800|900)\b/.test(s) ||
+      /boldmt|bolditalic/i.test(lower),
+    italic:
+      /\b(italic|oblique)\b/i.test(s) ||
+      /[-_]it(?:alic)?(?=[-_,\s]|$)/i.test(s) ||
+      /\bitalicmt\b/i.test(lower),
   }
 }
 
@@ -70,11 +78,18 @@ export function defaultTextFormat() {
  */
 /**
  * @param {string} [sampleColorHex] — from rendered canvas when opening inline editor (pdf.js has no fill color).
+ * @param {{ pdfToCssScale?: number }} [layoutHint] — `pdfW / cssW` from the page canvas so `block.pdf.fontSize` maps to on-screen px.
  */
-export function formatFromTextBlock(block, prev, sampleColorHex) {
+export function formatFromTextBlock(block, prev, sampleColorHex, layoutHint) {
   const base = { ...defaultTextFormat(), ...prev }
   if (!block) return base
-  const fs = Math.round(Math.max(8, Math.min(200, block.fontSizePx || 14)))
+  let fs = Math.round(Math.max(8, Math.min(200, block.fontSizePx || 14)))
+  const scale = Number(layoutHint?.pdfToCssScale)
+  const pdfFs = Number(block.pdf?.fontSize)
+  if (Number.isFinite(pdfFs) && pdfFs > 0 && Number.isFinite(scale) && scale > 0) {
+    const fromPdf = Math.round(Math.min(200, Math.max(8, pdfFs / scale)))
+    fs = Math.max(fs, fromPdf)
+  }
   const pdfFam = block.pdfFontFamily || ''
   const server = block.serverFontFamily || mapPdfFontNameToServer(pdfFam)
   const fromName = parsePdfFontStyle(pdfFam)
@@ -89,7 +104,8 @@ export function formatFromTextBlock(block, prev, sampleColorHex) {
     fontSizeCss: fs,
     fontFamily: server,
     color,
-    bold: block.sourceBold ?? fromName.bold,
-    italic: block.sourceItalic ?? fromName.italic,
+    /* `??` would keep false and ignore “Bold” in the font name */
+    bold: !!(block.sourceBold || fromName.bold),
+    italic: !!(block.sourceItalic || fromName.italic),
   }
 }

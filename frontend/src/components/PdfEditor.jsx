@@ -459,11 +459,20 @@ export default function PdfEditor({ sessionId, onBack }) {
                       textFormatRef={textFormatRef}
                       editTextMode={editTextMode}
                       onInlineEditorActiveChange={setInlineTextEditorOpen}
-                      onBeginNativeTextEdit={(block, extras) =>
+                      onBeginNativeTextEdit={(block, extras) => {
+                        if (extras?.presetFormat) {
+                          setTextFormat(extras.presetFormat)
+                          return
+                        }
                         setTextFormat((prev) =>
-                          formatFromTextBlock(block, prev, extras?.sampleColorHex)
+                          formatFromTextBlock(
+                            block,
+                            prev,
+                            extras?.sampleColorHex,
+                            extras?.layoutHint
+                          )
                         )
-                      }
+                      }}
                     />
                   )}
                 </LazyPageLoader>
