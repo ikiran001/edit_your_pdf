@@ -43,9 +43,15 @@ export function usePdfSessionUpload() {
       }
       if (status < 200 || status >= 300) {
         const hint = text && !data.error ? text.replace(/<[^>]+>/g, ' ').slice(0, 280).trim() : ''
+        const proxy502 =
+          status === 502 &&
+          !isApiBaseConfigured() &&
+          (uploadUrl === '/upload' || uploadUrl.startsWith('/'))
+            ? '\n\nThe Vite dev server proxies /upload to http://localhost:3001. Start the API in another terminal:\n  cd backend && npm run dev\n\nOr from the repo root: npm run dev'
+            : ''
         throw new Error(
           data.error ||
-            `HTTP ${status} ${statusText}\nURL: ${uploadUrl}${hint ? `\n${hint}` : ''}`
+            `HTTP ${status} ${statusText}\nURL: ${uploadUrl}${hint ? `\n${hint}` : ''}${proxy502}`
         )
       }
       if (!data.sessionId) {

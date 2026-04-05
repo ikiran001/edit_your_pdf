@@ -3,3 +3,4 @@ dist/
 backend/uploads/
 *.log
 .DS_Store
+backend/fonts/*.ttf

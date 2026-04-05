@@ -3,6 +3,15 @@
  * Each block carries a merged string, union bbox in canvas + normalized + PDF space.
  */
 
+function dominantStyleScore(r) {
+  const len = r.str?.length || 0
+  const fs = Number(r.pdf?.fontSize) || 0
+  const w = r.sourceBold ? 4 : 0
+  const i = r.sourceItalic ? 2 : 0
+  const u = r.sourceUnderline ? 1 : 0
+  return w + i + u + len * 1e-6 + fs * 1e-9
+}
+
 function pickDominantRunStyle(runs) {
   if (!runs?.length) {
     return {
@@ -10,15 +19,17 @@ function pickDominantRunStyle(runs) {
       serverFontFamily: 'Helvetica',
       sourceBold: false,
       sourceItalic: false,
+      sourceUnderline: false,
       sourceColorHex: '#000000',
     }
   }
-  const d = runs.reduce((best, r) => ((r.str?.length || 0) > (best.str?.length || 0) ? r : best))
+  const d = runs.reduce((best, r) => (dominantStyleScore(r) > dominantStyleScore(best) ? r : best))
   return {
     pdfFontFamily: d.pdfFontFamily || 'sans-serif',
     serverFontFamily: d.serverFontFamily || 'Helvetica',
     sourceBold: !!d.sourceBold,
     sourceItalic: !!d.sourceItalic,
+    sourceUnderline: !!d.sourceUnderline,
     sourceColorHex: d.sourceColorHex || '#000000',
   }
 }

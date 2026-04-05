@@ -24,6 +24,17 @@ export function parsePdfFontStyle(pdfFontFamily) {
       /\b(italic|oblique)\b/i.test(s) ||
       /[-_]it(?:alic)?(?=[-_,\s]|$)/i.test(s) ||
       /\bitalicmt\b/i.test(lower),
+    underline: /\b(underline|underlined|uline)\b/i.test(s),
+  }
+}
+
+/** Merge style hints from PDF internal name + resolved family (subset fonts often encode weight in the key). */
+export function mergePdfStyleHints(...parts) {
+  const hints = parts.map((p) => (typeof p === 'string' ? parsePdfFontStyle(p) : null)).filter(Boolean)
+  return {
+    bold: hints.some((h) => h.bold),
+    italic: hints.some((h) => h.italic),
+    underline: hints.some((h) => h.underline),
   }
 }
 
@@ -92,7 +103,7 @@ export function formatFromTextBlock(block, prev, sampleColorHex, layoutHint) {
   }
   const pdfFam = block.pdfFontFamily || ''
   const server = block.serverFontFamily || mapPdfFontNameToServer(pdfFam)
-  const fromName = parsePdfFontStyle(pdfFam)
+  const fromName = mergePdfStyleHints(pdfFam)
   const color =
     (typeof sampleColorHex === 'string' && sampleColorHex.startsWith('#')
       ? sampleColorHex
@@ -107,5 +118,6 @@ export function formatFromTextBlock(block, prev, sampleColorHex, layoutHint) {
     /* `??` would keep false and ignore “Bold” in the font name */
     bold: !!(block.sourceBold || fromName.bold),
     italic: !!(block.sourceItalic || fromName.italic),
+    underline: !!(block.sourceUnderline || fromName.underline),
   }
 }

@@ -7,7 +7,7 @@ import {
   defaultTextFormat,
   formatFromTextBlock,
   mapPdfFontNameToServer,
-  parsePdfFontStyle,
+  mergePdfStyleHints,
 } from '../lib/textFormatDefaults'
 
 const RENDER_SCALE = 1.35
@@ -714,12 +714,17 @@ export default function PdfPageCanvas({
       openFmt.bold !== curSnap.bold ||
       openFmt.italic !== curSnap.italic ||
       openFmt.fontFamily !== curSnap.fontFamily
-    const fromName = parsePdfFontStyle(block.pdfFontFamily || '')
-    const bold = bioTouched ? !!fmt.bold : !!(block.sourceBold || fromName.bold)
-    const italic = bioTouched ? !!fmt.italic : !!(block.sourceItalic || fromName.italic)
+    const fromHints = mergePdfStyleHints(block.pdfFontFamily || '')
+    const bold = bioTouched ? !!fmt.bold : !!(block.sourceBold || fromHints.bold)
+    const italic = bioTouched ? !!fmt.italic : !!(block.sourceItalic || fromHints.italic)
     const fontFamily = bioTouched
       ? String(fmt.fontFamily || 'Helvetica')
       : String(block.serverFontFamily || mapPdfFontNameToServer(block.pdfFontFamily))
+
+    const decorTouched = !openFmt || openFmt.underline !== curSnap.underline
+    const underline = decorTouched
+      ? !!fmt.underline
+      : !!(block.sourceUnderline || fromHints.underline)
 
     const alignTouched = openFmt && openFmt.align !== curSnap.align
     const align = alignTouched ? fmt.align || 'left' : curSnap.align || fmt.align || 'left'
@@ -733,7 +738,7 @@ export default function PdfPageCanvas({
       fontFamily,
       bold,
       italic,
-      underline: !!fmt.underline,
+      underline,
       align,
       color: fmt.color || '#000000',
       opacity: fmt.opacity ?? 1,
