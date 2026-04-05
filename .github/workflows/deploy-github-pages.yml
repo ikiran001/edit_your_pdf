@@ -40,11 +40,11 @@ jobs:
             echo "Then re-run this workflow."
             exit 1
           fi
-      # Optional secrets (see README):
-      #   VITE_SITE_URL / VITE_BASE_PATH — only set these in GitHub when overriding frontend/.env.production.
-      #   For pdfly.pro (root deploy): do NOT set secrets; the committed .env.production uses VITE_BASE_PATH=/.
-      #   For username.github.io/repo/ only: set VITE_SITE_URL to that github.io URL so VITE_BASE_PATH=/repo/ is applied below.
-      #   VITE_GA_MEASUREMENT_ID = G-XXXXXXXXXX     (overrides frontend/.env.production)
+      # Vite base URL for asset paths:
+      #   Default (forks / username.github.io/<repo>/): VITE_BASE_PATH=/<repo>/  so /assets/* resolves correctly.
+      #   Custom domain at site root (pdfly.pro): set repository secret VITE_BASE_PATH=/  (required for this repo).
+      # Optional: VITE_SITE_URL — canonical / OG URL (see frontend/.env.production).
+      #   VITE_GA_MEASUREMENT_ID — overrides frontend/.env.production when set as a secret.
       - name: Build
         working-directory: frontend
         env:
@@ -54,13 +54,12 @@ jobs:
           if [ -n "${{ secrets.VITE_GA_MEASUREMENT_ID }}" ]; then
             export VITE_GA_MEASUREMENT_ID="${{ secrets.VITE_GA_MEASUREMENT_ID }}"
           fi
-          # Do not default VITE_SITE_URL to github.io here — that overrides .env.production and breaks pdfly.pro (needs base /).
           if [ -n "${{ secrets.VITE_SITE_URL }}" ]; then
             export VITE_SITE_URL="${{ secrets.VITE_SITE_URL }}"
           fi
           if [ -n "${{ secrets.VITE_BASE_PATH }}" ]; then
             export VITE_BASE_PATH="${{ secrets.VITE_BASE_PATH }}"
-          elif [ -n "${{ secrets.VITE_SITE_URL }}" ] && echo "${{ secrets.VITE_SITE_URL }}" | grep -q 'github.io'; then
+          else
             export VITE_BASE_PATH="/${{ github.event.repository.name }}/"
           fi
           npm ci && npm run build
@@ -81,18 +80,19 @@ jobs:
       - name: SPA fallback (GitHub Pages client-side routes)
         working-directory: frontend/dist
         run: cp index.html 404.html
-      - name: Verify CNAME for custom domain (pdfly.pro)
+      # Root base (custom domain) emits /assets/... in index.html; project Pages uses /<repo>/assets/...
+      - name: Verify CNAME when using root base (pdfly.pro)
         working-directory: frontend/dist
         run: |
-          if [ ! -f CNAME ]; then
-            echo "::error::dist/CNAME missing. Add frontend/public/CNAME (copied by Vite to dist)."
-            exit 1
+          if grep -qE '(src|href)="/assets/' index.html; then
+            if [ ! -f CNAME ] || ! grep -qx 'pdfly.pro' CNAME; then
+              echo "::error::Root Vite base requires dist/CNAME with pdfly.pro (or set secret VITE_BASE_PATH=/<repo>/ for GitHub Pages only)."
+              exit 1
+            fi
+            echo "OK: root deploy + CNAME for custom domain."
+          else
+            echo "OK: project-path deploy (CNAME not required for username.github.io/<repo>/)."
           fi
-          if ! grep -qx 'pdfly.pro' CNAME; then
-            echo "::error::dist/CNAME must contain exactly: pdfly.pro"
-            exit 1
-          fi
-          echo "OK: CNAME present for GitHub Pages custom domain."
       - uses: actions/upload-pages-artifact@v3
         with:
           path: frontend/dist
