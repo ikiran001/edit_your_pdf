@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { buildTextRuns } from '../lib/pdfTextRuns'
 import { sampleInkColorHex } from '../lib/sampleCanvasInkColor'
 import { buildPageTextBlocks } from '../lib/textLayerManager'
+import { editorFontFamilyWithPdfHint } from '../lib/editorUnicodeFonts'
 import {
   cssDisplayFontFromPdf,
   defaultTextFormat,
@@ -177,6 +178,10 @@ export default function PdfPageCanvas({
     const el = nativeEditorElRef.current
     if (!el) return
     const f = textFormatRef?.current ?? textFormat ?? defaultTextFormat()
+    const b = nativeEdit.block
+    el.style.fontFamily = editorFontFamilyWithPdfHint(
+      cssDisplayFontFromPdf(b.pdfFontFamily, f.fontFamily)
+    )
     el.style.fontWeight = f.bold ? '700' : '400'
     el.style.fontStyle = f.italic ? 'italic' : 'normal'
     el.style.textDecoration = f.underline ? 'underline' : 'none'
@@ -781,6 +786,27 @@ export default function PdfPageCanvas({
     scheduleNativeSync(nativeEdit.block)
   }, [textFormat, nativeEdit, scheduleNativeSync])
 
+  /** Toolbar “Insert symbol” dispatches this so Unicode (₹, ✓, …) lands in the active editor. */
+  useEffect(() => {
+    if (!nativeEdit) return
+    const onIns = (e) => {
+      const t = e.detail?.text
+      if (typeof t !== 'string' || !t) return
+      const el = nativeEditorElRef.current
+      const block = nativeEditRef.current?.block
+      if (!el || !block) return
+      el.focus()
+      try {
+        document.execCommand('insertText', false, t)
+      } catch {
+        el.textContent = (el.textContent ?? '') + t
+      }
+      scheduleNativeSync(block)
+    }
+    document.addEventListener('pdfly-native-insert', onIns)
+    return () => document.removeEventListener('pdfly-native-insert', onIns)
+  }, [nativeEdit, scheduleNativeSync])
+
   const commitNativeEdit = useCallback(
     (value) => {
       if (nativeBlurTimerRef.current) {
@@ -866,7 +892,9 @@ export default function PdfPageCanvas({
             const viewportFont = fmt.fontSizeCss ?? block.fontSizePx
             const editorFontCssPx = Math.max(6, Math.min(240, viewportFont * sx))
             const rotDeg = fmt.rotationDeg ?? 0
-            const editFontFamily = cssDisplayFontFromPdf(block.pdfFontFamily, fmt.fontFamily)
+            const editFontFamily = editorFontFamilyWithPdfHint(
+              cssDisplayFontFromPdf(block.pdfFontFamily, fmt.fontFamily)
+            )
             const editorLineHeightPx = Math.max(14, Math.round(editorFontCssPx * 1.2))
             /* PDF block box can be shorter than one rendered line (line-height + border); without this the
                contenteditable overflows vertically and always shows a scrollbar. */
@@ -986,7 +1014,9 @@ export default function PdfPageCanvas({
                     el.style.colorScheme = 'light'
                     el.style.backgroundColor = '#ffffff'
                     el.style.fontSize = `${Math.max(6, Math.min(240, vfs * sx))}px`
-                    el.style.fontFamily = cssDisplayFontFromPdf(block.pdfFontFamily, f.fontFamily)
+                    el.style.fontFamily = editorFontFamilyWithPdfHint(
+                      cssDisplayFontFromPdf(block.pdfFontFamily, f.fontFamily)
+                    )
                     el.style.color = f.color
                     el.style.fontWeight = f.bold ? '700' : '400'
                     el.style.fontStyle = f.italic ? 'italic' : 'normal'

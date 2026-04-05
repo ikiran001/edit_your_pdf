@@ -8,19 +8,25 @@ import { fileURLToPath } from 'url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const DEST = path.join(__dirname, '../fonts')
-const BASE = 'https://github.com/googlefonts/noto-fonts/raw/main/hinted/ttf/NotoSans'
+const LATIN =
+  'https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSans'
+const DEVA =
+  'https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSansDevanagari'
+
 const FILES = [
-  'NotoSans-Regular.ttf',
-  'NotoSans-Bold.ttf',
-  'NotoSans-Italic.ttf',
-  'NotoSans-BoldItalic.ttf',
+  [LATIN, 'NotoSans-Regular.ttf'],
+  [LATIN, 'NotoSans-Bold.ttf'],
+  [LATIN, 'NotoSans-Italic.ttf'],
+  [LATIN, 'NotoSans-BoldItalic.ttf'],
+  [DEVA, 'NotoSansDevanagari-Regular.ttf'],
+  [DEVA, 'NotoSansDevanagari-Bold.ttf'],
 ]
 
 fs.mkdirSync(DEST, { recursive: true })
 
-for (const f of FILES) {
-  const url = `${BASE}/${f}`
-  const out = path.join(DEST, f)
+for (const [base, fname] of FILES) {
+  const url = `${base}/${fname}`
+  const out = path.join(DEST, fname)
   const res = await fetch(url)
   if (!res.ok) throw new Error(`${url} → ${res.status}`)
   const buf = new Uint8Array(await res.arrayBuffer())

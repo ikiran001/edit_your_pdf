@@ -12,6 +12,9 @@ RUN npm ci --omit=dev
 
 COPY . .
 
+# Noto TTFs for Unicode / Devanagari in applyEdits (gitignored locally; required in prod image).
+RUN npm run fonts:noto
+
 ENV NODE_ENV=production
 EXPOSE 3001
 

@@ -13,6 +13,8 @@ RUN npm ci --omit=dev
 
 COPY backend/ ./
 
+RUN npm run fonts:noto
+
 ENV NODE_ENV=production
 EXPOSE 3001
 
