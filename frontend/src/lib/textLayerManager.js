@@ -185,6 +185,131 @@ function appendMergedRunText(prevStr, prevRun, curRun) {
   return prevStr + sep + cur
 }
 
+/**
+ * pdf.js puts table cells on one baseline with large horizontal gaps; without splitting, the whole row
+ * becomes one block ("Base Pay … 1,600,000 …") and one giant editor. Word gaps stay below this threshold.
+ */
+function horizontalColumnGapThresholdPx(lineRuns) {
+  const fs = Math.max(9, ...lineRuns.map((r) => Number(r.fontSizePx) || 0))
+  return Math.max(10, fs * 0.28)
+}
+
+/**
+ * Split same-baseline runs into blocks. Uses bbox gap; when PDFs overlap runs, also uses left-edge jump.
+ * Runs from `tabularRowPartsFromString` carry `atomicLineSegment` and never merge with neighbors.
+ */
+function segmentRunsByGapAndJump(sorted) {
+  if (sorted.length === 1) return [sorted]
+  const floorThr = horizontalColumnGapThresholdPx(sorted)
+  const segments = []
+  let seg = [sorted[0]]
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = seg[seg.length - 1]
+    const cur = sorted[i]
+    const fs = Math.max(9, Number(prev.fontSizePx) || 9)
+    const leadGap = cur.left - (prev.left + prev.width)
+    const startJump = cur.left - prev.left
+    const gapSplit = leadGap > floorThr
+    const jumpSplit =
+      startJump > Math.max(11, fs * 1.15) && startJump > (prev.width || 1) * 0.22
+    if (gapSplit || jumpSplit) {
+      segments.push(seg)
+      seg = [cur]
+    } else {
+      seg.push(cur)
+    }
+  }
+  segments.push(seg)
+  return segments
+}
+
+/** @param {Array<Record<string, unknown>>} lineRuns */
+function segmentLineRunsByTableGaps(lineRuns) {
+  if (!lineRuns?.length) return []
+  const sorted = [...lineRuns].sort((a, b) => a.left - b.left)
+  if (sorted.length === 1) return [sorted]
+
+  const allAtomic = sorted.every((r) => r.atomicLineSegment)
+  if (allAtomic) return sorted.map((r) => [r])
+
+  const out = []
+  let buf = []
+  const flushBuf = () => {
+    if (buf.length) {
+      out.push(...segmentRunsByGapAndJump(buf))
+      buf = []
+    }
+  }
+  for (const r of sorted) {
+    if (r.atomicLineSegment) {
+      flushBuf()
+      out.push([r])
+    } else {
+      buf.push(r)
+    }
+  }
+  flushBuf()
+  return out.length ? out : [sorted]
+}
+
+/** @param {Array<Record<string, unknown>>} lineRuns */
+function lineRunsToBlock(lineRuns) {
+  const vw = lineRuns[0].viewportW
+  const vh = lineRuns[0].viewportH
+  const left = Math.min(...lineRuns.map((x) => x.left))
+  const top = Math.min(...lineRuns.map((x) => x.top))
+  const right = Math.max(...lineRuns.map((x) => x.left + x.width))
+  const bottom = Math.max(...lineRuns.map((x) => x.top + x.height))
+  const width = Math.max(right - left, 2)
+  const height = Math.max(bottom - top, 2)
+
+  let str = lineRuns[0].str
+  for (let j = 1; j < lineRuns.length; j++) {
+    str = appendMergedRunText(str, lineRuns[j - 1], lineRuns[j])
+  }
+
+  const lefts = lineRuns.map((r) => r.pdf.x)
+  const rights = lineRuns.map((r) => r.pdf.x + r.pdf.w)
+  const bottoms = lineRuns.map((r) => r.pdf.y)
+  const tops = lineRuns.map((r) => r.pdf.y + r.pdf.h)
+  const pdf = {
+    x: Math.min(...lefts),
+    y: Math.min(...bottoms),
+    w: Math.max(...rights) - Math.min(...lefts),
+    h: Math.max(...tops) - Math.min(...bottoms),
+    baseline: lineRuns[lineRuns.length - 1].pdf.baseline,
+    fontSize: Math.max(...lineRuns.map((r) => r.pdf.fontSize)),
+  }
+
+  const fontSizePx = Math.min(200, Math.max(9, height * 0.82))
+  const last = lineRuns[lineRuns.length - 1]
+  const baselineN = last.norm.baselineN
+
+  const norm = {
+    nx: left / vw,
+    ny: top / vh,
+    nw: width / vw,
+    nh: height / vh,
+    baselineN,
+  }
+
+  return {
+    id: `L${left.toFixed(0)}T${top.toFixed(0)}`,
+    str,
+    left,
+    top,
+    width,
+    height,
+    fontSizePx,
+    viewportW: vw,
+    viewportH: vh,
+    norm,
+    pdf,
+    runs: lineRuns,
+    ...pickDominantRunStyle(lineRuns),
+  }
+}
+
 /** @param {Array<Record<string, unknown>>} runs */
 export function mergeRunsIntoLineBlocks(runs) {
   if (!runs?.length) return []
@@ -213,63 +338,14 @@ export function mergeRunsIntoLineBlocks(runs) {
   }
   lines.push(current)
 
-  return lines.map((lineRuns) => {
-    lineRuns.sort((a, b) => a.left - b.left)
-    const vw = lineRuns[0].viewportW
-    const vh = lineRuns[0].viewportH
-    const left = Math.min(...lineRuns.map((x) => x.left))
-    const top = Math.min(...lineRuns.map((x) => x.top))
-    const right = Math.max(...lineRuns.map((x) => x.left + x.width))
-    const bottom = Math.max(...lineRuns.map((x) => x.top + x.height))
-    const width = Math.max(right - left, 2)
-    const height = Math.max(bottom - top, 2)
-
-    let str = lineRuns[0].str
-    for (let j = 1; j < lineRuns.length; j++) {
-      str = appendMergedRunText(str, lineRuns[j - 1], lineRuns[j])
+  const blocks = []
+  for (const lineRuns of lines) {
+    const segments = segmentLineRunsByTableGaps(lineRuns)
+    for (const seg of segments) {
+      blocks.push(lineRunsToBlock(seg))
     }
-
-    const lefts = lineRuns.map((r) => r.pdf.x)
-    const rights = lineRuns.map((r) => r.pdf.x + r.pdf.w)
-    const bottoms = lineRuns.map((r) => r.pdf.y)
-    const tops = lineRuns.map((r) => r.pdf.y + r.pdf.h)
-    const pdf = {
-      x: Math.min(...lefts),
-      y: Math.min(...bottoms),
-      w: Math.max(...rights) - Math.min(...lefts),
-      h: Math.max(...tops) - Math.min(...bottoms),
-      baseline: lineRuns[lineRuns.length - 1].pdf.baseline,
-      fontSize: Math.max(...lineRuns.map((r) => r.pdf.fontSize)),
-    }
-
-    const fontSizePx = Math.min(200, Math.max(9, height * 0.82))
-    const last = lineRuns[lineRuns.length - 1]
-    const baselineN = last.norm.baselineN
-
-    const norm = {
-      nx: left / vw,
-      ny: top / vh,
-      nw: width / vw,
-      nh: height / vh,
-      baselineN,
-    }
-
-    return {
-      id: `L${left.toFixed(0)}T${top.toFixed(0)}`,
-      str,
-      left,
-      top,
-      width,
-      height,
-      fontSizePx,
-      viewportW: vw,
-      viewportH: vh,
-      norm,
-      pdf,
-      runs: lineRuns,
-      ...pickDominantRunStyle(lineRuns),
-    }
-  })
+  }
+  return blocks
 }
 
 /**

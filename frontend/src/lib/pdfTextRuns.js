@@ -1,5 +1,97 @@
 import { mapPdfFontNameToServer, parsePdfFontStyle } from './textFormatDefaults'
 
+function tabularRowPartsFromString(str) {
+  const s = str.trim()
+  if (s.length < 6) return null
+  const re = /\d{1,3}(?:,\d{3})+\.\d{2,4}|\d+\.\d{2}%|\d{7,}\.\d{2}/g
+  const tokens = []
+  let m
+  while ((m = re.exec(s)) !== null) {
+    tokens.push({ start: m.index, end: m.index + m[0].length, val: m[0] })
+  }
+  if (tokens.length < 2) return null
+  const parts = []
+  let last = 0
+  for (const t of tokens) {
+    const prefix = s.slice(last, t.start).trim()
+    if (prefix.length) parts.push(prefix)
+    parts.push(t.val)
+    last = t.end
+  }
+  const tail = s.slice(last).trim()
+  if (tail.length) parts[parts.length - 1] = `${parts[parts.length - 1]} ${tail}`.trim()
+  return parts.length >= 2 ? parts : null
+}
+
+function makeRunFromPdfSlice({
+  viewport,
+  str,
+  e,
+  f,
+  wPdfSlice,
+  desc,
+  asc,
+  fontSizePdf,
+  rawPdfFontFamily,
+  fromStyleName,
+  vw,
+  vh,
+  vyBaseline,
+  baselineN,
+  atomicLineSegment,
+}) {
+  const x0 = e
+  const y0 = f - desc
+  const x1 = e + wPdfSlice
+  const y1 = f + asc
+  const pdfLeft = Math.min(x0, x1)
+  const pdfRight = Math.max(x0, x1)
+  const pdfBottom = Math.min(y0, y1)
+  const pdfTop = Math.max(y0, y1)
+
+  const r = viewport.convertToViewportRectangle([pdfLeft, pdfBottom, pdfRight, pdfTop])
+  const left = Math.min(r[0], r[2])
+  const right = Math.max(r[0], r[2])
+  const top = Math.min(r[1], r[3])
+  const bottom = Math.max(r[1], r[3])
+  const boxH = Math.max(bottom - top, 2)
+  const boxW = Math.max(right - left, 2)
+  const fontSizePx = Math.min(200, Math.max(9, boxH * 0.82))
+
+  return {
+    str,
+    baselineY: vyBaseline,
+    pdfFontFamily: rawPdfFontFamily,
+    serverFontFamily: mapPdfFontNameToServer(rawPdfFontFamily),
+    sourceBold: fromStyleName.bold,
+    sourceItalic: fromStyleName.italic,
+    sourceColorHex: '#000000',
+    left,
+    top,
+    width: Math.max(boxW, 2),
+    height: boxH,
+    fontSizePx,
+    viewportW: vw,
+    viewportH: vh,
+    norm: {
+      nx: left / vw,
+      ny: top / vh,
+      nw: boxW / vw,
+      nh: boxH / vh,
+      baselineN,
+    },
+    pdf: {
+      x: pdfLeft,
+      y: pdfBottom,
+      w: pdfRight - pdfLeft,
+      h: pdfTop - pdfBottom,
+      baseline: f,
+      fontSize: fontSizePdf,
+    },
+    ...(atomicLineSegment ? { atomicLineSegment: true } : {}),
+  }
+}
+
 /**
  * Build selectable text runs from pdf.js text content (same viewport as the page canvas).
  * Coordinates are in canvas pixel space (0…viewport.width/height).
@@ -58,6 +150,37 @@ export function buildTextRuns(viewport, textContent) {
     const vh = viewport.height
     const [, vyBaseline] = viewport.convertToViewportPoint(e, f)
     const baselineN = vh > 0 ? Math.min(1, Math.max(0, vyBaseline / vh)) : 0
+
+    const tabularParts = tabularRowPartsFromString(s)
+    if (tabularParts && wPdf > 0.5) {
+      const weights = tabularParts.map((p) => Math.max(String(p).length, 1))
+      const sumW = weights.reduce((a, b) => a + b, 0) || 1
+      let xCursor = e
+      for (let i = 0; i < tabularParts.length; i++) {
+        const sliceW = wPdf * (weights[i] / sumW)
+        runs.push(
+          makeRunFromPdfSlice({
+            viewport,
+            str: tabularParts[i],
+            e: xCursor,
+            f,
+            wPdfSlice: Math.max(sliceW, 1e-4),
+            desc,
+            asc,
+            fontSizePdf,
+            rawPdfFontFamily,
+            fromStyleName,
+            vw,
+            vh,
+            vyBaseline,
+            baselineN,
+            atomicLineSegment: true,
+          })
+        )
+        xCursor += sliceW
+      }
+      continue
+    }
 
     runs.push({
       str: s,
