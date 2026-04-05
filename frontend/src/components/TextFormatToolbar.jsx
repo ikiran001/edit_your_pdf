@@ -4,6 +4,25 @@ import {
   TEXT_ALIGN_OPTIONS,
 } from '../lib/textFormatDefaults'
 
+const INSERT_SYMBOLS = [
+  { label: '₹', ch: '₹', title: 'Indian rupee' },
+  { label: '$', ch: '$', title: 'Dollar' },
+  { label: '€', ch: '€', title: 'Euro' },
+  { label: '©', ch: '©', title: 'Copyright' },
+  { label: '™', ch: '™', title: 'Trademark' },
+  { label: '®', ch: '®', title: 'Registered' },
+  { label: '✓', ch: '✓', title: 'Check mark' },
+  { label: '→', ch: '→', title: 'Arrow right' },
+  { label: '←', ch: '←', title: 'Arrow left' },
+  { label: '±', ch: '±', title: 'Plus-minus' },
+  { label: '×', ch: '×', title: 'Multiply' },
+  { label: '÷', ch: '÷', title: 'Divide' },
+]
+
+function dispatchInsertSymbol(ch) {
+  document.dispatchEvent(new CustomEvent('pdfly-native-insert', { detail: { text: ch } }))
+}
+
 function ToggleBtn({ active, children, onClick, title }) {
   return (
     <button
@@ -72,6 +91,23 @@ export default function TextFormatToolbar({ format, onChange, disabled }) {
             ))}
           </select>
         </label>
+
+        <div className="flex flex-col gap-1">
+          <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Insert symbol</span>
+          <div className="flex flex-wrap gap-1">
+            {INSERT_SYMBOLS.map((s) => (
+              <button
+                key={s.ch + s.label}
+                type="button"
+                title={s.title}
+                onClick={() => dispatchInsertSymbol(s.ch)}
+                className="min-h-[2rem] min-w-[2rem] rounded-md border border-zinc-300 bg-white px-1.5 py-1 text-sm text-zinc-800 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <div className="flex flex-col gap-1">
           <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Style</span>

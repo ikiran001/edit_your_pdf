@@ -1,5 +1,12 @@
+import 'regenerator-runtime/runtime.js';
 import { Buffer } from 'node:buffer';
+import fontkit from '@pdf-lib/fontkit';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import {
+  containsDevanagari,
+  drawTextDevanagariBestEffort,
+  embedUnicodeFontIfAvailable,
+} from './pdfUnicodeFonts.js';
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 
 /** pdf.js rejects Node Buffers even though they subclass Uint8Array. */
@@ -104,7 +111,8 @@ export async function applyTextReplacements(pdfBytes, rules) {
   if (ops.length === 0) return pdfBytes;
 
   const doc = await PDFDocument.load(toUint8Array(pdfBytes), { ignoreEncryption: true });
-  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const baseFont = await doc.embedFont(StandardFonts.Helvetica);
+  const notoUnicodeState = { cache: new Map(), fontkitRegistered: false };
   const pages = doc.getPages();
 
   // Paint all white masks first so later replacements are not covered by a nearby mask.
@@ -126,18 +134,32 @@ export async function applyTextReplacements(pdfBytes, rules) {
     if (!page) continue;
     const { x, baseline, fontSize } = op.bbox;
     const size = Math.min(Math.max(fontSize * 0.98, 6), 72);
+    const raw = String(op.text || '');
+    let tF = baseFont;
+    let uni = false;
+    const emb = await embedUnicodeFontIfAvailable(doc, fontkit, raw, false, false, notoUnicodeState);
+    if (emb) {
+      tF = emb.font;
+      uni = emb.isUnicodeEmbedded;
+    }
     const drawOpts = {
       x: x + 2,
       y: baseline,
       size,
-      font,
+      font: tF,
       color: rgb(0, 0, 0),
     };
     try {
-      page.drawText(op.text, drawOpts);
+      if (uni && containsDevanagari(raw)) {
+        drawTextDevanagariBestEffort(page, raw, drawOpts);
+      } else {
+        page.drawText(raw, drawOpts);
+      }
     } catch {
-      const safe = op.text.replace(/[^\x20-\x7E]/g, '?');
-      if (safe) page.drawText(safe, drawOpts);
+      if (!uni) {
+        const safe = raw.replace(/[^\x20-\x7E]/g, '?');
+        if (safe) page.drawText(safe, drawOpts);
+      }
     }
   }
 

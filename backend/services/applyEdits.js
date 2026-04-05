@@ -1,10 +1,12 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import 'regenerator-runtime/runtime.js';
 import fontkit from '@pdf-lib/fontkit';
 import { PDFDocument, StandardFonts, rgb, degrees } from 'pdf-lib';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+import {
+  containsDevanagari,
+  drawTextDevanagariBestEffort,
+  embedUnicodeFontIfAvailable,
+  widthOfTextDevanagariBestEffort,
+} from './pdfUnicodeFonts.js';
 
 /** Coerce JSON / form quirks so `"false"` is not treated as true. */
 function asBool(v) {
@@ -18,43 +20,9 @@ function asBool(v) {
   return Boolean(v);
 }
 
-/**
- * Optional full Noto Sans TTF set under backend/fonts/ (OFL). When all four files exist,
- * native replacements use real bold/italic faces and broader Unicode than StandardFonts.
- * Filenames: NotoSans-Regular.ttf, NotoSans-Bold.ttf, NotoSans-Italic.ttf, NotoSans-BoldItalic.ttf
- */
-let optionalNotoBytesMemo = undefined;
-
-/** Custom TTF only when needed — embedding Noto adds ~hundreds of KB per variant. */
-function nativeTextNeedsNoto(raw) {
-  return /[^\u0000-\u007f]/.test(String(raw ?? ''));
-}
-
-function getOptionalNotoBytes() {
-  if (optionalNotoBytesMemo !== undefined) return optionalNotoBytesMemo;
-  const base = path.join(__dirname, '../fonts');
-  const names = {
-    normal: 'NotoSans-Regular.ttf',
-    bold: 'NotoSans-Bold.ttf',
-    italic: 'NotoSans-Italic.ttf',
-    bolditalic: 'NotoSans-BoldItalic.ttf',
-  };
-  try {
-    const out = {};
-    for (const [k, fname] of Object.entries(names)) {
-      const p = path.join(base, fname);
-      if (!fs.existsSync(p)) {
-        optionalNotoBytesMemo = null;
-        return null;
-      }
-      out[k] = new Uint8Array(fs.readFileSync(p));
-    }
-    optionalNotoBytesMemo = out;
-    return out;
-  } catch {
-    optionalNotoBytesMemo = null;
-    return null;
-  }
+function estimateUnicodeTextWidth(str, fontSizePt) {
+  const n = [...String(str)].length || 0;
+  return n * fontSizePt * 0.48;
 }
 
 /**
@@ -114,8 +82,7 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
   const font = await doc.embedFont(StandardFonts.Helvetica);
   const pages = doc.getPages();
   const nativeFontCache = new Map();
-  const notoEmbedded = new Map();
-  let notoFontkitRegistered = false;
+  const notoUnicodeState = { cache: new Map(), fontkitRegistered: false };
 
   const pageGroups = editsPayload.pages || [];
 
@@ -135,22 +102,20 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
           const bold = asBool(item.bold);
           const italic = asBool(item.italic);
           const underline = asBool(item.underline);
-          const notoKey =
-            bold && italic ? 'bolditalic' : bold ? 'bold' : italic ? 'italic' : 'normal';
 
           let tFont = null;
-          if (nativeTextNeedsNoto(raw)) {
-            const nb = getOptionalNotoBytes();
-            if (nb) {
-              if (!notoFontkitRegistered) {
-                doc.registerFontkit(fontkit);
-                notoFontkitRegistered = true;
-              }
-              if (!notoEmbedded.has(notoKey)) {
-                notoEmbedded.set(notoKey, await doc.embedFont(nb[notoKey]));
-              }
-              tFont = notoEmbedded.get(notoKey);
-            }
+          let isUnicodeEmbedded = false;
+          const embedded = await embedUnicodeFontIfAvailable(
+            doc,
+            fontkit,
+            raw,
+            bold,
+            italic,
+            notoUnicodeState
+          );
+          if (embedded) {
+            tFont = embedded.font;
+            isUnicodeEmbedded = embedded.isUnicodeEmbedded;
           }
           if (!tFont) {
             const fontEnum = resolveNativeStandardFont(item.fontFamily, bold, italic);
@@ -162,11 +127,19 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
           }
 
           let textW = 0;
-          try {
-            textW = raw.length ? tFont.widthOfTextAtSize(raw, fontSizePt) : 0;
-          } catch {
-            const safe = raw.replace(/[^\x20-\x7E]/g, '?');
-            textW = safe.length ? tFont.widthOfTextAtSize(safe, fontSizePt) : 0;
+          if (isUnicodeEmbedded && containsDevanagari(raw)) {
+            textW = raw.length ? widthOfTextDevanagariBestEffort(tFont, raw, fontSizePt) : 0;
+          } else {
+            try {
+              textW = raw.length ? tFont.widthOfTextAtSize(raw, fontSizePt) : 0;
+            } catch {
+              if (isUnicodeEmbedded) {
+                textW = estimateUnicodeTextWidth(raw, fontSizePt);
+              } else {
+                const safe = raw.replace(/[^\x20-\x7E]/g, '?');
+                textW = safe.length ? tFont.widthOfTextAtSize(safe, fontSizePt) : 0;
+              }
+            }
           }
           const pad = Math.max(3, fontSizePt * 0.22);
           const textColor = parseHexColor(item.color);
@@ -259,11 +232,19 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
           };
 
           try {
-            page.drawText(raw, drawOpts);
-          } catch {
-            const safe = raw.replace(/[^\x20-\x7E]/g, '?');
-            if (safe.length) {
-              page.drawText(safe, drawOpts);
+            if (isUnicodeEmbedded && containsDevanagari(raw)) {
+              drawTextDevanagariBestEffort(page, raw, drawOpts);
+            } else {
+              page.drawText(raw, drawOpts);
+            }
+          } catch (drawErr) {
+            if (isUnicodeEmbedded) {
+              console.warn('[applyEdits] nativeText unicode draw failed:', drawErr?.message);
+            } else {
+              const safe = raw.replace(/[^\x20-\x7E]/g, '?');
+              if (safe.length) {
+                page.drawText(safe, drawOpts);
+              }
             }
           }
 
@@ -286,25 +267,33 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
           const { x, y } = normPointToPdf(W, H, nx, ny);
           const baselineY = y - fontSize * 0.85;
           const raw = String(item.text || '');
+          let tAnnot = font;
+          let uniAnnot = false;
+          const emb = await embedUnicodeFontIfAvailable(doc, fontkit, raw, false, false, notoUnicodeState);
+          if (emb) {
+            tAnnot = emb.font;
+            uniAnnot = emb.isUnicodeEmbedded;
+          }
           try {
             page.drawText(raw, {
               x,
               y: baselineY,
               size: fontSize,
-              font,
+              font: tAnnot,
               color: parseHexColor(item.color),
             });
           } catch {
-            // Standard Helvetica is WinAnsi-only; fall back to ASCII subset so edits still apply.
-            const safe = raw.replace(/[^\x20-\x7E]/g, '?');
-            if (safe.length) {
-              page.drawText(safe, {
-                x,
-                y: baselineY,
-                size: fontSize,
-                font,
-                color: parseHexColor(item.color),
-              });
+            if (!uniAnnot) {
+              const safe = raw.replace(/[^\x20-\x7E]/g, '?');
+              if (safe.length) {
+                page.drawText(safe, {
+                  x,
+                  y: baselineY,
+                  size: fontSize,
+                  font: tAnnot,
+                  color: parseHexColor(item.color),
+                });
+              }
             }
           }
           break;
