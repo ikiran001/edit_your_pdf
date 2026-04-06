@@ -41,8 +41,9 @@ jobs:
             exit 1
           fi
       # Vite base URL for asset paths:
-      #   Default (forks / username.github.io/<repo>/): VITE_BASE_PATH=/<repo>/  so /assets/* resolves correctly.
-      #   Custom domain at site root (pdfpilot.pro): set repository secret VITE_BASE_PATH=/  (required for this repo).
+      #   Secret VITE_BASE_PATH — always wins if set.
+      #   If public/CNAME is a real domain (not *.github.io), assume custom domain at site root → base /.
+      #   Otherwise username.github.io/<repo>/ → base /<repo>/.
       # Optional: VITE_SITE_URL — canonical / OG URL (see frontend/.env.production).
       #   VITE_GA_MEASUREMENT_ID — overrides frontend/.env.production when set as a secret.
       - name: Build
@@ -59,6 +60,14 @@ jobs:
           fi
           if [ -n "${{ secrets.VITE_BASE_PATH }}" ]; then
             export VITE_BASE_PATH="${{ secrets.VITE_BASE_PATH }}"
+          elif [ -f public/CNAME ]; then
+            c="$(tr -d ' \t\r\n' < public/CNAME)"
+            if [ -n "$c" ] && [[ "$c" != *github.io* ]]; then
+              echo "VITE_BASE_PATH=/ (custom domain from public/CNAME)"
+              export VITE_BASE_PATH="/"
+            else
+              export VITE_BASE_PATH="/${{ github.event.repository.name }}/"
+            fi
           else
             export VITE_BASE_PATH="/${{ github.event.repository.name }}/"
           fi
