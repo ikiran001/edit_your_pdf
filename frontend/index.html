@@ -5,10 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="PDFly — Free PDF tools. Fast, simple, no watermark. Edit, sign, convert, and unlock PDFs in your browser."
+      content="Edit, compress, merge and manage PDFs instantly with pdfpilot. No login required. Free and fast PDF tools."
+    />
+    <meta
+      name="keywords"
+      content="edit pdf online, compress pdf free, merge pdf tool, pdfpilot, free pdf editor, sign pdf, split pdf, pdf converter"
     />
     <meta name="theme-color" content="#0f0614" />
-    <meta name="application-name" content="PDFly" />
+    <meta name="application-name" content="pdfpilot" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
@@ -26,30 +30,29 @@
       rel="stylesheet"
     />
     <link rel="canonical" href="%VITE_SITE_URL%" />
-    <meta property="og:title" content="PDFly - Edit, Sign &amp; Convert PDFs" />
+    <meta property="og:title" content="pdfpilot - Free PDF Tools" />
     <meta
       property="og:description"
-      content="PDFly — Free PDF tools. Fast, simple, no watermark. Edit, sign, convert, and unlock PDFs in your browser."
+      content="Edit, compress, merge and manage PDFs instantly with pdfpilot. No login required. Free and fast PDF tools."
     />
     <meta property="og:url" content="%VITE_SITE_URL%" />
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="PDFly" />
+    <meta property="og:site_name" content="pdfpilot" />
     <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="PDFly - Edit, Sign &amp; Convert PDFs" />
+    <meta name="twitter:title" content="pdfpilot - Free PDF Tools" />
     <meta
       name="twitter:description"
-      content="PDFly — Free PDF tools. Fast, simple, no watermark. Edit, sign, convert, and unlock PDFs in your browser."
+      content="Edit, compress, merge and manage PDFs instantly with pdfpilot. No login required. Free and fast PDF tools."
     />
     <!-- Google Search Console HTML tag verification (keep after verification succeeds). -->
     <meta name="google-site-verification" content="X4UwmRKzJYGTXsmFcN2o1ZD3Kg7xLBfmKvUuariTNvs" />
-    <title>PDFly - Edit, Sign &amp; Convert PDFs</title>
-    <!-- WebSite name is the brand Google may show as the result "site name" (best with a custom domain). -->
+    <title>Edit PDF Online Free | pdfpilot.pro</title>
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
         "@type": "WebSite",
-        "name": "PDFly",
-        "alternateName": "Free PDF tools. Fast, simple, no watermark.",
+        "name": "pdfpilot",
+        "alternateName": "Navigate your PDFs effortlessly — free PDF tools online.",
         "url": "%VITE_SITE_URL%"
       }
     </script>
@@ -58,11 +61,14 @@
     <script>
       ;(function () {
         try {
-          var k = 'PDFly-theme'
+          var k = 'pdfpilot-theme'
           var v = localStorage.getItem(k)
           if (v == null) {
+            /* Prior product localStorage keys — migrate theme once (exact key strings). */
             var leg =
-              localStorage.getItem('TheBestPDF-theme') || localStorage.getItem('letsEditPDF-theme')
+              localStorage.getItem('PDFly-theme') ||
+              localStorage.getItem('TheBestPDF-theme') ||
+              localStorage.getItem('letsEditPDF-theme')
             if (leg != null) {
               v = leg
               try {

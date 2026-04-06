@@ -1,20 +1,20 @@
 /** Single source of truth for product branding. */
-export const BRAND_NAME = 'PDFly'
-export const TAGLINE = 'Free PDF tools. Fast, simple, no watermark.'
+export const BRAND_NAME = 'pdfpilot'
+export const TAGLINE = 'Navigate your PDFs effortlessly'
 
-export const DOC_TITLE_HOME = 'PDFly - Edit, Sign & Convert PDFs'
+export const DOC_TITLE_HOME = 'Edit PDF Online Free | pdfpilot.pro'
 
 const TOOL_DOC_TITLES = {
-  '/tools/edit-pdf': 'PDFly - Edit PDF',
-  '/tools/merge-pdf': 'PDFly - Merge PDF',
-  '/tools/split-pdf': 'PDFly - Split PDF',
-  '/tools/compress-pdf': 'PDFly - Compress PDF',
-  '/tools/sign-pdf': 'PDFly - Sign PDF',
-  '/tools/pdf-to-jpg': 'PDFly - PDF to JPG',
-  '/tools/jpg-to-pdf': 'PDFly - JPG to PDF',
-  '/tools/unlock-pdf': 'PDFly - Unlock PDF',
-  '/tools/pdf-to-word': 'PDFly - PDF to Word',
-  '/tools/word-to-pdf': 'PDFly - Word to PDF',
+  '/tools/edit-pdf': 'pdfpilot - Edit PDF',
+  '/tools/merge-pdf': 'pdfpilot - Merge PDF',
+  '/tools/split-pdf': 'pdfpilot - Split PDF',
+  '/tools/compress-pdf': 'pdfpilot - Compress PDF',
+  '/tools/sign-pdf': 'pdfpilot - Sign PDF',
+  '/tools/pdf-to-jpg': 'pdfpilot - PDF to JPG',
+  '/tools/jpg-to-pdf': 'pdfpilot - JPG to PDF',
+  '/tools/unlock-pdf': 'pdfpilot - Unlock PDF',
+  '/tools/pdf-to-word': 'pdfpilot - PDF to Word',
+  '/tools/word-to-pdf': 'pdfpilot - Word to PDF',
 }
 
 /**
@@ -26,18 +26,18 @@ export function docTitleForPath(pathname) {
 }
 
 export const MSG = {
-  uploading: 'Uploading to PDFly…',
+  uploading: 'Uploading to pdfpilot…',
   processingFile: 'Processing your file…',
   finalizingPdf: 'Finalizing your PDF…',
   loadingPdf: 'Loading your PDF…',
-  fileReady: 'Your file is ready on PDFly.',
-  savedSession: 'Saved — stored for this session on PDFly.',
+  fileReady: 'Your file is ready on pdfpilot.',
+  savedSession: 'Saved — stored for this session on pdfpilot.',
   /** Shown after native line text is persisted without clicking Save PDF. */
   autoSavedSession: 'Text updated — saved to this session.',
   autoSaveFailed: 'Could not auto-save. Use Save PDF or check your connection.',
 }
 
-/** e.g. "Edit PDF on PDFly" */
+/** e.g. "Edit PDF on pdfpilot" */
 export function toolOnBrand(toolTitle) {
   return `${toolTitle} on ${BRAND_NAME}`
 }

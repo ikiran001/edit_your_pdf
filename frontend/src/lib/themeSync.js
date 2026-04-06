@@ -1,6 +1,7 @@
 /** Persisted UI theme (Tailwind uses class `dark` on <html>). */
-export const THEME_STORAGE_KEY = 'PDFly-theme'
-const LEGACY_THEME_KEYS = ['TheBestPDF-theme', 'letsEditPDF-theme']
+export const THEME_STORAGE_KEY = 'pdfpilot-theme'
+/** Exact keys from older installs; keep for one-time theme migration. */
+const LEGACY_THEME_KEYS = ['PDFly-theme', 'TheBestPDF-theme', 'letsEditPDF-theme']
 
 /** @returns {'dark' | 'light'} */
 export function getStoredThemeMode() {

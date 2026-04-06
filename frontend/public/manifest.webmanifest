@@ -1,7 +1,7 @@
 {
-  "name": "PDFly — Free PDF tools",
-  "short_name": "PDFly",
-  "description": "PDFly — Free PDF tools. Fast, simple, no watermark. Edit, sign, convert, unlock.",
+  "name": "pdfpilot — Free PDF tools",
+  "short_name": "pdfpilot",
+  "description": "Edit, compress, merge and manage PDFs instantly with pdfpilot. No login required.",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#fafafa",

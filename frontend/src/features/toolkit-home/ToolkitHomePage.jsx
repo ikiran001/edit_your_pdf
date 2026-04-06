@@ -22,7 +22,7 @@ export default function ToolkitHomePage() {
           {BRAND_NAME}
         </h1>
         <p className="mx-auto mt-3 max-w-2xl text-lg font-medium text-zinc-700 md:text-xl dark:text-zinc-300">
-          Edit, Sign &amp; Convert PDFs — Fast &amp; Free
+          Edit, compress, merge and manage PDFs instantly — no login required.
         </p>
         <p className="mx-auto mt-2 max-w-xl text-sm text-zinc-500 dark:text-zinc-400">{TAGLINE}</p>
       </section>
@@ -55,9 +55,7 @@ export default function ToolkitHomePage() {
       </section>
 
       <footer className="mt-auto border-t border-indigo-200/40 bg-white/40 px-4 py-8 text-center text-xs text-zinc-500 dark:border-indigo-500/15 dark:bg-zinc-950/40 dark:text-zinc-400">
-        <p className="m-0 font-medium text-zinc-600 dark:text-zinc-300">
-          © 2026 {BRAND_NAME} · Free PDF Tools
-        </p>
+        <p className="m-0 font-medium text-zinc-600 dark:text-zinc-300">© 2026 pdfpilot</p>
         <p className="mt-2 mb-0">
           <span className="cursor-default" title="Coming soon">
             Privacy
