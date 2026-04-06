@@ -11,6 +11,15 @@ export function initAnalytics() {
   const id = typeof MEASUREMENT_ID === 'string' ? MEASUREMENT_ID.trim() : ''
   if (!id || !id.startsWith('G-')) return
 
+  /* index.html may already include the official gtag snippet (build-time inject) for GA setup verification */
+  const gtagScript = document.querySelector(
+    `script[src*="googletagmanager.com/gtag/js?id=${encodeURIComponent(id)}"]`
+  )
+  if (typeof window.gtag === 'function' && gtagScript) {
+    initialized = true
+    return
+  }
+
   window.dataLayer = window.dataLayer || []
   window.gtag = function gtag() {
     window.dataLayer.push(arguments)
