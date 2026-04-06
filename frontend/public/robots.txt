@@ -1,0 +1,5 @@
+# https://pdfpilot.pro — allow indexing; sitemap lists public tool URLs.
+User-agent: *
+Allow: /
+
+Sitemap: https://pdfpilot.pro/sitemap.xml
