@@ -20,7 +20,7 @@ const INSERT_SYMBOLS = [
 ]
 
 function dispatchInsertSymbol(ch) {
-  document.dispatchEvent(new CustomEvent('pdfly-native-insert', { detail: { text: ch } }))
+  document.dispatchEvent(new CustomEvent('pdfpilot-native-insert', { detail: { text: ch } }))
 }
 
 function ToggleBtn({ active, children, onClick, title }) {

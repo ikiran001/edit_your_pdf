@@ -803,8 +803,8 @@ export default function PdfPageCanvas({
       }
       scheduleNativeSync(block)
     }
-    document.addEventListener('pdfly-native-insert', onIns)
-    return () => document.removeEventListener('pdfly-native-insert', onIns)
+    document.addEventListener('pdfpilot-native-insert', onIns)
+    return () => document.removeEventListener('pdfpilot-native-insert', onIns)
   }, [nativeEdit, scheduleNativeSync])
 
   const commitNativeEdit = useCallback(

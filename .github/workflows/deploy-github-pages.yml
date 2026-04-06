@@ -42,7 +42,7 @@ jobs:
           fi
       # Vite base URL for asset paths:
       #   Default (forks / username.github.io/<repo>/): VITE_BASE_PATH=/<repo>/  so /assets/* resolves correctly.
-      #   Custom domain at site root (pdfly.pro): set repository secret VITE_BASE_PATH=/  (required for this repo).
+      #   Custom domain at site root (pdfpilot.pro): set repository secret VITE_BASE_PATH=/  (required for this repo).
       # Optional: VITE_SITE_URL — canonical / OG URL (see frontend/.env.production).
       #   VITE_GA_MEASUREMENT_ID — overrides frontend/.env.production when set as a secret.
       - name: Build
@@ -81,12 +81,12 @@ jobs:
         working-directory: frontend/dist
         run: cp index.html 404.html
       # Root base (custom domain) emits /assets/... in index.html; project Pages uses /<repo>/assets/...
-      - name: Verify CNAME when using root base (pdfly.pro)
+      - name: Verify CNAME when using root base (pdfpilot.pro)
         working-directory: frontend/dist
         run: |
           if grep -qE '(src|href)="/assets/' index.html; then
-            if [ ! -f CNAME ] || ! grep -qx 'pdfly.pro' CNAME; then
-              echo "::error::Root Vite base requires dist/CNAME with pdfly.pro (or set secret VITE_BASE_PATH=/<repo>/ for GitHub Pages only)."
+            if [ ! -f CNAME ] || ! grep -qx 'pdfpilot.pro' CNAME; then
+              echo "::error::Root Vite base requires dist/CNAME with pdfpilot.pro (or set secret VITE_BASE_PATH=/<repo>/ for GitHub Pages only)."
               exit 1
             fi
             echo "OK: root deploy + CNAME for custom domain."

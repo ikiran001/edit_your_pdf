@@ -4,7 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 // GitHub Pages project site: base must be /repo-name/ (CI sets VITE_BASE_PATH).
-// Custom domain at root (pdfly.pro): set Actions secret VITE_BASE_PATH=/
+// Custom domain at root (pdfpilot.pro): set Actions secret VITE_BASE_PATH=/
 export default defineConfig(({ mode }) => {
   const fileEnv = loadEnv(mode, process.cwd(), '')
   const base =
