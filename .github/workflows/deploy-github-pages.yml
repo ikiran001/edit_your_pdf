@@ -45,7 +45,8 @@ jobs:
       #   If public/CNAME is a real domain (not *.github.io), assume custom domain at site root → base /.
       #   Otherwise username.github.io/<repo>/ → base /<repo>/.
       # Optional: VITE_SITE_URL — canonical / OG URL (see frontend/.env.production).
-      #   VITE_GA_MEASUREMENT_ID — overrides frontend/.env.production when set as a secret.
+      #   VITE_GA_MEASUREMENT_ID — overrides .env.production when set. Must match gtag id in frontend/index.html
+      #   or remove the secret so the committed ID is used (stale secret = wrong stream in JS bundle).
       - name: Build
         working-directory: frontend
         env:
