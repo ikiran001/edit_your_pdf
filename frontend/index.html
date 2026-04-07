@@ -21,13 +21,11 @@
     />
     <meta name="theme-color" content="#0f0614" />
     <meta name="application-name" content="pdfpilot" />
-    <!-- 48×48+ PNG helps Google show your icon in search (not only the generic globe). -->
-    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="any" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <!-- Favicons: ICO + 48×48 PNG at site root; ?v= cache-bust after asset changes. Google prefers ≥48×48 PNG. -->
+    <link rel="icon" href="/favicon.ico?v=2" type="image/x-icon" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon.png?v=2" />
+    <link rel="apple-touch-icon" href="/favicon.png?v=2" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2" sizes="any" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />

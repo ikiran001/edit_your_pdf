@@ -1,6 +1,5 @@
 /**
- * Generates favicons from public/favicon.svg.
- * Google Search favicons: prefer ≥48×48 PNG (see Google Search Central — favicon guidelines).
+ * Generates root favicons from public/favicon.svg (ICO + 48×48 favicon.png for Google Search).
  * Run: npm run generate-favicons
  */
 import fs from 'node:fs'
@@ -26,6 +25,7 @@ const buf192 = await png(192)
 fs.writeFileSync(path.join(publicDir, 'favicon-16x16.png'), buf16)
 fs.writeFileSync(path.join(publicDir, 'favicon-32x32.png'), buf32)
 fs.writeFileSync(path.join(publicDir, 'favicon-48x48.png'), buf48)
+fs.writeFileSync(path.join(publicDir, 'favicon.png'), buf48)
 fs.writeFileSync(path.join(publicDir, 'apple-touch-icon.png'), buf180)
 fs.writeFileSync(path.join(publicDir, 'favicon-192x192.png'), buf192)
 
@@ -33,5 +33,5 @@ const ico = await pngToIco([buf16, buf32, buf48])
 fs.writeFileSync(path.join(publicDir, 'favicon.ico'), ico)
 
 console.log(
-  'Wrote favicon.ico, favicon-16x16.png, favicon-32x32.png, favicon-48x48.png, favicon-192x192.png, apple-touch-icon.png'
+  'Wrote favicon.ico, favicon.png (48×48), favicon-16/32/48.png, favicon-192x192.png, apple-touch-icon.png'
 )
