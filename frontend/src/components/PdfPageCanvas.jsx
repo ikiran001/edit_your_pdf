@@ -876,7 +876,9 @@ export default function PdfPageCanvas({
     <div className="relative block w-full max-w-full shadow-md">
       <canvas
         ref={pdfCanvasRef}
-        className="relative z-0 block h-auto w-full max-w-full touch-none bg-white"
+        className={`relative z-0 block h-auto w-full max-w-full touch-none bg-white ${
+          showTextLayer ? 'pointer-events-none' : ''
+        }`}
       />
       <canvas
         ref={overlayRef}
@@ -891,8 +893,8 @@ export default function PdfPageCanvas({
       />
       {showTextLayer && cw > 0 && ch > 0 && (
         <div
-          role="application"
-          aria-label="Click PDF text to edit"
+          role="group"
+          aria-label="PDF text — tap a line to edit"
           className="pointer-events-none absolute left-0 top-0 z-[15]"
           style={{
             width: cw,
@@ -939,148 +941,131 @@ export default function PdfPageCanvas({
                 title={isEditing ? undefined : 'Tap to edit'}
                 data-text-block-id={block.id}
               >
-                <div
-                  key={isEditing ? `${block.id}__editing` : `${block.id}__idle`}
-                  ref={(el) => {
-                    if (isEditing) nativeEditorElRef.current = el
-                    else if (nativeEditorElRef.current === el) nativeEditorElRef.current = null
-                  }}
-                  role={isEditing ? 'textbox' : 'button'}
-                  tabIndex={isEditing ? 0 : -1}
-                  aria-label={isEditing ? undefined : 'Edit PDF text'}
-                  contentEditable={isEditing}
-                  suppressContentEditableWarning
-                  {...(isEditing ? { 'data-pdf-inline-editor-root': true } : {})}
-                  className={`z-[1] outline-none transition-[border-color,background-color] duration-150 ${
-                    isEditing ? 'relative overflow-hidden' : 'absolute inset-0 overflow-x-hidden overflow-y-hidden'
-                  } ${isEditing ? 'select-text box-border' : 'select-none pdf-text-layer-hit'} ${
-                    isEditing
-                      ? 'pdf-text-layer-editor cursor-text rounded-sm border border-solid border-[#4A90E2]'
-                      : `border border-transparent bg-transparent ${
-                          hoverBlockId === block.id ? 'border border-dashed border-[#ccc]' : ''
-                        }`
-                  }`}
-                  style={
-                    isEditing
-                      ? {
-                          colorScheme: 'light',
-                          backgroundColor: nativeEdit?.maskFillHex || '#ffffff',
-                          fontSize: `${editorFontCssPx}px`,
-                          lineHeight: editorLineHeightPx + 'px',
-                          fontFamily: editFontFamily,
-                          fontWeight: fmt.bold ? 700 : 400,
-                          fontStyle: fmt.italic ? 'italic' : 'normal',
-                          textDecoration: fmt.underline ? 'underline' : 'none',
-                          textAlign: fmt.align,
-                          color: fmt.color,
-                          opacity: fmt.opacity ?? 1,
-                          transform: rotDeg ? `rotate(${rotDeg}deg)` : 'none',
-                          transformOrigin: rotDeg ? 'top left' : undefined,
-                          whiteSpace: 'pre-wrap',
-                          overflowWrap: 'break-word',
-                        }
-                      : {
-                          color: 'transparent',
-                          caretColor: 'transparent',
-                          transform: 'none',
-                        }
-                  }
-                  onPointerEnter={() => {
-                    if (!isEditing) setHoverBlockId(block.id)
-                  }}
-                  onPointerLeave={() =>
-                    setHoverBlockId((id) => (id === block.id ? null : id))
-                  }
-                  onPointerDown={(e) => {
-                    if (isEditing) return
-                    /* Touch: avoid preventDefault so iOS can still synthesize click if pointer path is flaky. */
-                    if (e.pointerType && e.pointerType !== 'touch') e.preventDefault()
-                    e.stopPropagation()
-                    openNativeEditorForBlock(block)
-                  }}
-                  onClick={(e) => {
-                    if (isEditing) return
-                    e.stopPropagation()
-                    openNativeEditorForBlock(block)
-                  }}
-                  onKeyDown={(e) => {
-                    if (isEditing) return
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault()
-                      openNativeEditorForBlock(block)
-                    }
-                  }}
-                  onFocus={() => {
-                    if (!isEditing) return
-                    if (nativeBlurTimerRef.current) {
-                      window.clearTimeout(nativeBlurTimerRef.current)
-                      nativeBlurTimerRef.current = null
-                    }
-                  }}
-                  onBlur={(e) => {
-                    if (!isEditing) return
-                    const related = e.relatedTarget
-                    if (
-                      related &&
-                      typeof related.closest === 'function' &&
-                      related.closest('[data-text-format-panel]')
-                    ) {
-                      nativeBlurTimerRef.current = window.setTimeout(() => {
-                        nativeBlurTimerRef.current = null
-                        e.currentTarget.focus({ preventScroll: true })
-                      }, 0)
-                      return
-                    }
-                    if (nativeBlurTimerRef.current) window.clearTimeout(nativeBlurTimerRef.current)
-                    nativeBlurTimerRef.current = window.setTimeout(() => {
-                      nativeBlurTimerRef.current = null
-                      if (!nativeEditRef.current) return
-                      const el = nativeEditorElRef.current
-                      commitNativeEdit(el?.innerText ?? '')
-                    }, 0)
-                  }}
-                  onInput={(e) => {
-                    if (!isEditing) return
-                    const el = e.currentTarget
-                    const f = textFormat ?? defaultTextFormat()
-                    const vfs = f.fontSizeCss ?? block.fontSizePx
-                    el.style.colorScheme = 'light'
-                    el.style.backgroundColor =
-                      nativeEditRef.current?.maskFillHex || '#ffffff'
-                    el.style.fontSize = `${Math.max(6, Math.min(240, vfs * sx))}px`
-                    el.style.fontFamily = editorFontFamilyWithPdfHint(
-                      cssDisplayFontFromPdf(block.pdfFontFamily, f.fontFamily)
-                    )
-                    el.style.color = f.color
-                    el.style.fontWeight = f.bold ? '700' : '400'
-                    el.style.fontStyle = f.italic ? 'italic' : 'normal'
-                    el.style.textDecoration = f.underline ? 'underline' : 'none'
-                    const lh = Math.max(14, Math.round(Math.max(6, Math.min(240, vfs * sx)) * 1.2))
-                    el.style.lineHeight = `${lh}px`
-                    el.style.whiteSpace = 'pre-wrap'
-                    el.style.overflowWrap = 'break-word'
-                    scheduleNativeSync(block)
-                  }}
-                  onKeyDown={(e) => {
-                    if (!isEditing) return
-                    if (e.key === 'Escape') {
-                      e.preventDefault()
+                {isEditing ? (
+                  <div
+                    key={`${block.id}__editing`}
+                    ref={(el) => {
+                      nativeEditorElRef.current = el
+                    }}
+                    role="textbox"
+                    tabIndex={0}
+                    contentEditable
+                    suppressContentEditableWarning
+                    data-pdf-inline-editor-root
+                    className="pdf-text-layer-editor relative z-[1] box-border cursor-text select-text overflow-hidden rounded-sm border border-solid border-[#4A90E2] outline-none transition-[border-color,background-color] duration-150"
+                    style={{
+                      colorScheme: 'light',
+                      backgroundColor: nativeEdit?.maskFillHex || '#ffffff',
+                      fontSize: `${editorFontCssPx}px`,
+                      lineHeight: editorLineHeightPx + 'px',
+                      fontFamily: editFontFamily,
+                      fontWeight: fmt.bold ? 700 : 400,
+                      fontStyle: fmt.italic ? 'italic' : 'normal',
+                      textDecoration: fmt.underline ? 'underline' : 'none',
+                      textAlign: fmt.align,
+                      color: fmt.color,
+                      opacity: fmt.opacity ?? 1,
+                      transform: rotDeg ? `rotate(${rotDeg}deg)` : 'none',
+                      transformOrigin: rotDeg ? 'top left' : undefined,
+                      whiteSpace: 'pre-wrap',
+                      overflowWrap: 'break-word',
+                    }}
+                    onFocus={() => {
                       if (nativeBlurTimerRef.current) {
                         window.clearTimeout(nativeBlurTimerRef.current)
                         nativeBlurTimerRef.current = null
                       }
-                      flushNativeSyncTimer()
-                      nativeOpenBaselineStrRef.current = ''
-                      nativeEditRef.current = null
-                      setNativeEdit(null)
+                    }}
+                    onBlur={(e) => {
+                      const related = e.relatedTarget
+                      if (
+                        related &&
+                        typeof related.closest === 'function' &&
+                        related.closest('[data-text-format-panel]')
+                      ) {
+                        nativeBlurTimerRef.current = window.setTimeout(() => {
+                          nativeBlurTimerRef.current = null
+                          e.currentTarget.focus({ preventScroll: true })
+                        }, 0)
+                        return
+                      }
+                      if (nativeBlurTimerRef.current) window.clearTimeout(nativeBlurTimerRef.current)
+                      nativeBlurTimerRef.current = window.setTimeout(() => {
+                        nativeBlurTimerRef.current = null
+                        if (!nativeEditRef.current) return
+                        const el = nativeEditorElRef.current
+                        commitNativeEdit(el?.innerText ?? '')
+                      }, 0)
+                    }}
+                    onInput={(e) => {
+                      const el = e.currentTarget
+                      const f = textFormat ?? defaultTextFormat()
+                      const vfs = f.fontSizeCss ?? block.fontSizePx
+                      el.style.colorScheme = 'light'
+                      el.style.backgroundColor =
+                        nativeEditRef.current?.maskFillHex || '#ffffff'
+                      el.style.fontSize = `${Math.max(6, Math.min(240, vfs * sx))}px`
+                      el.style.fontFamily = editorFontFamilyWithPdfHint(
+                        cssDisplayFontFromPdf(block.pdfFontFamily, f.fontFamily)
+                      )
+                      el.style.color = f.color
+                      el.style.fontWeight = f.bold ? '700' : '400'
+                      el.style.fontStyle = f.italic ? 'italic' : 'normal'
+                      el.style.textDecoration = f.underline ? 'underline' : 'none'
+                      const lh = Math.max(14, Math.round(Math.max(6, Math.min(240, vfs * sx)) * 1.2))
+                      el.style.lineHeight = `${lh}px`
+                      el.style.whiteSpace = 'pre-wrap'
+                      el.style.overflowWrap = 'break-word'
+                      scheduleNativeSync(block)
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') {
+                        e.preventDefault()
+                        if (nativeBlurTimerRef.current) {
+                          window.clearTimeout(nativeBlurTimerRef.current)
+                          nativeBlurTimerRef.current = null
+                        }
+                        flushNativeSyncTimer()
+                        nativeOpenBaselineStrRef.current = ''
+                        nativeEditRef.current = null
+                        setNativeEdit(null)
+                        return
+                      }
+                      if (e.key === 'Enter' && e.ctrlKey) {
+                        e.preventDefault()
+                        commitNativeEdit(e.currentTarget.innerText ?? '')
+                        e.currentTarget.blur()
+                      }
+                    }}
+                  />
+                ) : (
+                  <button
+                    key={`${block.id}__idle`}
+                    type="button"
+                    aria-label="Edit PDF text"
+                    title="Tap to edit"
+                    className={`pdf-text-layer-hit pdf-text-layer-tap-target absolute inset-0 z-[1] overflow-hidden border bg-transparent p-0 font-inherit outline-none transition-[border-color,background-color] duration-150 select-none ${
+                      hoverBlockId === block.id
+                        ? 'border border-dashed border-[#ccc]'
+                        : 'border border-transparent'
+                    }`}
+                    style={{ color: 'transparent', caretColor: 'transparent' }}
+                    onPointerEnter={() => setHoverBlockId(block.id)}
+                    onPointerLeave={() =>
+                      setHoverBlockId((id) => (id === block.id ? null : id))
                     }
-                    if (e.key === 'Enter' && e.ctrlKey) {
-                      e.preventDefault()
-                      commitNativeEdit(e.currentTarget.innerText ?? '')
-                      e.currentTarget.blur()
-                    }
-                  }}
-                />
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      openNativeEditorForBlock(block)
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        openNativeEditorForBlock(block)
+                      }
+                    }}
+                  />
+                )}
               </div>
             )
           })}
