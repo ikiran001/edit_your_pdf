@@ -164,7 +164,7 @@ export default function PdfPageCanvas({
   const nativeOpenBaselinePdfFontSizeRef = useRef(null)
   const [hoverBlockId, setHoverBlockId] = useState(null)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     nativeEditRef.current = nativeEdit
   }, [nativeEdit])
 
@@ -606,11 +606,12 @@ export default function PdfPageCanvas({
 
   const openNativeEditorForBlock = useCallback(
     (block) => {
+      const id = block.id
+      if (nativeEditRef.current?.block?.id === id) return
       if (nativeSyncTimerRef.current != null) {
         window.clearTimeout(nativeSyncTimerRef.current)
         nativeSyncTimerRef.current = null
       }
-      const id = block.id
       nativeOpenBaselineStrRef.current =
         textBlocksRef.current.find((b) => b.id === id)?.str ?? ''
       const pdfFs = Number(block.pdf?.fontSize)
@@ -863,6 +864,8 @@ export default function PdfPageCanvas({
       const t = e.target
       if (t.closest?.('[data-pdf-inline-editor-root]')) return
       if (t.closest?.('[data-text-format-panel]')) return
+      /* Let line tap targets handle the event in the target phase (iPad / iOS WebKit). */
+      if (t.closest?.('[data-pdf-text-line-tap]')) return
       const el = nativeEditorElRef.current
       if (el && nativeEditRef.current) {
         commitNativeEdit(el.innerText ?? '')
@@ -895,7 +898,7 @@ export default function PdfPageCanvas({
         <div
           role="group"
           aria-label="PDF text — tap a line to edit"
-          className="pointer-events-none absolute left-0 top-0 z-[15]"
+          className="pointer-events-none absolute left-0 top-0 z-[30]"
           style={{
             width: cw,
             height: ch,
@@ -1042,6 +1045,7 @@ export default function PdfPageCanvas({
                   <button
                     key={`${block.id}__idle`}
                     type="button"
+                    data-pdf-text-line-tap
                     aria-label="Edit PDF text"
                     title="Tap to edit"
                     className={`pdf-text-layer-hit pdf-text-layer-tap-target absolute inset-0 z-[1] overflow-hidden border bg-transparent p-0 font-inherit outline-none transition-[border-color,background-color] duration-150 select-none ${
@@ -1049,13 +1053,33 @@ export default function PdfPageCanvas({
                         ? 'border border-dashed border-[#ccc]'
                         : 'border border-transparent'
                     }`}
-                    style={{ color: 'transparent', caretColor: 'transparent' }}
+                    style={{ color: 'transparent', caretColor: 'transparent', touchAction: 'manipulation' }}
                     onPointerEnter={() => setHoverBlockId(block.id)}
                     onPointerLeave={() =>
                       setHoverBlockId((id) => (id === block.id ? null : id))
                     }
+                    onPointerDown={(e) => {
+                      if (!e.isPrimary) return
+                      if (e.pointerType === 'mouse' && e.button !== 0) return
+                      e.stopPropagation()
+                      const cur = nativeEditRef.current
+                      if (cur && cur.block.id !== block.id) {
+                        const ed = nativeEditorElRef.current
+                        commitNativeEdit(ed?.innerText ?? '')
+                      }
+                      /* iPad / iOS WebKit (incl. Chrome) often skips click on overlay buttons; always use pointerdown. */
+                      if (e.pointerType === 'touch' || e.pointerType === 'pen') {
+                        e.preventDefault()
+                      }
+                      openNativeEditorForBlock(block)
+                    }}
                     onClick={(e) => {
                       e.stopPropagation()
+                      const cur = nativeEditRef.current
+                      if (cur && cur.block.id !== block.id) {
+                        const ed = nativeEditorElRef.current
+                        commitNativeEdit(ed?.innerText ?? '')
+                      }
                       openNativeEditorForBlock(block)
                     }}
                     onKeyDown={(e) => {
