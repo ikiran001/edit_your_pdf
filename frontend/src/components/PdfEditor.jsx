@@ -74,7 +74,6 @@ export default function PdfEditor({ sessionId, onBack }) {
   const nativeTextEditsRef = useRef([])
   const [nativeTextEdits, setNativeTextEdits] = useState([])
   const autosaveTimerRef = useRef(null)
-  const autosaveInFlightRef = useRef(false)
   /** Single source of truth for on-canvas text: block id → latest string (survives re-parse / re-render). */
   const [blockTextOverrides, setBlockTextOverrides] = useState({})
   const [textFormat, setTextFormat] = useState(defaultTextFormat)
@@ -236,30 +235,6 @@ export default function PdfEditor({ sessionId, onBack }) {
     setPdfBust((v) => v + 1)
   }, [])
 
-  /** After inline text changes (e.g. click outside the line), sync session + PDF like Save PDF — debounced. */
-  const scheduleSessionAutosave = useCallback(() => {
-    cancelScheduledAutosave()
-    autosaveTimerRef.current = window.setTimeout(async () => {
-      autosaveTimerRef.current = null
-      if (autosaveInFlightRef.current) return
-      autosaveInFlightRef.current = true
-      try {
-        await persistPdfToServer()
-        reloadPdfFromServer()
-        setSaveHint(MSG.autoSavedSession)
-        window.setTimeout(() => setSaveHint(null), 4500)
-      } catch (e) {
-        console.error('[autosave]', e)
-        setSaveHint(MSG.autoSaveFailed)
-        window.setTimeout(() => setSaveHint(null), 6000)
-      } finally {
-        autosaveInFlightRef.current = false
-      }
-    }, 850)
-  }, [cancelScheduledAutosave, persistPdfToServer, reloadPdfFromServer])
-
-  useEffect(() => () => cancelScheduledAutosave(), [cancelScheduledAutosave])
-
   const addNativeTextEdit = useCallback(
     (pageIndex, payload) => {
       const {
@@ -276,6 +251,7 @@ export default function PdfEditor({ sessionId, onBack }) {
         color,
         opacity,
         rotationDeg,
+        maskColor,
       } = payload
       const key = `${pageIndex}:${pdf.x}:${pdf.y}:${pdf.baseline}`
       const prev = nativeTextEditsRef.current
@@ -301,6 +277,7 @@ export default function PdfEditor({ sessionId, onBack }) {
           color,
           opacity,
           rotationDeg,
+          maskColor,
         },
       ]
       if (blockId) {
@@ -309,9 +286,8 @@ export default function PdfEditor({ sessionId, onBack }) {
       // Keep ref in sync immediately so “Download” in the same gesture as textarea blur still sends edits.
       nativeTextEditsRef.current = next
       setNativeTextEdits(next)
-      scheduleSessionAutosave()
     },
-    [scheduleSessionAutosave]
+    []
   )
 
   const handleSave = async () => {

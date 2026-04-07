@@ -4,6 +4,8 @@
  *
  *   node frontend/scripts/e2e-enter-download.mjs
  *   node frontend/scripts/e2e-enter-download.mjs /path/to/file.pdf [out.pdf]
+ *
+ *   E2E_ORIGIN=http://127.0.0.1:5175  (when Vite uses another port)
  */
 import fs from 'fs'
 import path from 'path'
@@ -20,6 +22,8 @@ const inputPdf = process.argv[2]
 const outFile = process.argv[3]
   ? path.resolve(process.argv[3])
   : path.join(repoRoot, 'test-artifacts', 'edited-enter-ui-verification.pdf')
+
+const e2eOrigin = (process.env.E2E_ORIGIN || 'http://127.0.0.1:5173').replace(/\/$/, '')
 
 async function main() {
   fs.mkdirSync(path.dirname(outFile), { recursive: true })
@@ -48,7 +52,7 @@ async function main() {
     }
   })
 
-  await page.goto('http://127.0.0.1:5173/tools/edit-pdf', {
+  await page.goto(`${e2eOrigin}/tools/edit-pdf`, {
     waitUntil: 'domcontentloaded',
     timeout: 30000,
   })

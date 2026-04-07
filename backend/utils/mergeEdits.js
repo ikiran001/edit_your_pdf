@@ -48,6 +48,7 @@ export function mergeEditsWithNative(edits, nativeTextEdits) {
       color: nt.color,
       opacity: nt.opacity,
       rotationDeg: nt.rotationDeg,
+      maskColor: nt.maskColor,
     });
   }
 

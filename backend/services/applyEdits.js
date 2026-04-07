@@ -207,13 +207,18 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
             maskY = cy - maskH / 2;
           }
 
-          /* Paint-out original glyphs (PDF content stream is unchanged). Not an annotation fill — avoids double text. */
+          /* Paint-out original glyphs — match canvas-sampled fill when provided (colored tables), else white. */
+          const maskHex =
+            typeof item.maskColor === 'string' &&
+            /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/i.test(item.maskColor.trim())
+              ? item.maskColor.trim()
+              : '#ffffff';
           page.drawRectangle({
             x: maskX,
             y: maskY,
             width: maskW,
             height: maskH,
-            color: rgb(1, 1, 1),
+            color: parseHexColor(maskHex),
           });
 
           if (align === 'center') {

@@ -123,17 +123,18 @@ html.dark .fx-glass-header > * {
   z-index: 1;
 }
 
-/* Contenteditable: opaque light “paper” masks pdf.js text under the box (avoids double text).
-   Do NOT use font-synthesis: none — it disables faux bold/italic so toolbar B/I appear broken
-   for typical PDF font-family stacks. Saved PDF still uses real StandardFonts (metrics may differ slightly). */
+/* Contenteditable over PDF canvas: root fill is set inline (sampled PDF background) to hide canvas text
+   and avoid “double text” ghosting; inner nodes stay transparent. */
 .pdf-text-layer-editor {
   text-rendering: geometricPrecision;
   -webkit-text-fill-color: currentColor;
   color-scheme: light;
 }
 
-.pdf-text-layer-editor--paper {
-  background-color: #ffffff !important;
+/* Browsers may insert <font>/<span> with white fill while typing — strip it. */
+.pdf-text-layer-editor * {
+  background-color: transparent !important;
+  background-image: none !important;
 }
 
 ::selection {
@@ -157,7 +158,7 @@ html.dark ::-moz-selection {
   color: #fdf2f8;
 }
 
-/* PDF inline editor sits on white paper — always soft raspberry, beats rules above. */
+/* PDF inline editor — soft raspberry selection, beats rules above. */
 .pdf-text-layer-editor::selection,
 html.dark .pdf-text-layer-editor::selection {
   background: var(--fx-raspberry-soft);
