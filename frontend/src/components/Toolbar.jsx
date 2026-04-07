@@ -27,21 +27,24 @@ export default function Toolbar({
   onApplyTextSwapChange,
 }) {
   return (
-    <div className="fx-glass-header flex flex-wrap items-center gap-2 px-3 py-2">
-      <BrandLogoLink className="mr-1 min-w-0 max-w-[10rem] shrink-0 sm:max-w-none" />
-      <div className="mr-2 text-sm font-medium text-zinc-600 dark:text-zinc-300">Tools</div>
+    <div className="fx-glass-header flex flex-wrap items-center gap-1.5 px-2 py-1.5 sm:gap-2 sm:px-3 sm:py-2">
+      <BrandLogoLink className="mr-0 min-w-0 max-w-[9rem] shrink-0 sm:mr-1 sm:max-w-none" />
+      <div className="mr-1 hidden text-sm font-medium text-zinc-600 sm:mr-2 sm:block dark:text-zinc-300">
+        Tools
+      </div>
       {onEditTextModeChange && (
         <button
           type="button"
           onClick={() => onEditTextModeChange(!editTextMode)}
           title="Show or hide detected text boxes and inline editing"
-          className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+          className={`rounded-lg px-2 py-1 text-xs font-medium transition sm:px-3 sm:py-1.5 sm:text-sm ${
             editTextMode
               ? 'bg-indigo-600 text-white shadow'
               : 'bg-zinc-100 text-zinc-800 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700'
           }`}
         >
-          Text edit mode
+          <span className="sm:hidden">Text boxes</span>
+          <span className="max-sm:hidden">Text edit mode</span>
         </button>
       )}
       {tools.map((t) => (
@@ -49,7 +52,7 @@ export default function Toolbar({
           key={t.id}
           type="button"
           onClick={() => onToolChange(t.id === activeTool ? null : t.id)}
-          className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+          className={`rounded-lg px-2 py-1 text-xs font-medium transition sm:px-3 sm:py-1.5 sm:text-sm ${
             activeTool === t.id
               ? 'bg-indigo-600 text-white shadow'
               : 'bg-zinc-100 text-zinc-800 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700'
@@ -63,7 +66,7 @@ export default function Toolbar({
         type="button"
         onClick={onUndo}
         disabled={!canUndo}
-        className="rounded-lg bg-zinc-100 px-3 py-1.5 text-sm font-medium text-zinc-800 disabled:opacity-40 dark:bg-zinc-800 dark:text-zinc-100"
+        className="rounded-lg bg-zinc-100 px-2 py-1 text-xs font-medium text-zinc-800 disabled:opacity-40 sm:px-3 sm:py-1.5 sm:text-sm dark:bg-zinc-800 dark:text-zinc-100"
       >
         Undo
       </button>
@@ -71,11 +74,11 @@ export default function Toolbar({
         type="button"
         onClick={onRedo}
         disabled={!canRedo}
-        className="rounded-lg bg-zinc-100 px-3 py-1.5 text-sm font-medium text-zinc-800 disabled:opacity-40 dark:bg-zinc-800 dark:text-zinc-100"
+        className="rounded-lg bg-zinc-100 px-2 py-1 text-xs font-medium text-zinc-800 disabled:opacity-40 sm:px-3 sm:py-1.5 sm:text-sm dark:bg-zinc-800 dark:text-zinc-100"
       >
         Redo
       </button>
-      <div className="ml-auto flex flex-wrap items-center gap-3">
+      <div className="ml-auto flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:justify-start sm:gap-3">
         <ThemeToggle />
         <label className="flex max-w-[min(100%,16rem)] cursor-pointer items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400 md:max-w-none">
           <input
@@ -95,7 +98,7 @@ export default function Toolbar({
               type="button"
               onClick={onSave}
               disabled={saving || downloading}
-              className="rounded-lg border border-emerald-700 bg-white px-4 py-1.5 text-sm font-semibold text-emerald-800 shadow-sm hover:bg-emerald-50 disabled:opacity-50 dark:border-emerald-500 dark:bg-zinc-900 dark:text-emerald-200 dark:hover:bg-emerald-950/40"
+              className="rounded-lg border border-emerald-700 bg-white px-2.5 py-1 text-xs font-semibold text-emerald-800 shadow-sm hover:bg-emerald-50 disabled:opacity-50 sm:px-4 sm:py-1.5 sm:text-sm dark:border-emerald-500 dark:bg-zinc-900 dark:text-emerald-200 dark:hover:bg-emerald-950/40"
             >
               {saving ? MSG.finalizingPdf : 'Save PDF'}
             </button>
@@ -103,7 +106,7 @@ export default function Toolbar({
               type="button"
               onClick={onDownload}
               disabled={saving || downloading}
-              className="rounded-lg bg-emerald-600 px-4 py-1.5 text-sm font-semibold text-white shadow hover:bg-emerald-700 disabled:opacity-50"
+              className="rounded-lg bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white shadow hover:bg-emerald-700 disabled:opacity-50 sm:px-4 sm:py-1.5 sm:text-sm"
             >
               {downloading ? MSG.processingFile : 'Download PDF'}
             </button>
