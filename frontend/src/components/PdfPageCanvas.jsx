@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { buildTextRuns } from '../lib/pdfTextRuns'
-import { sampleInkColorHex } from '../lib/sampleCanvasInkColor'
+import { sampleBackgroundColorHex, sampleInkColorHex } from '../lib/sampleCanvasInkColor'
 import { buildPageTextBlocks } from '../lib/textLayerManager'
 import { editorFontFamilyWithPdfHint } from '../lib/editorUnicodeFonts'
 import {
@@ -191,6 +191,7 @@ export default function PdfPageCanvas({
     el.style.opacity = String(f.opacity ?? 1)
     el.style.whiteSpace = 'pre-wrap'
     el.style.overflowWrap = 'break-word'
+    el.style.backgroundColor = nativeEdit.maskFillHex || '#ffffff'
   }, [nativeEdit, textFormat])
 
   const [textDiag, setTextDiag] = useState(null)
@@ -647,7 +648,11 @@ export default function PdfPageCanvas({
           layoutHint,
         })
       }
-      setNativeEdit({ block })
+      let maskFillHex = '#ffffff'
+      if (cv?.width && block.width > 0 && block.height > 0) {
+        maskFillHex = sampleBackgroundColorHex(cv, block.left, block.top, block.width, block.height)
+      }
+      setNativeEdit({ block, maskFillHex })
     },
     [onBeginNativeTextEdit, textFormat, textFormatRef]
   )
@@ -734,6 +739,19 @@ export default function PdfPageCanvas({
     const alignTouched = openFmt && openFmt.align !== curSnap.align
     const align = alignTouched ? fmt.align || 'left' : curSnap.align || fmt.align || 'left'
 
+    let maskColor = '#ffffff'
+    const cv = pdfCanvasRef.current
+    const editing = nativeEditRef.current
+    if (
+      editing?.block?.id === block.id &&
+      typeof editing.maskFillHex === 'string' &&
+      editing.maskFillHex
+    ) {
+      maskColor = editing.maskFillHex
+    } else if (cv?.width && block.width > 0 && block.height > 0) {
+      maskColor = sampleBackgroundColorHex(cv, block.left, block.top, block.width, block.height)
+    }
+
     return {
       blockId: block.id,
       pdf: block.pdf,
@@ -748,6 +766,7 @@ export default function PdfPageCanvas({
       color: fmt.color || '#000000',
       opacity: fmt.opacity ?? 1,
       rotationDeg: fmt.rotationDeg ?? 0,
+      maskColor,
     }
   }, [textFormat, textFormatRef])
 
@@ -935,7 +954,7 @@ export default function PdfPageCanvas({
                     isEditing ? 'relative overflow-hidden' : 'absolute inset-0 overflow-x-hidden overflow-y-hidden'
                   } ${isEditing ? 'select-text box-border' : 'select-none'} ${
                     isEditing
-                      ? 'pdf-text-layer-editor pdf-text-layer-editor--paper cursor-text rounded-sm border border-solid border-[#4A90E2] bg-white'
+                      ? 'pdf-text-layer-editor cursor-text rounded-sm border border-solid border-[#4A90E2]'
                       : `cursor-text border border-transparent bg-transparent ${
                           hoverBlockId === block.id ? 'border border-dashed border-[#ccc]' : ''
                         }`
@@ -944,7 +963,7 @@ export default function PdfPageCanvas({
                     isEditing
                       ? {
                           colorScheme: 'light',
-                          backgroundColor: '#ffffff',
+                          backgroundColor: nativeEdit?.maskFillHex || '#ffffff',
                           fontSize: `${editorFontCssPx}px`,
                           lineHeight: editorLineHeightPx + 'px',
                           fontFamily: editFontFamily,
@@ -1012,7 +1031,8 @@ export default function PdfPageCanvas({
                     const f = textFormat ?? defaultTextFormat()
                     const vfs = f.fontSizeCss ?? block.fontSizePx
                     el.style.colorScheme = 'light'
-                    el.style.backgroundColor = '#ffffff'
+                    el.style.backgroundColor =
+                      nativeEditRef.current?.maskFillHex || '#ffffff'
                     el.style.fontSize = `${Math.max(6, Math.min(240, vfs * sx))}px`
                     el.style.fontFamily = editorFontFamilyWithPdfHint(
                       cssDisplayFontFromPdf(block.pdfFontFamily, f.fontFamily)
