@@ -23,8 +23,7 @@ export default function Toolbar({
   onDownload,
   saving,
   downloading,
-  applyTextSwap,
-  onApplyTextSwapChange,
+  onShortcutsClick,
 }) {
   return (
     <div className="fx-glass-header flex flex-wrap items-center gap-1.5 px-2 py-1.5 sm:gap-2 sm:px-3 sm:py-2">
@@ -78,20 +77,19 @@ export default function Toolbar({
       >
         Redo
       </button>
+      {onShortcutsClick && (
+        <button
+          type="button"
+          onClick={onShortcutsClick}
+          title="Tips and keyboard shortcuts (?)"
+          className="rounded-lg border border-zinc-300 bg-white px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-50 sm:px-2.5 sm:text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+        >
+          <span className="sm:hidden">?</span>
+          <span className="max-sm:hidden">Tips</span>
+        </button>
+      )}
       <div className="ml-auto flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:justify-start sm:gap-3">
         <ThemeToggle />
-        <label className="flex max-w-[min(100%,16rem)] cursor-pointer items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400 md:max-w-none">
-          <input
-            type="checkbox"
-            className="rounded border-zinc-300"
-            checked={applyTextSwap}
-            onChange={(e) => onApplyTextSwapChange(e.target.checked)}
-          />
-          <span className="hidden sm:inline">
-            Replace embedded “PDF editor” with “PDF love” in the file
-          </span>
-          <span className="sm:hidden">Text swap</span>
-        </label>
         <div className="flex flex-col items-stretch gap-1 sm:items-end">
           <div className="flex flex-wrap justify-end gap-2">
             <button

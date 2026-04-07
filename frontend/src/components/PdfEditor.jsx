@@ -3,6 +3,8 @@ import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
 import { apiUrl } from '../lib/apiBase'
 import { usePagesHistory } from '../hooks/usePagesHistory'
 import ThemeToggle from '../shared/components/ThemeToggle.jsx'
+import EditorOnboardingBanner from '../shared/components/EditorOnboardingBanner.jsx'
+import EditPdfShortcutsModal from '../shared/components/EditPdfShortcutsModal.jsx'
 import Toolbar from './Toolbar'
 import ThumbnailSidebar from './ThumbnailSidebar'
 import PdfPageCanvas from './PdfPageCanvas'
@@ -17,6 +19,16 @@ import {
 import { MSG } from '../shared/constants/branding.js'
 
 const EDIT_TOOL = 'edit_pdf'
+
+const ONBOARDING_STORAGE_KEY = 'pdfpilot_editor_onboarding_dismissed'
+
+function readEditorOnboardingVisible() {
+  try {
+    return localStorage.getItem(ONBOARDING_STORAGE_KEY) !== '1'
+  } catch {
+    return true
+  }
+}
 
 /** Strip client-only fields before sending edits to the API / pdf-lib. */
 function toServerItem(it) {
@@ -64,8 +76,6 @@ export default function PdfEditor({ sessionId, onBack }) {
   const [saving, setSaving] = useState(false)
   const [downloading, setDownloading] = useState(false)
   const [saveHint, setSaveHint] = useState(null)
-  /** When true, server runs pdf.js text find + pdf-lib redraw (real PDF text edit). */
-  const [applyTextSwap, setApplyTextSwap] = useState(true)
   /** Bumped after a successful save so pdf.js refetches (edited.pdf) instead of a cached original. */
   const [pdfBust, setPdfBust] = useState(0)
   const pageRefs = useRef([])
@@ -81,6 +91,10 @@ export default function PdfEditor({ sessionId, onBack }) {
   textFormatRef.current = textFormat
   const [editTextMode, setEditTextMode] = useState(true)
   const [inlineTextEditorOpen, setInlineTextEditorOpen] = useState(false)
+  const [shortcutsOpen, setShortcutsOpen] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(readEditorOnboardingVisible)
+  const [toastMessage, setToastMessage] = useState(null)
+  const toastTimerRef = useRef(null)
 
   useEffect(() => {
     if (!editTextMode) setInlineTextEditorOpen(false)
@@ -90,6 +104,72 @@ export default function PdfEditor({ sessionId, onBack }) {
   nativeTextEditsRef.current = nativeTextEdits
 
   const numPages = pdfDoc?.numPages ?? 0
+
+  const showToast = useCallback((msg) => {
+    if (toastTimerRef.current != null) {
+      window.clearTimeout(toastTimerRef.current)
+      toastTimerRef.current = null
+    }
+    setToastMessage(msg)
+    toastTimerRef.current = window.setTimeout(() => {
+      setToastMessage(null)
+      toastTimerRef.current = null
+    }, 2200)
+  }, [])
+
+  useEffect(
+    () => () => {
+      if (toastTimerRef.current != null) window.clearTimeout(toastTimerRef.current)
+    },
+    []
+  )
+
+  const dismissOnboarding = useCallback(() => {
+    try {
+      localStorage.setItem(ONBOARDING_STORAGE_KEY, '1')
+    } catch {
+      /* ignore */
+    }
+    setShowOnboarding(false)
+  }, [])
+
+  const handleUndo = useCallback(() => {
+    if (!canUndo) return
+    undo()
+    showToast(MSG.undoToast)
+  }, [canUndo, undo, showToast])
+
+  const handleRedo = useCallback(() => {
+    if (!canRedo) return
+    redo()
+    showToast(MSG.redoToast)
+  }, [canRedo, redo, showToast])
+
+  useEffect(() => {
+    if (!pdfDoc) return
+    const onKey = (e) => {
+      if (e.key !== '?' || e.metaKey || e.ctrlKey || e.altKey) return
+      const t = e.target
+      if (t instanceof HTMLElement) {
+        const tag = t.tagName
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+        if (t.isContentEditable || t.closest('[contenteditable="true"]')) return
+      }
+      e.preventDefault()
+      setShortcutsOpen(true)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [pdfDoc])
+
+  useEffect(() => {
+    if (!shortcutsOpen) return
+    const onKey = (e) => {
+      if (e.key === 'Escape') setShortcutsOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [shortcutsOpen])
 
   useEffect(() => {
     let cancelled = false
@@ -207,7 +287,7 @@ export default function PdfEditor({ sessionId, onBack }) {
       body: JSON.stringify({
         sessionId,
         edits,
-        applyTextSwap,
+        applyTextSwap: false,
         nativeTextEdits: nativePayload,
       }),
     })
@@ -228,7 +308,7 @@ export default function PdfEditor({ sessionId, onBack }) {
     if (import.meta.env.DEV) {
       console.debug('[save] /edit ok', res.status)
     }
-  }, [sessionId, applyTextSwap])
+  }, [sessionId])
 
   const reloadPdfFromServer = useCallback(() => {
     setPdfDoc(null)
@@ -392,16 +472,15 @@ export default function PdfEditor({ sessionId, onBack }) {
         onToolChange={setActiveTool}
         editTextMode={editTextMode}
         onEditTextModeChange={setEditTextMode}
-        onUndo={undo}
-        onRedo={redo}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
         canUndo={canUndo}
         canRedo={canRedo}
         onSave={handleSave}
         onDownload={handleDownload}
         saving={saving}
         downloading={downloading}
-        applyTextSwap={applyTextSwap}
-        onApplyTextSwapChange={setApplyTextSwap}
+        onShortcutsClick={() => setShortcutsOpen(true)}
       />
       {saveHint && (
         <div
@@ -435,6 +514,10 @@ export default function PdfEditor({ sessionId, onBack }) {
               Session <code className="text-xs">{sessionId.slice(0, 8)}…</code>
             </span>
           </div>
+          {showOnboarding && <EditorOnboardingBanner onDismiss={dismissOnboarding} />}
+          <p className="mb-3 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+            {MSG.editorSessionPrivacyLine}
+          </p>
           {!activeTool && (
             <div
               role="status"
@@ -448,8 +531,7 @@ export default function PdfEditor({ sessionId, onBack }) {
                 <kbd className="rounded bg-amber-200/80 px-1 dark:bg-amber-900/50">Ctrl+Enter</kbd>
                 ), your text is saved to this session automatically — no need to press{' '}
                 <strong>Save PDF</strong> first. Use <strong>Save PDF</strong> or{' '}
-                <strong>Download PDF</strong> anytime for a full sync or file download. Optional bulk swap
-                “PDF editor” → “PDF love” uses the checkbox.
+                <strong>Download PDF</strong> anytime for a full sync or file download.
               </p>
             </div>
           )}
@@ -507,6 +589,15 @@ export default function PdfEditor({ sessionId, onBack }) {
           />
         )}
       </div>
+      <EditPdfShortcutsModal open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
+      {toastMessage && (
+        <div
+          role="status"
+          className="pointer-events-none fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-[290] max-w-[min(90vw,20rem)] -translate-x-1/2 rounded-lg border border-zinc-200 bg-zinc-900 px-4 py-2 text-center text-sm font-medium text-white shadow-lg dark:border-zinc-600 dark:bg-zinc-100 dark:text-zinc-900"
+        >
+          {toastMessage}
+        </div>
+      )}
     </div>
   )
 }

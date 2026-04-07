@@ -75,7 +75,9 @@ async function main() {
     { timeout: 30000 }
   )
 
-  await page.getByRole('application', { name: 'Click PDF text to edit' }).waitFor({ state: 'visible', timeout: 15000 })
+  await page
+    .getByRole('group', { name: /PDF text/ })
+    .waitFor({ state: 'visible', timeout: 15000 })
   const blocks = page.locator('[data-text-block-id]')
   const n = await blocks.count()
   if (n < 1) throw new Error('no text blocks in PDF (need text-based PDF)')
@@ -83,9 +85,11 @@ async function main() {
   let opened = false
   for (let i = 0; i < Math.min(n, 8); i++) {
     const block = blocks.nth(i)
-    const b = await block.boundingBox()
+    const tap = block.locator('[data-pdf-text-line-tap]').first()
+    const target = (await tap.count()) > 0 ? tap : block
+    const b = await target.boundingBox()
     if (!b) continue
-    await block.click({ position: { x: Math.min(12, b.width / 2), y: Math.min(12, b.height / 2) } })
+    await target.click({ position: { x: Math.min(12, b.width / 2), y: Math.min(12, b.height / 2) } })
     await page.waitForTimeout(400)
     if ((await page.locator('[data-pdf-inline-editor-root="true"]').count()) > 0) {
       opened = true
