@@ -411,7 +411,7 @@ export default function PdfEditor({ sessionId, onBack }) {
           {saveHint}
         </div>
       )}
-      <div className="flex min-h-0 flex-1">
+      <div className="flex min-h-0 flex-1 flex-col md:flex-row">
         <ThumbnailSidebar
           pdfDoc={pdfDoc}
           numPages={numPages}
@@ -421,7 +421,7 @@ export default function PdfEditor({ sessionId, onBack }) {
         />
         <div
           ref={scrollRef}
-          className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden px-3 py-4 md:px-6"
+          className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 md:px-6 md:py-4"
         >
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <button

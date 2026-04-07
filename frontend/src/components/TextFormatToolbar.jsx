@@ -49,18 +49,21 @@ export default function TextFormatToolbar({ format, onChange, disabled }) {
   return (
     <aside
       data-text-format-panel
-      className="flex w-[min(100%,18rem)] shrink-0 flex-col border-l border-indigo-200/60 bg-white/95 dark:border-indigo-500/15 dark:bg-zinc-950/95"
+      className="flex min-h-0 w-full shrink-0 flex-col border-t border-indigo-200/60 bg-white/95 shadow-[0_-8px_30px_-12px_rgba(0,0,0,0.25)] dark:border-indigo-500/15 dark:bg-zinc-950/95 dark:shadow-[0_-8px_30px_-12px_rgba(0,0,0,0.5)] md:max-h-none md:w-[min(100%,18rem)] md:border-t-0 md:border-l md:shadow-none max-md:max-h-[min(48dvh,22rem)]"
       aria-label="Text formatting"
     >
       <div className="border-b border-zinc-200 px-3 py-2 dark:border-zinc-700">
         <h2 className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">Text format</h2>
-        <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-          Click a highlighted line on the page. Use <kbd className="rounded bg-zinc-200 px-0.5 dark:bg-zinc-700">Enter</kbd> for new lines;{' '}
-          <kbd className="rounded bg-zinc-200 px-0.5 dark:bg-zinc-700">Ctrl+Enter</kbd> or click outside to apply.
+        <p className="mt-0.5 text-xs text-zinc-500 max-md:leading-snug dark:text-zinc-400">
+          <span className="md:hidden">Tap the page to edit. New line: Enter. Done: tap away or Ctrl+Enter.</span>
+          <span className="max-md:hidden">
+            Click a highlighted line on the page. Use <kbd className="rounded bg-zinc-200 px-0.5 dark:bg-zinc-700">Enter</kbd> for new lines;{' '}
+            <kbd className="rounded bg-zinc-200 px-0.5 dark:bg-zinc-700">Ctrl+Enter</kbd> or click outside to apply.
+          </span>
         </p>
       </div>
       <div
-        className={`flex flex-col gap-3 overflow-y-auto p-3 ${disabled ? 'pointer-events-none opacity-50' : ''}`}
+        className={`flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-y-contain p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] ${disabled ? 'pointer-events-none opacity-50' : ''}`}
       >
         <label className="flex flex-col gap-1">
           <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Font</span>
