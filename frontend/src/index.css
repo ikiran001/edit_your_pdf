@@ -137,6 +137,19 @@ html.dark .fx-glass-header > * {
   background-image: none !important;
 }
 
+/* Idle PDF text targets: iOS Safari often ignores taps on plain divs; treat as tappable controls. */
+.pdf-text-layer-hit {
+  touch-action: manipulation;
+  cursor: text;
+  -webkit-tap-highlight-color: rgba(99, 102, 241, 0.15);
+}
+
+@media (pointer: coarse) {
+  .pdf-text-layer-hit {
+    cursor: pointer;
+  }
+}
+
 ::selection {
   background: var(--fx-raspberry-muted);
   color: inherit;
