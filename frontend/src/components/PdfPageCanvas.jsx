@@ -930,13 +930,13 @@ export default function PdfPageCanvas({
                   height: 'auto',
                   zIndex: 2,
                 }
-              : { left, top, width: w, minHeight: wrapperMinH }
+              : { left, top, width: w, minHeight: wrapperMinH, height: wrapperMinH }
             return (
               <div
                 key={block.id}
-                className="pointer-events-auto absolute"
+                className="pointer-events-auto absolute touch-manipulation"
                 style={wrapperStyle}
-                title={isEditing ? undefined : 'Click to edit'}
+                title={isEditing ? undefined : 'Tap to edit'}
                 data-text-block-id={block.id}
               >
                 <div
@@ -945,17 +945,18 @@ export default function PdfPageCanvas({
                     if (isEditing) nativeEditorElRef.current = el
                     else if (nativeEditorElRef.current === el) nativeEditorElRef.current = null
                   }}
-                  role="textbox"
+                  role={isEditing ? 'textbox' : 'button'}
                   tabIndex={isEditing ? 0 : -1}
+                  aria-label={isEditing ? undefined : 'Edit PDF text'}
                   contentEditable={isEditing}
                   suppressContentEditableWarning
                   {...(isEditing ? { 'data-pdf-inline-editor-root': true } : {})}
                   className={`z-[1] outline-none transition-[border-color,background-color] duration-150 ${
                     isEditing ? 'relative overflow-hidden' : 'absolute inset-0 overflow-x-hidden overflow-y-hidden'
-                  } ${isEditing ? 'select-text box-border' : 'select-none'} ${
+                  } ${isEditing ? 'select-text box-border' : 'select-none pdf-text-layer-hit'} ${
                     isEditing
                       ? 'pdf-text-layer-editor cursor-text rounded-sm border border-solid border-[#4A90E2]'
-                      : `cursor-text border border-transparent bg-transparent ${
+                      : `border border-transparent bg-transparent ${
                           hoverBlockId === block.id ? 'border border-dashed border-[#ccc]' : ''
                         }`
                   }`}
@@ -992,9 +993,22 @@ export default function PdfPageCanvas({
                   }
                   onPointerDown={(e) => {
                     if (isEditing) return
-                    e.preventDefault()
+                    /* Touch: avoid preventDefault so iOS can still synthesize click if pointer path is flaky. */
+                    if (e.pointerType && e.pointerType !== 'touch') e.preventDefault()
                     e.stopPropagation()
                     openNativeEditorForBlock(block)
+                  }}
+                  onClick={(e) => {
+                    if (isEditing) return
+                    e.stopPropagation()
+                    openNativeEditorForBlock(block)
+                  }}
+                  onKeyDown={(e) => {
+                    if (isEditing) return
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      openNativeEditorForBlock(block)
+                    }
                   }}
                   onFocus={() => {
                     if (!isEditing) return
