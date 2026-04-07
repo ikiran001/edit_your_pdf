@@ -35,6 +35,14 @@ export const MSG = {
   /** Shown after native line text is persisted without clicking Save PDF. */
   autoSavedSession: 'Text updated — saved to this session.',
   autoSaveFailed: 'Could not auto-save. Use Save PDF or check your connection.',
+  undoToast: 'Undone.',
+  redoToast: 'Redone.',
+  /** Dismissible banner on first editor visit (localStorage). */
+  editorOnboardingHint:
+    'Turn on Edit text and Text boxes, then tap or click a line on the PDF. Use the format panel at the side (or bottom on phones) while you edit. Ctrl+Enter applies a line; Escape cancels.',
+  /** Short privacy line under session id in the editor. */
+  editorSessionPrivacyLine:
+    'This file is tied to your session on our server; download or save if you need a permanent copy.',
 }
 
 /** e.g. "Edit PDF on pdfpilot" */

@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import ErrorBoundary from '../shared/components/ErrorBoundary.jsx'
 import ToolkitHomePage from '../features/toolkit-home/ToolkitHomePage.jsx'
 import EditPdfPage from '../features/edit-pdf/EditPdfPage.jsx'
 import MergePdfPage from '../features/merge-pdf/MergePdfPage.jsx'
@@ -28,8 +29,9 @@ export default function AppRoutes() {
   const basename = raw === '/' ? undefined : raw.replace(/\/$/, '')
   return (
     <BrowserRouter basename={basename}>
-      <RouteAnalytics />
-      <Routes>
+      <ErrorBoundary>
+        <RouteAnalytics />
+        <Routes>
         <Route path="/" element={<ToolkitHomePage />} />
         <Route path="/tools/edit-pdf" element={<EditPdfPage />} />
         <Route path="/tools/merge-pdf" element={<MergePdfPage />} />
@@ -57,7 +59,8 @@ export default function AppRoutes() {
             </ComingSoonToolPage>
           }
         />
-      </Routes>
+        </Routes>
+      </ErrorBoundary>
     </BrowserRouter>
   )
 }
