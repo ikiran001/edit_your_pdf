@@ -44,6 +44,14 @@ export const TOOL_REGISTRY = [
     icon: 'PenLine',
   },
   { id: 'unlock-pdf', path: '/tools/unlock-pdf', title: 'Unlock PDF', description: 'Remove password in the browser.', implemented: true, icon: 'LockOpen' },
+  {
+    id: 'add-watermark',
+    path: '/tools/add-watermark',
+    title: 'Add Watermark',
+    description: 'Text or image watermark, page ranges, preview, then download.',
+    implemented: true,
+    icon: 'Droplets',
+  },
   { id: 'pdf-to-word', path: '/tools/pdf-to-word', title: 'PDF to Word', description: 'DOC/DOCX export via server (planned).', implemented: false, icon: 'FileType2' },
   { id: 'word-to-pdf', path: '/tools/word-to-pdf', title: 'Word to PDF', description: 'DOC/DOCX to PDF (planned).', implemented: false, icon: 'FileText' },
 ]
