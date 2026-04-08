@@ -13,6 +13,7 @@ export const ANALYTICS_TOOL = {
   pdf_to_jpg: 'pdf_to_jpg',
   unlock_pdf: 'unlock_pdf',
   organize_pdf: 'organize_pdf',
+  watermark_pdf: 'watermark_pdf',
 }
 
 /** Toolkit registry `id` → analytics feature key for `feature_used` */
@@ -26,6 +27,7 @@ export const REGISTRY_ID_TO_FEATURE = {
   'jpg-to-pdf': ANALYTICS_TOOL.merge_pdf,
   'unlock-pdf': ANALYTICS_TOOL.unlock_pdf,
   'organize-pdf': ANALYTICS_TOOL.organize_pdf,
+  'add-watermark': ANALYTICS_TOOL.watermark_pdf,
   'pdf-to-word': 'pdf_to_word',
   'word-to-pdf': 'word_to_pdf',
 }

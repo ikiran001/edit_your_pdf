@@ -11,6 +11,7 @@ import JpgToPdfPage from '../features/jpg-to-pdf/JpgToPdfPage.jsx'
 import SignPdfPage from '../features/sign-pdf/SignPdfPage.jsx'
 import UnlockPdfPage from '../features/unlock-pdf/UnlockPdfPage.jsx'
 import OrganizePdfPage from '../features/organize-pdf/OrganizePdfPage.jsx'
+import WatermarkPdfPage from '../features/add-watermark/WatermarkPdfPage.jsx'
 import ComingSoonToolPage from '../features/placeholder/ComingSoonToolPage.jsx'
 import { pageView } from '../lib/analytics.js'
 import { docTitleForPath } from '../shared/constants/branding.js'
@@ -43,6 +44,7 @@ export default function AppRoutes() {
         <Route path="/tools/sign-pdf" element={<SignPdfPage />} />
         <Route path="/tools/unlock-pdf" element={<UnlockPdfPage />} />
         <Route path="/tools/organize-pdf" element={<OrganizePdfPage />} />
+        <Route path="/tools/add-watermark" element={<WatermarkPdfPage />} />
         <Route
           path="/tools/pdf-to-word"
           element={
