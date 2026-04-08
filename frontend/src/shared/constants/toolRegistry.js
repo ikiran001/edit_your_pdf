@@ -18,6 +18,14 @@ export const TOOL_REGISTRY = [
     icon: 'Scissors',
   },
   {
+    id: 'organize-pdf',
+    path: '/tools/organize-pdf',
+    title: 'Organize Pages',
+    description: 'Reorder, rotate, or delete pages, then download.',
+    implemented: true,
+    icon: 'LayoutGrid',
+  },
+  {
     id: 'compress-pdf',
     path: '/tools/compress-pdf',
     title: 'Compress PDF',

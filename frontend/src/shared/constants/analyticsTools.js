@@ -12,6 +12,7 @@ export const ANALYTICS_TOOL = {
   compress_pdf: 'compress_pdf',
   pdf_to_jpg: 'pdf_to_jpg',
   unlock_pdf: 'unlock_pdf',
+  organize_pdf: 'organize_pdf',
 }
 
 /** Toolkit registry `id` → analytics feature key for `feature_used` */
@@ -24,6 +25,7 @@ export const REGISTRY_ID_TO_FEATURE = {
   'pdf-to-jpg': ANALYTICS_TOOL.pdf_to_jpg,
   'jpg-to-pdf': ANALYTICS_TOOL.merge_pdf,
   'unlock-pdf': ANALYTICS_TOOL.unlock_pdf,
+  'organize-pdf': ANALYTICS_TOOL.organize_pdf,
   'pdf-to-word': 'pdf_to_word',
   'word-to-pdf': 'word_to_pdf',
 }
