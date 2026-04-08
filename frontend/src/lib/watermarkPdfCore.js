@@ -90,7 +90,7 @@ function placeTextBaseline(pageW, pageH, textW, fontSize, position) {
 }
 
 /**
- * @param {File} file
+ * @param {File | Uint8Array} fileOrBytes — use a dedicated `Uint8Array` copy for pdf-lib if pdf.js already loaded the same buffer
  * @param {object} opts
  * @param {'text'|'image'} opts.mode
  * @param {string} [opts.text]
@@ -108,8 +108,11 @@ function placeTextBaseline(pageW, pageH, textW, fontSize, position) {
  * @param {(done: number, total: number) => void} [opts.onProgress]
  * @returns {Promise<Uint8Array>}
  */
-export async function applyWatermarkToPdf(file, opts) {
-  const bytes = new Uint8Array(await file.arrayBuffer())
+export async function applyWatermarkToPdf(fileOrBytes, opts) {
+  const bytes =
+    fileOrBytes instanceof Uint8Array
+      ? new Uint8Array(fileOrBytes)
+      : new Uint8Array(await fileOrBytes.arrayBuffer())
   const pdfDoc = await PDFDocument.load(bytes, { ignoreEncryption: true })
   const numPages = pdfDoc.getPageCount()
   const indices = resolvePageIndices(opts.pageScope, opts.pageRangeInput || '', numPages)
@@ -239,5 +242,6 @@ export async function applyWatermarkToPdf(file, opts) {
     }
   }
 
-  return pdfDoc.save({ useObjectStreams: true })
+  /* useObjectStreams: false — avoids rare save issues on multi-page docs from some producers */
+  return pdfDoc.save({ useObjectStreams: false })
 }

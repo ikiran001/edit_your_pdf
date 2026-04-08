@@ -54,6 +54,8 @@ function saveSettings(partial) {
 
 export default function WatermarkPdfPage() {
   const [pdfFile, setPdfFile] = useState(null)
+  /** Master PDF bytes (pdf.js must not consume this buffer — pass `.slice()` into getDocument). */
+  const [pdfBytes, setPdfBytes] = useState(null)
   const [pdfDoc, setPdfDoc] = useState(null)
   const [numPages, setNumPages] = useState(0)
   const [mode, setMode] = useState('text')
@@ -70,7 +72,7 @@ export default function WatermarkPdfPage() {
   const [imageScalePercent, setImageScalePercent] = useState(28)
   const [position, setPosition] = useState('center')
   const [pageScope, setPageScope] = useState('all')
-  const [pageRangeInput, setPageRangeInput] = useState('1-3, 5')
+  const [pageRangeInput, setPageRangeInput] = useState('1')
   const [busy, setBusy] = useState(false)
   const [progress, setProgress] = useState({ done: 0, total: 0 })
   const [error, setError] = useState(null)
@@ -131,6 +133,7 @@ export default function WatermarkPdfPage() {
 
   useEffect(() => {
     if (!pdfFile) {
+      setPdfBytes(null)
       setPdfDoc(null)
       setNumPages(0)
       return undefined
@@ -139,9 +142,12 @@ export default function WatermarkPdfPage() {
     let doc = null
     ;(async () => {
       try {
-        const u8 = new Uint8Array(await pdfFile.arrayBuffer())
+        const raw = await pdfFile.arrayBuffer()
         if (cancelled) return
-        const task = getDocument({ data: u8 })
+        const master = new Uint8Array(raw)
+        setPdfBytes(master)
+        /* pdf.js may transfer/neuter buffers; never pass `master` directly */
+        const task = getDocument({ data: master.slice() })
         doc = await task.promise
         if (cancelled) {
           doc.destroy()
@@ -202,6 +208,9 @@ export default function WatermarkPdfPage() {
     }
     setError(null)
     setSuccessHint(null)
+    setPdfBytes(null)
+    setPdfDoc(null)
+    setNumPages(0)
     setPdfFile(f)
   }, [])
 
@@ -246,7 +255,7 @@ export default function WatermarkPdfPage() {
   }
 
   const runApply = async () => {
-    if (!pdfFile) {
+    if (!pdfFile || !pdfBytes?.length) {
       setError('Upload a PDF first.')
       return
     }
@@ -271,7 +280,7 @@ export default function WatermarkPdfPage() {
     try {
       const indices = resolvePageIndices(pageScope, pageRangeInput, numPages)
       setProgress({ done: 0, total: indices.length })
-      const u8 = await applyWatermarkToPdf(pdfFile, {
+      const u8 = await applyWatermarkToPdf(pdfBytes, {
         mode,
         text: (text || '').trim(),
         fontSize,
@@ -593,6 +602,7 @@ export default function WatermarkPdfPage() {
             disabled={
               busy ||
               !pdfFile ||
+              !pdfBytes?.length ||
               !numPages ||
               (pageScope === 'range' && !validateRange.ok) ||
               (mode === 'text' && !(text || '').trim()) ||
