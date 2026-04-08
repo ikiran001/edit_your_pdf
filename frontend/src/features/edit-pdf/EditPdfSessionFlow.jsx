@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import LandingPage from '../../components/LandingPage.jsx'
 import PdfEditor from '../../components/PdfEditor.jsx'
 import ToolPageShell from '../../shared/components/ToolPageShell.jsx'
+import ToolFeatureSeoSection from '../../shared/components/ToolFeatureSeoSection.jsx'
 import {
   markFunnelUpload,
   trackErrorOccurred,
@@ -49,6 +50,7 @@ export default function EditPdfSessionFlow({
           loading={uploading}
           uploadProgress={uploadProgress}
         />
+        <ToolFeatureSeoSection toolId="edit-pdf" />
       </ToolPageShell>
     )
   }

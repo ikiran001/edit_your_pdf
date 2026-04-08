@@ -1,0 +1,498 @@
+/**
+ * SEO-friendly marketing copy per toolkit route id (`TOOL_REGISTRY.id`).
+ * Used by ToolFeatureSeoSection — keep language accurate per tool (browser vs API vs session).
+ */
+
+/** @typedef {{ title: string, body: string }} SeoBenefitOrHighlight */
+
+/**
+ * @typedef {Object} ToolSeoEntry
+ * @property {string} featureName — display name for headings
+ * @property {string[]} intro — 2–3 short paragraphs
+ * @property {string[]} steps — numbered “how to” steps
+ * @property {SeoBenefitOrHighlight[]} benefits — “why use” items
+ * @property {SeoBenefitOrHighlight[]} highlights — exactly 3 cards
+ */
+
+/** @type {Record<string, ToolSeoEntry>} */
+export const TOOL_SEO_BY_ID = {
+  'edit-pdf': {
+    featureName: 'Edit PDF',
+    intro: [
+      'Edit PDF online to fix text, add highlights, sketch notes, and mark up pages without installing desktop software. Upload starts a focused editing session so you can work through your document in one place.',
+      'Your PDF is tied to your session on pdfpilot—ideal when you want to avoid passing drafts through random file-sharing sites. When you are done, download the updated PDF and keep a copy of the original if you might need it later.',
+    ],
+    steps: [
+      'Open Edit PDF from the toolkit and upload your file (drag-and-drop or browse).',
+      'Wait for the document to open in the viewer.',
+      'Use the on-screen tools to adjust text where supported, highlight important lines, or draw simple annotations.',
+      'Move between pages on longer files so every section is covered.',
+      'Save or apply changes according to the prompts so your edits are kept for this session.',
+      'Download your updated PDF and store it somewhere safe.',
+    ],
+    benefits: [
+      {
+        title: 'Fix mistakes quickly',
+        body: 'Correct typos, dates, or labels on contracts, forms, and handouts without rebuilding the file from scratch.',
+      },
+      {
+        title: 'No heavy design suite',
+        body: 'Edit PDF online from a normal browser—helpful on a work laptop or when you cannot install extra apps.',
+      },
+      {
+        title: 'Session-based workflow',
+        body: 'Keep the document inside your editing session instead of emailing ten versions back and forth.',
+      },
+      {
+        title: 'One flow for light edits',
+        body: 'Handle quick markup and text tweaks in a single tool before you share or archive.',
+      },
+    ],
+    highlights: [
+      {
+        title: 'In-browser viewer',
+        body: 'Work directly in the tab with tools tuned for everyday PDF edits.',
+      },
+      {
+        title: 'Text and markup',
+        body: 'Update copy and add emphasis without exporting to Word for tiny changes.',
+      },
+      {
+        title: 'Multi-page navigation',
+        body: 'Scroll through reports and proposals without losing context.',
+      },
+    ],
+  },
+
+  'merge-pdf': {
+    featureName: 'Merge PDF',
+    intro: [
+      'Merge PDF files into one document for easier sharing, printing, and archiving. Put appendices, exhibits, and scans in the exact order you want.',
+      'Everything runs in your browser on pdfpilot—your PDFs are combined locally, so you skip uploading them to a third-party server just to stitch pages together.',
+    ],
+    steps: [
+      'Open Merge PDF from the toolkit.',
+      'Upload every PDF you want in the final file (you can add several at once).',
+      'Drag files in the list until the order matches how readers should see the pages.',
+      'Remove any file you added by mistake.',
+      'Click merge and wait a moment while the tool builds one PDF.',
+      'Download the merged file and rename it if your team uses a naming convention.',
+    ],
+    benefits: [
+      {
+        title: 'One attachment instead of many',
+        body: 'Send a single merge PDF online for proposals, closing sets, or portfolios.',
+      },
+      {
+        title: 'Clear reading order',
+        body: 'Readers open one file from page one to the end—no “open part three first” confusion.',
+      },
+      {
+        title: 'Privacy-friendly combining',
+        body: 'Merge PDF files in the browser when you want sensitive annexes to stay off public converters.',
+      },
+      {
+        title: 'Faster print and sign',
+        body: 'Print or sign once on a merged PDF instead of juggling separate downloads.',
+      },
+    ],
+    highlights: [
+      {
+        title: 'Drag-and-drop order',
+        body: 'Reorder merges without renaming files on disk.',
+      },
+      {
+        title: 'Multiple inputs',
+        body: 'Stack several PDFs in a single run.',
+      },
+      {
+        title: 'Instant download',
+        body: 'Grab the combined PDF as soon as processing finishes.',
+      },
+    ],
+  },
+
+  'split-pdf': {
+    featureName: 'Split PDF',
+    intro: [
+      'Split PDF pages into separate files by custom ranges or by every page. Pull out chapters, invoices, or signed sections without copy-pasting screenshots.',
+      'Processing stays in your browser, so you can extract pages locally instead of uploading a full contract to an unknown website.',
+    ],
+    steps: [
+      'Open Split PDF and upload your document.',
+      'Choose split by page ranges or extract every page into its own PDF.',
+      'If you use ranges, type segments such as 1-5, 8 using commas and dashes as the tool describes.',
+      'Double-check the page count shown so your ranges stay inside the document.',
+      'Run the split and wait for the tool to finish.',
+      'Download a ZIP or individual PDFs, then file or share only the slices you need.',
+    ],
+    benefits: [
+      {
+        title: 'Share only what matters',
+        body: 'Email pages 3-7 to legal while keeping the rest internal.',
+      },
+      {
+        title: 'Cleaner archives',
+        body: 'After scanning a thick binder, split PDF online so each topic has its own file.',
+      },
+      {
+        title: 'Less manual work',
+        body: 'Avoid print-rescan loops or fragile screenshots for single pages.',
+      },
+      {
+        title: 'Local extraction',
+        body: 'Keep sensitive PDFs in the browser workflow you already trust.',
+      },
+    ],
+    highlights: [
+      {
+        title: 'Flexible ranges',
+        body: 'Define multiple segments in one pass.',
+      },
+      {
+        title: 'Every-page export',
+        body: 'Ideal for forms or one-page records.',
+      },
+      {
+        title: 'ZIP when needed',
+        body: 'Download many parts in one bundle when the tool offers it.',
+      },
+    ],
+  },
+
+  'compress-pdf': {
+    featureName: 'Compress PDF',
+    intro: [
+      'Compress PDF files to shrink size for email limits, cloud folders, and phones. Pick a level that balances smaller files against how sharp you need the document to look.',
+      'Compression runs entirely in your browser—your PDF never has to sit on a stranger’s server just to lose a few megabytes.',
+    ],
+    steps: [
+      'Open Compress PDF and add one or more PDFs.',
+      'Choose a compression level if the tool offers presets (lighter change vs. smaller output).',
+      'Start compression and watch the progress indicator.',
+      'Compare original and new sizes in the list when sizes are shown.',
+      'Download each compressed PDF or grab a batch ZIP if provided.',
+      'Spot-check important pages before you delete the originals.',
+    ],
+    benefits: [
+      {
+        title: 'Fits upload caps',
+        body: 'Shrink PDFs for portals, HR systems, and email attachments that enforce limits.',
+      },
+      {
+        title: 'Faster syncing',
+        body: 'Smaller files move quicker to Drive, Dropbox, or your LMS.',
+      },
+      {
+        title: 'More phone storage',
+        body: 'Lighten travel folders without deleting photos.',
+      },
+      {
+        title: 'Browser-side processing',
+        body: 'Keep contracts and payroll PDFs in a local-first workflow when possible.',
+      },
+    ],
+    highlights: [
+      {
+        title: 'Level choices',
+        body: 'Tune how aggressive compression should be.',
+      },
+      {
+        title: 'Batch-friendly',
+        body: 'Handle more than one PDF when you are cleaning a folder.',
+      },
+      {
+        title: 'Size feedback',
+        body: 'See how much you saved at a glance.',
+      },
+    ],
+  },
+
+  'pdf-to-jpg': {
+    featureName: 'PDF to JPG',
+    intro: [
+      'Turn each PDF page into JPG images for slides, social posts, or tools that prefer pictures over documents. Export happens in your browser, so your deck is not uploaded to a random converter.',
+      'PDF to JPG online is perfect when a teammate can open images everywhere but struggles with PDF viewers on mobile.',
+    ],
+    steps: [
+      'Open PDF to JPG and upload your PDF.',
+      'If offered, pick image quality or scale (higher looks sharper but creates larger files).',
+      'Start conversion and wait until processing completes.',
+      'Download a ZIP of page images or individual JPGs.',
+      'Unzip on your computer and drop images into your presentation or site.',
+      'Keep the original PDF if you still need selectable text later.',
+    ],
+    benefits: [
+      {
+        title: 'Slides and design apps',
+        body: 'Drop page images into PowerPoint, Canva, or a CMS without re-exporting from InDesign.',
+      },
+      {
+        title: 'Easy previews',
+        body: 'Share JPGs when someone cannot open PDFs on their phone.',
+      },
+      {
+        title: 'Page-level control',
+        body: 'Export every page once instead of screenshotting each screen.',
+      },
+      {
+        title: 'Local conversion',
+        body: 'Convert PDF to JPG in the browser when privacy matters.',
+      },
+    ],
+    highlights: [
+      {
+        title: 'Whole-document export',
+        body: 'All pages in one run.',
+      },
+      {
+        title: 'Adjustable quality',
+        body: 'Balance sharpness against file size when options exist.',
+      },
+      {
+        title: 'ZIP download',
+        body: 'Keeps many images organized.',
+      },
+    ],
+  },
+
+  'jpg-to-pdf': {
+    featureName: 'JPG to PDF',
+    intro: [
+      'Combine JPG or PNG images into one polished PDF—great for applications, receipts, or photo sets. Build the story in the right order, then download a single file.',
+      'JPG to PDF online runs in your browser so your scans and photos are not sent through an extra cloud you do not control.',
+    ],
+    steps: [
+      'Open JPG to PDF from the toolkit.',
+      'Upload every image you want in the final document.',
+      'Drag thumbnails until the sequence matches how readers should scroll.',
+      'Remove any wrong shot from the list.',
+      'Create the PDF and wait briefly.',
+      'Download the combined PDF and upload or email it wherever forms ask for one file.',
+    ],
+    benefits: [
+      {
+        title: 'One clean attachment',
+        body: 'Submit a single merge PDF online instead of ten separate photos.',
+      },
+      {
+        title: 'Consistent viewing',
+        body: 'Reviewers open the same PDF on phone, tablet, or desktop.',
+      },
+      {
+        title: 'Scan cleanup',
+        body: 'Turn a burst of phone pictures into one professional document.',
+      },
+      {
+        title: 'Browser workflow',
+        body: 'Skip installing yet another “print to PDF” utility.',
+      },
+    ],
+    highlights: [
+      {
+        title: 'Drag to reorder',
+        body: 'Fix the page order before you export.',
+      },
+      {
+        title: 'Multi-image input',
+        body: 'Build longer PDFs from many shots.',
+      },
+      {
+        title: 'Quick download',
+        body: 'One file, ready to send.',
+      },
+    ],
+  },
+
+  'sign-pdf': {
+    featureName: 'Sign PDF',
+    intro: [
+      'Sign PDF documents by placing your signature on the right page, then download a normal PDF others can open anywhere. Draw or paste a signature and position it precisely on lines or boxes.',
+      'Signing happens in your browser on pdfpilot, which keeps routine agreements off random “free sign” sites when you want a simpler, more private flow.',
+    ],
+    steps: [
+      'Open Sign PDF and upload the file you need signed.',
+      'Create your signature using the options the tool provides (draw, type, or upload).',
+      'Place the signature on the page; copy or move it if initials appear in several spots.',
+      'Zoom and scroll until alignment looks correct.',
+      'Export or download the signed PDF.',
+      'Store the signed copy securely and share only that version with counterparties.',
+    ],
+    benefits: [
+      {
+        title: 'Faster than print-sign-scan',
+        body: 'Close simple deals without hunting for a scanner.',
+      },
+      {
+        title: 'Accurate placement',
+        body: 'Line up with signature fields so forms look intentional.',
+      },
+      {
+        title: 'Reusable mark',
+        body: 'Use the same signature across multiple pages in one session.',
+      },
+      {
+        title: 'Standard PDF output',
+        body: 'Recipients open the file in any PDF reader.',
+      },
+    ],
+    highlights: [
+      {
+        title: 'Flexible signature input',
+        body: 'Draw fresh or reuse an image you already trust.',
+      },
+      {
+        title: 'Multi-page support',
+        body: 'Initial every page that your policy requires.',
+      },
+      {
+        title: 'Simple flow',
+        body: 'Upload, place, download—no mystery steps.',
+      },
+    ],
+  },
+
+  'unlock-pdf': {
+    featureName: 'Unlock PDF',
+    intro: [
+      'Remove an open password from a PDF when you know the password and are allowed to keep an unlocked copy. This helps teams stop retyping the same password for internal references they already own.',
+      'Unlock PDF uses your configured pdfpilot API (with qpdf on the server) when available—your file and password go to that endpoint, not to a public converter. Only unlock documents you have permission to change.',
+    ],
+    steps: [
+      'Open Unlock PDF and upload the protected file.',
+      'Type the correct document password.',
+      'Start unlock and wait for the server to return an unlocked PDF.',
+      'Download the new file and verify it opens without the old password.',
+      'Store it according to your security policy and delete older copies if rules allow.',
+      'If the tool warns that the API is missing, configure your deployment before trying again in production.',
+    ],
+    benefits: [
+      {
+        title: 'Stop retyping passwords',
+        body: 'Useful for personal archives you are authorized to keep open.',
+      },
+      {
+        title: 'Team efficiency',
+        body: 'Share an unlocked internal copy only when policy says that is OK.',
+      },
+      {
+        title: 'Controlled endpoint',
+        body: 'Works through your app’s API instead of a random upload site.',
+      },
+      {
+        title: 'Compliance-minded',
+        body: 'Never unlock PDFs you do not own or are not permitted to alter.',
+      },
+    ],
+    highlights: [
+      {
+        title: 'Password-aware flow',
+        body: 'Built for legitimate access you already have.',
+      },
+      {
+        title: 'Straightforward steps',
+        body: 'Upload, enter password, download result.',
+      },
+      {
+        title: 'Deployment-ready',
+        body: 'Wire your backend so unlock works where you host pdfpilot.',
+      },
+    ],
+  },
+
+  'organize-pdf': {
+    featureName: 'Organize PDF Pages',
+    intro: [
+      'Organize PDF pages visually: reorder with drag-and-drop or arrows, rotate mis-scanned sheets, and delete extras—then download a clean PDF. The whole workflow runs in your browser, so page thumbnails and your final file stay on your device.',
+      'Whether you are fixing a merged report or trimming a long download, you see every page before you commit, which cuts mistakes before you share.',
+    ],
+    steps: [
+      'Open Organize Pages and upload your PDF.',
+      'Wait for thumbnails to appear; zoom the grid if you want to see more pages at once.',
+      'Drag a page onto another to change order, or use the up and down arrows on each card.',
+      'Use rotate controls for crooked scans and delete for pages you do not need.',
+      'Optionally select multiple pages to remove several at once, or reset to start over.',
+      'Click apply and download your reorganized PDF.',
+    ],
+    benefits: [
+      {
+        title: 'See before you ship',
+        body: 'Thumbnails make wrong order or upside-down pages obvious.',
+      },
+      {
+        title: 'No re-merge hassle',
+        body: 'Fix order after combining PDFs without rebuilding from source files.',
+      },
+      {
+        title: 'Browser-based privacy',
+        body: 'Reorder and rotate locally instead of uploading to unknown tools.',
+      },
+      {
+        title: 'Fine control',
+        body: 'Mix single-page fixes with bulk deletes when a document is half noise.',
+      },
+    ],
+    highlights: [
+      {
+        title: 'Drag, arrows, zoom',
+        body: 'Reorder comfortably on large sets of pages.',
+      },
+      {
+        title: 'Per-page rotation',
+        body: 'Straighten only the scans that need it.',
+      },
+      {
+        title: 'Instant download',
+        body: 'Export the new page order in one click.',
+      },
+    ],
+  },
+
+  'add-watermark': {
+    featureName: 'Add Watermark',
+    intro: [
+      'Add a text or image watermark across your PDF—set opacity, rotation, position, and which pages receive it, then preview on page one before you download. Processing uses pdf-lib in your browser, so your file is not sent to a separate watermarking service.',
+      'Use it for DRAFT labels, confidential banners, or logo stamps while keeping the original structure of the PDF.',
+    ],
+    steps: [
+      'Open Add Watermark and upload your PDF.',
+      'Choose text or image watermark and adjust size, color, opacity, and rotation.',
+      'Pick a position such as center, a corner, or tiled repeat.',
+      'Select all pages or enter page ranges like 1-3, 5.',
+      'Check the live preview on page one.',
+      'Apply and download your watermarked PDF.',
+    ],
+    benefits: [
+      {
+        title: 'Clear document status',
+        body: 'Mark drafts and internal copies before they leave your team.',
+      },
+      {
+        title: 'Flexible placement',
+        body: 'Center a subtle logo or tile text across large reports.',
+      },
+      {
+        title: 'Targeted pages',
+        body: 'Watermark only the sections that need a label.',
+      },
+      {
+        title: 'Local processing',
+        body: 'Keep confidential PDFs in a browser-first workflow.',
+      },
+    ],
+    highlights: [
+      {
+        title: 'Text and image modes',
+        body: 'Switch between typed watermarks and your logo file.',
+      },
+      {
+        title: 'Live preview',
+        body: 'See page one update as you tweak settings.',
+      },
+      {
+        title: 'Range-aware apply',
+        body: 'Cover the whole file or just the pages you list.',
+      },
+    ],
+  },
+}

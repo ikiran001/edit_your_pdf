@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { PDFDocument } from 'pdf-lib'
 import { ClipboardPaste, CopyPlus, PenLine } from 'lucide-react'
 import ToolPageShell from '../../shared/components/ToolPageShell.jsx'
+import ToolFeatureSeoSection from '../../shared/components/ToolFeatureSeoSection.jsx'
 import FileDropzone from '../../shared/components/FileDropzone.jsx'
 import { useToolEngagement } from '../../hooks/useToolEngagement.js'
 import {
@@ -224,21 +225,6 @@ export default function SignPdfPage() {
     >
       <SignatureCreationModal open={modalOpen} onClose={() => setModalOpen(false)} onDone={onSignatureDone} />
 
-      {fileReadyHint && (
-        <div
-          role="status"
-          className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-100"
-        >
-          {fileReadyHint}
-        </div>
-      )}
-
-      {error && (
-        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900 dark:bg-red-950/50 dark:text-red-100">
-          {error}
-        </div>
-      )}
-
       <h3 className="mb-2 text-sm font-semibold text-zinc-800 dark:text-zinc-200">1. PDF</h3>
       <FileDropzone
         accept="application/pdf"
@@ -263,6 +249,23 @@ export default function SignPdfPage() {
         }}
         label={pdfFile ? pdfFile.name : 'Drop PDF here'}
       />
+
+      {fileReadyHint && (
+        <div
+          role="status"
+          className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-100"
+        >
+          {fileReadyHint}
+        </div>
+      )}
+
+      {error && (
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900 dark:bg-red-950/50 dark:text-red-100">
+          {error}
+        </div>
+      )}
+
+      <ToolFeatureSeoSection toolId="sign-pdf" />
 
       {pdfFile ? (
         <>

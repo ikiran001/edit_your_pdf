@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { PDFDocument } from 'pdf-lib'
 import JSZip from 'jszip'
 import ToolPageShell from '../../shared/components/ToolPageShell.jsx'
+import ToolFeatureSeoSection from '../../shared/components/ToolFeatureSeoSection.jsx'
 import FileDropzone from '../../shared/components/FileDropzone.jsx'
 import { useToolEngagement } from '../../hooks/useToolEngagement.js'
 import { ANALYTICS_TOOL } from '../../shared/constants/analyticsTools.js'
@@ -123,6 +124,12 @@ export default function SplitPdfPage() {
       title="Split PDF"
       subtitle="Split by page ranges or extract every page. Processing stays in your browser."
     >
+      <FileDropzone
+        accept="application/pdf"
+        disabled={busy}
+        onFiles={onPdfChosen}
+        label={file ? file.name : 'Drop one PDF here or click to browse'}
+      />
       {error && (
         <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900 dark:bg-red-950/50 dark:text-red-100">
           {error}
@@ -136,13 +143,7 @@ export default function SplitPdfPage() {
           {success}
         </div>
       )}
-
-      <FileDropzone
-        accept="application/pdf"
-        disabled={busy}
-        onFiles={onPdfChosen}
-        label={file ? file.name : 'Drop one PDF here or click to browse'}
-      />
+      <ToolFeatureSeoSection toolId="split-pdf" />
 
       {file && pageCount > 0 && (
         <div className="mt-8 space-y-6 rounded-2xl border border-zinc-200 bg-white/80 p-6 shadow-inner dark:border-zinc-700 dark:bg-zinc-900/50">

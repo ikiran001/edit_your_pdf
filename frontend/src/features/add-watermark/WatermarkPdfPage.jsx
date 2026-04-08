@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
 import ToolPageShell from '../../shared/components/ToolPageShell.jsx'
+import ToolFeatureSeoSection from '../../shared/components/ToolFeatureSeoSection.jsx'
 import FileDropzone from '../../shared/components/FileDropzone.jsx'
 import { useToolEngagement } from '../../hooks/useToolEngagement.js'
 import {
@@ -331,6 +332,19 @@ export default function WatermarkPdfPage() {
       title="Add Watermark"
       subtitle="Add text or image watermarks in your browser. Preview on page 1, then download."
     >
+      <FileDropzone
+        accept="application/pdf"
+        disabled={busy}
+        onFiles={onPdfFiles}
+        label={pdfFile ? pdfFile.name : 'Drop your PDF here or click to browse'}
+      />
+
+      {numPages > 0 && (
+        <p className="mt-2 text-center text-xs text-zinc-500 dark:text-zinc-400">
+          {numPages} page{numPages === 1 ? '' : 's'} loaded
+        </p>
+      )}
+
       {error && (
         <div
           role="alert"
@@ -348,18 +362,7 @@ export default function WatermarkPdfPage() {
         </div>
       )}
 
-      <FileDropzone
-        accept="application/pdf"
-        disabled={busy}
-        onFiles={onPdfFiles}
-        label={pdfFile ? pdfFile.name : 'Drop your PDF here or click to browse'}
-      />
-
-      {numPages > 0 && (
-        <p className="mt-2 text-center text-xs text-zinc-500 dark:text-zinc-400">
-          {numPages} page{numPages === 1 ? '' : 's'} loaded
-        </p>
-      )}
+      <ToolFeatureSeoSection toolId="add-watermark" />
 
       <div className="mt-8 grid gap-8 lg:grid-cols-2 lg:items-start">
         <div className="space-y-6">

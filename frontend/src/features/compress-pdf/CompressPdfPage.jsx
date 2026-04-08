@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import JSZip from 'jszip'
 import { Trash2 } from 'lucide-react'
 import ToolPageShell from '../../shared/components/ToolPageShell.jsx'
+import ToolFeatureSeoSection from '../../shared/components/ToolFeatureSeoSection.jsx'
 import FileDropzone from '../../shared/components/FileDropzone.jsx'
 import { useToolEngagement } from '../../hooks/useToolEngagement.js'
 import { ANALYTICS_TOOL } from '../../shared/constants/analyticsTools.js'
@@ -168,6 +169,13 @@ export default function CompressPdfPage() {
       title="Compress PDF"
       subtitle="Shrink PDFs in your browser. Pick a level, compare sizes, then download or grab a ZIP for batches."
     >
+      <FileDropzone
+        accept="application/pdf"
+        multiple
+        disabled={busy}
+        onFiles={addFiles}
+        label={busy ? 'Compressing…' : 'Drop PDFs here or click to add (batch supported)'}
+      />
       {error && (
         <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900 dark:bg-red-950/50 dark:text-red-100">
           {error}
@@ -181,7 +189,6 @@ export default function CompressPdfPage() {
           {success}
         </div>
       )}
-
       <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
         Uses pdf-lib locally. How much smaller files get depends on the PDF; some may only change
         slightly.
@@ -226,13 +233,7 @@ export default function CompressPdfPage() {
         </div>
       </fieldset>
 
-      <FileDropzone
-        accept="application/pdf"
-        multiple
-        disabled={busy}
-        onFiles={addFiles}
-        label={busy ? 'Compressing…' : 'Drop PDFs here or click to add (batch supported)'}
-      />
+      <ToolFeatureSeoSection toolId="compress-pdf" />
 
       {items.length > 0 && (
         <div className="mt-8 space-y-4">

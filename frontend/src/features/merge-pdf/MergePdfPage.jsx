@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { GripVertical, Trash2 } from 'lucide-react'
 import ToolPageShell from '../../shared/components/ToolPageShell.jsx'
+import ToolFeatureSeoSection from '../../shared/components/ToolFeatureSeoSection.jsx'
 import FileDropzone from '../../shared/components/FileDropzone.jsx'
 import { useToolEngagement } from '../../hooks/useToolEngagement.js'
 import { ANALYTICS_TOOL } from '../../shared/constants/analyticsTools.js'
@@ -89,6 +90,13 @@ export default function MergePdfPage() {
       title="Merge PDF"
       subtitle="Combine multiple PDFs in order. All processing runs in your browser."
     >
+      <FileDropzone
+        accept="application/pdf"
+        multiple
+        disabled={busy}
+        onFiles={addFiles}
+        label={busy ? 'Merging…' : 'Drop PDFs here or click to add'}
+      />
       {error && (
         <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900 dark:bg-red-950/50 dark:text-red-100">
           {error}
@@ -102,14 +110,7 @@ export default function MergePdfPage() {
           {success}
         </div>
       )}
-
-      <FileDropzone
-        accept="application/pdf"
-        multiple
-        disabled={busy}
-        onFiles={addFiles}
-        label={busy ? 'Merging…' : 'Drop PDFs here or click to add'}
-      />
+      <ToolFeatureSeoSection toolId="merge-pdf" />
 
       {items.length > 0 && (
         <div className="mt-8 rounded-2xl border border-zinc-200 bg-white/80 p-4 shadow-inner dark:border-zinc-700 dark:bg-zinc-900/50">
