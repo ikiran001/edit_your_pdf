@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { apiUrl, isApiBaseConfigured } from '../../lib/apiBase'
 import ToolPageShell from '../../shared/components/ToolPageShell.jsx'
+import ToolFeatureSeoSection from '../../shared/components/ToolFeatureSeoSection.jsx'
 import FileDropzone from '../../shared/components/FileDropzone.jsx'
 import { useToolEngagement } from '../../hooks/useToolEngagement.js'
 import {
@@ -125,19 +126,6 @@ export default function UnlockPdfPage() {
 
   return (
     <ToolPageShell title="Unlock PDF" subtitle="Decrypt with the document password and download a copy with encryption removed (server uses qpdf).">
-      {fileReadyHint && (
-        <div
-          role="status"
-          className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-100"
-        >
-          {fileReadyHint}
-        </div>
-      )}
-      {error && (
-        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900 dark:bg-red-950/50 dark:text-red-100">
-          {error}
-        </div>
-      )}
       <FileDropzone
         accept="application/pdf"
         disabled={busy}
@@ -156,6 +144,19 @@ export default function UnlockPdfPage() {
         }}
         label={file ? file.name : 'Drop encrypted PDF here'}
       />
+      {fileReadyHint && (
+        <div
+          role="status"
+          className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-100"
+        >
+          {fileReadyHint}
+        </div>
+      )}
+      {error && (
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900 dark:bg-red-950/50 dark:text-red-100">
+          {error}
+        </div>
+      )}
       <div className="mt-6 max-w-md">
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">Password</label>
         <input
@@ -175,6 +176,7 @@ export default function UnlockPdfPage() {
       >
         {busy ? MSG.processingFile : 'Unlock and download'}
       </button>
+      <ToolFeatureSeoSection toolId="unlock-pdf" />
       <p className="mt-6 text-xs text-zinc-500 dark:text-zinc-400">
         The PDF is decrypted and rewritten on the server with{' '}
         <a

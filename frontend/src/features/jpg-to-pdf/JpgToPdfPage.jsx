@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react'
 import { GripVertical, Trash2 } from 'lucide-react'
 import ToolPageShell from '../../shared/components/ToolPageShell.jsx'
+import ToolFeatureSeoSection from '../../shared/components/ToolFeatureSeoSection.jsx'
 import FileDropzone from '../../shared/components/FileDropzone.jsx'
 import { useToolEngagement } from '../../hooks/useToolEngagement.js'
 import {
@@ -116,6 +117,13 @@ export default function JpgToPdfPage() {
 
   return (
     <ToolPageShell title="JPG to PDF" subtitle="Combine images in order. Drag rows to reorder.">
+      <FileDropzone
+        accept="image/jpeg,image/jpg,image/png"
+        multiple
+        disabled={busy}
+        onFiles={addFiles}
+        label="Drop images here or click (JPEG, PNG, WebP)"
+      />
       {fileReadyHint && (
         <div
           role="status"
@@ -129,13 +137,7 @@ export default function JpgToPdfPage() {
           {error}
         </div>
       )}
-      <FileDropzone
-        accept="image/jpeg,image/jpg,image/png"
-        multiple
-        disabled={busy}
-        onFiles={addFiles}
-        label="Drop images here or click (JPEG, PNG, WebP)"
-      />
+      <ToolFeatureSeoSection toolId="jpg-to-pdf" />
       {items.length > 0 && (
         <div className="mt-8">
           <h3 className="mb-3 text-sm font-semibold text-zinc-700 dark:text-zinc-300">Page order</h3>

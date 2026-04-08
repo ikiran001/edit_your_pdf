@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ZoomIn, ZoomOut } from 'lucide-react'
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
 import ToolPageShell from '../../shared/components/ToolPageShell.jsx'
+import ToolFeatureSeoSection from '../../shared/components/ToolFeatureSeoSection.jsx'
 import FileDropzone from '../../shared/components/FileDropzone.jsx'
 import { useToolEngagement } from '../../hooks/useToolEngagement.js'
 import {
@@ -252,44 +253,12 @@ export default function OrganizePdfPage() {
       title="Organize PDF Pages"
       subtitle="Rearrange, rotate, or remove pages — all in your browser."
     >
-      <div className="mb-6 rounded-2xl border border-zinc-200 bg-white/70 p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/50">
-        <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
-          Rearrange, rotate, or remove pages from your PDF easily. Drag pages to reorder them, rotate pages as
-          needed, or delete unwanted pages. Once done, download your updated PDF instantly.
-        </p>
-        <ul className="mt-4 space-y-2 text-xs text-zinc-600 dark:text-zinc-400">
-          <li className="flex gap-2">
-            <span className="text-indigo-500 dark:text-cyan-400" aria-hidden>
-              •
-            </span>
-            <span>Drag and drop pages to change order, or use the ↑ / ↓ arrows on each card</span>
-          </li>
-          <li className="flex gap-2">
-            <span className="text-indigo-500 dark:text-cyan-400" aria-hidden>
-              •
-            </span>
-            <span>Use grid zoom out to see more pages at once while you drag and reorder</span>
-          </li>
-          <li className="flex gap-2">
-            <span className="text-indigo-500 dark:text-cyan-400" aria-hidden>
-              •
-            </span>
-            <span>Arrows move a page earlier or later in the document (page numbers update automatically)</span>
-          </li>
-          <li className="flex gap-2">
-            <span className="text-indigo-500 dark:text-cyan-400" aria-hidden>
-              •
-            </span>
-            <span>Use rotate buttons to adjust page orientation</span>
-          </li>
-          <li className="flex gap-2">
-            <span className="text-indigo-500 dark:text-cyan-400" aria-hidden>
-              •
-            </span>
-            <span>Click delete to remove a page</span>
-          </li>
-        </ul>
-      </div>
+      <FileDropzone
+        accept="application/pdf"
+        disabled={busy || loadingDoc}
+        onFiles={onFiles}
+        label={loadingDoc ? 'Loading PDF…' : busy ? 'Working…' : 'Drop a PDF here or click to browse'}
+      />
 
       {error && (
         <div
@@ -309,12 +278,7 @@ export default function OrganizePdfPage() {
         </div>
       )}
 
-      <FileDropzone
-        accept="application/pdf"
-        disabled={busy || loadingDoc}
-        onFiles={onFiles}
-        label={loadingDoc ? 'Loading PDF…' : busy ? 'Working…' : 'Drop a PDF here or click to browse'}
-      />
+      <ToolFeatureSeoSection toolId="organize-pdf" />
 
       {loadingDoc && (
         <p className="mt-4 text-center text-sm text-zinc-500 dark:text-zinc-400">Preparing page previews…</p>
