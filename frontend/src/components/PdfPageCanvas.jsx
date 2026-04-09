@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { buildTextRuns } from '../lib/pdfTextRuns'
 import { sampleBackgroundColorHex, sampleInkColorHex } from '../lib/sampleCanvasInkColor'
-import { buildPageTextBlocks } from '../lib/textLayerManager'
+import { buildPageTextItemBlocks } from '../lib/textLayerManager'
 import { editorFontFamilyWithPdfHint } from '../lib/editorUnicodeFonts'
 import {
   cssDisplayFontFromPdf,
@@ -135,7 +135,7 @@ export default function PdfPageCanvas({
   const drawPointsRef = useRef(null)
   const [textRuns, setTextRuns] = useState([])
   const baseTextBlocks = useMemo(
-    () => buildPageTextBlocks(textRuns, pageIndex),
+    () => buildPageTextItemBlocks(textRuns, pageIndex),
     [textRuns, pageIndex]
   )
 
@@ -613,7 +613,7 @@ export default function PdfPageCanvas({
         nativeSyncTimerRef.current = null
       }
       nativeOpenBaselineStrRef.current =
-        textBlocksRef.current.find((b) => b.id === id)?.str ?? ''
+        block.str ?? textBlocksRef.current.find((b) => b.id === id)?.str ?? ''
       const pdfFs = Number(block.pdf?.fontSize)
       nativeOpenBaselinePdfFontSizeRef.current =
         Number.isFinite(pdfFs) && pdfFs > 0 ? pdfFs : null
@@ -678,7 +678,8 @@ export default function PdfPageCanvas({
   useLayoutEffect(() => {
     if (!nativeEdit) return
     const id = nativeEdit.block.id
-    const readStr = () => textBlocksRef.current.find((b) => b.id === id)?.str ?? ''
+    const readStr = () =>
+      textBlocksRef.current.find((b) => b.id === id)?.str ?? nativeEdit.block.str ?? ''
     const str = readStr()
     const el = nativeEditorElRef.current
     if (el && nativeEditRef.current?.block?.id === id && el.textContent !== str) {
@@ -905,7 +906,7 @@ export default function PdfPageCanvas({
             overflow: nativeEdit ? 'visible' : undefined,
           }}
         >
-          {textBlocks.map((block) => {
+          {[...textBlocks].reverse().map((block) => {
             const isEditing = nativeEdit?.block?.id === block.id
             const w = Math.max(block.width * sx, 4)
             const h = Math.max(block.height * sy, Math.max(10, block.fontSizePx * sy * 1.15))

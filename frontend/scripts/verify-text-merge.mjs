@@ -2,12 +2,14 @@
  * Quick sanity check for line merge + duplicate substring handling (no test runner in project).
  * Run: node scripts/verify-text-merge.mjs
  */
-import { mergeRunsIntoLineBlocks } from '../src/lib/textLayerManager.js'
+import { buildPageTextItemBlocks, mergeRunsIntoLineBlocks } from '../src/lib/textLayerManager.js'
 
 const vw = 600
 const vh = 800
 
+let _mkIdx = 0
 function mk(str, left, top, w, h, baselineY) {
+  const idx = _mkIdx++
   return {
     str,
     left,
@@ -18,8 +20,9 @@ function mk(str, left, top, w, h, baselineY) {
     viewportW: vw,
     viewportH: vh,
     baselineY,
+    pdfTextItemIndex: idx,
     norm: { nx: 0, ny: 0, nw: 0.1, nh: 0.02, baselineN: 0.5 },
-    pdf: { x: 0, y: 0, w: 1, h: 1, baseline: 0, fontSize: 12 },
+    pdf: { x: left * 0.1, y: top * 0.1, w: w * 0.1, h: h * 0.1, baseline: baselineY * 0.1, fontSize: 12 },
   }
 }
 
@@ -62,8 +65,30 @@ const ovBlocks = mergeRunsIntoLineBlocks(ov)
 assert(ovBlocks.length === 1, 'overlap: one line')
 assert(ovBlocks[0].str === 'Ganesh Kashid', `overlap: got "${ovBlocks[0].str}"`)
 
+// One pdf.js item per cell → buildPageTextItemBlocks does not merge by Y (three hit targets)
+_mkIdx = 200
+const tableRuns = [
+  mk('$5.00', 10, 20, 48, 14, 32),
+  mk('1', 100, 20, 10, 14, 32),
+  mk('$5.00', 200, 20, 48, 14, 32),
+]
+const itemBlocks = buildPageTextItemBlocks(tableRuns, 0)
+assert(itemBlocks.length === 3, `item blocks: expected 3, got ${itemBlocks.length}`)
+const byLeft = [...itemBlocks].sort((a, b) => a.left - b.left)
+assert(
+  byLeft[0].str === '$5.00' && byLeft[1].str === '1' && byLeft[2].str === '$5.00',
+  `item blocks: got ${itemBlocks.map((b) => b.str).join(' | ')}`
+)
+assert(
+  itemBlocks.every((b) => /^p\d+-i\d+-u/.test(b.id)),
+  `item blocks: ids should include pdf item index, got ${itemBlocks.map((b) => b.id).join(' ; ')}`
+)
+
+const tableMerged = mergeRunsIntoLineBlocks(tableRuns)
+assert(tableMerged.length === 3, `line-merge table row: expected 3 segments, got ${tableMerged.length}`)
+
 if (!failed) {
-  console.log('OK: verify-text-merge — duplicate runs, two baselines, char overlap')
+  console.log('OK: verify-text-merge — dup runs, two baselines, overlap, item blocks + line merge table')
 } else {
   process.exit(1)
 }
