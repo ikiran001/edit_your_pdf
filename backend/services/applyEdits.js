@@ -51,6 +51,28 @@ function parseHexColor(hex) {
   return rgb(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
 }
 
+/**
+ * Shrink the native-text erase mask slightly on each side. The mask is drawn on top of the
+ * existing page content; a full-bleed rectangle covers nearby vector strokes (table rules,
+ * form borders). Insetting keeps glyphs covered while leaving grid lines that sit on cell
+ * edges much more often intact.
+ */
+function tightenNativeTextMaskRect(maskX, maskY, maskW, maskH, fontSizePt) {
+  const fs = Math.max(4, Math.min(144, Number(fontSizePt) || 12));
+  const horiz = Math.min(maskW * 0.085, Math.max(0.55, fs * 0.085));
+  const vert = Math.min(maskH * 0.14, Math.max(0.75, fs * 0.1));
+  const nx = maskX + horiz;
+  const ny = maskY + vert;
+  const nw = maskW - 2 * horiz;
+  const nh = maskH - 2 * vert;
+  const minW = Math.max(2, fs * 0.38);
+  const minH = Math.max(2, fs * 0.52);
+  if (nw < minW || nh < minH) {
+    return { x: maskX, y: maskY, width: maskW, height: maskH };
+  }
+  return { x: nx, y: ny, width: nw, height: nh };
+}
+
 /** Map UI font family + bold/italic to pdf-lib StandardFonts (Arial≈Helvetica, etc.). */
 function resolveNativeStandardFont(fontFamily, bold, italic) {
   const fam = String(fontFamily || 'Helvetica').toLowerCase();
@@ -144,7 +166,7 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
               }
             }
           }
-          const pad = Math.max(3, fontSizePt * 0.22);
+          const pad = Math.max(2, Math.min(7, fontSizePt * 0.17));
           const textColor = parseHexColor(item.color);
           let opacity = Number(item.opacity);
           if (!Number.isFinite(opacity)) opacity = 1;
@@ -178,7 +200,7 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
             maskX = rect.x;
             maskY = rect.y;
             maskW = rect.width;
-            maskH = Math.max(rect.height, fontSizePt * 1.35);
+            maskH = Math.max(rect.height, fontSizePt * 1.22);
             textX = n.nx * W + 0.75;
             baselinePdf = (1 - n.baselineN) * H;
             const needW = textX + textW + pad - (maskX + maskW);
@@ -191,7 +213,7 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
             const bh = Math.abs(Number(item.h) || 1);
             baselinePdf = Number(item.baseline) || by + bh * 0.75;
             maskW = Math.max(bw, textW + pad * 2, fontSizePt * 0.5);
-            maskH = Math.max(bh + pad * 2, fontSizePt * 1.35);
+            maskH = Math.max(bh + pad * 2, fontSizePt * 1.22);
             maskX = bx - pad;
             maskY = by - pad;
             textX = Math.max(bx + 0.5, maskX + 1);
@@ -205,6 +227,14 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
             maskH *= f;
             maskX = cx - maskW / 2;
             maskY = cy - maskH / 2;
+          }
+
+          {
+            const t = tightenNativeTextMaskRect(maskX, maskY, maskW, maskH, fontSizePt);
+            maskX = t.x;
+            maskY = t.y;
+            maskW = t.width;
+            maskH = t.height;
           }
 
           /* Paint-out original glyphs — match canvas-sampled fill when provided (colored tables), else white. */
