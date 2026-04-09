@@ -45,6 +45,17 @@ function verticalOverlapRatio(a, b) {
   return h > 0 ? ih / h : 0
 }
 
+/** Horizontal overlap / min width — avoids merging two same-string cells in one table row. */
+function horizontalOverlapRatio(a, b) {
+  const ax2 = a.left + a.width
+  const bx2 = b.left + b.width
+  const x1 = Math.max(a.left, b.left)
+  const x2 = Math.min(ax2, bx2)
+  const iw = Math.max(0, x2 - x1)
+  const w = Math.min(a.width, b.width)
+  return w > 0 ? iw / w : 0
+}
+
 /**
  * pdf.js often emits two line blocks for one visible heading (duplicate geometry).
  * Merging keeps one block id and one `blockTextOverrides` entry.
@@ -64,7 +75,9 @@ export function dedupeIdenticalOverlappingLineBlocks(blocks) {
         if (!ta || ta !== tb) continue
         const iou = rectIou(a, b)
         const vy = verticalOverlapRatio(a, b)
-        if (iou > 0.06 || vy > 0.45) {
+        const hx = horizontalOverlapRatio(a, b)
+        /* Same row (vy high) is not enough — distinct columns with the same value must stay separate. */
+        if (iou > 0.06 || (vy > 0.45 && hx > 0.35)) {
           const m = mergeTwoLineBlocks(a, b)
           list = list.filter((_, k) => k !== i && k !== j)
           list.push(m)
@@ -136,6 +149,9 @@ function mergeTwoLineBlocks(a, b) {
     baselineN: b.norm.baselineN,
   }
   const mergedRuns = [...(a.runs || []), ...(b.runs || [])]
+  const ia = Number.isFinite(a.pdfTextItemIndex) ? a.pdfTextItemIndex : 1e9
+  const ib = Number.isFinite(b.pdfTextItemIndex) ? b.pdfTextItemIndex : 1e9
+  const pdfTextItemIndex = Math.min(ia, ib) < 1e9 ? Math.min(ia, ib) : undefined
   return {
     str,
     left,
@@ -148,6 +164,7 @@ function mergeTwoLineBlocks(a, b) {
     norm,
     pdf,
     runs: mergedRuns,
+    ...(pdfTextItemIndex !== undefined ? { pdfTextItemIndex } : {}),
     ...pickDominantRunStyle(mergedRuns),
   }
 }
@@ -202,12 +219,12 @@ function appendMergedRunText(prevStr, prevRun, curRun) {
  */
 function horizontalColumnGapThresholdPx(lineRuns) {
   const fs = Math.max(9, ...lineRuns.map((r) => Number(r.fontSizePx) || 0))
-  return Math.max(10, fs * 0.28)
+  return Math.max(8, fs * 0.24)
 }
 
 /**
  * Split same-baseline runs into blocks. Uses bbox gap; when PDFs overlap runs, also uses left-edge jump.
- * Runs from `tabularRowPartsFromString` carry `atomicLineSegment` and never merge with neighbors.
+ * Runs with `atomicLineSegment` never merge with neighbors (legacy line pipeline).
  */
 function segmentRunsByGapAndJump(sorted) {
   if (sorted.length === 1) return [sorted]
@@ -221,8 +238,11 @@ function segmentRunsByGapAndJump(sorted) {
     const leadGap = cur.left - (prev.left + prev.width)
     const startJump = cur.left - prev.left
     const gapSplit = leadGap > floorThr
+    /* startJump ≈ prev.width for every adjacent word; require real whitespace between boxes. */
     const jumpSplit =
-      startJump > Math.max(11, fs * 1.15) && startJump > (prev.width || 1) * 0.22
+      leadGap > Math.max(2.5, floorThr * 0.3) &&
+      startJump > Math.max(10, fs * 1.05) &&
+      startJump > (prev.width || 1) * 0.18
     if (gapSplit || jumpSplit) {
       segments.push(seg)
       seg = [cur]
@@ -375,6 +395,46 @@ export function buildPageTextBlocks(runs, pageIndex = 0) {
     const bb = Math.round((pdf?.baseline ?? 0) * 100) / 100
     const bw = Math.round((pdf?.w ?? 0) * 100) / 100
     const id = `p${pageIndex}-u${bx}_${by}_${bb}_w${bw}`
+    return { ...b, id }
+  })
+}
+
+/** One editable block per pdf.js `textContent.items` entry (no Y-axis line merge). */
+function runToItemTextBlock(run) {
+  return {
+    str: run.str,
+    left: run.left,
+    top: run.top,
+    width: run.width,
+    height: run.height,
+    fontSizePx: run.fontSizePx,
+    viewportW: run.viewportW,
+    viewportH: run.viewportH,
+    norm: run.norm,
+    pdf: run.pdf,
+    runs: [run],
+    pdfTextItemIndex: run.pdfTextItemIndex,
+    ...pickDominantRunStyle([run]),
+  }
+}
+
+/**
+ * Edit pipeline: item-sized blocks + overlap dedupe only (duplicate draws / shadow text).
+ * Ids include `pdfTextItemIndex` so distinct items never collide when geometry rounds the same.
+ */
+export function buildPageTextItemBlocks(runs, pageIndex = 0) {
+  if (!runs?.length) return []
+  const raw = runs.map((r) => runToItemTextBlock(r))
+  const deduped = dedupeOverlappingLineBlocks(raw)
+  const dedupedText = dedupeIdenticalOverlappingLineBlocks(deduped)
+  return dedupedText.map((b) => {
+    const { pdf } = b
+    const bx = Math.round((pdf?.x ?? 0) * 100) / 100
+    const by = Math.round((pdf?.y ?? 0) * 100) / 100
+    const bb = Math.round((pdf?.baseline ?? 0) * 100) / 100
+    const bw = Math.round((pdf?.w ?? 0) * 100) / 100
+    const idx = Number.isFinite(b.pdfTextItemIndex) ? b.pdfTextItemIndex : 0
+    const id = `p${pageIndex}-i${idx}-u${bx}_${by}_${bb}_w${bw}`
     return { ...b, id }
   })
 }
