@@ -34,9 +34,9 @@ export default function ToolkitHomePage() {
         <h2 className="mb-6 text-center font-mono text-sm font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-cyan-400/85">
           Choose a tool
         </h2>
-        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3">
           {TOOL_REGISTRY.map((tool) => (
-            <div key={tool.id} className="min-h-[200px]">
+            <div key={tool.id} className="aspect-square min-h-0 sm:aspect-auto sm:min-h-[200px]">
               <ToolCard tool={tool} />
             </div>
           ))}
