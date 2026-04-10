@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { flushSync } from 'react-dom'
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
 import { apiUrl } from '../lib/apiBase'
+import { usePagesHistory } from '../hooks/usePagesHistory'
 import ThemeToggle from '../shared/components/ThemeToggle.jsx'
 import EditorOnboardingBanner from '../shared/components/EditorOnboardingBanner.jsx'
 import EditPdfShortcutsModal from '../shared/components/EditPdfShortcutsModal.jsx'
@@ -9,7 +9,7 @@ import Toolbar from './Toolbar'
 import ThumbnailSidebar from './ThumbnailSidebar'
 import PdfPageCanvas from './PdfPageCanvas'
 import TextFormatToolbar from './TextFormatToolbar'
-import { defaultTextFormat, formatFromPlacedTextItem, formatFromTextBlock } from '../lib/textFormatDefaults'
+import { defaultTextFormat, formatFromTextBlock } from '../lib/textFormatDefaults'
 import {
   trackErrorOccurred,
   trackFileDownloaded,
@@ -17,15 +17,8 @@ import {
   trackToolCompleted,
 } from '../lib/analytics.js'
 import { MSG } from '../shared/constants/branding.js'
-import {
-  LEGACY_PLACED_TEXT_WIDGET_TOP_OFFSET_CSS,
-  PLACED_TEXT_BASELINE_FRAC,
-} from '../lib/placedTextConstants.js'
 
 const EDIT_TOOL = 'edit_pdf'
-
-/** Stable ref for pages with no annotations — avoids `|| []` creating a new array every render (infinite layout loops in PlacedTextAnnotations). */
-const EMPTY_PAGE_ITEMS = []
 
 const ONBOARDING_STORAGE_KEY = 'pdfpilot_editor_onboarding_dismissed'
 
@@ -37,148 +30,24 @@ function readEditorOnboardingVisible() {
   }
 }
 
-/** Client-only: PDF already contains this snapshot; next save must white it out before redraw. */
-function snapshotPlacedTextLastBake(it) {
-  if (!it || it.type !== 'text') return null
-  return {
-    x: it.x,
-    y: it.y,
-    pdfX: it.pdfX,
-    pdfBaselineY: it.pdfBaselineY,
-    text: it.text,
-    fontSize: it.fontSize,
-    fontSizeCss: it.fontSizeCss,
-    fontFamily: it.fontFamily,
-    bold: it.bold,
-    italic: it.italic,
-    underline: it.underline,
-    rotationDeg: it.rotationDeg,
-    placementV2: it.placementV2,
-  }
-}
-
-function toServerTextGeometry(snap, pageCssH) {
-  if (!snap || typeof snap !== 'object') return null
-  const rest = { ...snap }
-  if (
-    rest.placementV2 !== true &&
-    Number.isFinite(pageCssH) &&
-    pageCssH > 1
-  ) {
-    const y = Number(rest.y)
-    if (Number.isFinite(y)) {
-      rest.y = Math.min(
-        0.999,
-        Math.max(0, y + LEGACY_PLACED_TEXT_WIDGET_TOP_OFFSET_CSS / pageCssH)
-      )
-      rest.placementV2 = true
-    }
-  }
-  return rest
-}
-
-/**
- * Strip client-only fields before sending edits to the API / pdf-lib.
- * @param {number} [pageCssH] — page canvas CSS height for legacy `type: 'text'` Y correction
- */
-function toServerItem(it, pageCssH) {
+/** Strip client-only fields before sending edits to the API / pdf-lib. */
+function toServerItem(it) {
   const rest = { ...it }
   delete rest.id
   delete rest.fontSizeCss
   delete rest.lineWidthCss
-  delete rest.textBakedInEditorPdf
-  delete rest.placedTextLastBake
-  delete rest.erasePlacedTextAt
-  if (rest.type === 'text' && it.placedTextLastBake) {
-    const g = toServerTextGeometry(it.placedTextLastBake, pageCssH)
-    if (g) {
-      rest.erasePlacedTextAt = {
-        x: g.x,
-        y: g.y,
-        text: g.text,
-        fontSize: g.fontSize,
-        fontFamily: g.fontFamily,
-        bold: g.bold,
-        italic: g.italic,
-        underline: g.underline,
-        rotationDeg: g.rotationDeg,
-        placementV2: g.placementV2,
-      }
-    }
-  }
-  if (
-    rest.type === 'text' &&
-    rest.pdfX == null &&
-    rest.pdfBaselineY == null &&
-    it.placementV2 !== true &&
-    Number.isFinite(pageCssH) &&
-    pageCssH > 1
-  ) {
-    const y = Number(rest.y)
-    if (Number.isFinite(y)) {
-      rest.y = Math.min(
-        0.999,
-        Math.max(0, y + LEGACY_PLACED_TEXT_WIDGET_TOP_OFFSET_CSS / pageCssH)
-      )
-      rest.placementV2 = true
-    }
-  }
   return rest
 }
 
-/** Any of these on a placed-text patch means the server PDF is stale until the next save. */
-const PLACED_TEXT_PATCH_BAKE_KEYS = new Set([
-  'x',
-  'y',
-  'pdfX',
-  'pdfBaselineY',
-  'text',
-  'fontFamily',
-  'fontSize',
-  'fontSizeCss',
-  'bold',
-  'italic',
-  'underline',
-  'align',
-  'color',
-  'opacity',
-  'rotationDeg',
-])
-
-function placedTextPatchInvalidatesBakedPdf(patch) {
-  if (!patch || typeof patch !== 'object') return false
-  for (const k of Object.keys(patch)) {
-    if (PLACED_TEXT_PATCH_BAKE_KEYS.has(k)) return true
-  }
-  return false
-}
-
-function buildEditsPayload(pagesItems, pageHeights) {
-  const ph = pageHeights && typeof pageHeights === 'object' ? pageHeights : {}
+function buildEditsPayload(pagesItems) {
   const pages = Object.entries(pagesItems)
     .map(([key, list]) => ({
       pageIndex: Number(key),
-      items: (list || []).map((it) => toServerItem(it, ph[Number(key)])),
+      items: (list || []).map(toServerItem),
     }))
     .filter((g) => Number.isFinite(g.pageIndex) && g.items.length > 0)
     .sort((a, b) => a.pageIndex - b.pageIndex)
   return { pages }
-}
-
-function cloneEditorSlice(pagesItems, nativeTextEdits, blockTextOverrides) {
-  try {
-    return {
-      p: structuredClone(pagesItems ?? {}),
-      n: structuredClone(nativeTextEdits ?? []),
-      o: { ...(blockTextOverrides ?? {}) },
-    }
-  } catch {
-    return {
-      p: JSON.parse(JSON.stringify(pagesItems ?? {})),
-      n: JSON.parse(JSON.stringify(nativeTextEdits ?? [])),
-      o: { ...(blockTextOverrides ?? {}) },
-    }
-  }
 }
 
 /** Restore usePagesHistory.present from server `edits` payload (re-adds client-only ids). */
@@ -186,23 +55,13 @@ function editsPayloadToPresentMap(edits) {
   const out = {}
   for (const g of edits?.pages || []) {
     if (!Number.isFinite(g.pageIndex)) continue
-    const items = (g.items || []).map((it) => {
-      const base = {
-        ...it,
-        id:
-          typeof crypto !== 'undefined' && crypto.randomUUID
-            ? crypto.randomUUID()
-            : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-      }
-      if (it.type === 'text') {
-        return {
-          ...base,
-          textBakedInEditorPdf: true,
-          placedTextLastBake: snapshotPlacedTextLastBake(base),
-        }
-      }
-      return base
-    })
+    const items = (g.items || []).map((it) => ({
+      ...it,
+      id:
+        typeof crypto !== 'undefined' && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    }))
     out[String(g.pageIndex)] = items
   }
   return out
@@ -220,18 +79,10 @@ export default function PdfEditor({ sessionId, onBack }) {
   /** Bumped after a successful save so pdf.js refetches (edited.pdf) instead of a cached original. */
   const [pdfBust, setPdfBust] = useState(0)
   const pageRefs = useRef([])
-  /** Latest `ch` per page from PdfPageCanvas — needed to correct legacy text `y` on export. */
-  const pageCssHeightRef = useRef({})
   const scrollRef = useRef(null)
-  const [pagesItems, setPagesItems] = useState({})
   const pagesItemsRef = useRef({})
   const nativeTextEditsRef = useRef([])
-  const blockOverridesRef = useRef({})
   const [nativeTextEdits, setNativeTextEdits] = useState([])
-  /** Unified undo: annotations (incl. Add Text) + native line edits + block overrides. */
-  const editorUndoPastRef = useRef([])
-  const editorRedoFutureRef = useRef([])
-  const [editorHistTick, setEditorHistTick] = useState(0)
   const autosaveTimerRef = useRef(null)
   /** Single source of truth for on-canvas text: block id → latest string (survives re-parse / re-render). */
   const [blockTextOverrides, setBlockTextOverrides] = useState({})
@@ -240,9 +91,6 @@ export default function PdfEditor({ sessionId, onBack }) {
   textFormatRef.current = textFormat
   const [editTextMode, setEditTextMode] = useState(true)
   const [inlineTextEditorOpen, setInlineTextEditorOpen] = useState(false)
-  /** Add Text (`type: 'text'`) annotation selected for drag + format toolbar. */
-  const [selectedPlacedTextId, setSelectedPlacedTextId] = useState(null)
-  const placedTextMetaRef = useRef({ id: null, pageIndex: -1, fontRatio: 1 })
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(readEditorOnboardingVisible)
   const [toastMessage, setToastMessage] = useState(null)
@@ -251,105 +99,9 @@ export default function PdfEditor({ sessionId, onBack }) {
   useEffect(() => {
     if (!editTextMode) setInlineTextEditorOpen(false)
   }, [editTextMode])
-
-  const handlePlacedTextSelectInfo = useCallback((info) => {
-    if (!info) {
-      placedTextMetaRef.current = { id: null, pageIndex: -1, fontRatio: 1 }
-      setSelectedPlacedTextId(null)
-      return
-    }
-    placedTextMetaRef.current = {
-      id: info.id,
-      pageIndex: info.pageIndex,
-      fontRatio: info.fontRatio,
-    }
-    setSelectedPlacedTextId(info.id)
-    setTextFormat(formatFromPlacedTextItem(info.item))
-  }, [])
-
-  useEffect(() => {
-    if (inlineTextEditorOpen) {
-      setSelectedPlacedTextId(null)
-      placedTextMetaRef.current = { id: null, pageIndex: -1, fontRatio: 1 }
-    }
-  }, [inlineTextEditorOpen])
-
-  useEffect(() => {
-    if (!selectedPlacedTextId) return
-    const onDoc = (e) => {
-      const t = e.target
-      if (t.closest?.('[data-pdf-placed-text-root]')) return
-      if (t.closest?.('[data-text-format-panel]')) return
-      if (t.closest?.('[data-pdf-inline-editor-root]')) return
-      /* Save/Download: keep selection until click completes so contentEditable stays mounted; persist flushes then sync clears. */
-      if (t.closest?.('[data-pdf-session-actions]')) return
-      /* Other chrome (tools, theme): commit draft from DOM first — otherwise unmount drops edits (e.g. Kiran → Kiran Jadhav). */
-      if (t.closest?.('[data-pdf-editor-chrome]')) {
-        document.dispatchEvent(new CustomEvent('pdfpilot-flush-placed-text'))
-        setSelectedPlacedTextId(null)
-        placedTextMetaRef.current = { id: null, pageIndex: -1, fontRatio: 1 }
-        return
-      }
-      document.dispatchEvent(new CustomEvent('pdfpilot-flush-placed-text'))
-      setSelectedPlacedTextId(null)
-      placedTextMetaRef.current = { id: null, pageIndex: -1, fontRatio: 1 }
-    }
-    document.addEventListener('pointerdown', onDoc)
-    return () => document.removeEventListener('pointerdown', onDoc)
-  }, [selectedPlacedTextId])
+  const { pagesItems, commit, undo, redo, canUndo, canRedo, reset } = usePagesHistory({})
   pagesItemsRef.current = pagesItems
   nativeTextEditsRef.current = nativeTextEdits
-  blockOverridesRef.current = blockTextOverrides
-
-  const pushEditorUndoSnapshot = useCallback(() => {
-    editorUndoPastRef.current.push(
-      cloneEditorSlice(pagesItemsRef.current, nativeTextEditsRef.current, blockOverridesRef.current)
-    )
-    if (editorUndoPastRef.current.length > 80) {
-      editorUndoPastRef.current = editorUndoPastRef.current.slice(-80)
-    }
-    editorRedoFutureRef.current = []
-    setEditorHistTick((t) => t + 1)
-  }, [])
-
-  void editorHistTick
-  const canUndo = editorUndoPastRef.current.length > 0
-  const canRedo = editorRedoFutureRef.current.length > 0
-
-  const applyEditorSnapshot = useCallback((snap) => {
-    setPagesItems(snap.p)
-    setNativeTextEdits(snap.n)
-    nativeTextEditsRef.current = snap.n
-    setBlockTextOverrides(snap.o)
-    blockOverridesRef.current = snap.o
-  }, [])
-
-  const undo = useCallback(() => {
-    const past = editorUndoPastRef.current
-    if (past.length === 0) return
-    const snap = past.pop()
-    const cur = cloneEditorSlice(pagesItemsRef.current, nativeTextEditsRef.current, blockOverridesRef.current)
-    editorRedoFutureRef.current.unshift(cur)
-    if (editorRedoFutureRef.current.length > 80) {
-      editorRedoFutureRef.current = editorRedoFutureRef.current.slice(0, 80)
-    }
-    flushSync(() => {
-      applyEditorSnapshot(snap)
-    })
-    setEditorHistTick((t) => t + 1)
-  }, [applyEditorSnapshot])
-
-  const redo = useCallback(() => {
-    const fut = editorRedoFutureRef.current
-    if (fut.length === 0) return
-    const snap = fut.shift()
-    const cur = cloneEditorSlice(pagesItemsRef.current, nativeTextEditsRef.current, blockOverridesRef.current)
-    editorUndoPastRef.current.push(cur)
-    flushSync(() => {
-      applyEditorSnapshot(snap)
-    })
-    setEditorHistTick((t) => t + 1)
-  }, [applyEditorSnapshot])
 
   const numPages = pdfDoc?.numPages ?? 0
 
@@ -447,13 +199,10 @@ export default function PdfEditor({ sessionId, onBack }) {
         }
         setBlockTextOverrides(over)
 
-        editorUndoPastRef.current = []
-        editorRedoFutureRef.current = []
-        setEditorHistTick((t) => t + 1)
         if (stRes.edits?.pages?.length) {
-          setPagesItems(editsPayloadToPresentMap(stRes.edits))
+          reset(editsPayloadToPresentMap(stRes.edits))
         } else {
-          setPagesItems({})
+          reset({})
         }
       } catch (e) {
         if (!cancelled) setLoadError(e?.message || 'Failed to load PDF')
@@ -462,7 +211,7 @@ export default function PdfEditor({ sessionId, onBack }) {
     return () => {
       cancelled = true
     }
-  }, [sessionId, pdfBust])
+  }, [sessionId, reset, pdfBust])
 
   const loadErrorTracked = useRef(null)
   useEffect(() => {
@@ -499,111 +248,13 @@ export default function PdfEditor({ sessionId, onBack }) {
 
   const updatePage = useCallback(
     (pageIndex) => (updater) => {
-      pushEditorUndoSnapshot()
-      setPagesItems((prev) => {
+      commit((prev) => {
         const cur = prev[pageIndex] || []
         const next = typeof updater === 'function' ? updater(cur) : updater
         return { ...prev, [pageIndex]: next }
       })
     },
-    [pushEditorUndoSnapshot]
-  )
-
-  const reportPageCssHeight = useCallback((pageIndex, cssH) => {
-    if (Number.isFinite(pageIndex) && Number.isFinite(cssH) && cssH > 1) {
-      pageCssHeightRef.current[pageIndex] = cssH
-    }
-  }, [])
-
-  const patchPagePlacedText = useCallback(
-    (pageIndex, id, patch, opts) => {
-      const mergeOne = (it) => {
-        if (it.id !== id || it.type !== 'text' || !patch) return it
-        const hasPdfPos = patch.pdfX != null || patch.pdfBaselineY != null
-        const hasNormPos = patch.x != null || patch.y != null
-        const hasPos = hasPdfPos || hasNormPos
-        let next
-        if (!hasPos) {
-          next = { ...it, ...patch }
-        } else if (hasPdfPos) {
-          next = { ...it, ...patch, placementV2: true }
-        } else {
-          const h = pageCssHeightRef.current[pageIndex] || 0
-          const leg = LEGACY_PLACED_TEXT_WIDGET_TOP_OFFSET_CSS
-          const withoutPdf = { ...it }
-          delete withoutPdf.pdfX
-          delete withoutPdf.pdfBaselineY
-          if (it.placementV2 === true || h <= 1) {
-            next = { ...withoutPdf, ...patch, placementV2: true }
-          } else {
-            next = {
-              ...withoutPdf,
-              ...patch,
-              placementV2: true,
-              x: patch.x != null ? Number(patch.x) : it.x,
-              y:
-                patch.y != null
-                  ? Number(patch.y) + leg / h
-                  : Number(it.y) + leg / h,
-            }
-          }
-        }
-        if (placedTextPatchInvalidatesBakedPdf(patch)) {
-          next = { ...next, textBakedInEditorPdf: false }
-        }
-        return next
-      }
-      if (opts?.live) {
-        setPagesItems((prev) => {
-          const cur = prev[pageIndex] || []
-          const next = cur.map(mergeOne)
-          return { ...prev, [pageIndex]: next }
-        })
-        return
-      }
-      updatePage(pageIndex)((prev) => prev.map(mergeOne))
-    },
-    [updatePage]
-  )
-
-  const applyTextFormat = useCallback(
-    (fmt) => {
-      setTextFormat(fmt)
-      const m = placedTextMetaRef.current
-      if (!m.id || m.pageIndex < 0) return
-      const fontSize = Math.max(8, Math.min(144, (fmt.fontSizeCss ?? 14) * m.fontRatio))
-      updatePage(m.pageIndex)((prev) =>
-        prev.map((it) => {
-          if (it.id !== m.id || it.type !== 'text') return it
-          const oldFs = Math.max(4, Math.min(144, Number(it.fontSize) || 12))
-          let pdfBaselineY = it.pdfBaselineY
-          if (
-            Number.isFinite(it.pdfX) &&
-            Number.isFinite(it.pdfBaselineY) &&
-            fontSize !== oldFs
-          ) {
-            const topPdf = it.pdfBaselineY + oldFs * PLACED_TEXT_BASELINE_FRAC
-            pdfBaselineY = topPdf - fontSize * PLACED_TEXT_BASELINE_FRAC
-          }
-          return {
-            ...it,
-            fontFamily: fmt.fontFamily,
-            fontSizeCss: fmt.fontSizeCss,
-            fontSize,
-            pdfBaselineY,
-            bold: fmt.bold,
-            italic: fmt.italic,
-            underline: fmt.underline,
-            align: fmt.align,
-            color: fmt.color,
-            opacity: fmt.opacity,
-            rotationDeg: fmt.rotationDeg,
-            textBakedInEditorPdf: false,
-          }
-        })
-      )
-    },
-    [updatePage]
+    [commit]
   )
 
   const pageNodes = useMemo(() => {
@@ -619,9 +270,7 @@ export default function PdfEditor({ sessionId, onBack }) {
   }, [])
 
   const persistPdfToServer = useCallback(async () => {
-    document.dispatchEvent(new CustomEvent('pdfpilot-flush-text-draft'))
-    document.dispatchEvent(new CustomEvent('pdfpilot-flush-placed-text'))
-    const edits = buildEditsPayload(pagesItemsRef.current, pageCssHeightRef.current)
+    const edits = buildEditsPayload(pagesItemsRef.current)
     const nativePayload = nativeTextEditsRef.current
     if (import.meta.env.DEV) {
       console.debug('[save] POST /edit', {
@@ -661,30 +310,9 @@ export default function PdfEditor({ sessionId, onBack }) {
     }
   }, [sessionId])
 
-  /** Bump PDF URL only — do not null `pdfDoc` (that unmounts the whole editor and drops text-layer UX). */
   const reloadPdfFromServer = useCallback(() => {
+    setPdfDoc(null)
     setPdfBust((v) => v + 1)
-  }, [])
-
-  /** After persist + PDF reload, the canvas shows drawn text — hide duplicate DOM until the user selects an item. */
-  const syncPlacedTextWithBakedPdf = useCallback(() => {
-    placedTextMetaRef.current = { id: null, pageIndex: -1, fontRatio: 1 }
-    setSelectedPlacedTextId(null)
-    setPagesItems((prev) => {
-      const out = {}
-      for (const [k, list] of Object.entries(prev)) {
-        out[k] = list.map((it) =>
-          it?.type === 'text'
-            ? {
-                ...it,
-                textBakedInEditorPdf: true,
-                placedTextLastBake: snapshotPlacedTextLastBake(it),
-              }
-            : it
-        )
-      }
-      return out
-    })
   }, [])
 
   const addNativeTextEdit = useCallback(
@@ -705,19 +333,13 @@ export default function PdfEditor({ sessionId, onBack }) {
         rotationDeg,
         maskColor,
       } = payload
-      const spatialKey = `${pageIndex}:${pdf.x}:${pdf.y}:${pdf.baseline}`
-      const stableKey = blockId ? `p${pageIndex}:bid:${blockId}` : spatialKey
+      const key = `${pageIndex}:${pdf.x}:${pdf.y}:${pdf.baseline}`
       const prev = nativeTextEditsRef.current
-      const rest = prev.filter((e) => {
-        if (blockId && e.blockId === blockId) return false
-        if (!blockId && e.key === spatialKey) return false
-        return true
-      })
+      const rest = prev.filter((e) => e.key !== key)
       const next = [
         ...rest,
         {
-          key: stableKey,
-          blockId: blockId || undefined,
+          key,
           pageIndex,
           x: pdf.x,
           y: pdf.y,
@@ -756,7 +378,6 @@ export default function PdfEditor({ sessionId, onBack }) {
     try {
       await persistPdfToServer()
       reloadPdfFromServer()
-      syncPlacedTextWithBakedPdf()
       setSaveHint(MSG.savedSession)
       window.setTimeout(() => setSaveHint(null), 5000)
       trackToolCompleted(EDIT_TOOL, true)
@@ -794,7 +415,6 @@ export default function PdfEditor({ sessionId, onBack }) {
       URL.revokeObjectURL(href)
 
       reloadPdfFromServer()
-      syncPlacedTextWithBakedPdf()
       setSaveHint(MSG.fileReady)
       window.setTimeout(() => setSaveHint(null), 6000)
       trackToolCompleted(EDIT_TOOL, true)
@@ -906,7 +526,7 @@ export default function PdfEditor({ sessionId, onBack }) {
               <p className="m-0 font-medium">Select a tool first</p>
               <p className="mt-1 mb-0 text-amber-900/90 dark:text-amber-100/90">
                 Use <strong>Edit text</strong> to change existing PDF wording (matched size), or{' '}
-                <strong>Add Text</strong> / <strong>Draw</strong> / <strong>Highlight</strong> /{' '}
+                <strong>Text</strong> / <strong>Draw</strong> / <strong>Highlight</strong> /{' '}
                 <strong>Rectangle</strong> for markup. When you finish a line (click outside or press{' '}
                 <kbd className="rounded bg-amber-200/80 px-1 dark:bg-amber-900/50">Ctrl+Enter</kbd>
                 ), your text is saved to this session automatically — no need to press{' '}
@@ -931,7 +551,7 @@ export default function PdfEditor({ sessionId, onBack }) {
                       pdfPage={page}
                       pageIndex={i}
                       tool={activeTool}
-                      items={pagesItems[i] ?? EMPTY_PAGE_ITEMS}
+                      items={pagesItems[i] || []}
                       onUpdateItems={updatePage(i)}
                       blockTextOverrides={blockTextOverrides}
                       sessionNativeTextEdits={nativeTextEdits}
@@ -940,14 +560,6 @@ export default function PdfEditor({ sessionId, onBack }) {
                       textFormatRef={textFormatRef}
                       editTextMode={editTextMode}
                       onInlineEditorActiveChange={setInlineTextEditorOpen}
-                      onPushUndoSnapshot={pushEditorUndoSnapshot}
-                      selectedPlacedTextId={selectedPlacedTextId}
-                      onSelectPlacedTextInfo={handlePlacedTextSelectInfo}
-                      onPatchPlacedText={(id, patch, opts) =>
-                        patchPagePlacedText(i, id, patch, opts)
-                      }
-                      onPlacedTextDragStart={pushEditorUndoSnapshot}
-                      onReportPageCssHeight={reportPageCssHeight}
                       onBeginNativeTextEdit={(block, extras) => {
                         if (extras?.presetFormat) {
                           setTextFormat(extras.presetFormat)
@@ -969,10 +581,10 @@ export default function PdfEditor({ sessionId, onBack }) {
             ))}
           </div>
         </div>
-        {((editTextMode && inlineTextEditorOpen) || selectedPlacedTextId != null) && (
+        {activeTool === 'editText' && editTextMode && inlineTextEditorOpen && (
           <TextFormatToolbar
             format={textFormat}
-            onChange={applyTextFormat}
+            onChange={setTextFormat}
             disabled={false}
           />
         )}

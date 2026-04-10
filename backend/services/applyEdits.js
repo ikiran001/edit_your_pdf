@@ -26,27 +26,6 @@ function estimateUnicodeTextWidth(str, fontSizePt) {
   return n * fontSizePt * 0.48;
 }
 
-/** Must match `PLACED_TEXT_BASELINE_FRAC` in `frontend/src/lib/placedTextConstants.js`. */
-const PLACED_TEXT_BASELINE_FRAC = 0.85;
-
-/**
- * Add Text anchor: prefer PDF user-space baseline from the client; else legacy normalized top-left.
- * @returns {{ textX: number, baselineY: number, fontSize: number }}
- */
-function placedTextDrawAnchors(snap, pageWidth, pageHeight) {
-  const fontSize = Math.max(4, Math.min(144, Number(snap.fontSize) || 12));
-  const px = Number(snap?.pdfX);
-  const pby = Number(snap?.pdfBaselineY);
-  if (Number.isFinite(px) && Number.isFinite(pby)) {
-    return { textX: px, baselineY: pby, fontSize };
-  }
-  const nx = snap.x ?? 0;
-  const ny = snap.y ?? 0;
-  const { x: textX, y } = normPointToPdf(pageWidth, pageHeight, nx, ny);
-  const baselineY = y - fontSize * PLACED_TEXT_BASELINE_FRAC;
-  return { textX, baselineY, fontSize };
-}
-
 /**
  * Convert UI normalized coords (origin top-left, y down) to PDF user space
  * (origin bottom-left, y up). Returns lower-left corner for rectangles.
@@ -64,84 +43,6 @@ function normPointToPdf(pageWidth, pageHeight, nx, ny) {
     x: nx * pageWidth,
     y: (1 - ny) * pageHeight,
   };
-}
-
-/**
- * White out a previously drawn `type: 'text'` region (same geometry as drawText in `case 'text'`).
- * Uses multi-line width so wrapped erase masks are wide enough.
- */
-async function erasePlacedTextAtRegion(
-  doc,
-  page,
-  pageWidth,
-  pageHeight,
-  snap,
-  nativeFontCache,
-  notoUnicodeState,
-) {
-  if (!snap || typeof snap !== 'object') return;
-  const { textX, baselineY, fontSize } = placedTextDrawAnchors(snap, pageWidth, pageHeight);
-  const raw = String(snap.text || '');
-  const bold = asBool(snap.bold);
-  const italic = asBool(snap.italic);
-  const rotationDeg = Number(snap.rotationDeg) || 0;
-
-  let tAnnot = null;
-  const emb = await embedUnicodeFontIfAvailable(
-    doc,
-    fontkit,
-    raw,
-    bold,
-    italic,
-    notoUnicodeState,
-  );
-  if (emb) {
-    tAnnot = emb.font;
-  }
-  if (!tAnnot) {
-    const fontEnum = resolveNativeStandardFont(snap.fontFamily, bold, italic);
-    tAnnot = nativeFontCache.get(fontEnum);
-    if (!tAnnot) {
-      tAnnot = await doc.embedFont(fontEnum);
-      nativeFontCache.set(fontEnum, tAnnot);
-    }
-  }
-
-  const lines = raw.split(/\r?\n/);
-  let textW = 0;
-  for (const line of lines) {
-    try {
-      const w = line.length ? tAnnot.widthOfTextAtSize(line, fontSize) : 0;
-      textW = Math.max(textW, w);
-    } catch {
-      textW = Math.max(textW, estimateUnicodeTextWidth(line, fontSize));
-    }
-  }
-  const lineCount = Math.max(1, lines.length);
-  const pad = Math.max(3, Math.min(14, fontSize * 0.38));
-  let maskX = textX - pad;
-  let maskW = Math.max(textW + pad * 2, fontSize * 0.65);
-  let maskY = baselineY - fontSize * 0.4 - pad * 0.4;
-  let maskH = fontSize * 1.22 * lineCount + pad * 1.6;
-  if (asBool(snap.underline) && Math.abs(rotationDeg) < 1) {
-    maskH += Math.max(1.5, fontSize * 0.12);
-  }
-  if (Math.abs(rotationDeg) > 0.5) {
-    const f = 1 + Math.min(1.2, Math.abs(rotationDeg) / 90) * 0.45;
-    const cx = maskX + maskW / 2;
-    const cy = maskY + maskH / 2;
-    maskW *= f;
-    maskH *= f;
-    maskX = cx - maskW / 2;
-    maskY = cy - maskH / 2;
-  }
-  page.drawRectangle({
-    x: maskX,
-    y: maskY,
-    width: maskW,
-    height: maskH,
-    color: rgb(1, 1, 1),
-  });
 }
 
 function parseHexColor(hex) {
@@ -197,8 +98,7 @@ function resolveNativeStandardFont(fontFamily, bold, italic) {
 
 /**
  * Applies annotation payloads from the client onto a PDF using pdf-lib.
- * Placed text (`type: 'text'`) prefers `pdfX` + `pdfBaselineY` (PDF points, bottom-left origin);
- * otherwise falls back to normalized 0–1 top-left coords (`x`, `y`).
+ * All positions use normalized 0–1 coords relative to each page (top-left origin).
  */
 export async function applyEditsToPdf(pdfBytes, editsPayload) {
   const doc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
@@ -404,106 +304,42 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
           break;
         }
         case 'text': {
-          if (item.erasePlacedTextAt && typeof item.erasePlacedTextAt === 'object') {
-            await erasePlacedTextAtRegion(
-              doc,
-              page,
-              W,
-              H,
-              item.erasePlacedTextAt,
-              nativeFontCache,
-              notoUnicodeState,
-            );
-          }
-          const { textX: x, baselineY, fontSize } = placedTextDrawAnchors(item, W, H);
+          const nx = item.x ?? 0;
+          const ny = item.y ?? 0;
+          const fontSize = Math.max(4, Math.min(144, item.fontSize ?? 12));
+          const { x, y } = normPointToPdf(W, H, nx, ny);
+          const baselineY = y - fontSize * 0.85;
           const raw = String(item.text || '');
-          const bold = asBool(item.bold);
-          const italic = asBool(item.italic);
-          const underline = asBool(item.underline);
-          const rotationDeg = Number(item.rotationDeg) || 0;
-          let opacity = Number(item.opacity);
-          if (!Number.isFinite(opacity)) opacity = 1;
-          opacity = Math.min(1, Math.max(0.05, opacity));
-
-          let tAnnot = null;
+          let tAnnot = font;
           let uniAnnot = false;
-          const emb = await embedUnicodeFontIfAvailable(
-            doc,
-            fontkit,
-            raw,
-            bold,
-            italic,
-            notoUnicodeState,
-          );
+          const emb = await embedUnicodeFontIfAvailable(doc, fontkit, raw, false, false, notoUnicodeState);
           if (emb) {
             tAnnot = emb.font;
             uniAnnot = emb.isUnicodeEmbedded;
           }
-          if (!tAnnot) {
-            const fontEnum = resolveNativeStandardFont(item.fontFamily, bold, italic);
-            tAnnot = nativeFontCache.get(fontEnum);
-            if (!tAnnot) {
-              tAnnot = await doc.embedFont(fontEnum);
-              nativeFontCache.set(fontEnum, tAnnot);
-            }
-          }
-
-          let textW = 0;
           try {
-            textW = raw.length ? tAnnot.widthOfTextAtSize(raw, fontSize) : 0;
+            page.drawText(raw, {
+              x,
+              y: baselineY,
+              size: fontSize,
+              font: tAnnot,
+              color: parseHexColor(item.color),
+            });
           } catch {
-            textW = estimateUnicodeTextWidth(raw, fontSize);
-          }
-
-          const textColor = parseHexColor(item.color);
-          const textX = x;
-
-          const drawOpts = {
-            x: textX,
-            y: baselineY,
-            size: fontSize,
-            font: tAnnot,
-            color: textColor,
-            opacity,
-            rotate: degrees(rotationDeg),
-          };
-
-          const tryDraw = (s) => {
-            page.drawText(s, drawOpts);
-          };
-
-          try {
-            tryDraw(raw);
-          } catch (drawErr) {
-            if (containsDevanagari(raw) && uniAnnot) {
-              try {
-                drawTextDevanagariBestEffort(page, raw, drawOpts);
-              } catch {
-                /* fall through */
-              }
-            } else if (!uniAnnot && !needsNonAsciiText(raw)) {
+            if (!uniAnnot && !needsNonAsciiText(raw)) {
               const safe = raw.replace(/[^\x20-\x7E]/g, '?');
               if (safe.length) {
-                try {
-                  tryDraw(safe);
-                } catch {
-                  /* ignore */
-                }
+                page.drawText(safe, {
+                  x,
+                  y: baselineY,
+                  size: fontSize,
+                  font: tAnnot,
+                  color: parseHexColor(item.color),
+                });
               }
             } else if (!uniAnnot && needsNonAsciiText(raw)) {
               console.warn('[applyEdits] text annotation non-ASCII skipped (no embedded Unicode font)');
             }
-          }
-
-          if (underline && Math.abs(rotationDeg) < 1) {
-            const uy = baselineY - Math.max(0.8, fontSize * 0.11);
-            page.drawLine({
-              start: { x: textX, y: uy },
-              end: { x: textX + textW, y: uy },
-              thickness: Math.max(0.5, fontSize * 0.06),
-              color: textColor,
-              opacity,
-            });
           }
           break;
         }

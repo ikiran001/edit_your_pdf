@@ -91,27 +91,6 @@ export function defaultTextFormat() {
  * @param {string} [sampleColorHex] — from rendered canvas when opening inline editor (pdf.js has no fill color).
  * @param {{ pdfToCssScale?: number }} [layoutHint] — `pdfW / cssW` from the page canvas so `block.pdf.fontSize` maps to on-screen px.
  */
-/** Toolbar state from a persisted `type: 'text'` page item (Add Text tool). */
-export function formatFromPlacedTextItem(it) {
-  const base = defaultTextFormat()
-  if (!it || it.type !== 'text') return base
-  const c = it.color
-  const color =
-    typeof c === 'string' && c.startsWith('#') ? c : typeof c === 'string' ? c : base.color
-  return {
-    ...base,
-    fontFamily: it.fontFamily || 'Helvetica',
-    fontSizeCss: Math.round(Math.max(8, Math.min(200, Number(it.fontSizeCss) || 14))),
-    bold: !!it.bold,
-    italic: !!it.italic,
-    underline: !!it.underline,
-    align: it.align === 'center' || it.align === 'right' ? it.align : 'left',
-    color,
-    opacity: Number.isFinite(Number(it.opacity)) ? Math.min(1, Math.max(0.05, Number(it.opacity))) : 1,
-    rotationDeg: Number(it.rotationDeg) || 0,
-  }
-}
-
 export function formatFromTextBlock(block, prev, sampleColorHex, layoutHint) {
   const base = { ...defaultTextFormat(), ...prev }
   if (!block) return base
