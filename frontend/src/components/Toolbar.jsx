@@ -4,7 +4,7 @@ import { BRAND_NAME, MSG } from '../shared/constants/branding.js'
 
 const tools = [
   { id: 'editText', label: 'Edit text' },
-  { id: 'text', label: 'Text' },
+  { id: 'text', label: 'Add Text' },
   { id: 'draw', label: 'Draw' },
   { id: 'highlight', label: 'Highlight' },
   { id: 'rect', label: 'Rectangle' },
@@ -26,7 +26,10 @@ export default function Toolbar({
   onShortcutsClick,
 }) {
   return (
-    <div className="fx-glass-header flex flex-wrap items-center gap-1.5 px-2 py-1.5 sm:gap-2 sm:px-3 sm:py-2">
+    <div
+      className="fx-glass-header flex flex-wrap items-center gap-1.5 px-2 py-1.5 sm:gap-2 sm:px-3 sm:py-2"
+      data-pdf-editor-chrome
+    >
       <BrandLogoLink className="mr-0 min-w-0 max-w-[9rem] shrink-0 sm:mr-1 sm:max-w-none" />
       <div className="mr-1 hidden text-sm font-medium text-zinc-600 sm:mr-2 sm:block dark:text-zinc-300">
         Tools
@@ -91,7 +94,7 @@ export default function Toolbar({
       <div className="ml-auto flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:justify-start sm:gap-3">
         <ThemeToggle />
         <div className="flex flex-col items-stretch gap-1 sm:items-end">
-          <div className="flex flex-wrap justify-end gap-2">
+          <div className="flex flex-wrap justify-end gap-2" data-pdf-session-actions>
             <button
               type="button"
               onClick={onSave}
