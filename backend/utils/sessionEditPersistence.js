@@ -42,11 +42,31 @@ export function mergeNativeTextEdits(persisted, incoming) {
   return [...map.values()];
 }
 
+/** Client-only erase hint for pdf-lib; must not be persisted (stale masks on reload). */
+function stripEphemeralAnnotationFields(editsPayload) {
+  if (!editsPayload || typeof editsPayload !== 'object' || !Array.isArray(editsPayload.pages)) {
+    return editsPayload;
+  }
+  return {
+    pages: editsPayload.pages.map((g) => ({
+      ...g,
+      items: (g.items || []).map((it) => {
+        if (it?.type === 'text' && it.erasePlacedTextAt != null) {
+          const { erasePlacedTextAt, ...rest } = it;
+          return rest;
+        }
+        return it;
+      }),
+    })),
+  };
+}
+
 export function loadSessionEdits(uploadsRoot, sessionId) {
   const p = path.join(sessionDir(uploadsRoot, sessionId), 'session-edits.json');
   try {
     const j = JSON.parse(fs.readFileSync(p, 'utf8'));
-    return j && typeof j === 'object' && Array.isArray(j.pages) ? j : { pages: [] };
+    const raw = j && typeof j === 'object' && Array.isArray(j.pages) ? j : { pages: [] };
+    return stripEphemeralAnnotationFields(raw);
   } catch {
     return { pages: [] };
   }
@@ -54,7 +74,8 @@ export function loadSessionEdits(uploadsRoot, sessionId) {
 
 export function saveSessionEdits(uploadsRoot, sessionId, editsPayload) {
   const dir = sessionDir(uploadsRoot, sessionId);
-  fs.writeFileSync(path.join(dir, 'session-edits.json'), JSON.stringify(editsPayload));
+  const cleaned = stripEphemeralAnnotationFields(editsPayload);
+  fs.writeFileSync(path.join(dir, 'session-edits.json'), JSON.stringify(cleaned));
 }
 
 export function sessionHasAnnotationItems(editsPayload) {

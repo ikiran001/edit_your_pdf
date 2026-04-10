@@ -1,7 +1,16 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { buildTextRuns } from '../lib/pdfTextRuns'
 import { sampleBackgroundColorHex, sampleInkColorHex } from '../lib/sampleCanvasInkColor'
+import PlacedTextAnnotations from './PlacedTextAnnotations'
 import { buildPageTextItemBlocks } from '../lib/textLayerManager'
+import {
+  LEGACY_PLACED_TEXT_WIDGET_TOP_OFFSET_CSS,
+  PLACED_TEXT_PAD_CSS,
+} from '../lib/placedTextConstants.js'
+import {
+  placedTextPdfFromViewportTopLeft,
+} from '../lib/placedTextPdfGeometry.js'
 import { editorFontFamilyWithPdfHint } from '../lib/editorUnicodeFonts'
 import {
   cssDisplayFontFromPdf,
@@ -105,7 +114,8 @@ function sessionNativeStringForBlock(block, pageIndex, sessionNatives) {
 
 /**
  * Renders one PDF page with pdf.js and an interaction overlay.
- * Annotations use normalized coords (0–1, top-left origin) for pdf-lib on the server.
+ * Placed text is anchored in PDF user space (`pdfX`, `pdfBaselineY`); normalized `x`/`y` are kept
+ * as a cache for legacy payloads until migration runs.
  */
 export default function PdfPageCanvas({
   pdfPage,
@@ -123,14 +133,28 @@ export default function PdfPageCanvas({
   onBeginNativeTextEdit,
   editTextMode = true,
   onInlineEditorActiveChange,
+  /** Capture unified undo snapshot before persisting native line edits (blur / apply). */
+  onPushUndoSnapshot,
+  /** Selected Add Text annotation id (global); null if none. */
+  selectedPlacedTextId = null,
+  onSelectPlacedTextInfo,
+  onPatchPlacedText,
+  onPlacedTextDragStart,
+  onReportPageCssHeight,
 }) {
   const pdfCanvasRef = useRef(null)
   const overlayRef = useRef(null)
+  /** pdf.js viewport for the current render scale — used for PDF ↔ canvas transforms (placed text). */
+  const viewportRef = useRef(null)
   const metaRef = useRef({ pdfW: 1, pdfH: 1, cssW: 1, cssH: 1 })
   const [ready, setReady] = useState(false)
   /** CSS box + bitmap size for scaling text layer (canvas px ↔ layout px). */
   const [canvasLayout, setCanvasLayout] = useState({ cssW: 0, cssH: 0, bmpW: 1, bmpH: 1 })
   const [textDraft, setTextDraft] = useState(null)
+  const textDraftRef = useRef(null)
+  const textDraftInputRef = useRef(null)
+  const textDraftDragRef = useRef(null)
+  const canvasLayoutRefForDraft = useRef({ cssW: 1, cssH: 1 })
   const dragRef = useRef(null)
   const drawPointsRef = useRef(null)
   const [textRuns, setTextRuns] = useState([])
@@ -238,14 +262,9 @@ export default function PdfPageCanvas({
           ctx.strokeRect(it.x * w, it.y * h, it.w * w, it.h * h)
           break
         }
-        case 'text': {
-          ctx.fillStyle = it.color || '#111827'
-          const fs = Math.max(10, it.fontSizeCss ?? 14)
-          ctx.font = `${fs}px system-ui, sans-serif`
-          ctx.textBaseline = 'top'
-          ctx.fillText(it.text || '', it.x * w, it.y * h)
+        case 'text':
+          /* Rendered via PlacedTextAnnotations (DOM) to avoid double-draw / blur over baked PDF. */
           break
-        }
         default:
           break
       }
@@ -291,6 +310,7 @@ export default function PdfPageCanvas({
     if (!canvas) return
     const scale = RENDER_SCALE
     const viewport = pdfPage.getViewport({ scale })
+    viewportRef.current = viewport
     const base = pdfPage.getViewport({ scale: 1 })
     metaRef.current = {
       pdfW: base.width,
@@ -350,7 +370,8 @@ export default function PdfPageCanvas({
   }, [pdfPage])
 
   useEffect(() => {
-    if (tool !== 'editText' || !editTextMode) {
+    const textLayerOn = editTextMode && (tool === 'editText' || tool == null)
+    if (!textLayerOn) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- exit inline editor when tool/mode off
       setNativeEdit(null)
     }
@@ -371,6 +392,41 @@ export default function PdfPageCanvas({
     if (!ready) return
     paintOverlay()
   }, [ready, items, paintOverlay])
+
+  /** Derive PDF baseline anchors from legacy normalized coords once the viewport exists. */
+  useEffect(() => {
+    if (!ready || !pdfPage) return
+    const vp = viewportRef.current
+    if (!vp?.width) return
+    const pending = []
+    for (const it of items || []) {
+      if (!it || it.type !== 'text') continue
+      if (Number.isFinite(it.pdfX) && Number.isFinite(it.pdfBaselineY)) continue
+      if (!Number.isFinite(it.x) || !Number.isFinite(it.y)) continue
+      const fs = Math.max(4, Math.min(144, Number(it.fontSize) || 12))
+      let ny = it.y
+      if (it.placementV2 !== true) {
+        ny += LEGACY_PLACED_TEXT_WIDGET_TOP_OFFSET_CSS / vp.height
+      }
+      const vx = it.x * vp.width
+      const vy = ny * vp.height
+      const { pdfX, pdfBaselineY } = placedTextPdfFromViewportTopLeft(vp, vx, vy, fs)
+      pending.push({ id: it.id, pdfX, pdfBaselineY })
+    }
+    if (!pending.length) return
+    onUpdateItems((prev) => {
+      const map = new Map(pending.map((p) => [p.id, p]))
+      let changed = false
+      const next = prev.map((it) => {
+        const p = map.get(it.id)
+        if (!p) return it
+        if (Number.isFinite(it.pdfX) && Number.isFinite(it.pdfBaselineY)) return it
+        changed = true
+        return { ...it, pdfX: p.pdfX, pdfBaselineY: p.pdfBaselineY }
+      })
+      return changed ? next : prev
+    })
+  }, [items, ready, pdfPage, onUpdateItems])
 
   /**
    * Keep the overlay’s CSS box and bitmap size locked to the PDF canvas.
@@ -394,6 +450,7 @@ export default function PdfPageCanvas({
         bmpW: pdf.width || 1,
         bmpH: pdf.height || 1,
       })
+      onReportPageCssHeight?.(pageIndex, ch)
       overlay.style.width = `${cw}px`
       overlay.style.height = `${ch}px`
       overlay.width = pdf.width
@@ -417,7 +474,120 @@ export default function PdfPageCanvas({
       cancelAnimationFrame(idInner)
       ro.disconnect()
     }
-  }, [pdfPage, ready, paintOverlay])
+  }, [pdfPage, ready, paintOverlay, pageIndex, onReportPageCssHeight])
+
+  useLayoutEffect(() => {
+    textDraftRef.current = textDraft
+  }, [textDraft])
+
+  useLayoutEffect(() => {
+    canvasLayoutRefForDraft.current = {
+      cssW: canvasLayout.cssW,
+      cssH: canvasLayout.cssH,
+    }
+  }, [canvasLayout.cssW, canvasLayout.cssH])
+
+  const commitDraftText = useCallback(
+    (explicitValue) => {
+      const td = textDraftRef.current
+      if (!td) return
+      const raw =
+        explicitValue !== undefined && explicitValue !== null
+          ? String(explicitValue)
+          : textDraftInputRef.current?.value ?? ''
+      const v = raw.trim()
+      textDraftRef.current = null
+      setTextDraft(null)
+      if (!v) return
+      const { pdfW, cssW } = metaRef.current
+      const ratio = pdfW / Math.max(cssW, 1e-6)
+      const f = textFormatRef?.current ?? textFormat ?? defaultTextFormat()
+      const fontSize = Math.max(8, (f.fontSizeCss ?? 14) * ratio)
+      const vp = viewportRef.current
+      let pdfX
+      let pdfBaselineY
+      if (vp?.width && td.nx != null && td.ny != null) {
+        const g = placedTextPdfFromViewportTopLeft(
+          vp,
+          td.nx * vp.width,
+          td.ny * vp.height,
+          fontSize
+        )
+        pdfX = g.pdfX
+        pdfBaselineY = g.pdfBaselineY
+      }
+      flushSync(() => {
+        onUpdateItems((prev) => [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            type: 'text',
+            x: td.nx,
+            y: td.ny,
+            pdfX,
+            pdfBaselineY,
+            text: v,
+            fontSize,
+            fontSizeCss: f.fontSizeCss ?? 14,
+            color: f.color || '#111827',
+            fontFamily: f.fontFamily || 'Helvetica',
+            bold: !!f.bold,
+            italic: !!f.italic,
+            underline: !!f.underline,
+            align: f.align || 'left',
+            opacity: f.opacity ?? 1,
+            rotationDeg: f.rotationDeg ?? 0,
+            placementV2: true,
+            textBakedInEditorPdf: false,
+          },
+        ])
+      })
+    },
+    [onUpdateItems, textFormatRef, textFormat]
+  )
+
+  const beginTextDraftDrag = useCallback((e) => {
+    if (!e.isPrimary) return
+    e.preventDefault()
+    e.stopPropagation()
+    const td = textDraftRef.current
+    if (!td) return
+    const { cssW, cssH } = canvasLayoutRefForDraft.current
+    if (cssW < 1 || cssH < 1) return
+    const drag = {
+      startX: e.clientX,
+      startY: e.clientY,
+      originNx: td.nx,
+      originNy: td.ny,
+    }
+    textDraftDragRef.current = drag
+    const onMove = (ev) => {
+      if (!textDraftDragRef.current) return
+      const d = textDraftDragRef.current
+      const dx = (ev.clientX - d.startX) / cssW
+      const dy = (ev.clientY - d.startY) / cssH
+      const nx = Math.min(0.99, Math.max(0, d.originNx + dx))
+      const ny = Math.min(0.99, Math.max(0, d.originNy + dy))
+      setTextDraft((cur) => (cur ? { ...cur, nx, ny } : cur))
+    }
+    const onUp = () => {
+      textDraftDragRef.current = null
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointercancel', onUp)
+    }
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointercancel', onUp)
+  }, [])
+
+  useEffect(() => {
+    const onFlush = () => {
+      commitDraftText()
+    }
+    document.addEventListener('pdfpilot-flush-text-draft', onFlush)
+    return () => document.removeEventListener('pdfpilot-flush-text-draft', onFlush)
+  }, [commitDraftText])
 
   const normPoint = (e) => {
     const overlay = overlayRef.current
@@ -441,6 +611,7 @@ export default function PdfPageCanvas({
     if (!n) return
 
     if (tool === 'text') {
+      commitDraftText()
       setTextDraft({ nx: n.nx, ny: n.ny })
       e.preventDefault()
       return
@@ -575,34 +746,17 @@ export default function PdfPageCanvas({
     }
   }
 
-  const commitText = (value) => {
-    if (!textDraft) return
-    const v = value.trim()
-    setTextDraft(null)
-    if (!v) return
-    const { pdfW, cssW } = metaRef.current
-    const ratio = pdfW / cssW
-    onUpdateItems((prev) => [
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        type: 'text',
-        x: textDraft.nx,
-        y: textDraft.ny,
-        text: v,
-        fontSize: Math.max(8, 14 * ratio),
-        fontSizeCss: 14,
-        color: '#111827',
-      },
-    ])
-  }
-
   const { cssW: cw, cssH: ch, bmpW, bmpH } = canvasLayout
   const sx = bmpW > 0 ? cw / bmpW : 1
   const sy = bmpH > 0 ? ch / bmpH : 1
   const overlayActive = tool && tool !== 'editText'
 
-  const showTextLayer = editTextMode && tool === 'editText' && ready
+  /**
+   * Hit targets + inline editor when text edit mode is on and no markup tool is active.
+   * Include `tool == null` (no tool selected) so lines stay tappable after save/reload and when
+   * the user clears the active tool without choosing Draw/Highlight/etc.
+   */
+  const showTextLayer = editTextMode && ready && (tool === 'editText' || tool == null)
 
   const openNativeEditorForBlock = useCallback(
     (block) => {
@@ -651,7 +805,12 @@ export default function PdfPageCanvas({
       }
       let maskFillHex = '#ffffff'
       if (cv?.width && block.width > 0 && block.height > 0) {
-        maskFillHex = sampleBackgroundColorHex(cv, block.left, block.top, block.width, block.height)
+        const pad = Math.min(8, Math.max(2, Math.floor(Math.min(block.width, block.height) * 0.14)))
+        const bl = Math.max(0, Math.floor(block.left) - pad)
+        const bt = Math.max(0, Math.floor(block.top) - pad)
+        const bw = Math.min(cv.width - bl, block.width + 2 * pad)
+        const bh = Math.min(cv.height - bt, block.height + 2 * pad)
+        maskFillHex = sampleBackgroundColorHex(cv, bl, bt, bw, bh)
       }
       setNativeEdit({ block, maskFillHex })
     },
@@ -751,7 +910,12 @@ export default function PdfPageCanvas({
     ) {
       maskColor = editing.maskFillHex
     } else if (cv?.width && block.width > 0 && block.height > 0) {
-      maskColor = sampleBackgroundColorHex(cv, block.left, block.top, block.width, block.height)
+      const pad = Math.min(8, Math.max(2, Math.floor(Math.min(block.width, block.height) * 0.14)))
+      const bl = Math.max(0, Math.floor(block.left) - pad)
+      const bt = Math.max(0, Math.floor(block.top) - pad)
+      const bw = Math.min(cv.width - bl, block.width + 2 * pad)
+      const bh = Math.min(cv.height - bt, block.height + 2 * pad)
+      maskColor = sampleBackgroundColorHex(cv, bl, bt, bw, bh)
     }
 
     return {
@@ -853,9 +1017,10 @@ export default function PdfPageCanvas({
       if (textSame && formatSame) {
         return
       }
+      onPushUndoSnapshot?.()
       onNativeTextEdit?.(buildNativePayload(block, value))
     },
-    [onNativeTextEdit, buildNativePayload, flushNativeSyncTimer]
+    [onNativeTextEdit, buildNativePayload, flushNativeSyncTimer, onPushUndoSnapshot]
   )
 
   /** Click outside textarea / format panel commits (canvas is not focusable — blur alone is unreliable). */
@@ -864,6 +1029,8 @@ export default function PdfPageCanvas({
     const onDocPointerDown = (e) => {
       const t = e.target
       if (t.closest?.('[data-pdf-inline-editor-root]')) return
+      if (t.closest?.('[data-pdf-text-draft-root]')) return
+      if (t.closest?.('[data-pdf-placed-text-root]')) return
       if (t.closest?.('[data-text-format-panel]')) return
       /* Let line tap targets handle the event in the target phase (iPad / iOS WebKit). */
       if (t.closest?.('[data-pdf-text-line-tap]')) return
@@ -895,6 +1062,30 @@ export default function PdfPageCanvas({
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       />
+      {cw > 0 && ch > 0 && (
+        <PlacedTextAnnotations
+          items={items}
+          viewport={ready ? viewportRef.current : null}
+          cw={cw}
+          ch={ch}
+          bmpW={bmpW}
+          bmpH={bmpH}
+          sx={sx}
+          pdfCanvasRef={pdfCanvasRef}
+          selectedId={selectedPlacedTextId}
+          fontRatio={metaRef.current.pdfW / Math.max(metaRef.current.cssW, 1e-6)}
+          onSelectInfo={(info) => {
+            if (!onSelectPlacedTextInfo) return
+            if (!info) {
+              onSelectPlacedTextInfo(null)
+              return
+            }
+            onSelectPlacedTextInfo({ ...info, pageIndex })
+          }}
+          onPatchItem={(id, patch, opts) => onPatchPlacedText?.(id, patch, opts)}
+          onDragStartUndo={onPlacedTextDragStart}
+        />
+      )}
       {showTextLayer && cw > 0 && ch > 0 && (
         <div
           role="group"
@@ -921,6 +1112,12 @@ export default function PdfPageCanvas({
               cssDisplayFontFromPdf(block.pdfFontFamily, fmt.fontFamily)
             )
             const editorLineHeightPx = Math.max(14, Math.round(editorFontCssPx * 1.2))
+            /* pdf.js line boxes can be narrower than the full token; widen while editing so values don’t wrap mid-digit. */
+            const strLen = Math.max(4, String(block.str ?? '').length)
+            const wEdit = Math.min(
+              Math.max(0, cw - left),
+              Math.max(w, Math.ceil(strLen * editorFontCssPx * 0.52 + 14))
+            )
             /* PDF block box can be shorter than one rendered line (line-height + border); without this the
                contenteditable overflows vertically and always shows a scrollbar. */
             const wrapperMinH = isEditing
@@ -931,7 +1128,7 @@ export default function PdfPageCanvas({
               ? {
                   left,
                   top,
-                  width: w,
+                  width: wEdit,
                   minHeight: wrapperMinH,
                   height: 'auto',
                   zIndex: 2,
@@ -956,7 +1153,7 @@ export default function PdfPageCanvas({
                     contentEditable
                     suppressContentEditableWarning
                     data-pdf-inline-editor-root
-                    className="pdf-text-layer-editor relative z-[1] box-border cursor-text select-text overflow-hidden rounded-sm border border-solid border-[#4A90E2] outline-none transition-[border-color,background-color] duration-150"
+                    className="pdf-text-layer-editor relative z-[1] box-border min-h-0 cursor-text select-text overflow-visible rounded-sm border border-solid border-[#4A90E2] outline-none transition-[border-color,background-color] duration-150"
                     style={{
                       colorScheme: 'light',
                       backgroundColor: nativeEdit?.maskFillHex || '#ffffff',
@@ -1111,23 +1308,39 @@ export default function PdfPageCanvas({
           </div>
         )}
       {textDraft && cw > 0 && (
-        <input
-          autoFocus
-          className="absolute z-20 min-w-[120px] rounded border-2 border-indigo-500 bg-transparent px-2 py-1 text-sm text-zinc-900 shadow-none placeholder:text-zinc-500 dark:border-indigo-400 dark:text-zinc-100 dark:placeholder:text-zinc-400"
+        <div
+          data-pdf-text-draft-root
+          className="absolute z-[40] box-border min-w-[min(12rem,90vw)] max-w-[min(90vw,28rem)] cursor-grab touch-none rounded-sm border-2 border-dotted border-indigo-500 bg-white/95 active:cursor-grabbing dark:border-indigo-400 dark:bg-zinc-900/95"
           style={{
-            left: textDraft.nx * cw,
-            top: textDraft.ny * ch,
+            left: textDraft.nx * cw - PLACED_TEXT_PAD_CSS,
+            top: textDraft.ny * ch - PLACED_TEXT_PAD_CSS,
+            padding: PLACED_TEXT_PAD_CSS,
           }}
-          placeholder="Type text…"
-          onBlur={(e) => commitText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault()
-              commitText(e.currentTarget.value)
-            }
-            if (e.key === 'Escape') setTextDraft(null)
+          onPointerDown={(e) => {
+            if (!e.isPrimary) return
+            if (e.target.closest?.('input')) return
+            beginTextDraftDrag(e)
           }}
-        />
+        >
+          <input
+            ref={textDraftInputRef}
+            autoFocus
+            className="box-border w-full min-w-0 cursor-text border-0 bg-transparent px-0.5 py-0.5 text-sm text-gray-900 outline-none placeholder:text-zinc-500 dark:text-zinc-100 dark:placeholder:text-zinc-400"
+            placeholder="Type text…"
+            onPointerDown={(e) => e.stopPropagation()}
+            onBlur={(e) => commitDraftText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                commitDraftText(e.currentTarget.value)
+              }
+              if (e.key === 'Escape') {
+                textDraftRef.current = null
+                setTextDraft(null)
+              }
+            }}
+          />
+        </div>
       )}
     </div>
   )
