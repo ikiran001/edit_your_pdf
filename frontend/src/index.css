@@ -131,13 +131,6 @@ html.dark .fx-glass-header > * {
   color-scheme: light;
 }
 
-/* Add Text annotations: DOM layer (not bitmap fillText) — crisp edges over PDF. */
-.pdf-placed-text-editor {
-  text-rendering: geometricPrecision;
-  -webkit-font-smoothing: subpixel-antialiased;
-  -webkit-text-fill-color: currentColor;
-}
-
 /* Browsers may insert <font>/<span> with white fill while typing — strip it. */
 .pdf-text-layer-editor * {
   background-color: transparent !important;

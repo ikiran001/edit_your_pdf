@@ -209,14 +209,6 @@ function appendMergedRunText(prevStr, prevRun, curRun) {
   }
   const gapPx = curRun.left - (prevRun.left + prevRun.width)
   const spaceThreshold = Math.max(2, prevRun.fontSizePx * 0.12)
-  /*
-   * Adjacent table cells often sit just past the previous run’s advance width in PDF space; pdf.js can
-   * report a tiny gap so we glue without a space. A single Latin letter then leaks in (e.g. “…000/d”, “(Rs)d”).
-   */
-  if (cur.length === 1 && /[a-z]/i.test(cur) && gapPx <= spaceThreshold * 2.2) {
-    if (/[\d\/\.,]$/.test(prevStr)) return prevStr
-    if (prevStr.endsWith(')') && (cur === 'd' || cur === 'D')) return prevStr
-  }
   const sep = gapPx > spaceThreshold ? ' ' : ''
   return prevStr + sep + cur
 }
