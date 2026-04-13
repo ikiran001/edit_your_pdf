@@ -44,6 +44,7 @@ function toServerItem(it) {
   const rest = { ...it }
   delete rest.fontSizeCss
   delete rest.lineWidthCss
+  delete rest.rasterizedInPdf
   return rest
 }
 
@@ -58,7 +59,7 @@ function buildEditsPayload(pagesItems) {
   return { pages }
 }
 
-/** Restore usePagesHistory.present from server `edits` payload (re-adds client-only ids). */
+/** Restore usePagesHistory.present from server `edits` payload (stable ids; hide overlays already in PDF). */
 function editsPayloadToPresentMap(edits) {
   const out = {}
   for (const g of edits?.pages || []) {
@@ -66,9 +67,13 @@ function editsPayloadToPresentMap(edits) {
     const items = dedupeAnnotTextItemsBySlot(g.items || []).map((it) => ({
       ...it,
       id:
-        typeof crypto !== 'undefined' && crypto.randomUUID
-          ? crypto.randomUUID()
-          : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        typeof it.id === 'string' && it.id.length > 0
+          ? it.id
+          : typeof crypto !== 'undefined' && crypto.randomUUID
+            ? crypto.randomUUID()
+            : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      /* Baked into edited.pdf — skip HTML/canvas overlay so text is not drawn twice. */
+      rasterizedInPdf: true,
     }))
     out[String(g.pageIndex)] = items
   }
@@ -400,6 +405,8 @@ export default function PdfEditor({ sessionId, onBack }) {
         applyTextSwap: false,
         nativeTextEdits: nativePayload,
         ...(opts.replaceSessionAnnotations ? { replaceSessionAnnotations: true } : {}),
+        /* Let server replace session-edits.json with this snapshot so “Add Text” removals persist. */
+        ...(opts.annotationsAuthoritative === false ? {} : { annotationsAuthoritative: true }),
       }),
     })
     const raw = await res.text()
@@ -699,7 +706,6 @@ export default function PdfEditor({ sessionId, onBack }) {
       await persistPdfToServer()
       clearAnnotFormatUi()
       setTextBoxOverlayActions(null)
-      reset({})
       reloadPdfFromServer()
       setSaveHint(MSG.savedSession)
       window.setTimeout(() => setSaveHint(null), 5000)
@@ -725,7 +731,6 @@ export default function PdfEditor({ sessionId, onBack }) {
       await persistPdfToServer()
       clearAnnotFormatUi()
       setTextBoxOverlayActions(null)
-      reset({})
       const dl = await fetch(
         apiUrl(`/download?sessionId=${encodeURIComponent(sessionId)}`)
       )
