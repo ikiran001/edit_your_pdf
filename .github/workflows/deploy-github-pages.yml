@@ -47,6 +47,7 @@ jobs:
       # Optional: VITE_SITE_URL — canonical / OG URL (see frontend/.env.production).
       #   VITE_GA_MEASUREMENT_ID — overrides .env.production when set. Must match gtag id in frontend/index.html
       #   or remove the secret so the committed ID is used (stale secret = wrong stream in JS bundle).
+      #   VITE_SUPPORT_PAYMENT_URL — optional Razorpay (or other) tip link for the post-download modal.
       - name: Build
         working-directory: frontend
         env:
@@ -58,6 +59,9 @@ jobs:
           fi
           if [ -n "${{ secrets.VITE_SITE_URL }}" ]; then
             export VITE_SITE_URL="${{ secrets.VITE_SITE_URL }}"
+          fi
+          if [ -n "${{ secrets.VITE_SUPPORT_PAYMENT_URL }}" ]; then
+            export VITE_SUPPORT_PAYMENT_URL="${{ secrets.VITE_SUPPORT_PAYMENT_URL }}"
           fi
           if [ -n "${{ secrets.VITE_BASE_PATH }}" ]; then
             export VITE_BASE_PATH="${{ secrets.VITE_BASE_PATH }}"
