@@ -282,6 +282,13 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
             color: parseHexColor(maskHex),
           });
 
+          /* Expand mask height to cover all lines before alignment/drawing. */
+          const nativeLines = raw.split('\n');
+          const nativeLineStep = fontSizePt * ANNOT_UI_LINE_HEIGHT;
+          if (nativeLines.length > 1) {
+            maskH = Math.max(maskH, nativeLines.length * nativeLineStep);
+          }
+
           if (align === 'center') {
             textX = maskX + (maskW - textW) / 2;
           } else if (align === 'right') {
@@ -290,47 +297,54 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
             textX = Math.max(textX, maskX + 0.5);
           }
 
-          const drawOpts = {
-            x: textX,
-            y: baselinePdf,
-            size: fontSizePt,
-            font: tFont,
-            color: textColor,
-            opacity,
-            rotate: degrees(rotationDeg),
-          };
-
-          try {
-            if (isUnicodeEmbedded && containsDevanagari(raw)) {
-              drawTextDevanagariBestEffort(page, raw, drawOpts);
-            } else {
-              page.drawText(raw, drawOpts);
-            }
-          } catch (drawErr) {
-            if (isUnicodeEmbedded) {
-              console.warn('[applyEdits] nativeText unicode draw failed:', drawErr?.message);
-            } else if (needsNonAsciiText(raw)) {
-              console.warn(
-                '[applyEdits] nativeText non-ASCII skipped (no embedded Unicode font):',
-                drawErr?.message
-              );
-            } else {
-              const safe = raw.replace(/[^\x20-\x7E]/g, '?');
-              if (safe.length) {
-                page.drawText(safe, drawOpts);
-              }
-            }
-          }
-
-          if (underline && Math.abs(rotationDeg) < 1) {
-            const uy = baselinePdf - Math.max(0.8, fontSizePt * 0.11);
-            page.drawLine({
-              start: { x: textX, y: uy },
-              end: { x: textX + textW, y: uy },
-              thickness: Math.max(0.5, fontSizePt * 0.06),
+          for (let li = 0; li < nativeLines.length; li++) {
+            const lineStr = nativeLines[li];
+            const lineY = baselinePdf - li * nativeLineStep;
+            const drawOpts = {
+              x: textX,
+              y: lineY,
+              size: fontSizePt,
+              font: tFont,
               color: textColor,
               opacity,
-            });
+              rotate: degrees(rotationDeg),
+            };
+
+            /* Per-line width for alignment on lines 2+ */
+            let lineW = textW;
+            if (li > 0 && lineStr.length) {
+              try { lineW = tFont.widthOfTextAtSize(lineStr, fontSizePt); } catch { /* keep textW */ }
+              if (align === 'center') drawOpts.x = maskX + (maskW - lineW) / 2;
+              else if (align === 'right') drawOpts.x = maskX + maskW - lineW - pad * 0.5;
+            }
+
+            try {
+              if (isUnicodeEmbedded && containsDevanagari(lineStr)) {
+                drawTextDevanagariBestEffort(page, lineStr, drawOpts);
+              } else {
+                page.drawText(lineStr, drawOpts);
+              }
+            } catch (drawErr) {
+              if (isUnicodeEmbedded) {
+                console.warn('[applyEdits] nativeText unicode draw failed:', drawErr?.message);
+              } else if (needsNonAsciiText(lineStr)) {
+                console.warn('[applyEdits] nativeText non-ASCII skipped:', drawErr?.message);
+              } else {
+                const safe = lineStr.replace(/[^\x20-\x7E]/g, '?');
+                if (safe.length) page.drawText(safe, drawOpts);
+              }
+            }
+
+            if (underline && Math.abs(rotationDeg) < 1 && lineStr.length) {
+              const uy = lineY - Math.max(0.8, fontSizePt * 0.11);
+              page.drawLine({
+                start: { x: drawOpts.x, y: uy },
+                end: { x: drawOpts.x + lineW, y: uy },
+                thickness: Math.max(0.5, fontSizePt * 0.06),
+                color: textColor,
+                opacity,
+              });
+            }
           }
           break;
         }
@@ -388,50 +402,55 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
             }
           }
 
-          const textX = x;
-          try {
-            if (uniAnnot && containsDevanagari(raw)) {
-              drawTextDevanagariBestEffort(page, raw, {
-                x: textX,
-                y: baselineY,
-                size: fontSize,
-                font: tAnnot,
-                color: textColor,
-              });
-            } else {
-              page.drawText(raw, {
-                x: textX,
-                y: baselineY,
-                size: fontSize,
-                font: tAnnot,
-                color: textColor,
-              });
-            }
-          } catch {
-            if (!uniAnnot && !needsNonAsciiText(raw)) {
-              const safe = raw.replace(/[^\x20-\x7E]/g, '?');
-              if (safe.length) {
-                page.drawText(safe, {
-                  x: textX,
-                  y: baselineY,
-                  size: fontSize,
-                  font: tAnnot,
-                  color: textColor,
-                });
-              }
-            } else if (!uniAnnot && needsNonAsciiText(raw)) {
-              console.warn('[applyEdits] text annotation non-ASCII skipped (no embedded Unicode font)');
-            }
-          }
+          /* Annotation box width from client (nw = normalized) for alignment. */
+          const annotAlign = item.align === 'center' || item.align === 'right' ? item.align : 'left';
+          const boxWPdf = Number(item.nw) > 0 ? item.nw * W : textW;
+          let textX;
+          if (annotAlign === 'center') textX = x + (boxWPdf - textW) / 2;
+          else if (annotAlign === 'right') textX = x + boxWPdf - textW;
+          else textX = x;
 
-          if (underline && raw.length) {
-            const uy = baselineY - Math.max(0.8, fontSize * 0.11);
-            page.drawLine({
-              start: { x: textX, y: uy },
-              end: { x: textX + textW, y: uy },
-              thickness: Math.max(0.5, fontSize * 0.06),
-              color: textColor,
-            });
+          const annotLines = raw.split('\n');
+          const annotLineStep = fontSize * ANNOT_UI_LINE_HEIGHT;
+
+          for (let li = 0; li < annotLines.length; li++) {
+            const lineStr = annotLines[li];
+            const lineY = baselineY - li * annotLineStep;
+
+            /* Per-line width for alignment on lines 2+ */
+            let lineW = textW;
+            let lineX = textX;
+            if (li > 0 && lineStr.length) {
+              try { lineW = tAnnot.widthOfTextAtSize(lineStr, fontSize); } catch { /* keep textW */ }
+              if (annotAlign === 'center') lineX = x + (boxWPdf - lineW) / 2;
+              else if (annotAlign === 'right') lineX = x + boxWPdf - lineW;
+            }
+
+            const annotDrawOpts = { x: lineX, y: lineY, size: fontSize, font: tAnnot, color: textColor };
+            try {
+              if (uniAnnot && containsDevanagari(lineStr)) {
+                drawTextDevanagariBestEffort(page, lineStr, annotDrawOpts);
+              } else {
+                page.drawText(lineStr, annotDrawOpts);
+              }
+            } catch {
+              if (!uniAnnot && !needsNonAsciiText(lineStr)) {
+                const safe = lineStr.replace(/[^\x20-\x7E]/g, '?');
+                if (safe.length) page.drawText(safe, annotDrawOpts);
+              } else if (!uniAnnot && needsNonAsciiText(lineStr)) {
+                console.warn('[applyEdits] text annotation non-ASCII skipped');
+              }
+            }
+
+            if (underline && lineStr.length) {
+              const uy = lineY - Math.max(0.8, fontSize * 0.11);
+              page.drawLine({
+                start: { x: lineX, y: uy },
+                end: { x: lineX + lineW, y: uy },
+                thickness: Math.max(0.5, fontSize * 0.06),
+                color: textColor,
+              });
+            }
           }
           break;
         }

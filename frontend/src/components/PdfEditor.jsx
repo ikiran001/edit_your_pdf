@@ -109,6 +109,9 @@ export default function PdfEditor({ sessionId, onBack }) {
   const [showOnboarding, setShowOnboarding] = useState(readEditorOnboardingVisible)
   const [toastMessage, setToastMessage] = useState(null)
   const toastTimerRef = useRef(null)
+  const [zoom, setZoom] = useState(1.0)
+  const zoomIn  = useCallback(() => setZoom((z) => Math.min(2.0, Math.round((z + 0.25) * 100) / 100)), [])
+  const zoomOut = useCallback(() => setZoom((z) => Math.max(0.5, Math.round((z - 0.25) * 100) / 100)), [])
 
   const showErrorHint = useCallback((msg) => {
     if (errorHintTimerRef.current != null) {
@@ -341,6 +344,34 @@ export default function PdfEditor({ sessionId, onBack }) {
     }
   }, [])
 
+  /**
+   * Debounced autosave: fires 45 s after the last edit change.
+   * Only triggers when there is at least one edit (native or annotation).
+   * Errors are swallowed silently — autosave is best-effort.
+   */
+  useEffect(() => {
+    const hasNative = nativeTextEdits.length > 0
+    const hasAnnot = Object.values(pagesItems).some((arr) => arr && arr.length > 0)
+    if (!hasNative && !hasAnnot) return
+    if (autosaveTimerRef.current != null) window.clearTimeout(autosaveTimerRef.current)
+    autosaveTimerRef.current = window.setTimeout(async () => {
+      autosaveTimerRef.current = null
+      try {
+        await persistPdfToServer()
+        setSaveHint('Auto-saved')
+        window.setTimeout(() => setSaveHint(null), 4000)
+      } catch {
+        /* best-effort — do not surface autosave errors to the user */
+      }
+    }, 45_000)
+    return () => {
+      if (autosaveTimerRef.current != null) {
+        window.clearTimeout(autosaveTimerRef.current)
+        autosaveTimerRef.current = null
+      }
+    }
+  }, [nativeTextEdits, pagesItems]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const persistPdfToServer = useCallback(async () => {
     const edits = buildEditsPayload(pagesItemsRef.current)
     const nativePayload = nativeTextEditsRef.current
@@ -466,8 +497,43 @@ export default function PdfEditor({ sessionId, onBack }) {
     []
   )
 
+  /** Remove a native text edit by slotId, restoring the block to its original PDF text. */
+  const revertNativeTextEdit = useCallback((blockId, slotId) => {
+    const prev = nativeTextEditsRef.current
+    const next = prev.filter(
+      (e) => !(typeof slotId === 'string' && slotId.length >= 8 && e.slotId === slotId)
+    )
+    nativeTextEditsRef.current = next
+    setNativeTextEdits(next)
+    if (blockId) {
+      setBlockTextOverrides((prevOvr) => {
+        if (!(blockId in prevOvr)) return prevOvr
+        const n = { ...prevOvr }
+        delete n[blockId]
+        return n
+      })
+    }
+  }, [])
+
+  /**
+   * If a native inline text editor is currently focused, blur it so `commitNativeEdit`
+   * fires via its 0ms timer and the final text + format reach `nativeTextEditsRef` before
+   * `persistPdfToServer` reads it. The 16ms wait covers the 0ms timer and synchronous
+   * `nativeTextEditsRef.current` update inside `addNativeTextEdit`.
+   */
+  const commitActiveInlineEditor = useCallback(async () => {
+    const editorEl = document.querySelector(
+      '[data-pdf-inline-editor-root][contenteditable="true"]'
+    )
+    if (editorEl instanceof HTMLElement) {
+      editorEl.blur()
+      await new Promise((r) => window.setTimeout(r, 16))
+    }
+  }, [])
+
   const handleSave = async () => {
     cancelScheduledAutosave()
+    await commitActiveInlineEditor()
     setSaving(true)
     setSaveHint(null)
     const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
@@ -494,6 +560,7 @@ export default function PdfEditor({ sessionId, onBack }) {
 
   const handleDownload = async () => {
     cancelScheduledAutosave()
+    await commitActiveInlineEditor()
     setDownloading(true)
     const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
     try {
@@ -583,6 +650,9 @@ export default function PdfEditor({ sessionId, onBack }) {
         saving={saving}
         downloading={downloading}
         onShortcutsClick={() => setShortcutsOpen(true)}
+        zoom={zoom}
+        onZoomIn={zoomIn}
+        onZoomOut={zoomOut}
       />
       {saveHint && (
         <div
@@ -660,7 +730,8 @@ export default function PdfEditor({ sessionId, onBack }) {
                 ref={(el) => {
                   pageRefs.current[i] = el
                 }}
-                className="w-full max-w-4xl"
+                className="w-full"
+                style={{ maxWidth: `${Math.round(896 * zoom)}px` }}
               >
                 <div className="mb-2 text-sm font-medium text-zinc-500">Page {i + 1}</div>
                 <LazyPageLoader pdfDoc={pdfDoc} pageIndex={i} scrollRef={scrollRef}>
@@ -674,6 +745,7 @@ export default function PdfEditor({ sessionId, onBack }) {
                       blockTextOverrides={blockTextOverrides}
                       sessionNativeTextEdits={nativeTextEdits}
                       onNativeTextEdit={(payload) => addNativeTextEdit(i, payload)}
+                      onRevertNativeTextEdit={revertNativeTextEdit}
                       textFormat={textFormat}
                       textFormatRef={textFormatRef}
                       editTextMode={editTextMode}

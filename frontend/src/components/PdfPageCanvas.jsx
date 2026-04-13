@@ -227,6 +227,7 @@ export default function PdfPageCanvas({
   items,
   onUpdateItems,
   onNativeTextEdit,
+  onRevertNativeTextEdit,
   /** Parent SSOT: stable block id → display string (from pdf.js once, then overrides). */
   blockTextOverrides = {},
   /** Server-persisted native edits; used so display text is the saved string, not pdf.js duplicate concat. */
@@ -897,10 +898,13 @@ export default function PdfPageCanvas({
       const textAnnotCount = items.filter((it) => it.type === 'text').length
       if (textAnnotCount >= MAX_ANNOT_TEXT_PER_PAGE) return
       const el = pdfCanvasRef.current
-      const { pdfW } = metaRef.current
+      const { pdfW, cssW: metaCssW } = metaRef.current
       const bmpW =
         el && el.width > 0 ? el.width : metaRef.current.bmpW > 0 ? metaRef.current.bmpW : 1
       const fontSizePt = Math.max(4, Math.min(144, cssN * (pdfW / bmpW)))
+      /* Capture box width before draft is cleared — used for server-side alignment. */
+      const draftBoxW = draftInputRef.current?.offsetWidth ?? 0
+      const nw = metaCssW > 0 && draftBoxW > 0 ? draftBoxW / metaCssW : 0
       const id = crypto.randomUUID()
       onUpdateItems((prev) => [
         ...prev,
@@ -909,6 +913,7 @@ export default function PdfPageCanvas({
           type: 'text',
           x: draft.nx,
           y: draft.ny,
+          nw: nw > 0 ? nw : undefined,
           text: v,
           fontSize: fontSizePt,
           fontSizeCss: cssN,
@@ -1314,11 +1319,31 @@ export default function PdfPageCanvas({
     [onNativeTextEdit, buildNativePayload]
   )
 
-  /** Push toolbar-only changes (B/I/U, color, …) to parent even if the string never changed. */
+  /**
+   * Push toolbar-only changes (B/I/U, colour, font size …) immediately so they are always
+   * captured in `nativeTextEditsRef` before a Save/Download that might happen within the
+   * 280ms keystroke-debounce window. The debounced sync is still responsible for keystroke
+   * content; this effect handles format-only changes.
+   */
   useEffect(() => {
     if (!nativeEdit) return
-    scheduleNativeSync(nativeEdit.block)
-  }, [textFormat, nativeEdit, scheduleNativeSync])
+    const el = nativeEditorElRef.current
+    if (!el) return
+    const raw = el.innerText ?? ''
+    const openFmt = nativeOpenBaselineFormatRef.current
+    const curFmt = snapshotNativeFormat(textFormatRef?.current ?? defaultTextFormat())
+    const textSame =
+      normalizeNativeCompare(raw) === normalizeNativeCompare(nativeOpenBaselineStrRef.current)
+    const formatSame = openFmt && nativeFormatSnapshotsEqual(openFmt, curFmt)
+    if (textSame && formatSame) return
+    /* Cancel any pending debounced keystroke sync — this immediate call supersedes it. */
+    if (nativeSyncTimerRef.current != null) {
+      window.clearTimeout(nativeSyncTimerRef.current)
+      nativeSyncTimerRef.current = null
+    }
+    onNativeTextEdit?.(buildNativePayload(nativeEdit.block, raw))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [textFormat]) // intentionally only textFormat — nativeEdit/buildNativePayload are stable refs here
 
   /** Toolbar “Insert symbol” dispatches this so Unicode (₹, ✓, …) lands in the active editor. */
   useEffect(() => {
@@ -1353,20 +1378,23 @@ export default function PdfPageCanvas({
         setNativeEdit(null)
         return
       }
-      nativeEditRef.current = null
       const { block } = current
-      setNativeEdit(null)
       const baseline = nativeOpenBaselineStrRef.current
-      nativeOpenBaselineStrRef.current = ''
       const openFmt = nativeOpenBaselineFormatRef.current
-      nativeOpenBaselineFormatRef.current = null
       const textSame = normalizeNativeCompare(value) === normalizeNativeCompare(baseline)
       const curFmt = snapshotNativeFormat(textFormatRef?.current ?? defaultTextFormat())
       const formatSame = openFmt && nativeFormatSnapshotsEqual(openFmt, curFmt)
-      if (textSame && formatSame) {
-        return
+      /* Build payload BEFORE clearing refs so buildNativePayload reads nativeOpenBaselineFormatRef
+         (needed for sizeToolbarTouched) and nativeEditRef (needed for maskFillHex). */
+      const payload = (!textSame || !formatSame) ? buildNativePayload(block, value) : null
+      /* Clear state after payload is captured. useLayoutEffect([nativeEdit]) handles ref cleanup. */
+      nativeEditRef.current = null
+      nativeOpenBaselineStrRef.current = ''
+      nativeOpenBaselineFormatRef.current = null
+      setNativeEdit(null)
+      if (payload) {
+        onNativeTextEdit?.(payload)
       }
-      onNativeTextEdit?.(buildNativePayload(block, value))
     },
     [onNativeTextEdit, buildNativePayload, flushNativeSyncTimer]
   )
@@ -1377,6 +1405,28 @@ export default function PdfPageCanvas({
     const el = nativeEditorElRef.current
     commitNativeEdit(el?.innerText ?? '')
   }, [tool, commitNativeEdit])
+
+  /** Discard the current native edit and restore the block to its original PDF text. */
+  const revertNativeEdit = useCallback(() => {
+    if (nativeBlurTimerRef.current) {
+      window.clearTimeout(nativeBlurTimerRef.current)
+      nativeBlurTimerRef.current = null
+    }
+    flushNativeSyncTimer()
+    const current = nativeEditRef.current
+    if (!current) return
+    const { block } = current
+    const originalStr = nativeOpenBaselineStrRef.current
+    nativeEditRef.current = null
+    nativeOpenBaselineStrRef.current = ''
+    nativeOpenBaselineFormatRef.current = null
+    setNativeEdit(null)
+    /* Restore the editor element text for instant UI feedback before React re-render. */
+    const el = nativeEditorElRef.current
+    if (el) el.innerText = originalStr
+    onRevertNativeTextEdit?.(block.id, nativeEditSlotIdRef.current)
+    nativeEditSlotIdRef.current = null
+  }, [onRevertNativeTextEdit, flushNativeSyncTimer])
 
   /** Click outside textarea / format panel commits (canvas is not focusable — blur alone is unreliable). */
   useEffect(() => {
@@ -1676,6 +1726,7 @@ export default function PdfPageCanvas({
                 data-text-block-id={block.id}
               >
                 {isEditing ? (
+                  <>
                   <div
                     key={`${block.id}__editing`}
                     ref={(el) => {
@@ -1772,6 +1823,27 @@ export default function PdfPageCanvas({
                       }
                     }}
                   />
+                  {/* Revert action bar — only shown when there is an existing edit to undo */}
+                  {nativeEditSlotIdRef.current && (
+                    <div
+                      data-pdf-inline-editor-root
+                      className="absolute left-0 top-full z-[10] mt-0.5 flex items-center gap-1"
+                    >
+                      <button
+                        type="button"
+                        title="Revert to original PDF text"
+                        onMouseDown={(e) => {
+                          /* Prevent blur on the contentEditable before we can act */
+                          e.preventDefault()
+                          revertNativeEdit()
+                        }}
+                        className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 shadow-sm hover:bg-amber-200 dark:bg-amber-900/60 dark:text-amber-200 dark:hover:bg-amber-800/80"
+                      >
+                        Revert
+                      </button>
+                    </div>
+                  )}
+                  </>
                 ) : (
                   <button
                     key={`${block.id}__idle`}

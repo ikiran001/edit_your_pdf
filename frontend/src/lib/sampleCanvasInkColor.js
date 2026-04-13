@@ -74,8 +74,11 @@ export function sampleInkColorHex(canvas, cx, cy) {
     /*
      * LIGHT BACKGROUND (white, cream …)
      * Ink is the darkest non-trivial pixels (classic black-on-white path).
+     * Threshold 0.93 catches light gray / yellow / light-blue ink that 0.97 would miss.
+     * Fall back to 0.97 if nothing is found at the tighter cut.
      */
-    const nonWhite = sorted.filter((p) => p.lum < 0.97)
+    let nonWhite = sorted.filter((p) => p.lum < 0.93)
+    if (nonWhite.length < 3) nonWhite = sorted.filter((p) => p.lum < 0.97)
     const nTake = Math.max(3, Math.ceil(nonWhite.length * 0.38))
     ink = nonWhite.slice(0, nTake)
   }
