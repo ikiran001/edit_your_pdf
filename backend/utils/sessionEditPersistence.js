@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { dedupeNativeTextEditRecords } from './mergeEdits.js';
 
 export function sessionDir(uploadsRoot, sessionId) {
   return path.join(uploadsRoot, sessionId);
@@ -28,18 +29,9 @@ export function saveNativeTextEdits(uploadsRoot, sessionId, list) {
   fs.writeFileSync(path.join(dir, 'native-text-edits.json'), JSON.stringify(list));
 }
 
-/** Incoming entries override persisted when keys match. */
+/** Persisted first, then incoming — key + same-line overlap dedupe keeps one slot per line (newest wins). */
 export function mergeNativeTextEdits(persisted, incoming) {
-  const map = new Map();
-  for (const e of persisted || []) {
-    const k = nativeEditKey(e);
-    if (k) map.set(k, { ...e, key: k });
-  }
-  for (const e of incoming || []) {
-    const k = nativeEditKey(e);
-    if (k) map.set(k, { ...e, key: k });
-  }
-  return [...map.values()];
+  return dedupeNativeTextEditRecords([...(persisted || []), ...(incoming || [])]);
 }
 
 export function loadSessionEdits(uploadsRoot, sessionId) {
@@ -59,4 +51,48 @@ export function saveSessionEdits(uploadsRoot, sessionId, editsPayload) {
 
 export function sessionHasAnnotationItems(editsPayload) {
   return (editsPayload?.pages || []).some((g) => (g.items || []).length > 0);
+}
+
+/**
+ * Merge persisted annotation pages with the client's current payload by stable `id`.
+ * Each save rebuilds from `original.pdf`; the client only holds unsaved / new overlays after reload,
+ * so the server must accumulate all saved annotations here (see POST /edit).
+ * Incoming items with the same `id` replace persisted ones (in-place edits in one session).
+ */
+export function mergeAnnotationEdits(persisted, incoming) {
+  const byPage = new Map();
+
+  const ensure = (pageIndex) => {
+    if (!byPage.has(pageIndex)) byPage.set(pageIndex, new Map());
+    return byPage.get(pageIndex);
+  };
+
+  let legacySeq = 0;
+  const ingestPages = (pages) => {
+    for (const g of pages || []) {
+      const p = Number(g.pageIndex);
+      if (!Number.isFinite(p)) continue;
+      const idMap = ensure(p);
+      for (const it of g.items || []) {
+        if (!it || typeof it !== 'object') continue;
+        const id =
+          typeof it.id === 'string' && it.id.length > 0
+            ? it.id
+            : `_noid_${p}_${legacySeq++}`;
+        idMap.set(id, { ...it, id });
+      }
+    }
+  };
+
+  ingestPages(persisted?.pages);
+  ingestPages(incoming?.pages);
+
+  const pages = [...byPage.entries()]
+    .map(([pageIndex, idMap]) => ({
+      pageIndex,
+      items: [...idMap.values()],
+    }))
+    .sort((a, b) => a.pageIndex - b.pageIndex);
+
+  return { pages };
 }

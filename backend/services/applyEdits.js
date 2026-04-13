@@ -45,9 +45,41 @@ function normPointToPdf(pageWidth, pageHeight, nx, ny) {
   };
 }
 
+/** Must stay in sync with annot text `lineHeight` in `PdfPageCanvas.jsx` (currently 1.35). */
+const ANNOT_UI_LINE_HEIGHT = 1.35;
+
+/**
+ * Editor anchors `item.x` / `item.y` at the top of the first line box. pdf-lib `drawText` uses the
+ * alphabetic baseline. Offset = half-leading above the em box + ascender (pdf-lib), matching CSS.
+ */
+function annotBaselineYFromTopPdfY(tAnnot, fontSizePt, yTopPdf) {
+  let ascenderPt;
+  try {
+    ascenderPt = tAnnot.heightAtSize(fontSizePt, { descender: false });
+  } catch {
+    ascenderPt = fontSizePt * 0.72;
+  }
+  if (!Number.isFinite(ascenderPt) || ascenderPt <= 0) {
+    ascenderPt = fontSizePt * 0.72;
+  }
+  const halfLeading = (fontSizePt * (ANNOT_UI_LINE_HEIGHT - 1)) / 2;
+  return yTopPdf - ascenderPt - halfLeading;
+}
+
 function parseHexColor(hex) {
-  const h = (hex || '#000000').replace('#', '');
-  const n = parseInt(h.length === 3 ? h.split('').map((c) => c + c).join('') : h, 16);
+  let h = String(hex || '#000000')
+    .trim()
+    .replace(/^#/, '');
+  if (h.length === 3) {
+    h = h
+      .split('')
+      .map((c) => c + c)
+      .join('');
+  }
+  if (!/^[0-9a-fA-F]{6}$/.test(h)) {
+    h = '000000';
+  }
+  const n = parseInt(h, 16);
   return rgb(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
 }
 
@@ -102,7 +134,6 @@ function resolveNativeStandardFont(fontFamily, bold, italic) {
  */
 export async function applyEditsToPdf(pdfBytes, editsPayload) {
   const doc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
-  const font = await doc.embedFont(StandardFonts.Helvetica);
   const pages = doc.getPages();
   const nativeFontCache = new Map();
   const notoUnicodeState = { cache: new Map(), fontkitRegistered: false };
@@ -307,39 +338,100 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
           const nx = item.x ?? 0;
           const ny = item.y ?? 0;
           const fontSize = Math.max(4, Math.min(144, item.fontSize ?? 12));
-          const { x, y } = normPointToPdf(W, H, nx, ny);
-          const baselineY = y - fontSize * 0.85;
+          const { x, y: yTopPdf } = normPointToPdf(W, H, nx, ny);
           const raw = String(item.text || '');
-          let tAnnot = font;
+          const bold = asBool(item.bold);
+          const italic = asBool(item.italic);
+          const underline = asBool(item.underline);
+          const textColor = parseHexColor(item.color);
+
+          let tAnnot = null;
           let uniAnnot = false;
-          const emb = await embedUnicodeFontIfAvailable(doc, fontkit, raw, false, false, notoUnicodeState);
-          if (emb) {
-            tAnnot = emb.font;
-            uniAnnot = emb.isUnicodeEmbedded;
+          const embedded = await embedUnicodeFontIfAvailable(
+            doc,
+            fontkit,
+            raw,
+            bold,
+            italic,
+            notoUnicodeState,
+          );
+          if (embedded) {
+            tAnnot = embedded.font;
+            uniAnnot = embedded.isUnicodeEmbedded;
           }
+          if (!tAnnot) {
+            const fontEnum = resolveNativeStandardFont(item.fontFamily, bold, italic);
+            tAnnot = nativeFontCache.get(fontEnum);
+            if (!tAnnot) {
+              tAnnot = await doc.embedFont(fontEnum);
+              nativeFontCache.set(fontEnum, tAnnot);
+            }
+          }
+
+          const baselineY = annotBaselineYFromTopPdfY(tAnnot, fontSize, yTopPdf);
+
+          let textW = 0;
+          if (uniAnnot && containsDevanagari(raw)) {
+            textW = raw.length ? widthOfTextDevanagariBestEffort(tAnnot, raw, fontSize) : 0;
+          } else {
+            try {
+              textW = raw.length ? tAnnot.widthOfTextAtSize(raw, fontSize) : 0;
+            } catch {
+              if (uniAnnot) {
+                textW = estimateUnicodeTextWidth(raw, fontSize);
+              } else if (needsNonAsciiText(raw)) {
+                textW = estimateUnicodeTextWidth(raw, fontSize);
+              } else {
+                const safe = raw.replace(/[^\x20-\x7E]/g, '?');
+                textW = safe.length ? tAnnot.widthOfTextAtSize(safe, fontSize) : 0;
+              }
+            }
+          }
+
+          const textX = x;
           try {
-            page.drawText(raw, {
-              x,
-              y: baselineY,
-              size: fontSize,
-              font: tAnnot,
-              color: parseHexColor(item.color),
-            });
+            if (uniAnnot && containsDevanagari(raw)) {
+              drawTextDevanagariBestEffort(page, raw, {
+                x: textX,
+                y: baselineY,
+                size: fontSize,
+                font: tAnnot,
+                color: textColor,
+              });
+            } else {
+              page.drawText(raw, {
+                x: textX,
+                y: baselineY,
+                size: fontSize,
+                font: tAnnot,
+                color: textColor,
+              });
+            }
           } catch {
             if (!uniAnnot && !needsNonAsciiText(raw)) {
               const safe = raw.replace(/[^\x20-\x7E]/g, '?');
               if (safe.length) {
                 page.drawText(safe, {
-                  x,
+                  x: textX,
                   y: baselineY,
                   size: fontSize,
                   font: tAnnot,
-                  color: parseHexColor(item.color),
+                  color: textColor,
                 });
               }
             } else if (!uniAnnot && needsNonAsciiText(raw)) {
               console.warn('[applyEdits] text annotation non-ASCII skipped (no embedded Unicode font)');
             }
+          }
+
+          if (underline && raw.length) {
+            const uy = baselineY - Math.max(0.8, fontSize * 0.11);
+            page.drawLine({
+              start: { x: textX, y: uy },
+              end: { x: textX + textW, y: uy },
+              thickness: Math.max(0.5, fontSize * 0.06),
+              color: textColor,
+            });
           }
           break;
         }

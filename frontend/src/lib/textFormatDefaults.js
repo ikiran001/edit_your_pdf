@@ -38,6 +38,16 @@ export function mergePdfStyleHints(...parts) {
   }
 }
 
+/**
+ * CSS `font-family` for placed-text overlay so it tracks pdf-lib StandardFonts (Helvetica / Times / Courier).
+ * Skips Noto stacks so Latin preview matches export weight and width more closely than `editorFontFamilyWithPdfHint`.
+ */
+export function cssAnnotPreviewFontStack(serverFamily) {
+  if (serverFamily === 'TimesRoman') return 'Times, "Times New Roman", Georgia, serif'
+  if (serverFamily === 'Courier') return '"Courier New", Courier, monospace'
+  return 'Helvetica, Arial, system-ui, sans-serif'
+}
+
 /** CSS stack: prefer embedded PDF name, then web fallbacks matching server family. */
 export function cssDisplayFontFromPdf(pdfFontFamily, serverFamily) {
   const fallback =

@@ -15,6 +15,7 @@ import {
   loadSessionEdits,
   saveSessionEdits,
   sessionHasAnnotationItems,
+  mergeAnnotationEdits,
 } from '../utils/sessionEditPersistence.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -31,7 +32,10 @@ const router = Router();
 const debugEdit = process.env.DEBUG_PDF_EDIT === '1' || process.env.DEBUG_PDF_EDIT === 'true';
 
 /**
- * GET /editor-state/:sessionId — persisted native text edits + annotation payload for client hydration.
+ * GET /editor-state/:sessionId — persisted native text edits for client hydration.
+ * Annotation overlays are not returned: they are flattened into edited.pdf; re-hydrating them would
+ * duplicate text on top of the raster. Accumulated annotations live only in session-edits.json for
+ * server-side rebuild-from-original on each POST /edit.
  */
 router.get('/editor-state/:sessionId', (req, res) => {
   const sessionId = req.params.sessionId;
@@ -41,15 +45,15 @@ router.get('/editor-state/:sessionId', (req, res) => {
   const dir = path.join(uploadsRoot, sessionId);
   if (!fs.existsSync(dir)) return res.status(404).json({ error: 'Session not found' });
   const nativeTextEdits = loadNativeTextEdits(uploadsRoot, sessionId);
-  const edits = loadSessionEdits(uploadsRoot, sessionId);
-  return res.json({ nativeTextEdits, edits });
+  return res.json({ nativeTextEdits, edits: { pages: [] } });
 });
 
 /**
  * POST /edit — applies client edit payload with pdf-lib, writes edited.pdf for the session.
  *
- * Always rebuilds from original.pdf + persisted state so native text and masks are not stacked
- * on every save (which caused duplicated text in pdf.js and growing strings).
+ * Rebuilds from original.pdf + merged native text edits + merged annotation items. Annotation items
+ * are accumulated in session-edits.json by stable `id` so a second save (client only sends new boxes
+ * after reload) does not drop earlier flattened text.
  */
 router.post('/edit', express.json({ limit: '50mb' }), async (req, res) => {
   const { sessionId, edits, applyTextSwap, textReplaceRules, nativeTextEdits } =
@@ -68,11 +72,14 @@ router.post('/edit', express.json({ limit: '50mb' }), async (req, res) => {
     const mergedNative = mergeNativeTextEdits(persistedNative, nativeTextEdits || []);
     saveNativeTextEdits(uploadsRoot, sessionId, mergedNative);
 
-    let pagesEdits = edits && typeof edits === 'object' ? edits : { pages: [] };
-    if (sessionHasAnnotationItems(pagesEdits)) {
+    const incomingEdits = edits && typeof edits === 'object' ? edits : { pages: [] };
+    const persistedAnnot = loadSessionEdits(uploadsRoot, sessionId);
+    let pagesEdits;
+    if (sessionHasAnnotationItems(incomingEdits)) {
+      pagesEdits = mergeAnnotationEdits(persistedAnnot, incomingEdits);
       saveSessionEdits(uploadsRoot, sessionId, pagesEdits);
     } else {
-      pagesEdits = loadSessionEdits(uploadsRoot, sessionId);
+      pagesEdits = persistedAnnot;
     }
 
     let pdfBytes = fs.readFileSync(originalPath);

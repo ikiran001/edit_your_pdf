@@ -4,14 +4,52 @@ import { sampleBackgroundColorHex, sampleInkColorHex } from '../lib/sampleCanvas
 import { buildPageTextItemBlocks } from '../lib/textLayerManager'
 import { editorFontFamilyWithPdfHint } from '../lib/editorUnicodeFonts'
 import {
+  cssAnnotPreviewFontStack,
   cssDisplayFontFromPdf,
   defaultTextFormat,
   formatFromTextBlock,
   mapPdfFontNameToServer,
   mergePdfStyleHints,
 } from '../lib/textFormatDefaults'
+import { sessionNativeMetaForBlock } from '../lib/sessionNativeTextMatch.js'
 
 const RENDER_SCALE = 1.35
+
+const ANNOT_SCOPE_EVENT = 'pdf-editor-annot-scope'
+
+function clamp01(v) {
+  return Math.min(1, Math.max(0, v))
+}
+
+/** Added text is drawn with no fill in the viewer and on export — PDF shows through. */
+const ANNOT_TEXT_DISPLAY_BG = 'transparent'
+
+function normalizeHexForColorInput(c) {
+  const s = String(c || '#000000').trim()
+  if (/^#[0-9a-fA-F]{6}$/.test(s)) return s
+  if (/^#[0-9a-fA-F]{3}$/.test(s)) {
+    const a = s.slice(1)
+    return `#${a[0]}${a[0]}${a[1]}${a[1]}${a[2]}${a[2]}`
+  }
+  return '#000000'
+}
+
+function seedFormatFromAnnotTextItem(it) {
+  const base = defaultTextFormat()
+  if (!it || it.type !== 'text') return base
+  const cssN = Math.max(6, Math.min(144, Number(it.fontSizeCss) || 14))
+  return {
+    ...base,
+    fontSizeCss: cssN,
+    color: normalizeHexForColorInput(it.color),
+    bold: !!it.bold,
+    italic: !!it.italic,
+    underline: !!it.underline,
+    fontFamily:
+      typeof it.fontFamily === 'string' && it.fontFamily.trim() ? it.fontFamily.trim() : base.fontFamily,
+    align: typeof it.align === 'string' && it.align ? it.align : base.align,
+  }
+}
 
 /** Hex #RGB / #RRGGBB → rgba() for translucent highlights (no solid blocks). */
 function hexToRgba(hex, opacity) {
@@ -75,32 +113,89 @@ function nativeFormatSnapshotsEqual(a, b) {
 }
 
 /**
- * Find persisted native replacement for this line (block ids can change after reload; PDF x/y/baseline are stable).
+ * contentEditable must not use `{item.text}` as React children: any parent re-render
+ * (e.g. Text format syncing font size/color via patchAnnotItem) resets the DOM and
+ * wipes in-progress typing or stacks visual state. Seed text once per open instead.
  */
-function sessionNativeStringForBlock(block, pageIndex, sessionNatives) {
-  if (!sessionNatives?.length) return null
-  const bx = Number(block.pdf?.x)
-  const by = Number(block.pdf?.y)
-  const bb = Number(block.pdf?.baseline)
-  if (!Number.isFinite(bx) || !Number.isFinite(by) || !Number.isFinite(bb)) return null
-  const eps = 1.5
-  for (const n of sessionNatives) {
-    if (Number(n.pageIndex) !== pageIndex) continue
-    const nx = Number(n.x)
-    const ny = Number(n.y)
-    const nb = Number(n.baseline)
-    if (
-      Number.isFinite(nx) &&
-      Number.isFinite(ny) &&
-      Number.isFinite(nb) &&
-      Math.abs(nx - bx) < eps &&
-      Math.abs(ny - by) < eps &&
-      Math.abs(nb - bb) < eps
-    ) {
-      return n.text != null ? String(n.text) : null
-    }
-  }
-  return null
+/** iLovePDF-style: red circle X, overlaps top-right of the blue text frame */
+function TextAnnotBoxDeleteBtn({ onDelete }) {
+  return (
+    <button
+      type="button"
+      data-pdf-annot-delete-skip-blur
+      aria-label="Delete text"
+      className="absolute -right-2 -top-2 z-[6] flex h-6 w-6 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-red-500 text-[17px] font-light leading-none text-white shadow-md hover:bg-red-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+      onPointerDown={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+      }}
+      onClick={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        onDelete()
+      }}
+    >
+      ×
+    </button>
+  )
+}
+
+function AnnotTextContentEditable({
+  item,
+  fontSizePx,
+  color,
+  bold,
+  italic,
+  underline,
+  fontFamily,
+  align,
+  editorRef,
+  onCommit,
+}) {
+  /* Seed DOM once per mount. Omitting item.text from deps avoids resetting when Text format sync patches font/color. */
+  useLayoutEffect(() => {
+    const el = editorRef.current
+    if (!el) return
+    el.textContent = item.text ?? ''
+  }, [item.id]) // eslint-disable-line react-hooks/exhaustive-deps -- see comment above
+
+  const fontStack = cssAnnotPreviewFontStack(fontFamily || 'Helvetica')
+
+  return (
+    <div
+      ref={(el) => {
+        editorRef.current = el
+      }}
+      contentEditable
+      suppressContentEditableWarning
+      data-pdf-annot-editor
+      className="pdf-annot-inline-editor inline-block min-h-[1.5rem] w-max max-w-[min(18rem,calc(100vw-2rem))] cursor-text select-text rounded-sm border-0 py-0 pl-0 pr-2 font-sans outline-none"
+      style={{
+        fontSize: `${fontSizePx}px`,
+        /* Keep in sync with ANNOT_UI_LINE_HEIGHT in backend applyEdits.js */
+        lineHeight: 1.35,
+        color,
+        background: 'transparent',
+        backgroundColor: ANNOT_TEXT_DISPLAY_BG,
+        caretColor: '#2563eb',
+        minWidth: '2ch',
+        fontWeight: bold ? 700 : 400,
+        fontStyle: italic ? 'italic' : 'normal',
+        textDecoration: underline ? 'underline' : 'none',
+        textDecorationLine: underline ? 'underline' : 'none',
+        fontFamily: fontStack,
+        textAlign: align || 'left',
+      }}
+      onPointerDown={(e) => e.stopPropagation()}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') {
+          e.preventDefault()
+          const el = editorRef.current
+          onCommit(item.id, el?.innerText ?? '')
+        }
+      }}
+    />
+  )
 }
 
 /**
@@ -123,14 +218,23 @@ export default function PdfPageCanvas({
   onBeginNativeTextEdit,
   editTextMode = true,
   onInlineEditorActiveChange,
+  /** When set, Text format sidebar syncs font size + color to this annotation. */
+  formatSyncTarget = null,
+  onClearAnnotFormatTarget,
+  onAddedTextCommitted,
+  /** Register Done/Reset handlers: `(pageIndex, payload | null) => void`. */
+  onTextBoxOverlayActionsChange,
 }) {
   const pdfCanvasRef = useRef(null)
   const overlayRef = useRef(null)
-  const metaRef = useRef({ pdfW: 1, pdfH: 1, cssW: 1, cssH: 1 })
+  const metaRef = useRef({ pdfW: 1, pdfH: 1, cssW: 1, cssH: 1, bmpW: 1, bmpH: 1 })
   const [ready, setReady] = useState(false)
   /** CSS box + bitmap size for scaling text layer (canvas px ↔ layout px). */
   const [canvasLayout, setCanvasLayout] = useState({ cssW: 0, cssH: 0, bmpW: 1, bmpH: 1 })
   const [textDraft, setTextDraft] = useState(null)
+  const textDraftRef = useRef(null)
+  const draftInputRef = useRef(null)
+  const textDraftDragRef = useRef(null)
   const dragRef = useRef(null)
   const drawPointsRef = useRef(null)
   const [textRuns, setTextRuns] = useState([])
@@ -142,9 +246,9 @@ export default function PdfPageCanvas({
   const textBlocks = useMemo(() => {
     const o = blockTextOverrides || {}
     return baseTextBlocks.map((b) => {
-      const fromSession = sessionNativeStringForBlock(b, pageIndex, sessionNativeTextEdits)
+      const meta = sessionNativeMetaForBlock(b, pageIndex, sessionNativeTextEdits)
       let str = b.str
-      if (fromSession != null) str = fromSession
+      if (meta?.text != null) str = meta.text
       if (Object.prototype.hasOwnProperty.call(o, b.id)) str = o[b.id]
       return { ...b, str }
     })
@@ -153,6 +257,8 @@ export default function PdfPageCanvas({
   const [nativeEdit, setNativeEdit] = useState(null)
   const nativeEditRef = useRef(null)
   const nativeEditorElRef = useRef(null)
+  /** Stable id for this line across save/reload so native edits replace instead of stack. */
+  const nativeEditSlotIdRef = useRef(null)
   const nativeBlurTimerRef = useRef(null)
   /** Debounce parent `onNativeTextEdit` so typing does not re-render the whole page every key. */
   const nativeSyncTimerRef = useRef(null)
@@ -164,6 +270,25 @@ export default function PdfPageCanvas({
   const nativeOpenBaselinePdfFontSizeRef = useRef(null)
   const [hoverBlockId, setHoverBlockId] = useState(null)
 
+  const textAnnotItems = useMemo(() => (items || []).filter((it) => it.type === 'text'), [items])
+  const [selectedAnnotId, setSelectedAnnotId] = useState(null)
+  const [editingAnnotId, setEditingAnnotId] = useState(null)
+  const [annotDragVisual, setAnnotDragVisual] = useState(null)
+  const annotDragRef = useRef(null)
+  const annotEditorRef = useRef(null)
+  const annotEditBaselineRef = useRef('')
+  const editingAnnotIdRef = useRef(null)
+
+  const annotLayerInteractive = !tool || tool === 'text' || tool === 'editText'
+
+  useLayoutEffect(() => {
+    editingAnnotIdRef.current = editingAnnotId
+  }, [editingAnnotId])
+
+  useLayoutEffect(() => {
+    textDraftRef.current = textDraft
+  }, [textDraft])
+
   useLayoutEffect(() => {
     nativeEditRef.current = nativeEdit
   }, [nativeEdit])
@@ -171,6 +296,158 @@ export default function PdfPageCanvas({
   useLayoutEffect(() => {
     textBlocksRef.current = textBlocks
   }, [textBlocks])
+
+  const patchAnnotItem = useCallback(
+    (id, partial) => {
+      onUpdateItems((prev) => prev.map((it) => (it.id === id ? { ...it, ...partial } : it)))
+    },
+    [onUpdateItems]
+  )
+
+  useEffect(() => {
+    if (
+      !formatSyncTarget ||
+      formatSyncTarget.pageIndex !== pageIndex ||
+      formatSyncTarget.itemId !== selectedAnnotId ||
+      !selectedAnnotId
+    ) {
+      return
+    }
+    const it = items.find((x) => x.id === selectedAnnotId && x.type === 'text')
+    if (!it) return
+    const fmt = textFormatRef?.current ?? textFormat ?? defaultTextFormat()
+    const cssN = Math.max(6, Math.min(144, Number(fmt.fontSizeCss) || 14))
+    const { pdfW } = metaRef.current
+    const cv = pdfCanvasRef.current
+    const bmpW =
+      cv && cv.width > 0 ? cv.width : metaRef.current.bmpW > 0 ? metaRef.current.bmpW : 1
+    const fontSizePt = Math.max(4, Math.min(144, cssN * (pdfW / bmpW)))
+    const nextColor = normalizeHexForColorInput(String(fmt.color || '#000000').trim())
+    const curColor = normalizeHexForColorInput(String(it.color || '#000000').trim())
+    const nextFam = String(fmt.fontFamily || 'Helvetica').trim()
+    const curFam = String(it.fontFamily || 'Helvetica').trim()
+    const nextAlign = String(fmt.align || 'left')
+    const curAlign = String(it.align || 'left')
+    const nb = !!fmt.bold
+    const ni = !!fmt.italic
+    const nu = !!fmt.underline
+    const cb = !!it.bold
+    const ci = !!it.italic
+    const cu = !!it.underline
+    const ptOk = Math.abs(Number(it.fontSize || 0) - fontSizePt) < 0.05
+    if (
+      it.fontSizeCss === cssN &&
+      ptOk &&
+      curColor.toLowerCase() === nextColor.toLowerCase() &&
+      cb === nb &&
+      ci === ni &&
+      cu === nu &&
+      curFam === nextFam &&
+      curAlign === nextAlign
+    ) {
+      return
+    }
+    patchAnnotItem(selectedAnnotId, {
+      fontSizeCss: cssN,
+      fontSize: fontSizePt,
+      color: nextColor,
+      bold: nb,
+      italic: ni,
+      underline: nu,
+      fontFamily: nextFam,
+      align: nextAlign,
+    })
+  }, [textFormat, formatSyncTarget, pageIndex, selectedAnnotId, items, textFormatRef, patchAnnotItem])
+
+  const selectAnnot = useCallback(
+    (id, opts = {}) => {
+      window.dispatchEvent(new CustomEvent(ANNOT_SCOPE_EVENT, { detail: { pageIndex } }))
+      editingAnnotIdRef.current = null
+      setEditingAnnotId(null)
+      setSelectedAnnotId(id)
+      const it = items.find((x) => x.id === id && x.type === 'text')
+      if (it && opts.notifyFormat && onAddedTextCommitted) {
+        onAddedTextCommitted({
+          pageIndex,
+          itemId: id,
+          seedFormat: seedFormatFromAnnotTextItem(it),
+        })
+      }
+      if (it && opts.openEditor) {
+        editingAnnotIdRef.current = id
+        setEditingAnnotId(id)
+      }
+    },
+    [pageIndex, items, onAddedTextCommitted]
+  )
+
+  useEffect(() => {
+    const onScope = (e) => {
+      if (e.detail?.pageIndex === pageIndex) return
+      setSelectedAnnotId(null)
+      editingAnnotIdRef.current = null
+      setEditingAnnotId(null)
+      setAnnotDragVisual(null)
+      annotDragRef.current = null
+    }
+    window.addEventListener(ANNOT_SCOPE_EVENT, onScope)
+    return () => window.removeEventListener(ANNOT_SCOPE_EVENT, onScope)
+  }, [pageIndex])
+
+  const commitAnnotEdit = useCallback(
+    (id, raw) => {
+      if (editingAnnotIdRef.current !== id) return
+      editingAnnotIdRef.current = null
+      const v = String(raw ?? '')
+        .replace(/\r\n/g, '\n')
+        .trim()
+      if (!v) {
+        onUpdateItems((prev) => prev.filter((it) => it.id !== id))
+        setSelectedAnnotId(null)
+        setEditingAnnotId(null)
+        return
+      }
+      patchAnnotItem(id, { text: v })
+      setEditingAnnotId(null)
+    },
+    [onUpdateItems, patchAnnotItem]
+  )
+
+  useLayoutEffect(() => {
+    if (!editingAnnotId) return
+    const it = items.find((x) => x.id === editingAnnotId && x.type === 'text')
+    annotEditBaselineRef.current = it?.text ?? ''
+  }, [editingAnnotId, items])
+
+  const removeTextAnnot = useCallback(
+    (id) => {
+      onUpdateItems((prev) => prev.filter((x) => x.id !== id))
+      setSelectedAnnotId(null)
+      editingAnnotIdRef.current = null
+      setEditingAnnotId(null)
+      if (formatSyncTarget?.pageIndex === pageIndex && formatSyncTarget?.itemId === id) {
+        onClearAnnotFormatTarget?.()
+      }
+    },
+    [onUpdateItems, formatSyncTarget, pageIndex, onClearAnnotFormatTarget]
+  )
+
+  useLayoutEffect(() => {
+    if (!editingAnnotId) return
+    const el = annotEditorRef.current
+    if (!el) return
+    el.focus()
+    try {
+      const sel = window.getSelection()
+      const range = document.createRange()
+      range.selectNodeContents(el)
+      range.collapse(false)
+      sel?.removeAllRanges()
+      sel?.addRange(range)
+    } catch {
+      /* ignore */
+    }
+  }, [editingAnnotId])
 
   /** Toolbar B / I / U (and related) must apply even when onInput does not run — push to the live contenteditable. */
   useLayoutEffect(() => {
@@ -251,7 +528,10 @@ export default function PdfPageCanvas({
       }
     }
 
-    for (const it of items) drawItem(it)
+    for (const it of items) {
+      if (it.type === 'text') continue
+      drawItem(it)
+    }
 
     if (draftLinePts && draftLinePts.length >= 2) {
       ctx.strokeStyle = '#111827'
@@ -292,11 +572,11 @@ export default function PdfPageCanvas({
     const scale = RENDER_SCALE
     const viewport = pdfPage.getViewport({ scale })
     const base = pdfPage.getViewport({ scale: 1 })
+    /* pdfW/pdfH = page size in PDF points. cssW/cssH must match on-screen canvas (set in layout sync), not bitmap px. */
     metaRef.current = {
+      ...metaRef.current,
       pdfW: base.width,
       pdfH: base.height,
-      cssW: viewport.width,
-      cssH: viewport.height,
     }
     canvas.width = viewport.width
     canvas.height = viewport.height
@@ -388,6 +668,13 @@ export default function PdfPageCanvas({
       const cw = pdf.clientWidth
       const ch = pdf.clientHeight
       if (cw < 2 || ch < 2) return
+      metaRef.current = {
+        ...metaRef.current,
+        cssW: cw,
+        cssH: ch,
+        bmpW: pdf.width || 1,
+        bmpH: pdf.height || 1,
+      }
       setCanvasLayout({
         cssW: cw,
         cssH: ch,
@@ -441,6 +728,9 @@ export default function PdfPageCanvas({
     if (!n) return
 
     if (tool === 'text') {
+      window.dispatchEvent(new CustomEvent(ANNOT_SCOPE_EVENT, { detail: { pageIndex } }))
+      setSelectedAnnotId(null)
+      setEditingAnnotId(null)
       setTextDraft({ nx: n.nx, ny: n.ny })
       e.preventDefault()
       return
@@ -575,31 +865,192 @@ export default function PdfPageCanvas({
     }
   }
 
-  const commitText = (value) => {
-    if (!textDraft) return
-    const v = value.trim()
+  const commitText = useCallback(
+    (value) => {
+      if (!textDraftRef.current) return
+      const draft = textDraftRef.current
+      const fmt = textFormatRef?.current ?? textFormat ?? defaultTextFormat()
+      const cssN = Math.max(6, Math.min(144, Number(fmt.fontSizeCss) || 14))
+      textDraftRef.current = null
+      textDraftDragRef.current = null
+      setTextDraft(null)
+      const v = String(value ?? '').trim()
+      if (!v) return
+      const el = pdfCanvasRef.current
+      const { pdfW } = metaRef.current
+      const bmpW =
+        el && el.width > 0 ? el.width : metaRef.current.bmpW > 0 ? metaRef.current.bmpW : 1
+      const fontSizePt = Math.max(4, Math.min(144, cssN * (pdfW / bmpW)))
+      const id = crypto.randomUUID()
+      onUpdateItems((prev) => [
+        ...prev,
+        {
+          id,
+          type: 'text',
+          x: draft.nx,
+          y: draft.ny,
+          text: v,
+          fontSize: fontSizePt,
+          fontSizeCss: cssN,
+          color: normalizeHexForColorInput(String(fmt.color || '#000000').trim()),
+          backgroundHex: 'transparent',
+          bold: !!fmt.bold,
+          italic: !!fmt.italic,
+          underline: !!fmt.underline,
+          fontFamily: String(fmt.fontFamily || 'Helvetica').trim(),
+          align: String(fmt.align || 'left'),
+        },
+      ])
+      /* `selectAnnot` reads `items` synchronously — the new row is not in props yet, so openEditor/notify would no-op. */
+      window.dispatchEvent(new CustomEvent(ANNOT_SCOPE_EVENT, { detail: { pageIndex } }))
+      setSelectedAnnotId(id)
+      editingAnnotIdRef.current = id
+      setEditingAnnotId(id)
+      onAddedTextCommitted?.({
+        pageIndex,
+        itemId: id,
+        seedFormat: { ...defaultTextFormat(), ...fmt, fontSizeCss: cssN },
+      })
+    },
+    [onUpdateItems, textFormat, textFormatRef, onAddedTextCommitted, pageIndex]
+  )
+
+  useEffect(() => {
+    if (!onTextBoxOverlayActionsChange) return
+    if (textDraft) {
+      onTextBoxOverlayActionsChange(pageIndex, {
+        done: () => commitText(draftInputRef.current?.value ?? ''),
+        reset: () => {
+          textDraftDragRef.current = null
+          textDraftRef.current = null
+          setTextDraft(null)
+        },
+      })
+      return () => onTextBoxOverlayActionsChange(pageIndex, null)
+    }
+    if (editingAnnotId) {
+      onTextBoxOverlayActionsChange(pageIndex, {
+        done: () => {
+          const id = editingAnnotIdRef.current
+          const el = annotEditorRef.current
+          if (id != null && el) commitAnnotEdit(id, el.innerText ?? '')
+        },
+        reset: () => {
+          const el = annotEditorRef.current
+          if (el) el.textContent = annotEditBaselineRef.current
+          editingAnnotIdRef.current = null
+          setEditingAnnotId(null)
+        },
+      })
+      return () => onTextBoxOverlayActionsChange(pageIndex, null)
+    }
+    onTextBoxOverlayActionsChange(pageIndex, null)
+    return undefined
+  }, [
+    textDraft,
+    editingAnnotId,
+    onTextBoxOverlayActionsChange,
+    pageIndex,
+    commitText,
+    commitAnnotEdit,
+  ])
+
+  useEffect(() => {
+    if (!selectedAnnotId && !editingAnnotId && !textDraft) return
+    const onDocDown = (e) => {
+      const t = e.target
+      if (textDraft && !t.closest?.('[data-pdf-annot-draft]')) {
+        commitText(draftInputRef.current?.value ?? '')
+        return
+      }
+      if (t.closest?.('[data-pdf-annot-text-root]')) return
+      if (t.closest?.('[data-pdf-annot-toolbar]')) return
+      if (t.closest?.('[data-pdf-annot-draft]')) return
+      if (t.closest?.('[data-pdf-inline-editor-root]')) return
+      if (t.closest?.('[data-text-format-panel]')) return
+      if (editingAnnotId) {
+        const el = annotEditorRef.current
+        const id = editingAnnotIdRef.current
+        if (el && id != null) commitAnnotEdit(id, el.innerText ?? '')
+        return
+      }
+      const prevSel = selectedAnnotId
+      setSelectedAnnotId(null)
+      if (
+        prevSel &&
+        formatSyncTarget?.pageIndex === pageIndex &&
+        formatSyncTarget?.itemId === prevSel
+      ) {
+        onClearAnnotFormatTarget?.()
+      }
+    }
+    document.addEventListener('pointerdown', onDocDown, true)
+    return () => document.removeEventListener('pointerdown', onDocDown, true)
+  }, [
+    textDraft,
+    selectedAnnotId,
+    editingAnnotId,
+    formatSyncTarget,
+    pageIndex,
+    onClearAnnotFormatTarget,
+    commitText,
+    commitAnnotEdit,
+  ])
+
+  const onDraftDragPointerDown = useCallback((e) => {
+    if (!e.isPrimary || e.button !== 0) return
+    e.preventDefault()
+    e.stopPropagation()
+    const d0 = textDraftRef.current
+    if (!d0) return
+    const { cssW, cssH } = metaRef.current
+    if (cssW < 1 || cssH < 1) return
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId)
+    } catch {
+      /* ignore */
+    }
+    textDraftDragRef.current = {
+      pointerId: e.pointerId,
+      sx: e.clientX,
+      sy: e.clientY,
+      ox: d0.nx,
+      oy: d0.ny,
+    }
+  }, [])
+
+  const onDraftDragPointerMove = useCallback((e) => {
+    const drag = textDraftDragRef.current
+    if (!drag || e.pointerId !== drag.pointerId) return
+    const { cssW, cssH } = metaRef.current
+    if (cssW < 1 || cssH < 1) return
+    const nx = clamp01(drag.ox + (e.clientX - drag.sx) / cssW)
+    const ny = clamp01(drag.oy + (e.clientY - drag.sy) / cssH)
+    setTextDraft((prev) => (prev ? { ...prev, nx, ny } : null))
+  }, [])
+
+  const onDraftDragPointerUp = useCallback((e) => {
+    const drag = textDraftDragRef.current
+    if (!drag || e.pointerId !== drag.pointerId) return
+    textDraftDragRef.current = null
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    } catch {
+      /* ignore */
+    }
+  }, [])
+
+  useEffect(() => {
+    if (tool === 'text') return
+    textDraftDragRef.current = null
+    textDraftRef.current = null
     setTextDraft(null)
-    if (!v) return
-    const { pdfW, cssW } = metaRef.current
-    const ratio = pdfW / cssW
-    onUpdateItems((prev) => [
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        type: 'text',
-        x: textDraft.nx,
-        y: textDraft.ny,
-        text: v,
-        fontSize: Math.max(8, 14 * ratio),
-        fontSizeCss: 14,
-        color: '#111827',
-      },
-    ])
-  }
+  }, [tool])
 
   const { cssW: cw, cssH: ch, bmpW, bmpH } = canvasLayout
   const sx = bmpW > 0 ? cw / bmpW : 1
   const sy = bmpH > 0 ? ch / bmpH : 1
+
   const overlayActive = tool && tool !== 'editText'
 
   const showTextLayer = editTextMode && tool === 'editText' && ready
@@ -612,6 +1063,13 @@ export default function PdfPageCanvas({
         window.clearTimeout(nativeSyncTimerRef.current)
         nativeSyncTimerRef.current = null
       }
+      const meta = sessionNativeMetaForBlock(block, pageIndex, sessionNativeTextEdits)
+      nativeEditSlotIdRef.current =
+        typeof meta?.slotId === 'string' && meta.slotId.length >= 8
+          ? meta.slotId
+          : typeof crypto !== 'undefined' && crypto.randomUUID
+            ? crypto.randomUUID()
+            : `ns-${Date.now()}-${Math.random().toString(36).slice(2)}`
       nativeOpenBaselineStrRef.current =
         block.str ?? textBlocksRef.current.find((b) => b.id === id)?.str ?? ''
       const pdfFs = Number(block.pdf?.fontSize)
@@ -655,7 +1113,7 @@ export default function PdfPageCanvas({
       }
       setNativeEdit({ block, maskFillHex })
     },
-    [onBeginNativeTextEdit, textFormat, textFormatRef]
+    [onBeginNativeTextEdit, pageIndex, sessionNativeTextEdits, textFormat, textFormatRef]
   )
 
   /** Capture format once when edit opens only (`nativeEdit` deps — not `textFormat`, or toggling B/I/U would reset baseline). */
@@ -663,6 +1121,7 @@ export default function PdfPageCanvas({
     if (!nativeEdit) {
       nativeOpenBaselineFormatRef.current = null
       nativeOpenBaselinePdfFontSizeRef.current = null
+      nativeEditSlotIdRef.current = null
       return
     }
     nativeOpenBaselineFormatRef.current = snapshotNativeFormat(
@@ -754,8 +1213,17 @@ export default function PdfPageCanvas({
       maskColor = sampleBackgroundColorHex(cv, block.left, block.top, block.width, block.height)
     }
 
+    let slotId = nativeEditSlotIdRef.current
+    if (!slotId) {
+      slotId =
+        typeof crypto !== 'undefined' && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `ns-${Date.now()}-${Math.random().toString(36).slice(2)}`
+      nativeEditSlotIdRef.current = slotId
+    }
     return {
       blockId: block.id,
+      slotId,
       pdf: block.pdf,
       norm: block.norm,
       text,
@@ -858,6 +1326,13 @@ export default function PdfPageCanvas({
     [onNativeTextEdit, buildNativePayload, flushNativeSyncTimer]
   )
 
+  useEffect(() => {
+    if (tool === 'editText') return
+    if (!nativeEditRef.current) return
+    const el = nativeEditorElRef.current
+    commitNativeEdit(el?.innerText ?? '')
+  }, [tool, commitNativeEdit])
+
   /** Click outside textarea / format panel commits (canvas is not focusable — blur alone is unreliable). */
   useEffect(() => {
     if (!nativeEdit) return
@@ -865,6 +1340,9 @@ export default function PdfPageCanvas({
       const t = e.target
       if (t.closest?.('[data-pdf-inline-editor-root]')) return
       if (t.closest?.('[data-text-format-panel]')) return
+      if (t.closest?.('[data-pdf-annot-text-root]')) return
+      if (t.closest?.('[data-pdf-annot-toolbar]')) return
+      if (t.closest?.('[data-pdf-annot-draft]')) return
       /* Let line tap targets handle the event in the target phase (iPad / iOS WebKit). */
       if (t.closest?.('[data-pdf-text-line-tap]')) return
       const el = nativeEditorElRef.current
@@ -875,6 +1353,79 @@ export default function PdfPageCanvas({
     document.addEventListener('pointerdown', onDocPointerDown, true)
     return () => document.removeEventListener('pointerdown', onDocPointerDown, true)
   }, [nativeEdit, commitNativeEdit])
+
+  const annotPointerDown = (e, it) => {
+    if (!annotLayerInteractive || !e.isPrimary || e.button !== 0) return
+    e.stopPropagation()
+    if (editingAnnotId === it.id) return
+    annotDragRef.current = {
+      id: it.id,
+      sx: e.clientX,
+      sy: e.clientY,
+      ox: it.x,
+      oy: it.y,
+      moved: false,
+    }
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId)
+    } catch {
+      /* ignore */
+    }
+  }
+
+  /** Drag handle while inline-editing (editingAnnotId blocks `annotPointerDown` on the glyph). */
+  const beginAnnotTextDrag = (e, it) => {
+    if (!annotLayerInteractive || !e.isPrimary || e.button !== 0) return
+    e.preventDefault()
+    e.stopPropagation()
+    annotDragRef.current = {
+      id: it.id,
+      sx: e.clientX,
+      sy: e.clientY,
+      ox: it.x,
+      oy: it.y,
+      moved: false,
+    }
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId)
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const annotPointerMove = (e, it) => {
+    const d = annotDragRef.current
+    if (!d || d.id !== it.id) return
+    const dx = e.clientX - d.sx
+    const dy = e.clientY - d.sy
+    if (!d.moved && dx * dx + dy * dy > 25) d.moved = true
+    if (d.moved) setAnnotDragVisual({ id: it.id, dx, dy })
+  }
+
+  const endAnnotDrag = (e, it) => {
+    const d = annotDragRef.current
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    } catch {
+      /* ignore */
+    }
+    if (!d || d.id !== it.id) {
+      setAnnotDragVisual(null)
+      return
+    }
+    annotDragRef.current = null
+    const W = cw
+    const H = ch
+    if (d.moved && W > 0 && H > 0) {
+      const nx = clamp01(d.ox + (e.clientX - d.sx) / W)
+      const ny = clamp01(d.oy + (e.clientY - d.sy) / H)
+      patchAnnotItem(it.id, { x: nx, y: ny })
+      selectAnnot(it.id, { notifyFormat: true, openEditor: false })
+    } else if (!d.moved && editingAnnotIdRef.current !== it.id) {
+      selectAnnot(it.id, { notifyFormat: true, openEditor: true })
+    }
+    setAnnotDragVisual(null)
+  }
 
   return (
     <div className="relative block w-full max-w-full shadow-md">
@@ -895,6 +1446,140 @@ export default function PdfPageCanvas({
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       />
+      {textAnnotItems.length > 0 && ready && cw > 0 && ch > 0 && (
+        <div
+          className={`pointer-events-none absolute left-0 top-0 ${
+            annotLayerInteractive ? 'z-[35]' : 'z-[4]'
+          }`}
+          style={{ width: cw, height: ch }}
+        >
+          {textAnnotItems.map((it) => {
+            const isSel = selectedAnnotId === it.id
+            const isEdit = editingAnnotId === it.id
+            const dx = annotDragVisual?.id === it.id ? annotDragVisual.dx : 0
+            const dy = annotDragVisual?.id === it.id ? annotDragVisual.dy : 0
+            const fs = Math.max(8, Math.min(144, (it.fontSizeCss ?? 14) * sx))
+            const color = it.color || '#000000'
+            const fmtToolbar = textFormat ?? defaultTextFormat()
+            const annotSyncs =
+              formatSyncTarget?.pageIndex === pageIndex && formatSyncTarget?.itemId === it.id
+            const decor = annotSyncs
+              ? {
+                  bold: !!fmtToolbar.bold,
+                  italic: !!fmtToolbar.italic,
+                  underline: !!fmtToolbar.underline,
+                  fontFamily: fmtToolbar.fontFamily || 'Helvetica',
+                  align: fmtToolbar.align || 'left',
+                }
+              : {
+                  bold: !!it.bold,
+                  italic: !!it.italic,
+                  underline: !!it.underline,
+                  fontFamily: it.fontFamily || 'Helvetica',
+                  align: it.align || 'left',
+                }
+            const annotFontStack = cssAnnotPreviewFontStack(decor.fontFamily)
+            return (
+              <div
+                key={it.id}
+                data-pdf-annot-text-root
+                className="pointer-events-auto absolute"
+                style={{
+                  left: it.x * cw + dx,
+                  top: it.y * ch + dy,
+                  maxWidth: `min(${Math.max(0, cw * (1 - it.x))}px, 100vw)`,
+                }}
+              >
+                {isEdit ? (
+                  <div
+                    className="relative inline-flex max-w-full cursor-default rounded-md shadow-sm ring-2 ring-blue-600"
+                    style={{ backgroundColor: ANNOT_TEXT_DISPLAY_BG }}
+                  >
+                    {/*
+                      Strip sits above the box (out of flow) so `it.y` = top of first text line — matches PDF origin.
+                    */}
+                    <div
+                      role="separator"
+                      aria-label="Drag to move"
+                      title="Drag to move"
+                      className="absolute bottom-full left-0 right-0 z-[5] mb-0.5 h-2.5 cursor-grab rounded-sm border border-blue-600/30 bg-blue-600/10 active:cursor-grabbing dark:bg-blue-500/15"
+                      onPointerDown={(e) => beginAnnotTextDrag(e, it)}
+                      onPointerMove={(e) => annotPointerMove(e, it)}
+                      onPointerUp={(e) => endAnnotDrag(e, it)}
+                      onPointerCancel={(e) => endAnnotDrag(e, it)}
+                    />
+                    {annotLayerInteractive && (
+                      <TextAnnotBoxDeleteBtn onDelete={() => removeTextAnnot(it.id)} />
+                    )}
+                    <AnnotTextContentEditable
+                      key={`${it.id}__annot-ed`}
+                      item={it}
+                      fontSizePx={fs}
+                      color={color}
+                      bold={decor.bold}
+                      italic={decor.italic}
+                      underline={decor.underline}
+                      fontFamily={decor.fontFamily}
+                      align={decor.align}
+                      editorRef={annotEditorRef}
+                      onCommit={commitAnnotEdit}
+                    />
+                  </div>
+                ) : (
+                    <div
+                      className={[
+                      'relative inline-block w-max max-w-full',
+                      annotLayerInteractive ? 'cursor-grab active:cursor-grabbing' : '',
+                      isSel && annotLayerInteractive ? 'rounded-md shadow-sm ring-2 ring-blue-600' : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                      style={
+                        isSel && annotLayerInteractive
+                          ? { backgroundColor: ANNOT_TEXT_DISPLAY_BG }
+                          : undefined
+                      }
+                  >
+                    {isSel && annotLayerInteractive && (
+                      <TextAnnotBoxDeleteBtn onDelete={() => removeTextAnnot(it.id)} />
+                    )}
+                    <div
+                      role="text"
+                      className={`inline-block max-w-full touch-none whitespace-pre-wrap break-words font-sans select-none ${
+                        isSel && annotLayerInteractive ? 'border-0 py-0 pl-0 pr-1' : 'border border-transparent px-0 py-0'
+                      }`}
+                      style={{
+                        fontSize: `${fs}px`,
+                        /* Keep in sync with ANNOT_UI_LINE_HEIGHT in backend applyEdits.js (annot baseline). */
+                        lineHeight: 1.35,
+                        color,
+                        backgroundColor: ANNOT_TEXT_DISPLAY_BG,
+                        fontWeight: decor.bold ? 700 : 400,
+                        fontStyle: decor.italic ? 'italic' : 'normal',
+                        textDecoration: decor.underline ? 'underline' : 'none',
+                        textDecorationLine: decor.underline ? 'underline' : 'none',
+                        fontFamily: annotFontStack,
+                        textAlign: decor.align || 'left',
+                      }}
+                      onPointerDown={(e) => annotPointerDown(e, it)}
+                      onPointerMove={(e) => annotPointerMove(e, it)}
+                      onPointerUp={(e) => endAnnotDrag(e, it)}
+                      onPointerCancel={(e) => endAnnotDrag(e, it)}
+                      onDoubleClick={(e) => {
+                        if (!annotLayerInteractive) return
+                        e.stopPropagation()
+                        selectAnnot(it.id, { notifyFormat: true, openEditor: true })
+                      }}
+                    >
+                      {it.text}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
       {showTextLayer && cw > 0 && ch > 0 && (
         <div
           role="group"
@@ -1110,25 +1795,75 @@ export default function PdfPageCanvas({
             No selectable text on this page (try a text-based PDF, not a scan).
           </div>
         )}
-      {textDraft && cw > 0 && (
-        <input
-          autoFocus
-          className="absolute z-20 min-w-[120px] rounded border-2 border-indigo-500 bg-transparent px-2 py-1 text-sm text-zinc-900 shadow-none placeholder:text-zinc-500 dark:border-indigo-400 dark:text-zinc-100 dark:placeholder:text-zinc-400"
-          style={{
-            left: textDraft.nx * cw,
-            top: textDraft.ny * ch,
-          }}
-          placeholder="Type text…"
-          onBlur={(e) => commitText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault()
-              commitText(e.currentTarget.value)
-            }
-            if (e.key === 'Escape') setTextDraft(null)
-          }}
-        />
-      )}
+      {textDraft && cw > 0 && (() => {
+        const draftFmt = textFormat ?? defaultTextFormat()
+        const draftFsCss = Math.max(8, Math.min(144, Number(draftFmt.fontSizeCss) || 14))
+        const draftPx = Math.max(8, Math.min(144, draftFsCss * sx))
+        const draftFont = cssAnnotPreviewFontStack(draftFmt.fontFamily)
+        const cancelDraft = () => {
+          textDraftDragRef.current = null
+          textDraftRef.current = null
+          setTextDraft(null)
+        }
+        const onDraftGripPointerDown = (e) => {
+          if (!e.isPrimary || e.button !== 0) return
+          e.preventDefault()
+          e.stopPropagation()
+          onDraftDragPointerDown(e)
+        }
+        return (
+          <div
+            data-pdf-annot-draft
+            className="absolute z-[50] inline-block max-w-[min(22rem,calc(100vw-1.25rem))] cursor-default overflow-visible rounded-md shadow-md ring-2 ring-blue-600"
+            style={{
+              left: textDraft.nx * cw,
+              top: textDraft.ny * ch,
+              backgroundColor: ANNOT_TEXT_DISPLAY_BG,
+            }}
+          >
+            <div
+              role="separator"
+              aria-label="Drag to move"
+              title="Drag to move"
+              className="absolute bottom-full left-0 right-0 z-[5] mb-0.5 h-2.5 cursor-grab rounded-sm border border-blue-600/30 bg-blue-600/10 active:cursor-grabbing dark:bg-blue-500/15"
+              onPointerDown={onDraftGripPointerDown}
+              onPointerMove={onDraftDragPointerMove}
+              onPointerUp={onDraftDragPointerUp}
+              onPointerCancel={onDraftDragPointerUp}
+            />
+            <TextAnnotBoxDeleteBtn onDelete={cancelDraft} />
+            <div className="px-0 pb-2 pt-0">
+              <input
+                ref={draftInputRef}
+                data-pdf-annot-draft-input
+                autoFocus
+                placeholder="Type text…"
+                className="pdf-annot-draft-input min-w-0 max-w-full cursor-text rounded-sm border-0 py-0 pl-0 pr-2 text-zinc-900 outline-none placeholder:text-zinc-500"
+                style={{
+                  fontSize: `${draftPx}px`,
+                  lineHeight: 1.35, /* match ANNOT_UI_LINE_HEIGHT in backend applyEdits.js */
+                  color: normalizeHexForColorInput(draftFmt.color || '#000000'),
+                  fontFamily: draftFont,
+                  fontWeight: draftFmt.bold ? 700 : 400,
+                  fontStyle: draftFmt.italic ? 'italic' : 'normal',
+                  textDecoration: draftFmt.underline ? 'underline' : 'none',
+                  textAlign: draftFmt.align || 'left',
+                  caretColor: '#2563eb',
+                  background: 'transparent',
+                  backgroundColor: 'transparent',
+                }}
+                onPointerDown={(e) => e.stopPropagation()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    e.preventDefault()
+                    cancelDraft()
+                  }
+                }}
+              />
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }

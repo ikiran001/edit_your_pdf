@@ -214,3 +214,17 @@ html.dark .pdf-text-layer-editor::-moz-selection {
   color: inherit;
 }
 
+/* Add-text draft: width follows typed content (Chromium / Safari 17.4+); others keep min-width. */
+.pdf-annot-draft-input {
+  box-sizing: border-box;
+  width: auto;
+  min-width: 7ch;
+  max-width: 100%;
+  field-sizing: content;
+  background-color: transparent !important;
+}
+
+.pdf-annot-inline-editor {
+  background-color: transparent !important;
+}
+
