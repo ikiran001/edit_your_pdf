@@ -43,7 +43,7 @@ function ToggleBtn({ active, children, onClick, title }) {
 /**
  * Right-side panel for native PDF text styling (iLovePDF-style controls).
  */
-export default function TextFormatToolbar({ format, onChange, disabled }) {
+export default function TextFormatToolbar({ format, onChange, disabled, overlayActions = null }) {
   const patch = (partial) => onChange({ ...format, ...partial })
 
   return (
@@ -61,6 +61,24 @@ export default function TextFormatToolbar({ format, onChange, disabled }) {
             <kbd className="rounded bg-zinc-200 px-0.5 dark:bg-zinc-700">Ctrl+Enter</kbd> or click outside to apply.
           </span>
         </p>
+        {overlayActions && (
+          <div className="mt-3 flex flex-wrap gap-2 border-t border-zinc-200 pt-3 dark:border-zinc-700">
+            <button
+              type="button"
+              onClick={() => overlayActions.done?.()}
+              className="flex-1 min-w-[5.5rem] rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+            >
+              Done
+            </button>
+            <button
+              type="button"
+              onClick={() => overlayActions.reset?.()}
+              className="flex-1 min-w-[5.5rem] rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-semibold text-zinc-800 hover:bg-zinc-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
+            >
+              Reset
+            </button>
+          </div>
+        )}
       </div>
       <div
         className={`flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-y-contain p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] ${disabled ? 'pointer-events-none opacity-50' : ''}`}

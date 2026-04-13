@@ -11,6 +11,11 @@ import PdfPageCanvas from './PdfPageCanvas'
 import TextFormatToolbar from './TextFormatToolbar'
 import { defaultTextFormat, formatFromTextBlock } from '../lib/textFormatDefaults'
 import {
+  nativeTextRecordsAreSameSlot,
+  dedupeAnnotTextItemsBySlot,
+  dedupeNativeTextEditRecords,
+} from '../lib/nativeTextOverlap.js'
+import {
   trackErrorOccurred,
   trackFileDownloaded,
   trackProcessingTime,
@@ -19,6 +24,9 @@ import {
 import { MSG } from '../shared/constants/branding.js'
 
 const EDIT_TOOL = 'edit_pdf'
+
+/** Stable when `pagesItems[i]` is missing — inline `[]` would be a new reference every render and break `commitText` / overlay effects in PdfPageCanvas. */
+const EMPTY_PAGE_ANNOT_ITEMS = []
 
 const ONBOARDING_STORAGE_KEY = 'pdfpilot_editor_onboarding_dismissed'
 
@@ -30,10 +38,9 @@ function readEditorOnboardingVisible() {
   }
 }
 
-/** Strip client-only fields before sending edits to the API / pdf-lib. */
+/** Strip client-only fields before sending edits to the API / pdf-lib. Keep `id` for server merge. */
 function toServerItem(it) {
   const rest = { ...it }
-  delete rest.id
   delete rest.fontSizeCss
   delete rest.lineWidthCss
   return rest
@@ -43,7 +50,7 @@ function buildEditsPayload(pagesItems) {
   const pages = Object.entries(pagesItems)
     .map(([key, list]) => ({
       pageIndex: Number(key),
-      items: (list || []).map(toServerItem),
+      items: dedupeAnnotTextItemsBySlot(list || []).map(toServerItem),
     }))
     .filter((g) => Number.isFinite(g.pageIndex) && g.items.length > 0)
     .sort((a, b) => a.pageIndex - b.pageIndex)
@@ -55,7 +62,7 @@ function editsPayloadToPresentMap(edits) {
   const out = {}
   for (const g of edits?.pages || []) {
     if (!Number.isFinite(g.pageIndex)) continue
-    const items = (g.items || []).map((it) => ({
+    const items = dedupeAnnotTextItemsBySlot(g.items || []).map((it) => ({
       ...it,
       id:
         typeof crypto !== 'undefined' && crypto.randomUUID
@@ -91,6 +98,11 @@ export default function PdfEditor({ sessionId, onBack }) {
   textFormatRef.current = textFormat
   const [editTextMode, setEditTextMode] = useState(true)
   const [inlineTextEditorOpen, setInlineTextEditorOpen] = useState(false)
+  /** After placing “Add Text”, keep Text format sidebar open for styling (in addition to native line edit). */
+  const [addedTextFormatOpen, setAddedTextFormatOpen] = useState(false)
+  const [annotFormatTarget, setAnnotFormatTarget] = useState(null)
+  /** Done / Reset for add-text draft or placed-text edit (driven by PdfPageCanvas). */
+  const [textBoxOverlayActions, setTextBoxOverlayActions] = useState(null)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(readEditorOnboardingVisible)
   const [toastMessage, setToastMessage] = useState(null)
@@ -99,6 +111,41 @@ export default function PdfEditor({ sessionId, onBack }) {
   useEffect(() => {
     if (!editTextMode) setInlineTextEditorOpen(false)
   }, [editTextMode])
+
+  useEffect(() => {
+    if (!editTextMode) {
+      setAddedTextFormatOpen(false)
+      setAnnotFormatTarget(null)
+    }
+  }, [editTextMode])
+
+  const clearAnnotFormatUi = useCallback(() => {
+    setAnnotFormatTarget(null)
+    setAddedTextFormatOpen(false)
+  }, [])
+
+  useEffect(() => {
+    if (activeTool !== 'text') return
+    setInlineTextEditorOpen(false)
+    clearAnnotFormatUi()
+  }, [activeTool, clearAnnotFormatUi])
+
+  const handleTextBoxOverlayActions = useCallback((pageIndex, payload) => {
+    setTextBoxOverlayActions((prev) => {
+      if (payload == null) {
+        return prev?.pageIndex === pageIndex ? null : prev
+      }
+      return { pageIndex, done: payload.done, reset: payload.reset }
+    })
+  }, [])
+
+  const handleAddedTextCommitted = useCallback(({ pageIndex, itemId, seedFormat }) => {
+    setAnnotFormatTarget({ pageIndex, itemId })
+    setTextFormat((prev) => ({ ...prev, ...seedFormat }))
+    setAddedTextFormatOpen(true)
+    setActiveTool('editText')
+    setEditTextMode(true)
+  }, [])
   const { pagesItems, commit, undo, redo, canUndo, canRedo, reset } = usePagesHistory({})
   pagesItemsRef.current = pagesItems
   nativeTextEditsRef.current = nativeTextEdits
@@ -190,7 +237,7 @@ export default function PdfEditor({ sessionId, onBack }) {
         if (cancelled) return
         setPdfDoc(doc)
 
-        const natives = stRes.nativeTextEdits || []
+        const natives = dedupeNativeTextEditRecords(stRes.nativeTextEdits || [])
         nativeTextEditsRef.current = natives
         setNativeTextEdits(natives)
         const over = {}
@@ -246,16 +293,17 @@ export default function PdfEditor({ sessionId, onBack }) {
     return () => el.removeEventListener('scroll', onScroll)
   }, [numPages])
 
-  const updatePage = useCallback(
-    (pageIndex) => (updater) => {
+  /** Stable per-page updaters — `updatePage(i)` returned a new fn each render and broke PdfPageCanvas `commitText` deps → overlay effect loop. */
+  const pageItemUpdaters = useMemo(() => {
+    if (!pdfDoc || numPages < 1) return null
+    return Array.from({ length: numPages }, (_, pageIndex) => (updater) => {
       commit((prev) => {
-        const cur = prev[pageIndex] || []
+        const cur = prev[pageIndex] ?? []
         const next = typeof updater === 'function' ? updater(cur) : updater
         return { ...prev, [pageIndex]: next }
       })
-    },
-    [commit]
-  )
+    })
+  }, [commit, pdfDoc, numPages])
 
   const pageNodes = useMemo(() => {
     if (!pdfDoc) return null
@@ -319,6 +367,7 @@ export default function PdfEditor({ sessionId, onBack }) {
     (pageIndex, payload) => {
       const {
         blockId,
+        slotId: payloadSlotId,
         pdf,
         norm,
         text,
@@ -334,12 +383,35 @@ export default function PdfEditor({ sessionId, onBack }) {
         maskColor,
       } = payload
       const key = `${pageIndex}:${pdf.x}:${pdf.y}:${pdf.baseline}`
+      const effectiveSlotId =
+        typeof payloadSlotId === 'string' && payloadSlotId.length >= 8
+          ? payloadSlotId
+          : typeof crypto !== 'undefined' && crypto.randomUUID
+            ? crypto.randomUUID()
+            : `slot-${Date.now()}-${Math.random().toString(36).slice(2)}`
       const prev = nativeTextEditsRef.current
-      const rest = prev.filter((e) => e.key !== key)
+      const incoming = {
+        norm,
+        x: pdf.x,
+        y: pdf.y,
+        baseline: pdf.baseline,
+        w: pdf.w,
+        h: pdf.h,
+      }
+      const rest = prev.filter((e) => {
+        if (Number(e.pageIndex) !== Number(pageIndex)) return true
+        if (typeof e.slotId === 'string' && e.slotId.length >= 8 && e.slotId === effectiveSlotId) {
+          return false
+        }
+        if (e.key === key) return false
+        if (nativeTextRecordsAreSameSlot(e, incoming)) return false
+        return true
+      })
       const next = [
         ...rest,
         {
           key,
+          slotId: effectiveSlotId,
           pageIndex,
           x: pdf.x,
           y: pdf.y,
@@ -377,6 +449,9 @@ export default function PdfEditor({ sessionId, onBack }) {
     const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
     try {
       await persistPdfToServer()
+      clearAnnotFormatUi()
+      setTextBoxOverlayActions(null)
+      reset({})
       reloadPdfFromServer()
       setSaveHint(MSG.savedSession)
       window.setTimeout(() => setSaveHint(null), 5000)
@@ -399,6 +474,9 @@ export default function PdfEditor({ sessionId, onBack }) {
     const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
     try {
       await persistPdfToServer()
+      clearAnnotFormatUi()
+      setTextBoxOverlayActions(null)
+      reset({})
       const dl = await fetch(
         apiUrl(`/download?sessionId=${encodeURIComponent(sessionId)}`)
       )
@@ -526,7 +604,7 @@ export default function PdfEditor({ sessionId, onBack }) {
               <p className="m-0 font-medium">Select a tool first</p>
               <p className="mt-1 mb-0 text-amber-900/90 dark:text-amber-100/90">
                 Use <strong>Edit text</strong> to change existing PDF wording (matched size), or{' '}
-                <strong>Text</strong> / <strong>Draw</strong> / <strong>Highlight</strong> /{' '}
+                <strong>Add Text</strong> / <strong>Draw</strong> / <strong>Highlight</strong> /{' '}
                 <strong>Rectangle</strong> for markup. When you finish a line (click outside or press{' '}
                 <kbd className="rounded bg-amber-200/80 px-1 dark:bg-amber-900/50">Ctrl+Enter</kbd>
                 ), your text is saved to this session automatically — no need to press{' '}
@@ -551,8 +629,8 @@ export default function PdfEditor({ sessionId, onBack }) {
                       pdfPage={page}
                       pageIndex={i}
                       tool={activeTool}
-                      items={pagesItems[i] || []}
-                      onUpdateItems={updatePage(i)}
+                      items={pagesItems[i] ?? EMPTY_PAGE_ANNOT_ITEMS}
+                      onUpdateItems={pageItemUpdaters[i]}
                       blockTextOverrides={blockTextOverrides}
                       sessionNativeTextEdits={nativeTextEdits}
                       onNativeTextEdit={(payload) => addNativeTextEdit(i, payload)}
@@ -560,6 +638,10 @@ export default function PdfEditor({ sessionId, onBack }) {
                       textFormatRef={textFormatRef}
                       editTextMode={editTextMode}
                       onInlineEditorActiveChange={setInlineTextEditorOpen}
+                      formatSyncTarget={annotFormatTarget}
+                      onClearAnnotFormatTarget={clearAnnotFormatUi}
+                      onAddedTextCommitted={handleAddedTextCommitted}
+                      onTextBoxOverlayActionsChange={handleTextBoxOverlayActions}
                       onBeginNativeTextEdit={(block, extras) => {
                         if (extras?.presetFormat) {
                           setTextFormat(extras.presetFormat)
@@ -581,11 +663,20 @@ export default function PdfEditor({ sessionId, onBack }) {
             ))}
           </div>
         </div>
-        {activeTool === 'editText' && editTextMode && inlineTextEditorOpen && (
+        {((activeTool === 'editText' &&
+          editTextMode &&
+          (inlineTextEditorOpen || addedTextFormatOpen || annotFormatTarget != null)) ||
+          activeTool === 'text' ||
+          textBoxOverlayActions != null) && (
           <TextFormatToolbar
             format={textFormat}
             onChange={setTextFormat}
             disabled={false}
+            overlayActions={
+              textBoxOverlayActions
+                ? { done: textBoxOverlayActions.done, reset: textBoxOverlayActions.reset }
+                : null
+            }
           />
         )}
       </div>
