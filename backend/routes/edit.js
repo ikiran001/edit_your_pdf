@@ -8,6 +8,7 @@ import {
   defaultEditorToLoveRules,
 } from '../services/applyTextReplacements.js';
 import { dedupeNativeTextEditRecords, mergeEditsWithNative } from '../utils/mergeEdits.js';
+import { dedupeAnnotTextItemsBySlot } from '../utils/nativeTextOverlap.js';
 import {
   loadNativeTextEdits,
   saveNativeTextEdits,
@@ -16,6 +17,18 @@ import {
   sessionHasAnnotationItems,
   mergeAnnotationEdits,
 } from '../utils/sessionEditPersistence.js';
+
+/** Full snapshot from editor: each page list replaces persisted markup for that page (omitted pages = none). */
+function normalizeAuthoritativeAnnotationEdits(incoming) {
+  const pages = (incoming?.pages || [])
+    .map((g) => {
+      const pageIndex = Number(g.pageIndex);
+      const items = dedupeAnnotTextItemsBySlot(Array.isArray(g.items) ? g.items : []);
+      return { pageIndex, items };
+    })
+    .filter((g) => Number.isFinite(g.pageIndex) && g.items.length > 0);
+  return { pages };
+}
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const uploadsRoot = path.join(__dirname, '..', 'uploads');
@@ -31,10 +44,9 @@ const router = Router();
 const debugEdit = process.env.DEBUG_PDF_EDIT === '1' || process.env.DEBUG_PDF_EDIT === 'true';
 
 /**
- * GET /editor-state/:sessionId — persisted native text edits for client hydration.
- * Annotation overlays are not returned: they are flattened into edited.pdf; re-hydrating them would
- * duplicate text on top of the raster. Accumulated annotations live only in session-edits.json for
- * server-side rebuild-from-original on each POST /edit.
+ * GET /editor-state/:sessionId — persisted native text edits + session markup for the editor.
+ * Markup is also baked into edited.pdf; the client marks hydrated items `rasterizedInPdf` so it does
+ * not draw them twice on the canvas (see PdfPageCanvas).
  */
 router.get('/editor-state/:sessionId', (req, res) => {
   const sessionId = req.params.sessionId;
@@ -44,7 +56,8 @@ router.get('/editor-state/:sessionId', (req, res) => {
   const dir = path.join(uploadsRoot, sessionId);
   if (!fs.existsSync(dir)) return res.status(404).json({ error: 'Session not found' });
   const nativeTextEdits = loadNativeTextEdits(uploadsRoot, sessionId);
-  return res.json({ nativeTextEdits, edits: { pages: [] } });
+  const edits = loadSessionEdits(uploadsRoot, sessionId);
+  return res.json({ nativeTextEdits, edits });
 });
 
 /**
@@ -63,6 +76,11 @@ router.post('/edit', express.json({ limit: '52mb' }), async (req, res) => {
     nativeTextEdits,
     /** When true, replace session-edits.json with empty (used by editor “Clear all”). */
     replaceSessionAnnotations,
+    /**
+     * When true, `edits.pages` is the full current markup snapshot (Add Text / draw / …).
+     * Replaces session-edits.json so removals are not resurrected from the old merge-with-persisted logic.
+     */
+    annotationsAuthoritative,
   } = req.body || {};
   if (!sessionId || typeof sessionId !== 'string') {
     return res.status(400).json({ error: 'sessionId required' });
@@ -91,6 +109,9 @@ router.post('/edit', express.json({ limit: '52mb' }), async (req, res) => {
     let pagesEdits;
     if (replaceSessionAnnotations) {
       pagesEdits = { pages: [] };
+      saveSessionEdits(uploadsRoot, sessionId, pagesEdits);
+    } else if (annotationsAuthoritative === true) {
+      pagesEdits = normalizeAuthoritativeAnnotationEdits(incomingEdits);
       saveSessionEdits(uploadsRoot, sessionId, pagesEdits);
     } else if (sessionHasAnnotationItems(incomingEdits)) {
       pagesEdits = mergeAnnotationEdits(persistedAnnot, incomingEdits);

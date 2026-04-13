@@ -289,7 +289,10 @@ export default function PdfPageCanvas({
   const nativeOpenBaselinePdfFontSizeRef = useRef(null)
   const [hoverBlockId, setHoverBlockId] = useState(null)
 
-  const textAnnotItems = useMemo(() => (items || []).filter((it) => it.type === 'text'), [items])
+  const textAnnotItems = useMemo(
+    () => (items || []).filter((it) => it.type === 'text' && !it.rasterizedInPdf),
+    [items]
+  )
   const [selectedAnnotId, setSelectedAnnotId] = useState(null)
   const [editingAnnotId, setEditingAnnotId] = useState(null)
   const [annotDragVisual, setAnnotDragVisual] = useState(null)
@@ -549,6 +552,7 @@ export default function PdfPageCanvas({
 
     for (const it of items) {
       if (it.type === 'text') continue
+      if (it.rasterizedInPdf) continue
       drawItem(it)
     }
 
