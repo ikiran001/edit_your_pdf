@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { buildTextRuns } from '../lib/pdfTextRuns'
-import { sampleBackgroundColorHex, sampleInkColorHex } from '../lib/sampleCanvasInkColor'
+import { hexLuminance, sampleBackgroundColorHex, sampleInkColorHex } from '../lib/sampleCanvasInkColor'
 import { buildPageTextItemBlocks } from '../lib/textLayerManager'
 import { editorFontFamilyWithPdfHint } from '../lib/editorUnicodeFonts'
 import {
@@ -14,6 +14,9 @@ import {
 import { sessionNativeMetaForBlock } from '../lib/sessionNativeTextMatch.js'
 
 const RENDER_SCALE = 1.35
+const MAX_DRAW_POINTS = 1000
+const MAX_ANNOT_TEXT_PER_PAGE = 50
+const MAX_ANNOT_TEXT_LENGTH = 2000
 
 const ANNOT_SCOPE_EVENT = 'pdf-editor-annot-scope'
 
@@ -187,6 +190,21 @@ function AnnotTextContentEditable({
         textAlign: align || 'left',
       }}
       onPointerDown={(e) => e.stopPropagation()}
+      onInput={(e) => {
+        const el = e.currentTarget
+        if ((el.innerText ?? '').length > MAX_ANNOT_TEXT_LENGTH) {
+          const sel = window.getSelection()
+          const range = sel?.getRangeAt(0)
+          el.innerText = (el.innerText ?? '').slice(0, MAX_ANNOT_TEXT_LENGTH)
+          if (range) {
+            try {
+              sel.removeAllRanges()
+              range.collapse(false)
+              sel.addRange(range)
+            } catch { /* ignore */ }
+          }
+        }
+      }}
       onKeyDown={(e) => {
         if (e.key === 'Escape') {
           e.preventDefault()
@@ -758,7 +776,7 @@ export default function PdfPageCanvas({
       const last = drawPointsRef.current[drawPointsRef.current.length - 1]
       const dx = n.nx - last.nx
       const dy = n.ny - last.ny
-      if (dx * dx + dy * dy > 0.000004) {
+      if (dx * dx + dy * dy > 0.000004 && drawPointsRef.current.length < MAX_DRAW_POINTS) {
         drawPointsRef.current.push({ nx: n.nx, ny: n.ny })
         paintOverlay(null, drawPointsRef.current)
       }
@@ -874,8 +892,10 @@ export default function PdfPageCanvas({
       textDraftRef.current = null
       textDraftDragRef.current = null
       setTextDraft(null)
-      const v = String(value ?? '').trim()
+      const v = String(value ?? '').trim().slice(0, MAX_ANNOT_TEXT_LENGTH)
       if (!v) return
+      const textAnnotCount = items.filter((it) => it.type === 'text').length
+      if (textAnnotCount >= MAX_ANNOT_TEXT_PER_PAGE) return
       const el = pdfCanvasRef.current
       const { pdfW } = metaRef.current
       const bmpW =
@@ -1088,6 +1108,29 @@ export default function PdfPageCanvas({
       const pdfToCssScale = cssW > 0 ? pdfW / cssW : 1
       const layoutHint = Number.isFinite(pdfToCssScale) && pdfToCssScale > 0 ? { pdfToCssScale } : undefined
       const prevFmt = textFormatRef?.current ?? textFormat ?? defaultTextFormat()
+      let maskFillHex = '#ffffff'
+      if (cv?.width && block.width > 0 && block.height > 0) {
+        maskFillHex = sampleBackgroundColorHex(cv, block.left, block.top, block.width, block.height)
+      }
+
+      /*
+       * Contrast safety: if the sampled ink colour is too close to the background
+       * (WCAG contrast ratio < 2.5), the text would be nearly invisible after saving.
+       * Correct by choosing a strongly contrasting colour instead.
+       * This handles the case where dark-background white text is incorrectly sampled
+       * as a dark/blue colour (e.g. navy text on navy background → invisible).
+       */
+      if (sampleColorHex) {
+        const bgLum  = hexLuminance(maskFillHex)
+        const inkLum = hexLuminance(sampleColorHex)
+        const lighter = Math.max(bgLum, inkLum)
+        const darker  = Math.min(bgLum, inkLum)
+        const ratio   = (lighter + 0.05) / (darker + 0.05)
+        if (ratio < 2.5) {
+          sampleColorHex = bgLum < 0.4 ? '#ffffff' : '#000000'
+        }
+      }
+
       try {
         const presetFormat = formatFromTextBlock(
           block,
@@ -1099,17 +1142,15 @@ export default function PdfPageCanvas({
           sampleColorHex: sampleColorHex ?? undefined,
           presetFormat,
           layoutHint,
+          _maskColorHexSeed: maskFillHex,
         })
       } catch (err) {
         console.error('formatFromTextBlock failed', err)
         onBeginNativeTextEdit?.(block, {
           sampleColorHex: sampleColorHex ?? undefined,
           layoutHint,
+          _maskColorHexSeed: maskFillHex,
         })
-      }
-      let maskFillHex = '#ffffff'
-      if (cv?.width && block.width > 0 && block.height > 0) {
-        maskFillHex = sampleBackgroundColorHex(cv, block.left, block.top, block.width, block.height)
       }
       setNativeEdit({ block, maskFillHex })
     },
@@ -1200,10 +1241,12 @@ export default function PdfPageCanvas({
     const alignTouched = openFmt && openFmt.align !== curSnap.align
     const align = alignTouched ? fmt.align || 'left' : curSnap.align || fmt.align || 'left'
 
-    let maskColor = '#ffffff'
     const cv = pdfCanvasRef.current
     const editing = nativeEditRef.current
-    if (
+    let maskColor
+    if (fmt.maskColorMode === 'manual' && /^#[0-9a-fA-F]{6}$/.test(fmt.maskColorHex || '')) {
+      maskColor = fmt.maskColorHex
+    } else if (
       editing?.block?.id === block.id &&
       typeof editing.maskFillHex === 'string' &&
       editing.maskFillHex
@@ -1211,6 +1254,8 @@ export default function PdfPageCanvas({
       maskColor = editing.maskFillHex
     } else if (cv?.width && block.width > 0 && block.height > 0) {
       maskColor = sampleBackgroundColorHex(cv, block.left, block.top, block.width, block.height)
+    } else {
+      maskColor = '#ffffff'
     }
 
     let slotId = nativeEditSlotIdRef.current
@@ -1786,6 +1831,11 @@ export default function PdfPageCanvas({
           Detecting text on this page…
         </div>
       )}
+      {tool === 'editText' && ready && textDiag?.error && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-1 z-[5] rounded bg-red-100/95 px-2 py-1 text-center text-[11px] text-red-900 dark:bg-red-950/90 dark:text-red-200">
+          Could not detect text on this page. Try a text-based PDF.
+        </div>
+      )}
       {tool === 'editText' &&
         ready &&
         textDiag?.scanned &&
@@ -1795,6 +1845,11 @@ export default function PdfPageCanvas({
             No selectable text on this page (try a text-based PDF, not a scan).
           </div>
         )}
+      {tool === 'text' && ready && textDiag?.scanned && textDiag.count === 0 && !textDiag.error && (
+        <div className="pointer-events-none absolute inset-x-0 top-1 z-[5] rounded bg-amber-100/95 px-2 py-1 text-center text-[11px] text-amber-950 dark:bg-amber-950/90 dark:text-amber-100">
+          This page has no selectable text (likely a scan). You can still Add Text on top of it.
+        </div>
+      )}
       {textDraft && cw > 0 && (() => {
         const draftFmt = textFormat ?? defaultTextFormat()
         const draftFsCss = Math.max(8, Math.min(144, Number(draftFmt.fontSizeCss) || 14))
@@ -1838,6 +1893,7 @@ export default function PdfPageCanvas({
                 data-pdf-annot-draft-input
                 autoFocus
                 placeholder="Type text…"
+                maxLength={MAX_ANNOT_TEXT_LENGTH}
                 className="pdf-annot-draft-input min-w-0 max-w-full cursor-text rounded-sm border-0 py-0 pl-0 pr-2 text-zinc-900 outline-none placeholder:text-zinc-500"
                 style={{
                   fontSize: `${draftPx}px`,

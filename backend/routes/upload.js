@@ -52,6 +52,20 @@ router.post('/upload', (req, res) => {
       }
       return res.status(400).json({ error: 'No file' });
     }
+    /* Magic-byte check: reject files that don't start with %PDF- */
+    try {
+      const fd = fs.openSync(req.file.path, 'r');
+      const head = Buffer.alloc(5);
+      fs.readSync(fd, head, 0, 5, 0);
+      fs.closeSync(fd);
+      if (head.toString('ascii') !== '%PDF-') {
+        fs.rmSync(dir, { recursive: true, force: true });
+        return res.status(400).json({ error: 'Invalid PDF file (missing %PDF- header).' });
+      }
+    } catch {
+      fs.rmSync(dir, { recursive: true, force: true });
+      return res.status(400).json({ error: 'Could not validate uploaded file.' });
+    }
     return res.json({ sessionId, filename: req.file.originalname });
   });
 });

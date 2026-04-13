@@ -70,8 +70,12 @@ export const FONT_OPTIONS = [
 ]
 
 export const FONT_SIZE_OPTIONS = [
-  8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 60, 72,
+  8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 60, 72, 96, 120, 144,
 ]
+
+/** Shared font size bounds used in canvas + backend to keep display and export consistent. */
+export const FONT_SIZE_MIN = 6
+export const FONT_SIZE_MAX = 144
 
 export const TEXT_ALIGN_OPTIONS = [
   { value: 'left', label: 'Left' },
@@ -90,6 +94,13 @@ export function defaultTextFormat() {
     color: '#000000',
     opacity: 1,
     rotationDeg: 0,
+    /**
+     * Background (mask) override for native "Edit Text":
+     *   'auto'    — sample from canvas (default)
+     *   '#rrggbb' — use this exact colour
+     */
+    maskColorMode: 'auto',
+    maskColorHex: '#ffffff',
   }
 }
 

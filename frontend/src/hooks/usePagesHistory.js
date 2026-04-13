@@ -4,6 +4,8 @@ function clone(obj) {
   return JSON.parse(JSON.stringify(obj))
 }
 
+const MAX_UNDO_STACK = 50
+
 /**
  * Undo/redo over a per-page map: { [pageIndex: string]: annotation[] }.
  */
@@ -14,8 +16,9 @@ function historyReducer(state, action) {
         typeof action.payload === 'function'
           ? action.payload(state.present)
           : action.payload
+      const newPast = [...state.past, clone(state.present)]
       return {
-        past: [...state.past, clone(state.present)],
+        past: newPast.length > MAX_UNDO_STACK ? newPast.slice(newPast.length - MAX_UNDO_STACK) : newPast,
         present: next,
         future: [],
       }

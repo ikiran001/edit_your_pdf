@@ -83,6 +83,8 @@ export default function PdfEditor({ sessionId, onBack }) {
   const [saving, setSaving] = useState(false)
   const [downloading, setDownloading] = useState(false)
   const [saveHint, setSaveHint] = useState(null)
+  const [errorHint, setErrorHint] = useState(null)
+  const errorHintTimerRef = useRef(null)
   /** Bumped after a successful save so pdf.js refetches (edited.pdf) instead of a cached original. */
   const [pdfBust, setPdfBust] = useState(0)
   const pageRefs = useRef([])
@@ -107,6 +109,25 @@ export default function PdfEditor({ sessionId, onBack }) {
   const [showOnboarding, setShowOnboarding] = useState(readEditorOnboardingVisible)
   const [toastMessage, setToastMessage] = useState(null)
   const toastTimerRef = useRef(null)
+
+  const showErrorHint = useCallback((msg) => {
+    if (errorHintTimerRef.current != null) {
+      window.clearTimeout(errorHintTimerRef.current)
+      errorHintTimerRef.current = null
+    }
+    setErrorHint(msg)
+    errorHintTimerRef.current = window.setTimeout(() => {
+      setErrorHint(null)
+      errorHintTimerRef.current = null
+    }, 8000)
+  }, [])
+
+  useEffect(
+    () => () => {
+      if (errorHintTimerRef.current != null) window.clearTimeout(errorHintTimerRef.current)
+    },
+    []
+  )
 
   useEffect(() => {
     if (!editTextMode) setInlineTextEditorOpen(false)
@@ -231,12 +252,15 @@ export default function PdfEditor({ sessionId, onBack }) {
         const [doc, stRes] = await Promise.all([
           task.promise,
           fetch(apiUrl(`/editor-state/${encodeURIComponent(sessionId)}`))
-            .then((r) => (r.ok ? r.json() : { nativeTextEdits: [], edits: { pages: [] } }))
-            .catch(() => ({ nativeTextEdits: [], edits: { pages: [] } })),
+            .then((r) => (r.ok ? r.json() : { nativeTextEdits: [], edits: { pages: [] }, _hydrationFailed: true }))
+            .catch(() => ({ nativeTextEdits: [], edits: { pages: [] }, _hydrationFailed: true })),
         ])
         if (cancelled) return
         setPdfDoc(doc)
 
+        if (stRes._hydrationFailed) {
+          showErrorHint('Could not reload saved edits — your previous inline text changes may not be visible.')
+        }
         const natives = dedupeNativeTextEditRecords(stRes.nativeTextEdits || [])
         nativeTextEditsRef.current = natives
         setNativeTextEdits(natives)
@@ -462,7 +486,7 @@ export default function PdfEditor({ sessionId, onBack }) {
     } catch (e) {
       console.error(e)
       trackErrorOccurred(EDIT_TOOL, e?.message || 'save_failed')
-      alert(e.message || 'Save failed')
+      showErrorHint(e.message || 'Save failed — check your connection and try again.')
     } finally {
       setSaving(false)
     }
@@ -507,7 +531,7 @@ export default function PdfEditor({ sessionId, onBack }) {
     } catch (e) {
       console.error(e)
       trackErrorOccurred(EDIT_TOOL, e?.message || 'download_failed')
-      alert(e.message || 'Download failed')
+      showErrorHint(e.message || 'Download failed — check your connection and try again.')
     } finally {
       setDownloading(false)
     }
@@ -566,6 +590,22 @@ export default function PdfEditor({ sessionId, onBack }) {
           className="border-b border-emerald-200 bg-emerald-50 px-3 py-1.5 text-center text-xs text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-100"
         >
           {saveHint}
+        </div>
+      )}
+      {errorHint && (
+        <div
+          role="alert"
+          className="flex items-center justify-between border-b border-red-300 bg-red-50 px-3 py-1.5 text-xs text-red-900 dark:border-red-700 dark:bg-red-950/60 dark:text-red-200"
+        >
+          <span>{errorHint}</span>
+          <button
+            type="button"
+            aria-label="Dismiss"
+            className="ml-3 shrink-0 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200"
+            onClick={() => setErrorHint(null)}
+          >
+            ✕
+          </button>
         </div>
       )}
       <div className="flex min-h-0 flex-1 flex-col md:flex-row">
@@ -643,18 +683,23 @@ export default function PdfEditor({ sessionId, onBack }) {
                       onAddedTextCommitted={handleAddedTextCommitted}
                       onTextBoxOverlayActionsChange={handleTextBoxOverlayActions}
                       onBeginNativeTextEdit={(block, extras) => {
-                        if (extras?.presetFormat) {
+                        if (extras?.presetFormat && !extras?._maskColorHexSeed) {
                           setTextFormat(extras.presetFormat)
                           return
                         }
-                        setTextFormat((prev) =>
-                          formatFromTextBlock(
+                        setTextFormat((prev) => {
+                          const next = formatFromTextBlock(
                             block,
                             prev,
                             extras?.sampleColorHex,
                             extras?.layoutHint
                           )
-                        )
+                          /* Seed manual colour picker with auto-sampled bg — user can override immediately. */
+                          if (extras?._maskColorHexSeed && (prev.maskColorMode ?? 'auto') === 'auto') {
+                            next.maskColorHex = extras._maskColorHexSeed
+                          }
+                          return next
+                        })
                       }}
                     />
                   )}
