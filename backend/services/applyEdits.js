@@ -201,7 +201,7 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
           const textColor = parseHexColor(item.color);
           let opacity = Number(item.opacity);
           if (!Number.isFinite(opacity)) opacity = 1;
-          opacity = Math.min(1, Math.max(0.05, opacity));
+          opacity = Math.min(1, Math.max(0.1, opacity));
           const rotationDeg = Number(item.rotationDeg) || 0;
           const align = item.align === 'center' || item.align === 'right' ? item.align : 'left';
 
@@ -450,7 +450,7 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
             width,
             height,
             color: parseHexColor(item.color || '#ffeb3b'),
-            opacity: item.opacity ?? 0.35,
+            opacity: Math.min(1, Math.max(0.05, Number(item.opacity) || 0.35)),
           });
           break;
         }

@@ -1,8 +1,11 @@
+import { useState } from 'react'
 import {
   FONT_OPTIONS,
   FONT_SIZE_OPTIONS,
   TEXT_ALIGN_OPTIONS,
 } from '../lib/textFormatDefaults'
+
+const HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/
 
 const INSERT_SYMBOLS = [
   { label: '₹', ch: '₹', title: 'Indian rupee' },
@@ -45,6 +48,9 @@ function ToggleBtn({ active, children, onClick, title }) {
  */
 export default function TextFormatToolbar({ format, onChange, disabled, overlayActions = null }) {
   const patch = (partial) => onChange({ ...format, ...partial })
+  const [colorInputRaw, setColorInputRaw] = useState(null)
+  const displayColor = colorInputRaw ?? (format.color || '#000000')
+  const colorValid = HEX_RE.test(displayColor)
 
   return (
     <aside
@@ -183,19 +189,84 @@ export default function TextFormatToolbar({ format, onChange, disabled, overlayA
           <div className="flex items-center gap-2">
             <input
               type="color"
-              value={format.color?.match(/^#/) ? format.color.slice(0, 7) : '#000000'}
-              onChange={(e) => patch({ color: e.target.value })}
+              value={format.color?.match(/^#[0-9a-fA-F]{6}$/) ? format.color : '#000000'}
+              onChange={(e) => {
+                setColorInputRaw(null)
+                patch({ color: e.target.value })
+              }}
               className="h-9 w-12 cursor-pointer rounded border border-zinc-300 bg-white p-0.5 dark:border-zinc-600"
             />
             <input
               type="text"
-              value={format.color || '#000000'}
-              onChange={(e) => patch({ color: e.target.value })}
-              className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-white px-2 py-1.5 font-mono text-xs dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+              value={displayColor}
+              onChange={(e) => {
+                const v = e.target.value
+                setColorInputRaw(v)
+                if (HEX_RE.test(v)) {
+                  setColorInputRaw(null)
+                  patch({ color: v })
+                }
+              }}
+              onBlur={() => {
+                if (!colorValid) setColorInputRaw(null)
+              }}
+              className={`min-w-0 flex-1 rounded-md border px-2 py-1.5 font-mono text-xs dark:bg-zinc-800 dark:text-zinc-100 ${
+                colorInputRaw && !colorValid
+                  ? 'border-red-400 bg-red-50 dark:border-red-500 dark:bg-red-950/20'
+                  : 'border-zinc-300 bg-white dark:border-zinc-600'
+              }`}
               placeholder="#000000"
+              maxLength={7}
             />
           </div>
+          {colorInputRaw && !colorValid && (
+            <p className="text-[11px] text-red-600 dark:text-red-400">Use #RGB or #RRGGBB format</p>
+          )}
         </label>
+
+        <div className="flex flex-col gap-1">
+          <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Background erase</span>
+          <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-snug">
+            Controls what colour covers the old text before writing the new text.
+          </p>
+          <div className="flex gap-1">
+            <button
+              type="button"
+              onClick={() => patch({ maskColorMode: 'auto' })}
+              className={`flex-1 rounded-md border px-2 py-1.5 text-xs font-medium ${
+                (format.maskColorMode ?? 'auto') === 'auto'
+                  ? 'border-indigo-600 bg-indigo-600 text-white'
+                  : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700'
+              }`}
+            >
+              Auto
+            </button>
+            <button
+              type="button"
+              onClick={() => patch({ maskColorMode: 'manual' })}
+              className={`flex-1 rounded-md border px-2 py-1.5 text-xs font-medium ${
+                (format.maskColorMode ?? 'auto') === 'manual'
+                  ? 'border-indigo-600 bg-indigo-600 text-white'
+                  : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700'
+              }`}
+            >
+              Pick colour
+            </button>
+          </div>
+          {(format.maskColorMode ?? 'auto') === 'manual' && (
+            <div className="flex items-center gap-2 pt-0.5">
+              <input
+                type="color"
+                value={format.maskColorHex?.match(/^#[0-9a-fA-F]{6}$/) ? format.maskColorHex : '#ffffff'}
+                onChange={(e) => patch({ maskColorHex: e.target.value })}
+                className="h-9 w-12 cursor-pointer rounded border border-zinc-300 bg-white p-0.5 dark:border-zinc-600"
+              />
+              <span className="font-mono text-xs text-zinc-600 dark:text-zinc-400">
+                {format.maskColorHex || '#ffffff'}
+              </span>
+            </div>
+          )}
+        </div>
 
         <label className="flex flex-col gap-1">
           <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">

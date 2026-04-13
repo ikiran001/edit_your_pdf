@@ -55,7 +55,7 @@ router.get('/editor-state/:sessionId', (req, res) => {
  * are accumulated in session-edits.json by stable `id` so a second save (client only sends new boxes
  * after reload) does not drop earlier flattened text.
  */
-router.post('/edit', express.json({ limit: '50mb' }), async (req, res) => {
+router.post('/edit', express.json({ limit: '52mb' }), async (req, res) => {
   const { sessionId, edits, applyTextSwap, textReplaceRules, nativeTextEdits } =
     req.body || {};
   if (!sessionId || typeof sessionId !== 'string') {

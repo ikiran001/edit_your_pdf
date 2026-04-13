@@ -12,9 +12,16 @@ export function usePdfSessionUpload() {
     setUploading(true)
     setUploadProgress(0)
     const uploadUrl = apiUrl('/upload')
+    const MAX_UPLOAD_BYTES = 52 * 1024 * 1024
     try {
       if (import.meta.env.PROD && !isApiBaseConfigured()) {
         throw new Error('NO_API_BASE')
+      }
+      if (file && file.size > MAX_UPLOAD_BYTES) {
+        throw new Error(`File too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum is 52 MB.`)
+      }
+      if (file && file.type && file.type !== 'application/pdf') {
+        throw new Error('Only PDF files are supported.')
       }
       const fd = new FormData()
       fd.append('file', file)
@@ -60,19 +67,6 @@ export function usePdfSessionUpload() {
       setUploadProgress(100)
       return data.sessionId
     } catch (e) {
-      if (e.message === 'NO_API_BASE' || (import.meta.env.PROD && !isApiBaseConfigured())) {
-        alert(
-          'Upload blocked: no backend URL in this build.\n\n' +
-            'GitHub: Settings - Secrets - Actions - VITE_API_BASE_URL = https://your-api.onrender.com\n' +
-            'Then re-run Deploy frontend to GitHub Pages.'
-        )
-      } else if (e.name === 'TypeError' && String(e.message).toLowerCase().includes('fetch')) {
-        alert(
-          `Cannot reach the API:\n${uploadUrl}\n\nCheck HTTPS, CORS, and that the API is awake.`
-        )
-      } else {
-        alert(e.message || 'Upload failed')
-      }
       throw e
     } finally {
       setUploading(false)
