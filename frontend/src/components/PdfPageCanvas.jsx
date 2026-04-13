@@ -993,6 +993,7 @@ export default function PdfPageCanvas({
       if (t.closest?.('[data-pdf-annot-draft]')) return
       if (t.closest?.('[data-pdf-inline-editor-root]')) return
       if (t.closest?.('[data-text-format-panel]')) return
+      if (t.closest?.('[data-pdf-edits-sidebar]')) return
       if (editingAnnotId) {
         const el = annotEditorRef.current
         const id = editingAnnotIdRef.current
@@ -1435,6 +1436,7 @@ export default function PdfPageCanvas({
       const t = e.target
       if (t.closest?.('[data-pdf-inline-editor-root]')) return
       if (t.closest?.('[data-text-format-panel]')) return
+      if (t.closest?.('[data-pdf-edits-sidebar]')) return
       if (t.closest?.('[data-pdf-annot-text-root]')) return
       if (t.closest?.('[data-pdf-annot-toolbar]')) return
       if (t.closest?.('[data-pdf-annot-draft]')) return
@@ -1448,6 +1450,46 @@ export default function PdfPageCanvas({
     document.addEventListener('pointerdown', onDocPointerDown, true)
     return () => document.removeEventListener('pointerdown', onDocPointerDown, true)
   }, [nativeEdit, commitNativeEdit])
+
+  /** Parent removed this slot (sidebar ✕) or cleared the session — close inline editor without re-committing. */
+  useEffect(() => {
+    const onSlotRemoved = (e) => {
+      const sid = e.detail?.slotId
+      if (typeof sid !== 'string' || sid.length < 8) return
+      if (nativeEditSlotIdRef.current !== sid) return
+      if (nativeBlurTimerRef.current) {
+        window.clearTimeout(nativeBlurTimerRef.current)
+        nativeBlurTimerRef.current = null
+      }
+      flushNativeSyncTimer()
+      nativeEditRef.current = null
+      nativeOpenBaselineStrRef.current = ''
+      nativeOpenBaselineFormatRef.current = null
+      nativeOpenBaselinePdfFontSizeRef.current = null
+      nativeEditSlotIdRef.current = null
+      setNativeEdit(null)
+    }
+    const onSessionCleared = () => {
+      if (!nativeEditRef.current) return
+      if (nativeBlurTimerRef.current) {
+        window.clearTimeout(nativeBlurTimerRef.current)
+        nativeBlurTimerRef.current = null
+      }
+      flushNativeSyncTimer()
+      nativeEditRef.current = null
+      nativeOpenBaselineStrRef.current = ''
+      nativeOpenBaselineFormatRef.current = null
+      nativeOpenBaselinePdfFontSizeRef.current = null
+      nativeEditSlotIdRef.current = null
+      setNativeEdit(null)
+    }
+    document.addEventListener('pdfpilot-remove-native-slot', onSlotRemoved)
+    document.addEventListener('pdfpilot-native-session-cleared', onSessionCleared)
+    return () => {
+      document.removeEventListener('pdfpilot-remove-native-slot', onSlotRemoved)
+      document.removeEventListener('pdfpilot-native-session-cleared', onSessionCleared)
+    }
+  }, [flushNativeSyncTimer])
 
   const annotPointerDown = (e, it) => {
     if (!annotLayerInteractive || !e.isPrimary || e.button !== 0) return

@@ -6,6 +6,18 @@ import { normRectIou } from './nativeTextOverlap.js'
  */
 export function sessionNativeMetaForBlock(block, pageIndex, sessionNatives) {
   if (!sessionNatives?.length || !block?.pdf) return null
+
+  /* Prefer stable block id so removing one edit cannot “stick” another line’s text via fuzzy x/y match. */
+  const bid = typeof block.id === 'string' && block.id.length ? block.id : null
+  if (bid) {
+    for (const n of sessionNatives) {
+      if (Number(n.pageIndex) !== pageIndex) continue
+      if (n.blockId === bid) {
+        return { text: n.text != null ? String(n.text) : '', slotId: n.slotId }
+      }
+    }
+  }
+
   const bx = Number(block.pdf.x)
   const by = Number(block.pdf.y)
   const bb = Number(block.pdf.baseline)

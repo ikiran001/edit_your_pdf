@@ -7,6 +7,7 @@ import EditorOnboardingBanner from '../shared/components/EditorOnboardingBanner.
 import EditPdfShortcutsModal from '../shared/components/EditPdfShortcutsModal.jsx'
 import Toolbar from './Toolbar'
 import ThumbnailSidebar from './ThumbnailSidebar'
+import EditsSidebar from './EditsSidebar'
 import PdfPageCanvas from './PdfPageCanvas'
 import TextFormatToolbar from './TextFormatToolbar'
 import { defaultTextFormat, formatFromTextBlock } from '../lib/textFormatDefaults'
@@ -82,6 +83,8 @@ export default function PdfEditor({ sessionId, onBack }) {
   const [activePage, setActivePage] = useState(0)
   const [saving, setSaving] = useState(false)
   const [downloading, setDownloading] = useState(false)
+  /** True while POST /edit + PDF reload after edits-list remove / clear (keeps UI in sync with file). */
+  const [editingListSync, setEditingListSync] = useState(false)
   const [saveHint, setSaveHint] = useState(null)
   const [errorHint, setErrorHint] = useState(null)
   const errorHintTimerRef = useRef(null)
@@ -372,9 +375,13 @@ export default function PdfEditor({ sessionId, onBack }) {
     }
   }, [nativeTextEdits, pagesItems]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const persistPdfToServer = useCallback(async () => {
-    const edits = buildEditsPayload(pagesItemsRef.current)
-    const nativePayload = nativeTextEditsRef.current
+  const persistPdfToServer = useCallback(async (opts = {}) => {
+    const pagesMap = opts.pagesItemsOverride ?? pagesItemsRef.current
+    const nativePayload =
+      opts.nativeTextEditsOverride !== undefined
+        ? opts.nativeTextEditsOverride
+        : nativeTextEditsRef.current
+    const edits = buildEditsPayload(pagesMap)
     if (import.meta.env.DEV) {
       console.debug('[save] POST /edit', {
         annotationPages: edits.pages?.length ?? 0,
@@ -392,6 +399,7 @@ export default function PdfEditor({ sessionId, onBack }) {
         edits,
         applyTextSwap: false,
         nativeTextEdits: nativePayload,
+        ...(opts.replaceSessionAnnotations ? { replaceSessionAnnotations: true } : {}),
       }),
     })
     const raw = await res.text()
@@ -416,6 +424,26 @@ export default function PdfEditor({ sessionId, onBack }) {
   const reloadPdfFromServer = useCallback(() => {
     setPdfDoc(null)
     setPdfBust((v) => v + 1)
+  }, [])
+
+  /**
+   * Blur any open inline native editor so PdfPageCanvas commits, then wait for timers / React
+   * before persist reads nativeTextEditsRef.
+   */
+  const commitActiveInlineEditor = useCallback(async () => {
+    const editorEl = document.querySelector(
+      '[data-pdf-inline-editor-root][contenteditable="true"]'
+    )
+    if (editorEl instanceof HTMLElement) {
+      editorEl.blur()
+    }
+    await new Promise((r) => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          window.setTimeout(r, 64)
+        })
+      })
+    })
   }, [])
 
   const addNativeTextEdit = useCallback(
@@ -465,6 +493,7 @@ export default function PdfEditor({ sessionId, onBack }) {
       const next = [
         ...rest,
         {
+          blockId: typeof blockId === 'string' && blockId.length ? blockId : undefined,
           key,
           slotId: effectiveSlotId,
           pageIndex,
@@ -505,31 +534,160 @@ export default function PdfEditor({ sessionId, onBack }) {
     )
     nativeTextEditsRef.current = next
     setNativeTextEdits(next)
-    if (blockId) {
+    const bid =
+      typeof blockId === 'string' && blockId.length
+        ? blockId
+        : prev.find((e) => e.slotId === slotId)?.blockId
+    if (bid) {
       setBlockTextOverrides((prevOvr) => {
-        if (!(blockId in prevOvr)) return prevOvr
+        if (!(bid in prevOvr)) return prevOvr
         const n = { ...prevOvr }
-        delete n[blockId]
+        delete n[bid]
         return n
       })
     }
   }, [])
 
-  /**
-   * If a native inline text editor is currently focused, blur it so `commitNativeEdit`
-   * fires via its 0ms timer and the final text + format reach `nativeTextEditsRef` before
-   * `persistPdfToServer` reads it. The 16ms wait covers the 0ms timer and synchronous
-   * `nativeTextEditsRef.current` update inside `addNativeTextEdit`.
-   */
-  const commitActiveInlineEditor = useCallback(async () => {
-    const editorEl = document.querySelector(
-      '[data-pdf-inline-editor-root][contenteditable="true"]'
-    )
-    if (editorEl instanceof HTMLElement) {
-      editorEl.blur()
-      await new Promise((r) => window.setTimeout(r, 16))
+  /** Remove a native line edit from the session list (e.g. Edits sidebar ✕). */
+  const removeNativeTextEditBySlot = useCallback(
+    async (slotId) => {
+      if (typeof slotId !== 'string' || slotId.length < 8) return
+      cancelScheduledAutosave()
+      setEditingListSync(true)
+      try {
+        /* Flush any open inline editor first, or its blur commit would fight this removal. */
+        await commitActiveInlineEditor()
+        const prev = nativeTextEditsRef.current
+        const victim = prev.find((e) => e.slotId === slotId)
+        if (!victim) return
+        const next = prev.filter((e) => e.slotId !== slotId)
+        nativeTextEditsRef.current = next
+        setNativeTextEdits(next)
+        const bid = victim.blockId
+        if (bid) {
+          setBlockTextOverrides((prevOvr) => {
+            if (!(bid in prevOvr)) return prevOvr
+            const n = { ...prevOvr }
+            delete n[bid]
+            return n
+          })
+        }
+        document.dispatchEvent(
+          new CustomEvent('pdfpilot-remove-native-slot', { detail: { slotId } })
+        )
+        await persistPdfToServer({ nativeTextEditsOverride: next })
+        reloadPdfFromServer()
+      } catch (e) {
+        console.error(e)
+        showErrorHint(
+          e?.message || 'Could not update the PDF after removing that edit. Try Save PDF.'
+        )
+      } finally {
+        setEditingListSync(false)
+      }
+    },
+    [
+      cancelScheduledAutosave,
+      commitActiveInlineEditor,
+      persistPdfToServer,
+      reloadPdfFromServer,
+      showErrorHint,
+    ]
+  )
+
+  const removeAnnotationItem = useCallback(
+    async (pageIndex, itemId) => {
+      if (typeof itemId !== 'string' || !itemId.length) return
+      cancelScheduledAutosave()
+      setEditingListSync(true)
+      try {
+        await commitActiveInlineEditor()
+        const prev = pagesItemsRef.current
+        const list = prev[pageIndex] ?? []
+        const filtered = list.filter((it) => it.id !== itemId)
+        if (filtered.length === list.length) return
+        const nextPages = { ...prev, [pageIndex]: filtered }
+        commit((p) => {
+          const l = p[pageIndex] ?? []
+          const f = l.filter((it) => it.id !== itemId)
+          if (f.length === l.length) return p
+          return { ...p, [pageIndex]: f }
+        })
+        await persistPdfToServer({ pagesItemsOverride: nextPages })
+        reloadPdfFromServer()
+      } catch (e) {
+        console.error(e)
+        showErrorHint(
+          e?.message || 'Could not update the PDF after removing that markup. Try Save PDF.'
+        )
+      } finally {
+        setEditingListSync(false)
+      }
+    },
+    [
+      commit,
+      cancelScheduledAutosave,
+      commitActiveInlineEditor,
+      persistPdfToServer,
+      reloadPdfFromServer,
+      showErrorHint,
+    ]
+  )
+
+  const handleClearAllEdits = useCallback(() => {
+    if (
+      nativeTextEdits.length === 0 &&
+      !Object.values(pagesItems).some((arr) => arr && arr.length > 0)
+    ) {
+      return
     }
-  }, [])
+    if (
+      !window.confirm(
+        'Remove all edits in this session? This cannot be undone (use Undo before clearing if you change your mind).'
+      )
+    ) {
+      return
+    }
+    cancelScheduledAutosave()
+    void (async () => {
+      setEditingListSync(true)
+      try {
+        await commitActiveInlineEditor()
+        nativeTextEditsRef.current = []
+        setNativeTextEdits([])
+        setBlockTextOverrides({})
+        reset({})
+        clearAnnotFormatUi()
+        setTextBoxOverlayActions(null)
+        document.dispatchEvent(new CustomEvent('pdfpilot-native-session-cleared'))
+        await persistPdfToServer({
+          pagesItemsOverride: {},
+          nativeTextEditsOverride: [],
+          replaceSessionAnnotations: true,
+        })
+        reloadPdfFromServer()
+        showToast('All edits cleared')
+      } catch (e) {
+        console.error(e)
+        showErrorHint(
+          e?.message || 'Could not clear the PDF on the server. Try Save PDF or reload the page.'
+        )
+      } finally {
+        setEditingListSync(false)
+      }
+    })()
+  }, [
+    nativeTextEdits.length,
+    pagesItems,
+    cancelScheduledAutosave,
+    reset,
+    clearAnnotFormatUi,
+    showToast,
+    commitActiveInlineEditor,
+    persistPdfToServer,
+    reloadPdfFromServer,
+    showErrorHint,
+  ])
 
   const handleSave = async () => {
     cancelScheduledAutosave()
@@ -780,6 +938,19 @@ export default function PdfEditor({ sessionId, onBack }) {
             ))}
           </div>
         </div>
+        <EditsSidebar
+          nativeTextEdits={nativeTextEdits}
+          pagesItems={pagesItems}
+          numPages={numPages}
+          onRemoveNative={removeNativeTextEditBySlot}
+          onRemoveAnnot={removeAnnotationItem}
+          onClearAll={handleClearAllEdits}
+          onSave={handleSave}
+          onDownload={handleDownload}
+          saving={saving}
+          downloading={downloading}
+          listSyncing={editingListSync}
+        />
         {((activeTool === 'editText' &&
           editTextMode &&
           (inlineTextEditorOpen || addedTextFormatOpen || annotFormatTarget != null)) ||
