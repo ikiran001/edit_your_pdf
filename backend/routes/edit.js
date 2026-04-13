@@ -7,11 +7,10 @@ import {
   applyTextReplacements,
   defaultEditorToLoveRules,
 } from '../services/applyTextReplacements.js';
-import { mergeEditsWithNative } from '../utils/mergeEdits.js';
+import { dedupeNativeTextEditRecords, mergeEditsWithNative } from '../utils/mergeEdits.js';
 import {
   loadNativeTextEdits,
   saveNativeTextEdits,
-  mergeNativeTextEdits,
   loadSessionEdits,
   saveSessionEdits,
   sessionHasAnnotationItems,
@@ -56,8 +55,15 @@ router.get('/editor-state/:sessionId', (req, res) => {
  * after reload) does not drop earlier flattened text.
  */
 router.post('/edit', express.json({ limit: '52mb' }), async (req, res) => {
-  const { sessionId, edits, applyTextSwap, textReplaceRules, nativeTextEdits } =
-    req.body || {};
+  const {
+    sessionId,
+    edits,
+    applyTextSwap,
+    textReplaceRules,
+    nativeTextEdits,
+    /** When true, replace session-edits.json with empty (used by editor “Clear all”). */
+    replaceSessionAnnotations,
+  } = req.body || {};
   if (!sessionId || typeof sessionId !== 'string') {
     return res.status(400).json({ error: 'sessionId required' });
   }
@@ -68,14 +74,25 @@ router.post('/edit', express.json({ limit: '52mb' }), async (req, res) => {
     return res.status(404).json({ error: 'Session or PDF not found' });
   }
   try {
-    const persistedNative = loadNativeTextEdits(uploadsRoot, sessionId);
-    const mergedNative = mergeNativeTextEdits(persistedNative, nativeTextEdits || []);
-    saveNativeTextEdits(uploadsRoot, sessionId, mergedNative);
+    /**
+     * Client always sends the full current native list; treat it as authoritative so removals
+     * are not resurrected from native-text-edits.json (old merge concatenated persisted + incoming).
+     */
+    let mergedNative;
+    if (Array.isArray(nativeTextEdits)) {
+      mergedNative = dedupeNativeTextEditRecords(nativeTextEdits);
+      saveNativeTextEdits(uploadsRoot, sessionId, mergedNative);
+    } else {
+      mergedNative = loadNativeTextEdits(uploadsRoot, sessionId);
+    }
 
     const incomingEdits = edits && typeof edits === 'object' ? edits : { pages: [] };
     const persistedAnnot = loadSessionEdits(uploadsRoot, sessionId);
     let pagesEdits;
-    if (sessionHasAnnotationItems(incomingEdits)) {
+    if (replaceSessionAnnotations) {
+      pagesEdits = { pages: [] };
+      saveSessionEdits(uploadsRoot, sessionId, pagesEdits);
+    } else if (sessionHasAnnotationItems(incomingEdits)) {
       pagesEdits = mergeAnnotationEdits(persistedAnnot, incomingEdits);
       saveSessionEdits(uploadsRoot, sessionId, pagesEdits);
     } else {

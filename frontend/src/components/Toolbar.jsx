@@ -24,6 +24,9 @@ export default function Toolbar({
   saving,
   downloading,
   onShortcutsClick,
+  zoom = 1.0,
+  onZoomIn,
+  onZoomOut,
 }) {
   return (
     <div className="fx-glass-header flex flex-wrap items-center gap-1.5 px-2 py-1.5 sm:gap-2 sm:px-3 sm:py-2">
@@ -77,6 +80,32 @@ export default function Toolbar({
       >
         Redo
       </button>
+      {(onZoomIn || onZoomOut) && (
+        <>
+          <span className="mx-1 hidden h-6 w-px bg-zinc-200 sm:inline dark:bg-zinc-600" />
+          <button
+            type="button"
+            onClick={onZoomOut}
+            disabled={zoom <= 0.5}
+            title="Zoom out"
+            className="rounded-lg bg-zinc-100 px-2 py-1 text-xs font-medium text-zinc-800 disabled:opacity-40 sm:px-2.5 sm:py-1.5 sm:text-sm dark:bg-zinc-800 dark:text-zinc-100"
+          >
+            −
+          </button>
+          <span className="min-w-[3rem] text-center text-xs font-medium tabular-nums text-zinc-600 dark:text-zinc-300">
+            {Math.round(zoom * 100)}%
+          </span>
+          <button
+            type="button"
+            onClick={onZoomIn}
+            disabled={zoom >= 2.0}
+            title="Zoom in"
+            className="rounded-lg bg-zinc-100 px-2 py-1 text-xs font-medium text-zinc-800 disabled:opacity-40 sm:px-2.5 sm:py-1.5 sm:text-sm dark:bg-zinc-800 dark:text-zinc-100"
+          >
+            +
+          </button>
+        </>
+      )}
       {onShortcutsClick && (
         <button
           type="button"
