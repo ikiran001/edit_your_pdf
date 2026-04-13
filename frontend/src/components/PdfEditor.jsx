@@ -5,6 +5,7 @@ import { usePagesHistory } from '../hooks/usePagesHistory'
 import ThemeToggle from '../shared/components/ThemeToggle.jsx'
 import EditorOnboardingBanner from '../shared/components/EditorOnboardingBanner.jsx'
 import EditPdfShortcutsModal from '../shared/components/EditPdfShortcutsModal.jsx'
+import DownloadCompleteModal from '../shared/components/DownloadCompleteModal.jsx'
 import Toolbar from './Toolbar'
 import ThumbnailSidebar from './ThumbnailSidebar'
 import EditsSidebar from './EditsSidebar'
@@ -114,6 +115,7 @@ export default function PdfEditor({ sessionId, onBack }) {
   /** Done / Reset for add-text draft or placed-text edit (driven by PdfPageCanvas). */
   const [textBoxOverlayActions, setTextBoxOverlayActions] = useState(null)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
+  const [downloadCompleteModal, setDownloadCompleteModal] = useState(null)
   const [showOnboarding, setShowOnboarding] = useState(readEditorOnboardingVisible)
   const [toastMessage, setToastMessage] = useState(null)
   const toastTimerRef = useRef(null)
@@ -747,8 +749,7 @@ export default function PdfEditor({ sessionId, onBack }) {
       URL.revokeObjectURL(href)
 
       reloadPdfFromServer()
-      setSaveHint(MSG.fileReady)
-      window.setTimeout(() => setSaveHint(null), 6000)
+      setDownloadCompleteModal({ fileName: 'edited.pdf', fileSizeBytes: blob.size })
       trackToolCompleted(EDIT_TOOL, true)
       trackFileDownloaded({
         tool: EDIT_TOOL,
@@ -974,6 +975,12 @@ export default function PdfEditor({ sessionId, onBack }) {
         )}
       </div>
       <EditPdfShortcutsModal open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
+      <DownloadCompleteModal
+        open={Boolean(downloadCompleteModal)}
+        onClose={() => setDownloadCompleteModal(null)}
+        fileName={downloadCompleteModal?.fileName ?? 'edited.pdf'}
+        fileSizeBytes={downloadCompleteModal?.fileSizeBytes ?? 0}
+      />
       {toastMessage && (
         <div
           role="status"
