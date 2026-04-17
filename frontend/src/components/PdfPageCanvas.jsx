@@ -12,13 +12,32 @@ import {
   mergePdfStyleHints,
 } from '../lib/textFormatDefaults'
 import { sessionNativeMetaForBlock } from '../lib/sessionNativeTextMatch.js'
+import { defaultPlacementForPng } from '../features/sign-pdf/signPdfGeometry.js'
+import { trackSignaturePlaced } from '../lib/analytics.js'
 
 const RENDER_SCALE = 1.35
 const MAX_DRAW_POINTS = 1000
 const MAX_ANNOT_TEXT_PER_PAGE = 50
 const MAX_ANNOT_TEXT_LENGTH = 2000
+const MAX_SIGN_PER_PAGE = 10
 
 const ANNOT_SCOPE_EVENT = 'pdf-editor-annot-scope'
+
+/** Raw or data-URL base64 → PNG bytes for placement sizing. */
+function rawBase64ToUint8(b64) {
+  const s = String(b64 || '')
+    .replace(/^data:image\/png;base64,/i, '')
+    .trim()
+  if (!s) return null
+  try {
+    const bin = atob(s)
+    const u8 = new Uint8Array(bin.length)
+    for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i)
+    return u8
+  } catch {
+    return null
+  }
+}
 
 function clamp01(v) {
   return Math.min(1, Math.max(0, v))
@@ -243,6 +262,8 @@ export default function PdfPageCanvas({
   onAddedTextCommitted,
   /** Register Done/Reset handlers: `(pageIndex, payload | null) => void`. */
   onTextBoxOverlayActionsChange,
+  /** Raw PNG base64 (no `data:` prefix) for signature placement; empty disables. */
+  signatureImageBase64 = '',
 }) {
   const pdfCanvasRef = useRef(null)
   const overlayRef = useRef(null)
@@ -254,6 +275,11 @@ export default function PdfPageCanvas({
   const textDraftRef = useRef(null)
   const draftInputRef = useRef(null)
   const textDraftDragRef = useRef(null)
+  const [sigDraft, setSigDraft] = useState(null)
+  const sigDraftRef = useRef(null)
+  const sigDraftDragRef = useRef(null)
+  const sigDraftWrapRef = useRef(null)
+  const [sigDefaultBox, setSigDefaultBox] = useState(null)
   const dragRef = useRef(null)
   const drawPointsRef = useRef(null)
   const [textRuns, setTextRuns] = useState([])
@@ -293,6 +319,10 @@ export default function PdfPageCanvas({
     () => (items || []).filter((it) => it.type === 'text' && !it.rasterizedInPdf),
     [items]
   )
+  const signatureAnnotItems = useMemo(
+    () => (items || []).filter((it) => it.type === 'signature' && !it.rasterizedInPdf),
+    [items]
+  )
   const [selectedAnnotId, setSelectedAnnotId] = useState(null)
   const [editingAnnotId, setEditingAnnotId] = useState(null)
   const [annotDragVisual, setAnnotDragVisual] = useState(null)
@@ -301,7 +331,8 @@ export default function PdfPageCanvas({
   const annotEditBaselineRef = useRef('')
   const editingAnnotIdRef = useRef(null)
 
-  const annotLayerInteractive = !tool || tool === 'text' || tool === 'editText'
+  const annotLayerInteractive =
+    !tool || tool === 'text' || tool === 'editText' || tool === 'signature'
 
   useLayoutEffect(() => {
     editingAnnotIdRef.current = editingAnnotId
@@ -310,6 +341,19 @@ export default function PdfPageCanvas({
   useLayoutEffect(() => {
     textDraftRef.current = textDraft
   }, [textDraft])
+
+  useLayoutEffect(() => {
+    sigDraftRef.current = sigDraft
+  }, [sigDraft])
+
+  useLayoutEffect(() => {
+    if (!sigDraft) return
+    try {
+      sigDraftWrapRef.current?.focus({ preventScroll: true })
+    } catch {
+      /* ignore */
+    }
+  }, [sigDraft])
 
   useLayoutEffect(() => {
     nativeEditRef.current = nativeEdit
@@ -411,6 +455,9 @@ export default function PdfPageCanvas({
       setEditingAnnotId(null)
       setAnnotDragVisual(null)
       annotDragRef.current = null
+      sigDraftDragRef.current = null
+      sigDraftRef.current = null
+      setSigDraft(null)
     }
     window.addEventListener(ANNOT_SCOPE_EVENT, onScope)
     return () => window.removeEventListener(ANNOT_SCOPE_EVENT, onScope)
@@ -759,6 +806,24 @@ export default function PdfPageCanvas({
       return
     }
 
+    if (tool === 'signature') {
+      if (!signatureImageBase64 || !sigDefaultBox) {
+        e.preventDefault()
+        return
+      }
+      const { nw, nh } = sigDefaultBox
+      let nx = clamp01(n.nx - nw / 2)
+      let ny = clamp01(n.ny - nh / 2)
+      nx = Math.min(nx, 1 - nw)
+      ny = Math.min(ny, 1 - nh)
+      window.dispatchEvent(new CustomEvent(ANNOT_SCOPE_EVENT, { detail: { pageIndex } }))
+      setSelectedAnnotId(null)
+      setEditingAnnotId(null)
+      setSigDraft({ nx, ny, nw, nh })
+      e.preventDefault()
+      return
+    }
+
     if (tool === 'draw') {
       drawPointsRef.current = [{ nx: n.nx, ny: n.ny }]
       e.currentTarget.setPointerCapture(e.pointerId)
@@ -944,6 +1009,66 @@ export default function PdfPageCanvas({
     [onUpdateItems, textFormat, textFormatRef, onAddedTextCommitted, pageIndex]
   )
 
+  const cancelSigDraft = useCallback(() => {
+    sigDraftDragRef.current = null
+    sigDraftRef.current = null
+    setSigDraft(null)
+  }, [])
+
+  const commitSigPlacement = useCallback(() => {
+    if (!sigDraftRef.current || !signatureImageBase64) return
+    const d = sigDraftRef.current
+    sigDraftDragRef.current = null
+    sigDraftRef.current = null
+    setSigDraft(null)
+    const count = (items || []).filter((it) => it.type === 'signature').length
+    if (count >= MAX_SIGN_PER_PAGE) return
+    const id = crypto.randomUUID()
+    onUpdateItems((prev) => [
+      ...prev,
+      {
+        id,
+        type: 'signature',
+        x: d.nx,
+        y: d.ny,
+        w: d.nw,
+        h: d.nh,
+        imageBase64: signatureImageBase64,
+      },
+    ])
+    trackSignaturePlaced(pageIndex + 1)
+    window.dispatchEvent(new CustomEvent(ANNOT_SCOPE_EVENT, { detail: { pageIndex } }))
+    setSelectedAnnotId(id)
+  }, [items, signatureImageBase64, onUpdateItems, pageIndex])
+
+  useEffect(() => {
+    let cancelled = false
+    if (tool !== 'signature' || !signatureImageBase64 || !pdfPage) {
+      setSigDefaultBox(null)
+      return undefined
+    }
+    const u8 = rawBase64ToUint8(signatureImageBase64)
+    if (!u8?.length) {
+      setSigDefaultBox(null)
+      return undefined
+    }
+    ;(async () => {
+      try {
+        const box = await defaultPlacementForPng(
+          u8,
+          () => pdfPage.getViewport({ scale: 1 }),
+          pageIndex
+        )
+        if (!cancelled) setSigDefaultBox(box)
+      } catch {
+        if (!cancelled) setSigDefaultBox({ nx: 0.25, ny: 0.7, nw: 0.2, nh: 0.08 })
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [tool, signatureImageBase64, pdfPage, pageIndex])
+
   useEffect(() => {
     if (!onTextBoxOverlayActionsChange) return
     if (textDraft) {
@@ -954,6 +1079,13 @@ export default function PdfPageCanvas({
           textDraftRef.current = null
           setTextDraft(null)
         },
+      })
+      return () => onTextBoxOverlayActionsChange(pageIndex, null)
+    }
+    if (sigDraft) {
+      onTextBoxOverlayActionsChange(pageIndex, {
+        done: () => commitSigPlacement(),
+        reset: () => cancelSigDraft(),
       })
       return () => onTextBoxOverlayActionsChange(pageIndex, null)
     }
@@ -982,19 +1114,28 @@ export default function PdfPageCanvas({
     pageIndex,
     commitText,
     commitAnnotEdit,
+    sigDraft,
+    commitSigPlacement,
+    cancelSigDraft,
   ])
 
   useEffect(() => {
-    if (!selectedAnnotId && !editingAnnotId && !textDraft) return
+    if (!selectedAnnotId && !editingAnnotId && !textDraft && !sigDraft) return
     const onDocDown = (e) => {
       const t = e.target
       if (textDraft && !t.closest?.('[data-pdf-annot-draft]')) {
         commitText(draftInputRef.current?.value ?? '')
         return
       }
+      if (sigDraft && !t.closest?.('[data-pdf-sig-draft]')) {
+        commitSigPlacement()
+        return
+      }
       if (t.closest?.('[data-pdf-annot-text-root]')) return
+      if (t.closest?.('[data-pdf-sig-annot-root]')) return
       if (t.closest?.('[data-pdf-annot-toolbar]')) return
       if (t.closest?.('[data-pdf-annot-draft]')) return
+      if (t.closest?.('[data-pdf-sig-draft]')) return
       if (t.closest?.('[data-pdf-inline-editor-root]')) return
       if (t.closest?.('[data-text-format-panel]')) return
       if (t.closest?.('[data-pdf-edits-sidebar]')) return
@@ -1018,6 +1159,7 @@ export default function PdfPageCanvas({
     return () => document.removeEventListener('pointerdown', onDocDown, true)
   }, [
     textDraft,
+    sigDraft,
     selectedAnnotId,
     editingAnnotId,
     formatSyncTarget,
@@ -1025,6 +1167,7 @@ export default function PdfPageCanvas({
     onClearAnnotFormatTarget,
     commitText,
     commitAnnotEdit,
+    commitSigPlacement,
   ])
 
   const onDraftDragPointerDown = useCallback((e) => {
@@ -1070,11 +1213,66 @@ export default function PdfPageCanvas({
     }
   }, [])
 
+  const onSigDraftGripPointerDown = useCallback((e) => {
+    if (!e.isPrimary || e.button !== 0) return
+    e.preventDefault()
+    e.stopPropagation()
+    const d0 = sigDraftRef.current
+    if (!d0) return
+    const { cssW, cssH } = metaRef.current
+    if (cssW < 1 || cssH < 1) return
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId)
+    } catch {
+      /* ignore */
+    }
+    sigDraftDragRef.current = {
+      pointerId: e.pointerId,
+      sx: e.clientX,
+      sy: e.clientY,
+      ox: d0.nx,
+      oy: d0.ny,
+    }
+  }, [])
+
+  const onSigDraftDragPointerMove = useCallback((e) => {
+    const drag = sigDraftDragRef.current
+    if (!drag || e.pointerId !== drag.pointerId) return
+    const { cssW, cssH } = metaRef.current
+    if (cssW < 1 || cssH < 1) return
+    const d0 = sigDraftRef.current
+    if (!d0) return
+    let nx = clamp01(drag.ox + (e.clientX - drag.sx) / cssW)
+    let ny = clamp01(drag.oy + (e.clientY - drag.sy) / cssH)
+    nx = Math.min(nx, 1 - d0.nw)
+    ny = Math.min(ny, 1 - d0.nh)
+    setSigDraft((prev) => (prev ? { ...prev, nx, ny } : null))
+  }, [])
+
+  const onSigDraftDragPointerUp = useCallback((e) => {
+    const drag = sigDraftDragRef.current
+    if (!drag || e.pointerId !== drag.pointerId) return
+    sigDraftDragRef.current = null
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    } catch {
+      /* ignore */
+    }
+  }, [])
+
   useEffect(() => {
     if (tool === 'text') return
     textDraftDragRef.current = null
     textDraftRef.current = null
     setTextDraft(null)
+  }, [tool])
+
+  useEffect(() => {
+    if (tool === 'signature') return
+    sigDraftDragRef.current = null
+    sigDraftRef.current = null
+    setSigDraft(null)
+    setSigDefaultBox(null)
   }, [tool])
 
   const { cssW: cw, cssH: ch, bmpW, bmpH } = canvasLayout
@@ -1442,8 +1640,10 @@ export default function PdfPageCanvas({
       if (t.closest?.('[data-text-format-panel]')) return
       if (t.closest?.('[data-pdf-edits-sidebar]')) return
       if (t.closest?.('[data-pdf-annot-text-root]')) return
+      if (t.closest?.('[data-pdf-sig-annot-root]')) return
       if (t.closest?.('[data-pdf-annot-toolbar]')) return
       if (t.closest?.('[data-pdf-annot-draft]')) return
+      if (t.closest?.('[data-pdf-sig-draft]')) return
       /* Let line tap targets handle the event in the target phase (iPad / iOS WebKit). */
       if (t.closest?.('[data-pdf-text-line-tap]')) return
       const el = nativeEditorElRef.current
@@ -1563,7 +1763,10 @@ export default function PdfPageCanvas({
       patchAnnotItem(it.id, { x: nx, y: ny })
       selectAnnot(it.id, { notifyFormat: true, openEditor: false })
     } else if (!d.moved && editingAnnotIdRef.current !== it.id) {
-      selectAnnot(it.id, { notifyFormat: true, openEditor: true })
+      selectAnnot(it.id, {
+        notifyFormat: it.type === 'text',
+        openEditor: it.type === 'text',
+      })
     }
     setAnnotDragVisual(null)
   }
@@ -1716,6 +1919,61 @@ export default function PdfPageCanvas({
                     </div>
                   </div>
                 )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+      {signatureAnnotItems.length > 0 && ready && cw > 0 && ch > 0 && (
+        <div
+          className={`pointer-events-none absolute left-0 top-0 ${
+            annotLayerInteractive ? 'z-[34]' : 'z-[3]'
+          }`}
+          style={{ width: cw, height: ch }}
+        >
+          {signatureAnnotItems.map((it) => {
+            const isSel = selectedAnnotId === it.id
+            const dx = annotDragVisual?.id === it.id ? annotDragVisual.dx : 0
+            const dy = annotDragVisual?.id === it.id ? annotDragVisual.dy : 0
+            const raw = String(it.imageBase64 || '').replace(/^data:image\/png;base64,/i, '')
+            const src = raw ? `data:image/png;base64,${raw}` : ''
+            return (
+              <div
+                key={it.id}
+                data-pdf-sig-annot-root
+                className="pointer-events-auto absolute"
+                style={{
+                  left: it.x * cw + dx,
+                  top: it.y * ch + dy,
+                  width: it.w * cw,
+                  height: it.h * ch,
+                }}
+              >
+                <div
+                  className={[
+                    'relative h-full w-full',
+                    annotLayerInteractive ? 'cursor-grab active:cursor-grabbing' : '',
+                    isSel && annotLayerInteractive ? 'rounded-md ring-2 ring-blue-600' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                  onPointerDown={(e) => annotPointerDown(e, it)}
+                  onPointerMove={(e) => annotPointerMove(e, it)}
+                  onPointerUp={(e) => endAnnotDrag(e, it)}
+                  onPointerCancel={(e) => endAnnotDrag(e, it)}
+                >
+                  {isSel && annotLayerInteractive && (
+                    <TextAnnotBoxDeleteBtn onDelete={() => removeTextAnnot(it.id)} />
+                  )}
+                  {src ? (
+                    <img
+                      alt=""
+                      src={src}
+                      draggable={false}
+                      className="pointer-events-none h-full w-full object-contain"
+                    />
+                  ) : null}
+                </div>
               </div>
             )
           })}
@@ -1968,6 +2226,63 @@ export default function PdfPageCanvas({
           This page has no selectable text (likely a scan). You can still Add Text on top of it.
         </div>
       )}
+      {tool === 'signature' &&
+        ready &&
+        !signatureImageBase64 &&
+        !sigDraft && (
+          <div className="pointer-events-none absolute inset-x-0 top-1 z-[5] rounded bg-amber-100/95 px-2 py-1 text-center text-[11px] text-amber-950 dark:bg-amber-950/90 dark:text-amber-100">
+            Create a signature first (dialog should open automatically).
+          </div>
+        )}
+      {sigDraft &&
+        cw > 0 &&
+        signatureImageBase64 &&
+        (() => {
+          const raw = String(signatureImageBase64).replace(/^data:image\/png;base64,/i, '')
+          const src = raw ? `data:image/png;base64,${raw}` : ''
+          return (
+            <div
+              ref={sigDraftWrapRef}
+              data-pdf-sig-draft
+              tabIndex={0}
+              className="absolute z-[50] cursor-default overflow-visible rounded-md ring-2 ring-blue-600 outline-none"
+              style={{
+                left: sigDraft.nx * cw,
+                top: sigDraft.ny * ch,
+                width: sigDraft.nw * cw,
+                height: sigDraft.nh * ch,
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  e.preventDefault()
+                  cancelSigDraft()
+                }
+              }}
+            >
+              <div
+                role="separator"
+                aria-label="Drag to move"
+                title="Drag to move"
+                className="absolute bottom-full left-0 right-0 z-[5] mb-0.5 h-2.5 cursor-grab rounded-sm border border-blue-600/30 bg-blue-600/10 active:cursor-grabbing dark:bg-blue-500/15"
+                onPointerDown={onSigDraftGripPointerDown}
+                onPointerMove={onSigDraftDragPointerMove}
+                onPointerUp={onSigDraftDragPointerUp}
+                onPointerCancel={onSigDraftDragPointerUp}
+              />
+              <TextAnnotBoxDeleteBtn onDelete={cancelSigDraft} />
+              <div className="relative h-full w-full">
+                {src ? (
+                  <img
+                    alt=""
+                    src={src}
+                    draggable={false}
+                    className="h-full w-full object-contain"
+                  />
+                ) : null}
+              </div>
+            </div>
+          )
+        })()}
       {textDraft && cw > 0 && (() => {
         const draftFmt = textFormat ?? defaultTextFormat()
         const draftFsCss = Math.max(8, Math.min(144, Number(draftFmt.fontSizeCss) || 14))

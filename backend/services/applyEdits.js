@@ -522,6 +522,35 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
           }
           break;
         }
+        case 'signature': {
+          const raw = String(item.imageBase64 || '')
+            .trim()
+            .replace(/^data:image\/png;base64,/, '');
+          if (!raw.length) break;
+          let buf;
+          try {
+            buf = Buffer.from(raw, 'base64');
+          } catch {
+            break;
+          }
+          if (buf.length < 32 || buf.length > 2_500_000) break;
+          let pngImage;
+          try {
+            pngImage = await doc.embedPng(buf);
+          } catch {
+            break;
+          }
+          const { x, y, width, height } = normRectToPdf(
+            W,
+            H,
+            item.x ?? 0,
+            item.y ?? 0,
+            item.w ?? 0.1,
+            item.h ?? 0.05,
+          );
+          page.drawImage(pngImage, { x, y, width, height });
+          break;
+        }
         default:
           break;
       }

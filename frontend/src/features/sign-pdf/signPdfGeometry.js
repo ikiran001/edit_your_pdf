@@ -23,6 +23,17 @@ export function viewportRectToPdfDrawImage(viewport, vx, vy, sw, sh) {
   }
 }
 
+/** Raw base64 (no data: prefix) for API payloads. */
+export function uint8ToBase64(u8) {
+  if (!u8?.length) return ''
+  let binary = ''
+  const chunk = 8192
+  for (let i = 0; i < u8.length; i += chunk) {
+    binary += String.fromCharCode.apply(null, u8.subarray(i, Math.min(i + chunk, u8.length)))
+  }
+  return btoa(binary)
+}
+
 /** Small PNGs only (signatures); avoids blob URL lifecycle in React. */
 export function uint8ToDataUrlPng(u8) {
   let binary = ''

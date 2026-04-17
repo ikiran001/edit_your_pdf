@@ -5,6 +5,7 @@ import { BRAND_NAME, MSG } from '../shared/constants/branding.js'
 const tools = [
   { id: 'editText', label: 'Edit text' },
   { id: 'text', label: 'Add Text' },
+  { id: 'signature', label: 'Signature' },
   { id: 'draw', label: 'Draw' },
   { id: 'highlight', label: 'Highlight' },
   { id: 'rect', label: 'Rectangle' },
