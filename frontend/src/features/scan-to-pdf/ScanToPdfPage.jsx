@@ -65,6 +65,8 @@ export default function ScanToPdfPage() {
   const retakeIdRef = useRef(null)
   const pagesRef = useRef(pages)
   pagesRef.current = pages
+  /** Bumps when a new stream is acquired so `<video>` remounts (fixes stale ref after review → camera). */
+  const [cameraMountKey, setCameraMountKey] = useState(0)
 
   useToolEngagement(SCAN_TOOL, true)
 
@@ -87,6 +89,21 @@ export default function ScanToPdfPage() {
     [revokePageUrls]
   )
 
+  /** Bind MediaStream after React mounts `<video>` (rAF right after setState often sees ref=null). */
+  useEffect(() => {
+    if (phase !== 'camera') return undefined
+    const stream = streamRef.current
+    if (!stream) return undefined
+    const el = videoRef.current
+    if (!el) return undefined
+    el.srcObject = stream
+    const playPromise = el.play()
+    if (playPromise?.catch) playPromise.catch(() => {})
+    return () => {
+      if (el.srcObject === stream) el.srcObject = null
+    }
+  }, [phase, cameraMountKey])
+
   const openCamera = useCallback(async () => {
     setCameraError(null)
     setPermissionDenied(false)
@@ -95,7 +112,7 @@ export default function ScanToPdfPage() {
 
     if (!navigator.mediaDevices?.getUserMedia) {
       setNoCameraApi(true)
-      setPhase('home')
+      setPhase(pagesRef.current.length ? 'review' : 'home')
       return
     }
 
@@ -110,14 +127,8 @@ export default function ScanToPdfPage() {
       })
       stopStream(streamRef.current)
       streamRef.current = stream
+      setCameraMountKey((k) => k + 1)
       setPhase('camera')
-      requestAnimationFrame(() => {
-        const v = videoRef.current
-        if (v) {
-          v.srcObject = stream
-          v.play().catch(() => {})
-        }
-      })
     } catch (e) {
       stopStream(streamRef.current)
       streamRef.current = null
@@ -129,7 +140,7 @@ export default function ScanToPdfPage() {
       } else {
         setCameraError(e?.message || 'Could not open the camera.')
       }
-      setPhase('home')
+      setPhase(pagesRef.current.length ? 'review' : 'home')
     }
   }, [])
 
@@ -301,7 +312,6 @@ export default function ScanToPdfPage() {
 
   const goReview = () => {
     closeCamera()
-    setPhase('review')
   }
 
   const scanAnotherFromReview = () => {
@@ -397,6 +407,7 @@ export default function ScanToPdfPage() {
           <div className="space-y-4">
             <div className="relative overflow-hidden rounded-2xl border border-zinc-800 bg-black shadow-lg">
               <video
+                key={cameraMountKey}
                 ref={videoRef}
                 className="mx-auto max-h-[min(70vh,640px)] w-full object-contain"
                 playsInline
