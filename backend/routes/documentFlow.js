@@ -8,6 +8,7 @@ import {
   convertPdfFileToDocxBuffer,
   getDocumentFlowCapabilities,
   isUuidLikeSessionId,
+  resolveGotenbergBaseUrl,
 } from '../services/documentFlowConvert.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -91,11 +92,12 @@ const docxMem = multer({
  * Returns application/pdf when GOTENBERG_URL is configured.
  */
 router.post('/document-flow/convert-docx-to-pdf', (req, res) => {
-  const gotenbergUrl = (process.env.GOTENBERG_URL || '').trim().replace(/\/$/, '');
+  const gotenbergUrl = resolveGotenbergBaseUrl();
   if (!gotenbergUrl) {
     return res.status(501).json({
       error: 'docx_to_pdf_unconfigured',
-      message: 'Set GOTENBERG_URL to your Gotenberg base URL (e.g. http://localhost:3044) for Word → PDF.',
+      message:
+        'Set GOTENBERG_URL (full URL) or GOTENBERG_HOSTPORT (host:port for private network, e.g. from Render Blueprint).',
     });
   }
 

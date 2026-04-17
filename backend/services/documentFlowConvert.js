@@ -15,11 +15,25 @@ export function isUuidLikeSessionId(id) {
 }
 
 /**
+ * Full Gotenberg base URL (no trailing slash).
+ * - `GOTENBERG_URL`: explicit URL (local or public), e.g. https://gotenberg.example.com
+ * - `GOTENBERG_HOSTPORT`: Render private network `host:port` from Blueprint `fromService`; `http://` is prepended.
+ */
+export function resolveGotenbergBaseUrl() {
+  const direct = (process.env.GOTENBERG_URL || '').trim().replace(/\/$/, '');
+  if (direct) return direct;
+  const hp = (process.env.GOTENBERG_HOSTPORT || '').trim();
+  if (!hp) return '';
+  if (/^https?:\/\//i.test(hp)) return hp.replace(/\/$/, '');
+  return `http://${hp}`.replace(/\/$/, '');
+}
+
+/**
  * @returns {{ pdfToDocx: boolean, docxToPdf: boolean, sofficePath: string | null, gotenbergUrl: string | null }}
  */
 export function getDocumentFlowCapabilities() {
   const sofficePath = (process.env.SOFFICE_PATH || '').trim() || null;
-  const gotenbergUrl = (process.env.GOTENBERG_URL || '').trim().replace(/\/$/, '') || null;
+  const gotenbergUrl = resolveGotenbergBaseUrl() || null;
   return {
     pdfToDocx: Boolean(sofficePath),
     docxToPdf: Boolean(gotenbergUrl),

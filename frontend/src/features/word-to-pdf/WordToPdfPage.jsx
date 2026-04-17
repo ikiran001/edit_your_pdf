@@ -142,8 +142,7 @@ export default function WordToPdfPage() {
           <div className="rounded-2xl border border-zinc-200 bg-zinc-50/90 p-6 text-sm text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900/50 dark:text-zinc-300">
             <p className="m-0 font-medium text-zinc-900 dark:text-zinc-100">Converter not configured</p>
             <p className="mt-2 mb-0">
-              The API needs <code className="rounded bg-zinc-200 px-1 font-mono text-xs dark:bg-zinc-800">GOTENBERG_URL</code>{' '}
-              (e.g. local{' '}
+              The API needs a reachable{' '}
               <a
                 className="text-indigo-600 underline-offset-2 hover:underline dark:text-cyan-400"
                 href="https://gotenberg.dev/"
@@ -151,9 +150,12 @@ export default function WordToPdfPage() {
                 rel="noreferrer"
               >
                 Gotenberg
-              </a>
-              ). See <code className="font-mono text-xs">docker-compose.document-flow.yml</code> and{' '}
-              <code className="font-mono text-xs">backend/.env.example</code> in the repo.
+              </a>{' '}
+              instance: set <code className="rounded bg-zinc-200 px-1 font-mono text-xs dark:bg-zinc-800">GOTENBERG_URL</code>{' '}
+              (full URL) on the server, or deploy with the repo{' '}
+              <code className="font-mono text-xs">render.yaml</code> so production gets{' '}
+              <code className="font-mono text-xs">GOTENBERG_HOSTPORT</code> automatically. For local dev, see{' '}
+              <code className="font-mono text-xs">docker-compose.document-flow.yml</code>.
             </p>
           </div>
         )}
