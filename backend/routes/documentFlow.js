@@ -8,6 +8,7 @@ import {
   convertPdfFileToDocxBuffer,
   getDocumentFlowCapabilities,
   isUuidLikeSessionId,
+  probeGotenbergHealth,
   resolveGotenbergBaseUrl,
 } from '../services/documentFlowConvert.js';
 
@@ -16,9 +17,34 @@ const uploadsRoot = path.join(__dirname, '..', 'uploads');
 
 const router = Router();
 
-router.get('/document-flow/capabilities', (_req, res) => {
+router.get('/document-flow/capabilities', async (_req, res) => {
   res.setHeader('Cache-Control', 'no-store');
-  res.json(getDocumentFlowCapabilities());
+  const caps = getDocumentFlowCapabilities();
+  const url = resolveGotenbergBaseUrl();
+  if (!url || !caps.docxToPdf) {
+    return res.json(caps);
+  }
+  try {
+    const probe = await probeGotenbergHealth(url);
+    if (!probe.ok) {
+      return res.json({
+        ...caps,
+        docxToPdf: false,
+        gotenbergReachable: false,
+        gotenbergHealthHint: probe.hint,
+        gotenbergProbeStatus: probe.status ?? null,
+        gotenbergRenderNoServer: Boolean(probe.noServer),
+      });
+    }
+    return res.json({ ...caps, gotenbergReachable: true });
+  } catch (e) {
+    return res.json({
+      ...caps,
+      docxToPdf: false,
+      gotenbergReachable: false,
+      gotenbergHealthHint: e?.message || 'Capabilities probe failed',
+    });
+  }
 });
 
 /**

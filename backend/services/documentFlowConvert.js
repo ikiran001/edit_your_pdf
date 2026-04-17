@@ -51,6 +51,47 @@ function assertGotenbergNotSameHostAsApi(gotenbergBaseUrl) {
 }
 
 /**
+ * GET Gotenberg `/health` so we can treat dead hostnames (e.g. Render `no-server`) as unreachable.
+ * @param {string} gotenbergBaseUrl
+ * @returns {Promise<{ ok: true } | { ok: false, status?: number, noServer?: boolean, hint: string }>}
+ */
+export async function probeGotenbergHealth(gotenbergBaseUrl) {
+  const base = gotenbergBaseUrl.replace(/\/$/, '');
+  const healthUrl = `${base}/health`;
+  try {
+    const r = await fetch(healthUrl, {
+      method: 'GET',
+      redirect: 'follow',
+      signal: AbortSignal.timeout(12_000),
+    });
+    const noServer = r.status === 404 && r.headers.get('x-render-routing') === 'no-server';
+    if (noServer) {
+      return {
+        ok: false,
+        status: 404,
+        noServer: true,
+        hint:
+          'GOTENBERG_URL uses a hostname where Render has no running Web Service (404 + x-render-routing: no-server). In the Render dashboard, create a separate Web Service from the Gotenberg image (see render.yaml in this repo), deploy it, then set GOTENBERG_URL to the exact https URL on that service’s Overview page. Checking /health on your PDF API (edit-your-pdf-…) is not the same as checking Gotenberg.',
+      };
+    }
+    if (!r.ok) {
+      return {
+        ok: false,
+        status: r.status,
+        hint: `Gotenberg GET ${healthUrl} returned HTTP ${r.status}. Fix GOTENBERG_URL or redeploy the Gotenberg service.`,
+      };
+    }
+    return { ok: true };
+  } catch (e) {
+    const label = e?.name === 'TimeoutError' ? 'timed out' : e?.message || 'request failed';
+    return {
+      ok: false,
+      hint: `Could not reach Gotenberg at ${healthUrl} (${label}).`,
+    };
+  }
+}
+
+/**
  * @returns {{
  *   pdfToDocx: boolean,
  *   docxToPdf: boolean,
