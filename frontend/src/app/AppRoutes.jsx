@@ -14,6 +14,7 @@ import UnlockPdfPage from '../features/unlock-pdf/UnlockPdfPage.jsx'
 import OrganizePdfPage from '../features/organize-pdf/OrganizePdfPage.jsx'
 import WatermarkPdfPage from '../features/add-watermark/WatermarkPdfPage.jsx'
 import ComingSoonToolPage from '../features/placeholder/ComingSoonToolPage.jsx'
+import WordToPdfPage from '../features/word-to-pdf/WordToPdfPage.jsx'
 import { pageView } from '../lib/analytics.js'
 import { docTitleForPath } from '../shared/constants/branding.js'
 
@@ -56,15 +57,7 @@ export default function AppRoutes() {
             </ComingSoonToolPage>
           }
         />
-        <Route
-          path="/tools/word-to-pdf"
-          element={
-            <ComingSoonToolPage title="Word to PDF">
-              DOCX→PDF is best done with LibreOffice or a document API on the server. A future
-              `features/word-to-pdf` service will call that API only.
-            </ComingSoonToolPage>
-          }
-        />
+        <Route path="/tools/word-to-pdf" element={<WordToPdfPage />} />
         </Routes>
       </ErrorBoundary>
     </BrowserRouter>

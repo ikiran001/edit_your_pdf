@@ -1,0 +1,17 @@
+# Optional stack for Path B (Word round-trip) features in Edit PDF.
+# Usage:
+#   docker compose -f docker-compose.document-flow.yml up -d
+# Then point the Node API at Gotenberg:
+#   export GOTENBERG_URL=http://localhost:3044
+# For PDF → .docx, install LibreOffice on the host (or extend your API image) and set:
+#   export SOFFICE_PATH=/usr/bin/soffice
+# macOS example:
+#   export SOFFICE_PATH="/Applications/LibreOffice.app/Contents/MacOS/soffice"
+
+services:
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    ports:
+      - '3044:3000'
+    # Chromium is unused for DOCX→PDF; slim profile is fine if your Gotenberg version supports it.
+    restart: unless-stopped
