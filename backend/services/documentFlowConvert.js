@@ -147,7 +147,19 @@ export async function convertDocxBufferToPdfBuffer(opts) {
   if (!res.ok) {
     let msg = buf.slice(0, 800).toString('utf8') || res.statusText;
     if (res.status === 404) {
-      msg += `\n\n404 usually means GOTENBERG_URL is not a Gotenberg base URL (this app calls POST …/forms/libreoffice/convert). Try GET ${base}/health in a browser — Gotenberg returns JSON; if you see HTML, 404, or your own API, set GOTENBERG_URL to your separate Gotenberg Web Service on Render.`;
+      const noServer = res.headers.get('x-render-routing') === 'no-server';
+      if (noServer) {
+        const host = (() => {
+          try {
+            return new URL(base).hostname;
+          } catch {
+            return base;
+          }
+        })();
+        msg += `\n\nRender reports no web service for host "${host}" (x-render-routing: no-server). That hostname is not attached to a running service — create or resume your Gotenberg Web Service on Render and set GOTENBERG_URL to the exact URL shown on that service’s Overview page (not a guessed *.onrender.com name).`;
+      } else {
+        msg += `\n\n404 usually means GOTENBERG_URL is not a Gotenberg base URL (this app calls POST …/forms/libreoffice/convert). Try GET ${base}/health in a browser — Gotenberg returns JSON; if you see HTML, 404, or your own API, set GOTENBERG_URL to your separate Gotenberg Web Service on Render.`;
+      }
     }
     const err = new Error(`Gotenberg error ${res.status}: ${msg}`);
     err.code = 'GOTENBERG_HTTP';
