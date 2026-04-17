@@ -1,7 +1,19 @@
 # Render Blueprint — https://render.com/docs/blueprint-spec
-# Uses repo-root Dockerfile so the service works when the repo is the Git root
-# (avoids empty image when context was wrong).
+#
+# - `pdfpilot-gotenberg`: prebuilt Gotenberg image for DOCX → PDF (Word to PDF tool).
+# - `edit-your-pdf-api`: repo Dockerfile; receives GOTENBERG_HOSTPORT from the Gotenberg service
+#   over Render’s private network (same region). The API prepends http:// automatically.
+#
+# If you deploy the API only (no Blueprint sync), set GOTENBERG_URL manually on the API service
+# to any reachable Gotenberg base URL (e.g. https://your-gotenberg.onrender.com).
 services:
+  - type: web
+    name: pdfpilot-gotenberg
+    runtime: image
+    image:
+      url: docker.io/gotenberg/gotenberg:8
+    healthCheckPath: /health
+
   - type: web
     name: edit-your-pdf-api
     runtime: docker
@@ -10,3 +22,8 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: GOTENBERG_HOSTPORT
+        fromService:
+          name: pdfpilot-gotenberg
+          type: web
+          property: hostport
