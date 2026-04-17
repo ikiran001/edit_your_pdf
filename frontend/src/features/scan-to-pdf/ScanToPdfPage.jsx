@@ -25,6 +25,42 @@ import {
 
 const SCAN_TOOL = ANALYTICS_TOOL.scan_to_pdf
 
+/** @param {{ step: 0 | 1 | 2 }} props */
+function ScanFlowSteps({ step }) {
+  const items = [
+    { n: 1, label: 'Capture' },
+    { n: 2, label: 'Crop' },
+    { n: 3, label: 'Review' },
+  ]
+  return (
+    <nav
+      aria-label="Scan progress"
+      className="flex flex-wrap items-center justify-center gap-x-0.5 gap-y-1 rounded-xl border border-zinc-200 bg-zinc-50/90 px-3 py-2.5 text-[11px] dark:border-zinc-700 dark:bg-zinc-900/50"
+    >
+      {items.map((item, i) => (
+        <span key={item.label} className="inline-flex items-center">
+          {i > 0 && (
+            <span className="mx-1.5 font-normal text-zinc-300 dark:text-zinc-600" aria-hidden>
+              →
+            </span>
+          )}
+          <span
+            className={
+              i === step
+                ? 'rounded-md bg-indigo-600 px-2 py-0.5 font-semibold text-white shadow-sm dark:bg-indigo-500'
+                : i < step
+                  ? 'font-medium text-emerald-700 dark:text-emerald-400/90'
+                  : 'text-zinc-500 dark:text-zinc-400'
+            }
+          >
+            {item.n}. {item.label}
+          </span>
+        </span>
+      ))}
+    </nav>
+  )
+}
+
 function downloadUint8(u8, name) {
   const blob = new Blob([u8], { type: 'application/pdf' })
   const url = URL.createObjectURL(blob)
@@ -65,6 +101,8 @@ export default function ScanToPdfPage() {
   const [busyCapture, setBusyCapture] = useState(false)
   const [error, setError] = useState(null)
   const [fileReadyHint, setFileReadyHint] = useState(null)
+  /** Shown after a cropped capture is added (camera flow). */
+  const [pageAddHint, setPageAddHint] = useState(null)
   const [autoCrop, setAutoCrop] = useState(true)
   const [enhance, setEnhance] = useState(true)
   /** Longest side of each saved page (px) before PDF — lower is faster/smaller files. */
@@ -112,6 +150,10 @@ export default function ScanToPdfPage() {
     },
     [revokePageUrls]
   )
+
+  useEffect(() => {
+    if (phase === 'home') setPageAddHint(null)
+  }, [phase])
 
   /** Bind MediaStream after React mounts `<video>` (rAF right after setState often sees ref=null). */
   useEffect(() => {
@@ -225,6 +267,8 @@ export default function ScanToPdfPage() {
         const cropped = applyNormCropToCanvas(src, norm)
         const blob = await processCanvasToJpegBlob(cropped, scanProcessOptions)
         addProcessedBlob(blob)
+        setPageAddHint('Page added — capture another or tap Done when you are finished.')
+        window.setTimeout(() => setPageAddHint(null), 5500)
       } catch (e) {
         console.error(e)
         setError(e?.message || 'Could not process the cropped image')
@@ -356,12 +400,18 @@ export default function ScanToPdfPage() {
     void openCamera()
   }
 
+  const scanFlowStep =
+    phase === 'review' ? 2 : pendingCropCanvas ? 1 : phase === 'camera' ? 0 : -1
+  const showMobileSticky =
+    phase === 'camera' || (phase === 'review' && pages.length > 0)
+
   return (
     <ToolPageShell
       title="Scan to PDF"
       subtitle="Use your camera or upload photos. Pages stay in order for one PDF download."
     >
-      <div className="space-y-6">
+      <div className={`space-y-6 ${showMobileSticky ? 'max-md:pb-28' : ''}`}>
+        {scanFlowStep >= 0 && <ScanFlowSteps step={scanFlowStep} />}
         <div className="space-y-4 rounded-2xl border border-zinc-200 bg-white/80 p-4 text-sm text-zinc-700 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-300">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <label className="flex cursor-pointer items-center gap-2">
@@ -456,7 +506,7 @@ export default function ScanToPdfPage() {
                 type="button"
                 disabled={busy || noCameraApi}
                 onClick={() => void openCamera()}
-                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 hover:bg-indigo-700 disabled:opacity-50"
+                className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 hover:bg-indigo-700 disabled:opacity-50"
               >
                 <Camera className="h-5 w-5" aria-hidden />
                 Scan document
@@ -496,26 +546,34 @@ export default function ScanToPdfPage() {
                 </div>
               )}
             </div>
-            <div className="flex flex-wrap gap-2">
+            {pageAddHint && (
+              <div
+                role="status"
+                className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-100"
+              >
+                {pageAddHint}
+              </div>
+            )}
+            <div className="hidden flex-wrap gap-2 md:flex">
               <button
                 type="button"
                 disabled={busyCapture || Boolean(pendingCropCanvas)}
                 onClick={() => void captureFrame()}
-                className="flex-1 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 sm:flex-none sm:px-8"
+                className="min-h-11 flex-1 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 sm:flex-none sm:px-8"
               >
                 Capture page
               </button>
               <button
                 type="button"
                 onClick={goReview}
-                className="rounded-xl border border-zinc-300 bg-white px-4 py-3 text-sm font-medium text-zinc-800 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                className="min-h-11 rounded-xl border border-zinc-300 bg-white px-4 py-3 text-sm font-medium text-zinc-800 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
               >
                 {pages.length ? 'Done — review pages' : 'Close camera'}
               </button>
               <button
                 type="button"
                 onClick={closeCamera}
-                className="inline-flex items-center justify-center rounded-xl border border-zinc-300 p-3 text-zinc-600 dark:border-zinc-600 dark:text-zinc-300"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-zinc-300 text-zinc-600 dark:border-zinc-600 dark:text-zinc-300"
                 aria-label="Close camera"
               >
                 <X className="h-5 w-5" />
@@ -619,7 +677,7 @@ export default function ScanToPdfPage() {
                       <button
                         type="button"
                         onClick={() => removePage(p.id)}
-                        className="shrink-0 rounded-lg p-2 text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40"
+                        className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40"
                         aria-label={`Remove page ${idx + 1}`}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -631,19 +689,83 @@ export default function ScanToPdfPage() {
                   type="button"
                   disabled={busy}
                   onClick={() => void buildPdf()}
-                  className="w-full rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white shadow-lg hover:bg-emerald-700 disabled:opacity-50 sm:w-auto sm:px-10"
+                  className="hidden w-full rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white shadow-lg hover:bg-emerald-700 disabled:opacity-50 md:inline-block md:w-auto md:px-10"
                 >
                   {busy ? MSG.finalizingPdf : 'Download PDF'}
                 </button>
               </>
             ) : (
-              <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                No pages yet. Use the camera or upload photos to add scans.
-              </p>
+              <div className="rounded-2xl border border-dashed border-zinc-300 bg-zinc-50/80 px-5 py-8 text-center dark:border-zinc-600 dark:bg-zinc-900/40">
+                <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">No pages yet</p>
+                <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                  Add scans with the camera or upload photos — they appear here in order.
+                </p>
+                <div className="mt-5 flex flex-col items-stretch justify-center gap-2 sm:flex-row sm:justify-center">
+                  <button
+                    type="button"
+                    disabled={busy || noCameraApi}
+                    onClick={() => void openCamera()}
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow hover:bg-indigo-700 disabled:opacity-50"
+                  >
+                    <Camera className="h-4 w-4" aria-hidden />
+                    Open camera
+                  </button>
+                  <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800">
+                    <ImagePlus className="h-4 w-4" aria-hidden />
+                    Upload photos
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="sr-only"
+                      disabled={busy}
+                      onChange={(e) => {
+                        const fs = e.target.files
+                        if (fs?.length) void onUploadImages(fs)
+                        e.target.value = ''
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
             )}
           </div>
         )}
       </div>
+
+      {showMobileSticky && (
+        <div className="fixed inset-x-0 bottom-0 z-[70] border-t border-zinc-200 bg-white/95 p-3 shadow-[0_-10px_30px_-12px_rgba(0,0,0,0.15)] backdrop-blur-md md:hidden dark:border-zinc-700 dark:bg-zinc-950/95 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          {phase === 'camera' && (
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={busyCapture || Boolean(pendingCropCanvas)}
+                onClick={() => void captureFrame()}
+                className="min-h-12 min-w-0 flex-1 rounded-xl bg-emerald-600 px-3 py-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+              >
+                Capture page
+              </button>
+              <button
+                type="button"
+                onClick={goReview}
+                className="min-h-12 shrink-0 rounded-xl border border-zinc-300 bg-white px-3 py-3 text-sm font-medium text-zinc-800 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+              >
+                {pages.length ? 'Done' : 'Close'}
+              </button>
+            </div>
+          )}
+          {phase === 'review' && pages.length > 0 && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void buildPdf()}
+              className="min-h-12 w-full rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white shadow-lg hover:bg-emerald-700 disabled:opacity-50"
+            >
+              {busy ? MSG.finalizingPdf : 'Download PDF'}
+            </button>
+          )}
+        </div>
+      )}
 
       <ScanCropModal
         open={Boolean(pendingCropCanvas)}

@@ -27,10 +27,7 @@ export default function ToolkitHomePage() {
         <p className="mx-auto mt-2 max-w-xl text-sm text-zinc-500 dark:text-zinc-400">{TAGLINE}</p>
       </section>
 
-      <section
-        className="mx-auto max-w-6xl flex-1 px-4 py-6 md:px-10 md:py-10"
-        style={{ animation: 'toolkitFade 0.6s ease-out both' }}
-      >
+      <section className="fx-toolkit-fade mx-auto max-w-6xl flex-1 px-4 py-6 md:px-10 md:py-10">
         <h2 className="mb-6 text-center font-mono text-sm font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-cyan-400/85">
           Choose a tool
         </h2>
