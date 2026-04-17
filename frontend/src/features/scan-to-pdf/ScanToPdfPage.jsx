@@ -15,7 +15,13 @@ import {
 import { ANALYTICS_TOOL } from '../../shared/constants/analyticsTools.js'
 import { MSG } from '../../shared/constants/branding.js'
 import { imageBlobsToPdfBytes } from '../jpg-to-pdf/jpgToPdfCore.js'
-import { processCanvasToJpegBlob, processScannedImageBlob } from './scanImagePipeline.js'
+import ScanCropModal from './ScanCropModal.jsx'
+import {
+  applyNormCropToCanvas,
+  cloneCanvas,
+  processCanvasToJpegBlob,
+  processScannedImageBlob,
+} from './scanImagePipeline.js'
 
 const SCAN_TOOL = ANALYTICS_TOOL.scan_to_pdf
 
@@ -71,6 +77,10 @@ export default function ScanToPdfPage() {
   pagesRef.current = pages
   /** Bumps when a new stream is acquired so `<video>` remounts (fixes stale ref after review → camera). */
   const [cameraMountKey, setCameraMountKey] = useState(0)
+  /** Raw frame after camera capture — user crops then we run JPEG pipeline. */
+  const [pendingCropCanvas, setPendingCropCanvas] = useState(null)
+  const pendingCropRef = useRef(null)
+  pendingCropRef.current = pendingCropCanvas
 
   useToolEngagement(SCAN_TOOL, true)
 
@@ -201,9 +211,31 @@ export default function ScanToPdfPage() {
     []
   )
 
+  const handleCropCancel = useCallback(() => {
+    setPendingCropCanvas(null)
+  }, [])
+
+  const handleCropApply = useCallback(
+    async (norm) => {
+      const src = pendingCropRef.current
+      if (!src) return
+      setPendingCropCanvas(null)
+      setError(null)
+      try {
+        const cropped = applyNormCropToCanvas(src, norm)
+        const blob = await processCanvasToJpegBlob(cropped, scanProcessOptions)
+        addProcessedBlob(blob)
+      } catch (e) {
+        console.error(e)
+        setError(e?.message || 'Could not process the cropped image')
+      }
+    },
+    [addProcessedBlob, scanProcessOptions]
+  )
+
   const captureFrame = useCallback(async () => {
     const video = videoRef.current
-    if (!video || video.readyState < 2 || busyCapture) return
+    if (!video || video.readyState < 2 || busyCapture || pendingCropRef.current) return
     const vw = video.videoWidth
     const vh = video.videoHeight
     if (vw < 2 || vh < 2) {
@@ -219,15 +251,14 @@ export default function ScanToPdfPage() {
       const ctx = canvas.getContext('2d', { willReadFrequently: true })
       if (!ctx) throw new Error('Could not capture frame')
       ctx.drawImage(video, 0, 0, vw, vh)
-      const blob = await processCanvasToJpegBlob(canvas, scanProcessOptions)
-      addProcessedBlob(blob)
+      setPendingCropCanvas(cloneCanvas(canvas))
     } catch (e) {
       console.error(e)
-      setError(e?.message || 'Could not process the photo')
+      setError(e?.message || 'Could not capture the photo')
     } finally {
       setBusyCapture(false)
     }
-  }, [addProcessedBlob, busyCapture, scanProcessOptions])
+  }, [busyCapture])
 
   const onUploadImages = useCallback(
     async (files) => {
@@ -468,7 +499,7 @@ export default function ScanToPdfPage() {
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                disabled={busyCapture}
+                disabled={busyCapture || Boolean(pendingCropCanvas)}
                 onClick={() => void captureFrame()}
                 className="flex-1 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 sm:flex-none sm:px-8"
               >
@@ -491,8 +522,8 @@ export default function ScanToPdfPage() {
               </button>
             </div>
             <p className="text-center text-xs text-zinc-500 dark:text-zinc-400">
-              Add several captures for a multi-page PDF. Use <strong>Close camera</strong> if you opened
-              it by mistake.
+              After each capture you can crop the frame, then it is added as a page. Add several
+              captures for a multi-page PDF. Use <strong>Close camera</strong> if you opened it by mistake.
             </p>
           </div>
         )}
@@ -613,6 +644,13 @@ export default function ScanToPdfPage() {
           </div>
         )}
       </div>
+
+      <ScanCropModal
+        open={Boolean(pendingCropCanvas)}
+        sourceCanvas={pendingCropCanvas}
+        onCancel={handleCropCancel}
+        onApply={handleCropApply}
+      />
 
       <ToolFeatureSeoSection toolId="scan-to-pdf" />
     </ToolPageShell>
