@@ -1,9 +1,11 @@
 # Render Blueprint — https://render.com/docs/blueprint-spec
 #
 # - `pdfpilot-gotenberg`: prebuilt Gotenberg image for DOCX → PDF (Word to PDF tool).
-#   Render injects `PORT`; Gotenberg defaults to 3000, so `API_PORT_FROM_ENV=PORT` is required.
-# - `edit-your-pdf-api`: repo Dockerfile; receives `GOTENBERG_URL` from the Gotenberg service’s
-#   `RENDER_EXTERNAL_URL` (https://…onrender.com). Optional `GOTENBERG_HOSTPORT` is private-network fallback.
+#   Render injects `PORT`; Gotenberg defaults to 3000 — override CMD so it listens on `$PORT`.
+# - API web service (`name` below): MUST match your Render service name exactly (same as the
+#   `https://<name>.onrender.com` host). If names differ, Blueprint `fromService` env never applies—set
+#   `GOTENBERG_URL` manually on the API, or fix `name` here and sync the Blueprint.
+#   Receives `GOTENBERG_URL` from the Gotenberg service’s `RENDER_EXTERNAL_URL`. Optional `GOTENBERG_HOSTPORT`.
 #
 # If you deploy the API only (no Blueprint sync), set GOTENBERG_URL manually on the API service
 # to any reachable Gotenberg base URL (e.g. https://your-gotenberg.onrender.com).
@@ -14,12 +16,10 @@ services:
     image:
       url: docker.io/gotenberg/gotenberg:8
     healthCheckPath: /health
-    envVars:
-      - key: API_PORT_FROM_ENV
-        value: PORT
+    dockerCommand: gotenberg --api-port-from-env=PORT
 
   - type: web
-    name: edit-your-pdf-api
+    name: edit-your-pdf-chew
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
