@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Camera, GripVertical, ImagePlus, Trash2, X } from 'lucide-react'
 import ToolPageShell from '../../shared/components/ToolPageShell.jsx'
 import ToolFeatureSeoSection from '../../shared/components/ToolFeatureSeoSection.jsx'
@@ -61,6 +61,10 @@ export default function ScanToPdfPage() {
   const [fileReadyHint, setFileReadyHint] = useState(null)
   const [autoCrop, setAutoCrop] = useState(true)
   const [enhance, setEnhance] = useState(true)
+  /** Longest side of each saved page (px) before PDF — lower is faster/smaller files. */
+  const [scanMaxLongEdge, setScanMaxLongEdge] = useState(2200)
+  /** JPEG quality 0.5–0.98 for processed scan pages. */
+  const [scanJpegQuality, setScanJpegQuality] = useState(0.88)
   const funnelMarkedRef = useRef(false)
   const retakeIdRef = useRef(null)
   const pagesRef = useRef(pages)
@@ -69,6 +73,16 @@ export default function ScanToPdfPage() {
   const [cameraMountKey, setCameraMountKey] = useState(0)
 
   useToolEngagement(SCAN_TOOL, true)
+
+  const scanProcessOptions = useMemo(
+    () => ({
+      autoCrop,
+      enhance,
+      maxLongEdge: scanMaxLongEdge,
+      jpegQuality: scanJpegQuality,
+    }),
+    [autoCrop, enhance, scanMaxLongEdge, scanJpegQuality]
+  )
 
   const revokePageUrls = useCallback((list) => {
     for (const p of list) {
@@ -205,11 +219,7 @@ export default function ScanToPdfPage() {
       const ctx = canvas.getContext('2d', { willReadFrequently: true })
       if (!ctx) throw new Error('Could not capture frame')
       ctx.drawImage(video, 0, 0, vw, vh)
-      const blob = await processCanvasToJpegBlob(canvas, {
-        autoCrop,
-        enhance,
-        maxLongEdge: 2200,
-      })
+      const blob = await processCanvasToJpegBlob(canvas, scanProcessOptions)
       addProcessedBlob(blob)
     } catch (e) {
       console.error(e)
@@ -217,7 +227,7 @@ export default function ScanToPdfPage() {
     } finally {
       setBusyCapture(false)
     }
-  }, [addProcessedBlob, autoCrop, busyCapture, enhance])
+  }, [addProcessedBlob, busyCapture, scanProcessOptions])
 
   const onUploadImages = useCallback(
     async (files) => {
@@ -227,11 +237,7 @@ export default function ScanToPdfPage() {
       setBusy(true)
       try {
         for (const file of list) {
-          const blob = await processScannedImageBlob(file, {
-            autoCrop,
-            enhance,
-            maxLongEdge: 2200,
-          })
+          const blob = await processScannedImageBlob(file, scanProcessOptions)
           addProcessedBlob(blob)
         }
       } catch (e) {
@@ -242,7 +248,7 @@ export default function ScanToPdfPage() {
       }
       setPhase('review')
     },
-    [addProcessedBlob, autoCrop, enhance]
+    [addProcessedBlob, scanProcessOptions]
   )
 
   const removePage = (id) => {
@@ -325,29 +331,68 @@ export default function ScanToPdfPage() {
       subtitle="Use your camera or upload photos. Pages stay in order for one PDF download."
     >
       <div className="space-y-6">
-        <div className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white/80 p-4 text-sm text-zinc-700 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-300 sm:flex-row sm:items-center sm:justify-between">
-          <label className="flex cursor-pointer items-center gap-2">
-            <input
-              type="checkbox"
-              className="h-4 w-4 rounded border-zinc-400 text-indigo-600"
-              checked={autoCrop}
-              onChange={(e) => setAutoCrop(e.target.checked)}
-            />
-            <span title="Trims mostly-white borders around paper (best on a desk or light background).">
-              Auto-trim margins
-            </span>
-          </label>
-          <label className="flex cursor-pointer items-center gap-2">
-            <input
-              type="checkbox"
-              className="h-4 w-4 rounded border-zinc-400 text-indigo-600"
-              checked={enhance}
-              onChange={(e) => setEnhance(e.target.checked)}
-            />
-            <span title="Stretchs shadows and highlights for easier reading (browser-only).">
-              Enhance contrast
-            </span>
-          </label>
+        <div className="space-y-4 rounded-2xl border border-zinc-200 bg-white/80 p-4 text-sm text-zinc-700 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-300">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <label className="flex cursor-pointer items-center gap-2">
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-zinc-400 text-indigo-600"
+                checked={autoCrop}
+                onChange={(e) => setAutoCrop(e.target.checked)}
+              />
+              <span title="Trims mostly-white borders around paper (best on a desk or light background).">
+                Auto-trim margins
+              </span>
+            </label>
+            <label className="flex cursor-pointer items-center gap-2">
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-zinc-400 text-indigo-600"
+                checked={enhance}
+                onChange={(e) => setEnhance(e.target.checked)}
+              />
+              <span title="Stretches shadows and highlights for easier reading (browser-only).">
+                Enhance contrast
+              </span>
+            </label>
+          </div>
+          <div className="flex flex-col gap-4 border-t border-zinc-200 pt-4 dark:border-zinc-700 sm:flex-row sm:flex-wrap sm:items-end sm:gap-6">
+            <div className="min-w-0 flex-1">
+              <label htmlFor="scan-jpeg-quality" className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                JPEG quality ({Math.round(scanJpegQuality * 100)}%)
+              </label>
+              <input
+                id="scan-jpeg-quality"
+                type="range"
+                min={75}
+                max={98}
+                step={1}
+                value={Math.round(scanJpegQuality * 100)}
+                onChange={(e) => setScanJpegQuality(Number(e.target.value) / 100)}
+                className="w-full accent-indigo-600"
+              />
+              <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-500">
+                Lower = smaller PDF; higher = sharper text.
+              </p>
+            </div>
+            <div>
+              <label htmlFor="scan-max-edge" className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                Max page side (px)
+              </label>
+              <select
+                id="scan-max-edge"
+                value={scanMaxLongEdge}
+                onChange={(e) => setScanMaxLongEdge(Number(e.target.value))}
+                className="w-full min-w-[10rem] rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900"
+              >
+                {[1600, 2000, 2200, 2600, 3000].map((n) => (
+                  <option key={n} value={n}>
+                    {n}px (longest side)
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
 
         {phase === 'home' && (

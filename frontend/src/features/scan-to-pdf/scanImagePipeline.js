@@ -121,18 +121,36 @@ function scaleBoundsToFull(bounds, srcW, srcH, fullW, fullH) {
   return { left, top, right, bottom }
 }
 
+function clampJpegQuality(q) {
+  const n = Number(q)
+  if (!Number.isFinite(n)) return 0.88
+  return Math.min(0.98, Math.max(0.5, n))
+}
+
+function clampMaxLongEdge(n) {
+  const v = Math.round(Number(n))
+  if (!Number.isFinite(v)) return 2200
+  return Math.min(4000, Math.max(800, v))
+}
+
 /**
  * @param {HTMLCanvasElement} sourceCanvas
- * @param {{ autoCrop?: boolean, enhance?: boolean, maxLongEdge?: number }} [options]
+ * @param {{ autoCrop?: boolean, enhance?: boolean, maxLongEdge?: number, jpegQuality?: number }} [options]
  * @returns {Promise<Blob>}
  */
 export function processCanvasToJpegBlob(sourceCanvas, options = {}) {
-  const { autoCrop = true, enhance = true, maxLongEdge = 2200 } = options
+  const { autoCrop = true, enhance = true, maxLongEdge: rawMax = 2200 } = options
+  const maxLongEdge = clampMaxLongEdge(rawMax)
+  const jpegQ = clampJpegQuality(options.jpegQuality ?? 0.88)
   const W = sourceCanvas.width
   const H = sourceCanvas.height
   if (W < 2 || H < 2) {
     return new Promise((resolve, reject) => {
-      sourceCanvas.toBlob((b) => (b ? resolve(b) : reject(new Error('Empty canvas'))), 'image/jpeg', 0.88)
+      sourceCanvas.toBlob(
+        (b) => (b ? resolve(b) : reject(new Error('Empty canvas'))),
+        'image/jpeg',
+        jpegQ
+      )
     })
   }
 
@@ -147,7 +165,11 @@ export function processCanvasToJpegBlob(sourceCanvas, options = {}) {
   const actx = analysis.getContext('2d', { willReadFrequently: true })
   if (!actx) {
     return new Promise((resolve, reject) => {
-      sourceCanvas.toBlob((b) => (b ? resolve(b) : reject(new Error('No canvas context'))), 'image/jpeg', 0.88)
+      sourceCanvas.toBlob(
+        (b) => (b ? resolve(b) : reject(new Error('No canvas context'))),
+        'image/jpeg',
+        jpegQ
+      )
     })
   }
   actx.drawImage(sourceCanvas, 0, 0, aw, ah)
@@ -167,7 +189,11 @@ export function processCanvasToJpegBlob(sourceCanvas, options = {}) {
   const cctx = cropCanvas.getContext('2d', { willReadFrequently: true })
   if (!cctx) {
     return new Promise((resolve, reject) => {
-      sourceCanvas.toBlob((b) => (b ? resolve(b) : reject(new Error('No crop context'))), 'image/jpeg', 0.88)
+      sourceCanvas.toBlob(
+        (b) => (b ? resolve(b) : reject(new Error('No crop context'))),
+        'image/jpeg',
+        jpegQ
+      )
     })
   }
   cctx.drawImage(sourceCanvas, crop.left, crop.top, cw, ch, 0, 0, cw, ch)
@@ -187,7 +213,11 @@ export function processCanvasToJpegBlob(sourceCanvas, options = {}) {
   const octx = out.getContext('2d', { willReadFrequently: true })
   if (!octx) {
     return new Promise((resolve, reject) => {
-      cropCanvas.toBlob((b) => (b ? resolve(b) : reject(new Error('No out context'))), 'image/jpeg', 0.88)
+      cropCanvas.toBlob(
+        (b) => (b ? resolve(b) : reject(new Error('No out context'))),
+        'image/jpeg',
+        jpegQ
+      )
     })
   }
   octx.imageSmoothingEnabled = true
@@ -201,10 +231,14 @@ export function processCanvasToJpegBlob(sourceCanvas, options = {}) {
   }
 
   return new Promise((resolve, reject) => {
-    out.toBlob((blob) => {
-      if (blob) resolve(blob)
-      else reject(new Error('JPEG encode failed'))
-    }, 'image/jpeg', 0.88)
+    out.toBlob(
+      (blob) => {
+        if (blob) resolve(blob)
+        else reject(new Error('JPEG encode failed'))
+      },
+      'image/jpeg',
+      jpegQ
+    )
   })
 }
 
