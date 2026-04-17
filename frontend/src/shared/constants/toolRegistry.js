@@ -36,6 +36,14 @@ export const TOOL_REGISTRY = [
   { id: 'pdf-to-jpg', path: '/tools/pdf-to-jpg', title: 'PDF to JPG', description: 'Export pages as JPEG. ZIP or single files.', implemented: true, icon: 'ImageDown' },
   { id: 'jpg-to-pdf', path: '/tools/jpg-to-pdf', title: 'JPG to PDF', description: 'Combine images. Drag to reorder.', implemented: true, icon: 'Images' },
   {
+    id: 'scan-to-pdf',
+    path: '/tools/scan-to-pdf',
+    title: 'Scan to PDF',
+    description: 'Camera or photos: trim, enhance, multi-page PDF.',
+    implemented: true,
+    icon: 'ScanLine',
+  },
+  {
     id: 'sign-pdf',
     path: '/tools/sign-pdf',
     title: 'Sign PDF',

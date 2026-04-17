@@ -12,6 +12,7 @@ const TOOL_DOC_TITLES = {
   '/tools/sign-pdf': 'pdfpilot - Sign PDF',
   '/tools/pdf-to-jpg': 'pdfpilot - PDF to JPG',
   '/tools/jpg-to-pdf': 'pdfpilot - JPG to PDF',
+  '/tools/scan-to-pdf': 'pdfpilot - Scan to PDF',
   '/tools/unlock-pdf': 'pdfpilot - Unlock PDF',
   '/tools/organize-pdf': 'pdfpilot - Organize PDF Pages',
   '/tools/add-watermark': 'pdfpilot - Add Watermark',
