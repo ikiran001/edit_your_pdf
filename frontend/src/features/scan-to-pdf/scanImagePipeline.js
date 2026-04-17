@@ -133,6 +133,55 @@ function clampMaxLongEdge(n) {
   return Math.min(4000, Math.max(800, v))
 }
 
+function clamp01(v) {
+  return Math.min(1, Math.max(0, v))
+}
+
+/**
+ * Copy pixels to a new canvas (same dimensions).
+ * @param {HTMLCanvasElement} src
+ * @returns {HTMLCanvasElement}
+ */
+export function cloneCanvas(src) {
+  const d = document.createElement('canvas')
+  d.width = src.width
+  d.height = src.height
+  const ctx = d.getContext('2d')
+  if (ctx) ctx.drawImage(src, 0, 0)
+  return d
+}
+
+/**
+ * Crop using normalized rect (top-left origin, 0–1 relative to full canvas).
+ * @param {HTMLCanvasElement} sourceCanvas
+ * @param {{ nx: number, ny: number, nw: number, nh: number }} norm
+ * @returns {HTMLCanvasElement}
+ */
+export function applyNormCropToCanvas(sourceCanvas, norm) {
+  let nx = clamp01(Number(norm.nx) || 0)
+  let ny = clamp01(Number(norm.ny) || 0)
+  let nw = clamp01(Number(norm.nw) || 1)
+  let nh = clamp01(Number(norm.nh) || 1)
+  nw = Math.max(0.02, nw)
+  nh = Math.max(0.02, nh)
+  if (nx + nw > 1) nx = Math.max(0, 1 - nw)
+  if (ny + nh > 1) ny = Math.max(0, 1 - nh)
+
+  const W = sourceCanvas.width
+  const H = sourceCanvas.height
+  const x = Math.floor(nx * W)
+  const y = Math.floor(ny * H)
+  const w = Math.max(2, Math.ceil(nw * W))
+  const h = Math.max(2, Math.ceil(nh * H))
+  const out = document.createElement('canvas')
+  out.width = w
+  out.height = h
+  const ctx = out.getContext('2d')
+  if (!ctx) return cloneCanvas(sourceCanvas)
+  ctx.drawImage(sourceCanvas, x, y, w, h, 0, 0, w, h)
+  return out
+}
+
 /**
  * @param {HTMLCanvasElement} sourceCanvas
  * @param {{ autoCrop?: boolean, enhance?: boolean, maxLongEdge?: number, jpegQuality?: number }} [options]
