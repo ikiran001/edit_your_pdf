@@ -70,7 +70,7 @@ export default function ScanCropModal({ open, sourceCanvas, onCancel, onApply })
     const { nx: mx, ny: my } = clientToNorm(e, wrap)
     const brx = r.left + (n.nx + n.nw) * r.width
     const bry = r.top + (n.ny + n.nh) * r.height
-    const brHit = Math.hypot(e.clientX - brx, e.clientY - bry) < 36
+    const brHit = Math.hypot(e.clientX - brx, e.clientY - bry) < 44
     const inBox =
       mx >= n.nx - 0.01 &&
       mx <= n.nx + n.nw + 0.01 &&
@@ -141,6 +141,10 @@ export default function ScanCropModal({ open, sourceCanvas, onCancel, onApply })
   if (!open || !sourceCanvas) return null
 
   const { nx, ny, nw, nh } = norm
+  const iw = sourceCanvas.width
+  const ih = sourceCanvas.height
+  const cropPxW = Math.round(nw * iw)
+  const cropPxH = Math.round(nh * ih)
 
   return (
     <div
@@ -153,9 +157,22 @@ export default function ScanCropModal({ open, sourceCanvas, onCancel, onApply })
         <h2 id="scan-crop-title" className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
           Crop page
         </h2>
-        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-          Drag the frame to move it. Drag the bottom-right corner to resize. Then apply — auto-trim
-          and contrast run after this crop.
+        <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-medium text-zinc-600 dark:text-zinc-400">
+          <span className="rounded-md bg-indigo-100 px-1.5 py-0.5 text-indigo-800 dark:bg-indigo-950/80 dark:text-indigo-200">
+            1 Capture
+          </span>
+          <span className="text-zinc-400">→</span>
+          <span className="rounded-md bg-indigo-600 px-1.5 py-0.5 text-white dark:bg-indigo-500">
+            2 Crop
+          </span>
+          <span className="text-zinc-400">→</span>
+          <span className="rounded-md bg-zinc-200 px-1.5 py-0.5 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300">
+            3 Review
+          </span>
+        </p>
+        <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+          Drag the frame to move it. Drag the bottom-right corner to resize (large touch target). Then
+          apply — auto-trim and contrast run after this crop.
         </p>
 
         <div className="mt-4 flex justify-center">
@@ -215,35 +232,42 @@ export default function ScanCropModal({ open, sourceCanvas, onCancel, onApply })
               >
                 <div
                   className="absolute bottom-0 right-0 h-5 w-5 translate-x-1/2 translate-y-1/2 cursor-nwse-resize rounded-sm border-2 border-white bg-indigo-600 shadow"
-                  title="Resize"
+                  title="Resize (corner has a large touch target)"
                 />
               </div>
             </div>
           </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-2 border-t border-zinc-200 pt-4 dark:border-zinc-700">
-          <button
-            type="button"
-            disabled={applying}
-            onClick={() => setNorm({ nx: 0, ny: 0, nw: 1, nh: 1 })}
-            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800"
-          >
-            Reset to full frame
-          </button>
-          <button
-            type="button"
-            disabled={applying}
-            onClick={onCancel}
-            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800"
-          >
-            Cancel
-          </button>
+        <p className="mt-3 text-center text-xs tabular-nums text-zinc-600 dark:text-zinc-400">
+          Crop area: {Math.round(nw * 100)}% × {Math.round(nh * 100)}% of frame · about {cropPxW} ×{' '}
+          {cropPxH}px
+        </p>
+
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-zinc-200 pt-4 dark:border-zinc-700">
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={applying}
+              onClick={() => setNorm({ nx: 0, ny: 0, nw: 1, nh: 1 })}
+              className="fx-focus-ring rounded-lg border border-zinc-300 px-3 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800"
+            >
+              Reset to full frame
+            </button>
+            <button
+              type="button"
+              disabled={applying}
+              onClick={onCancel}
+              className="fx-focus-ring rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100 disabled:opacity-50 dark:text-zinc-400 dark:hover:bg-zinc-800"
+            >
+              Cancel
+            </button>
+          </div>
           <button
             type="button"
             disabled={applying}
             onClick={() => void handleApply()}
-            className="ml-auto rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+            className="fx-focus-ring min-h-11 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
           >
             {applying ? 'Applying…' : 'Apply & add page'}
           </button>

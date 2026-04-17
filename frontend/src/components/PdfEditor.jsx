@@ -834,12 +834,22 @@ export default function PdfEditor({ sessionId, onBack }) {
 
   if (!pdfDoc) {
     return (
-      <div className="relative flex min-h-svh items-center justify-center gap-3 bg-zinc-50 dark:bg-zinc-950">
+      <div className="relative flex min-h-svh flex-col items-center justify-center gap-6 bg-zinc-50 px-4 py-10 dark:bg-zinc-950">
         <div className="fixed right-4 top-4 z-[200]">
           <ThemeToggle />
         </div>
-        <div className="h-9 w-9 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
-        <span className="text-sm text-zinc-600 dark:text-zinc-400">{MSG.loadingPdf}</span>
+        <p className="sr-only">{MSG.loadingPdf}</p>
+        <div className="w-full max-w-md space-y-3" aria-hidden>
+          <div className="h-9 rounded-lg bg-zinc-200 motion-reduce:animate-none dark:bg-zinc-800 animate-pulse" />
+          <div className="h-[min(42vh,360px)] rounded-xl bg-zinc-200 motion-reduce:animate-none dark:bg-zinc-800 animate-pulse" />
+          <div className="flex gap-2">
+            <div className="h-3 flex-1 rounded bg-zinc-200 motion-reduce:animate-none dark:bg-zinc-800 animate-pulse" />
+            <div className="h-3 w-1/3 rounded bg-zinc-200 motion-reduce:animate-none dark:bg-zinc-800 animate-pulse" />
+          </div>
+        </div>
+        <span className="text-sm text-zinc-600 dark:text-zinc-400" aria-hidden>
+          {MSG.loadingPdf}
+        </span>
       </div>
     )
   }
@@ -1098,8 +1108,10 @@ function PageLoader({ pdfDoc, pageIndex, children }) {
   }, [pdfDoc, pageIndex])
   if (!page) {
     return (
-      <div className="flex h-40 items-center justify-center rounded-lg bg-white shadow dark:bg-zinc-900">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
+      <div className="space-y-2 rounded-lg border border-zinc-200 bg-white p-3 shadow dark:border-zinc-700 dark:bg-zinc-900">
+        <div className="h-4 w-2/5 rounded bg-zinc-200 motion-reduce:animate-none dark:bg-zinc-800 animate-pulse" />
+        <div className="h-36 w-full rounded-md bg-zinc-100 motion-reduce:animate-none dark:bg-zinc-800/80 animate-pulse" />
+        <div className="h-3 w-3/5 rounded bg-zinc-200 motion-reduce:animate-none dark:bg-zinc-800 animate-pulse" />
       </div>
     )
   }

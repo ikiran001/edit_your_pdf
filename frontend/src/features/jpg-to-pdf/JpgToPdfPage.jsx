@@ -124,6 +124,11 @@ export default function JpgToPdfPage() {
         onFiles={addFiles}
         label="Drop images here or click (JPEG, PNG, WebP)"
       />
+      {items.length === 0 && (
+        <p className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50/80 px-4 py-3 text-center text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-400">
+          No images yet. Drop files above or tap the zone — order is preserved for your PDF.
+        </p>
+      )}
       {fileReadyHint && (
         <div
           role="status"
