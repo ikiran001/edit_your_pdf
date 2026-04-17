@@ -28,6 +28,8 @@ export default function Toolbar({
   zoom = 1.0,
   onZoomIn,
   onZoomOut,
+  flattenFormsOnSave = true,
+  onFlattenFormsOnSaveChange,
 }) {
   return (
     <div className="fx-glass-header flex flex-wrap items-center gap-1.5 px-2 py-1.5 sm:gap-2 sm:px-3 sm:py-2">
@@ -121,6 +123,19 @@ export default function Toolbar({
       <div className="ml-auto flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:justify-start sm:gap-3">
         <ThemeToggle />
         <div className="flex flex-col items-stretch gap-1 sm:items-end">
+          {typeof onFlattenFormsOnSaveChange === 'function' && (
+            <label className="flex cursor-pointer select-none items-center justify-end gap-2 text-[11px] text-zinc-600 dark:text-zinc-400">
+              <input
+                type="checkbox"
+                className="h-3.5 w-3.5 shrink-0 rounded border-zinc-400 text-emerald-600 focus:ring-emerald-500 dark:border-zinc-500"
+                checked={flattenFormsOnSave}
+                onChange={(e) => onFlattenFormsOnSaveChange(e.target.checked)}
+              />
+              <span title="Bakes fillable fields into the page so Chrome/Edge/Acrobat no longer show blue field shading. Fields become static after save.">
+                Flatten forms on save
+              </span>
+            </label>
+          )}
           <div className="flex flex-wrap justify-end gap-2">
             <button
               type="button"

@@ -131,8 +131,12 @@ function resolveNativeStandardFont(fontFamily, bold, italic) {
 /**
  * Applies annotation payloads from the client onto a PDF using pdf-lib.
  * All positions use normalized 0–1 coords relative to each page (top-left origin).
+ *
+ * @param {{ flattenForms?: boolean }} [options] — When `flattenForms` is true, AcroForm fields are
+ *   baked into page content and removed so viewers no longer draw interactive field shading.
  */
-export async function applyEditsToPdf(pdfBytes, editsPayload) {
+export async function applyEditsToPdf(pdfBytes, editsPayload, options = {}) {
+  const { flattenForms = false } = options;
   const doc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
   const pages = doc.getPages();
   const nativeFontCache = new Map();
@@ -554,6 +558,15 @@ export async function applyEditsToPdf(pdfBytes, editsPayload) {
         default:
           break;
       }
+    }
+  }
+
+  if (flattenForms === true) {
+    try {
+      doc.getForm().flatten();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn('[applyEdits] flattenForms skipped:', msg);
     }
   }
 

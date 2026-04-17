@@ -124,6 +124,10 @@ export default function PdfEditor({ sessionId, onBack }) {
   const [zoom, setZoom] = useState(1.0)
   const zoomIn  = useCallback(() => setZoom((z) => Math.min(2.0, Math.round((z + 0.25) * 100) / 100)), [])
   const zoomOut = useCallback(() => setZoom((z) => Math.max(0.5, Math.round((z - 0.25) * 100) / 100)), [])
+  /** When true, POST /edit asks the server to flatten AcroForm fields into static content. */
+  const [flattenFormsOnSave, setFlattenFormsOnSave] = useState(true)
+  const flattenFormsOnSaveRef = useRef(true)
+  flattenFormsOnSaveRef.current = flattenFormsOnSave
   /** PNG bytes from the modal; used for new placements. */
   const [signaturePng, setSignaturePng] = useState(null)
   const [signatureModalOpen, setSignatureModalOpen] = useState(false)
@@ -449,6 +453,8 @@ export default function PdfEditor({ sessionId, onBack }) {
         ...(opts.replaceSessionAnnotations ? { replaceSessionAnnotations: true } : {}),
         /* Let server replace session-edits.json with this snapshot so “Add Text” removals persist. */
         ...(opts.annotationsAuthoritative === false ? {} : { annotationsAuthoritative: true }),
+        flattenForms:
+          typeof opts.flattenForms === 'boolean' ? opts.flattenForms : flattenFormsOnSaveRef.current,
       }),
     })
     const raw = await res.text()
@@ -857,6 +863,8 @@ export default function PdfEditor({ sessionId, onBack }) {
         zoom={zoom}
         onZoomIn={zoomIn}
         onZoomOut={zoomOut}
+        flattenFormsOnSave={flattenFormsOnSave}
+        onFlattenFormsOnSaveChange={setFlattenFormsOnSave}
       />
       {saveHint && (
         <div
@@ -923,7 +931,10 @@ export default function PdfEditor({ sessionId, onBack }) {
                 <kbd className="rounded bg-amber-200/80 px-1 dark:bg-amber-900/50">Ctrl+Enter</kbd>
                 ), your text is saved to this session automatically — no need to press{' '}
                 <strong>Save PDF</strong> first. Use <strong>Save PDF</strong> or{' '}
-                <strong>Download PDF</strong> anytime for a full sync or file download.
+                <strong>Download PDF</strong> anytime for a full sync or file download. For fillable
+                forms, leave <strong>Flatten forms on save</strong> checked in the toolbar so viewers
+                do not tint fields blue; turn it off only if you need the downloaded PDF to stay
+                editable as a form.
               </p>
             </div>
           )}
