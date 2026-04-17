@@ -28,18 +28,51 @@ export function resolveGotenbergBaseUrl() {
   return `http://${hp}`.replace(/\/$/, '');
 }
 
+/** True if two URLs refer to the same host (Gotenberg must be a different service than this API). */
+function sameHostname(a, b) {
+  try {
+    const ua = new URL(/^https?:\/\//i.test(a) ? a : `http://${a}`);
+    const ub = new URL(/^https?:\/\//i.test(b) ? b : `http://${b}`);
+    return ua.hostname.toLowerCase() === ub.hostname.toLowerCase();
+  } catch {
+    return false;
+  }
+}
+
+function assertGotenbergNotSameHostAsApi(gotenbergBaseUrl) {
+  const apiPublic = (process.env.RENDER_EXTERNAL_URL || '').trim();
+  if (!apiPublic) return;
+  if (!sameHostname(gotenbergBaseUrl, apiPublic)) return;
+  const err = new Error(
+    'GOTENBERG_URL points at this API (same host as RENDER_EXTERNAL_URL). It must be the base URL of your separate Gotenberg service, e.g. https://<your-gotenberg-name>.onrender.com — not this Node server.'
+  );
+  err.code = 'GOTENBERG_SELF_REFERENCE';
+  throw err;
+}
+
 /**
- * @returns {{ pdfToDocx: boolean, docxToPdf: boolean, sofficePath: string | null, gotenbergUrl: string | null }}
+ * @returns {{
+ *   pdfToDocx: boolean,
+ *   docxToPdf: boolean,
+ *   sofficePath: string | null,
+ *   gotenbergUrl: string | null,
+ *   gotenbergSameHostAsApi?: boolean,
+ * }}
  */
 export function getDocumentFlowCapabilities() {
   const sofficePath = (process.env.SOFFICE_PATH || '').trim() || null;
   const gotenbergUrl = resolveGotenbergBaseUrl() || null;
-  return {
+  const apiPublic = (process.env.RENDER_EXTERNAL_URL || '').trim();
+  const sameHost =
+    Boolean(gotenbergUrl && apiPublic) && sameHostname(gotenbergUrl, apiPublic);
+  const out = {
     pdfToDocx: Boolean(sofficePath),
-    docxToPdf: Boolean(gotenbergUrl),
+    docxToPdf: Boolean(gotenbergUrl) && !sameHost,
     sofficePath: sofficePath ? '(set)' : null,
     gotenbergUrl: gotenbergUrl ? '(set)' : null,
   };
+  if (sameHost) out.gotenbergSameHostAsApi = true;
+  return out;
 }
 
 /**
@@ -100,6 +133,7 @@ export async function convertPdfFileToDocxBuffer(opts) {
 export async function convertDocxBufferToPdfBuffer(opts) {
   const { gotenbergBaseUrl, docxBuffer, filename = 'document.docx' } = opts;
   const base = gotenbergBaseUrl.replace(/\/$/, '');
+  assertGotenbergNotSameHostAsApi(base);
   const url = `${base}/forms/libreoffice/convert`;
 
   const form = new FormData();
@@ -111,7 +145,10 @@ export async function convertDocxBufferToPdfBuffer(opts) {
   const res = await fetch(url, { method: 'POST', body: form });
   const buf = Buffer.from(await res.arrayBuffer());
   if (!res.ok) {
-    const msg = buf.slice(0, 800).toString('utf8') || res.statusText;
+    let msg = buf.slice(0, 800).toString('utf8') || res.statusText;
+    if (res.status === 404) {
+      msg += `\n\n404 usually means GOTENBERG_URL is not a Gotenberg base URL (this app calls POST …/forms/libreoffice/convert). Try GET ${base}/health in a browser — Gotenberg returns JSON; if you see HTML, 404, or your own API, set GOTENBERG_URL to your separate Gotenberg Web Service on Render.`;
+    }
     const err = new Error(`Gotenberg error ${res.status}: ${msg}`);
     err.code = 'GOTENBERG_HTTP';
     err.status = res.status;
