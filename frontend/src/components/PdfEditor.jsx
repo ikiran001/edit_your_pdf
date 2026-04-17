@@ -7,6 +7,8 @@ import EditorOnboardingBanner from '../shared/components/EditorOnboardingBanner.
 import EditPdfShortcutsModal from '../shared/components/EditPdfShortcutsModal.jsx'
 import DownloadCompleteModal from '../shared/components/DownloadCompleteModal.jsx'
 import Toolbar from './Toolbar'
+import SignatureCreationModal from '../features/sign-pdf/SignatureCreationModal.jsx'
+import { uint8ToBase64 } from '../features/sign-pdf/signPdfGeometry.js'
 import ThumbnailSidebar from './ThumbnailSidebar'
 import EditsSidebar from './EditsSidebar'
 import PdfPageCanvas from './PdfPageCanvas'
@@ -122,6 +124,9 @@ export default function PdfEditor({ sessionId, onBack }) {
   const [zoom, setZoom] = useState(1.0)
   const zoomIn  = useCallback(() => setZoom((z) => Math.min(2.0, Math.round((z + 0.25) * 100) / 100)), [])
   const zoomOut = useCallback(() => setZoom((z) => Math.max(0.5, Math.round((z - 0.25) * 100) / 100)), [])
+  /** PNG bytes from the modal; used for new placements. */
+  const [signaturePng, setSignaturePng] = useState(null)
+  const [signatureModalOpen, setSignatureModalOpen] = useState(false)
 
   const showErrorHint = useCallback((msg) => {
     if (errorHintTimerRef.current != null) {
@@ -185,6 +190,41 @@ export default function PdfEditor({ sessionId, onBack }) {
   nativeTextEditsRef.current = nativeTextEdits
 
   const numPages = pdfDoc?.numPages ?? 0
+
+  const signatureImageBase64 = useMemo(() => {
+    if (signaturePng?.length) return uint8ToBase64(signaturePng)
+    for (const k of Object.keys(pagesItems || {})) {
+      const list = pagesItems[k] || []
+      const found = list.find((it) => it?.type === 'signature' && it.imageBase64)
+      if (found?.imageBase64) {
+        return String(found.imageBase64).replace(/^data:image\/png;base64,/i, '')
+      }
+    }
+    return ''
+  }, [signaturePng, pagesItems])
+
+  const canPlaceSignature = Boolean(signatureImageBase64)
+
+  const onToolbarTool = useCallback(
+    (t) => {
+      if (t === 'signature' && !canPlaceSignature) {
+        setSignatureModalOpen(true)
+        return
+      }
+      setActiveTool(t)
+    },
+    [canPlaceSignature]
+  )
+
+  const handleSignatureModalDone = useCallback((pngBytes) => {
+    setSignaturePng(pngBytes)
+    setSignatureModalOpen(false)
+    setActiveTool('signature')
+  }, [])
+
+  const handleSignatureModalClose = useCallback(() => {
+    setSignatureModalOpen(false)
+  }, [])
 
   const showToast = useCallback((msg) => {
     if (toastTimerRef.current != null) {
@@ -802,7 +842,7 @@ export default function PdfEditor({ sessionId, onBack }) {
     <div className="flex h-svh flex-col bg-zinc-100/95 text-zinc-900 dark:bg-zinc-950/80 dark:text-zinc-100">
       <Toolbar
         activeTool={activeTool}
-        onToolChange={setActiveTool}
+        onToolChange={onToolbarTool}
         editTextMode={editTextMode}
         onEditTextModeChange={setEditTextMode}
         onUndo={handleUndo}
@@ -878,8 +918,8 @@ export default function PdfEditor({ sessionId, onBack }) {
               <p className="m-0 font-medium">Select a tool first</p>
               <p className="mt-1 mb-0 text-amber-900/90 dark:text-amber-100/90">
                 Use <strong>Edit text</strong> to change existing PDF wording (matched size), or{' '}
-                <strong>Add Text</strong> / <strong>Draw</strong> / <strong>Highlight</strong> /{' '}
-                <strong>Rectangle</strong> for markup. When you finish a line (click outside or press{' '}
+                <strong>Add Text</strong> / <strong>Signature</strong> / <strong>Draw</strong> /{' '}
+                <strong>Highlight</strong> / <strong>Rectangle</strong> for markup. When you finish a line (click outside or press{' '}
                 <kbd className="rounded bg-amber-200/80 px-1 dark:bg-amber-900/50">Ctrl+Enter</kbd>
                 ), your text is saved to this session automatically — no need to press{' '}
                 <strong>Save PDF</strong> first. Use <strong>Save PDF</strong> or{' '}
@@ -918,6 +958,7 @@ export default function PdfEditor({ sessionId, onBack }) {
                       onClearAnnotFormatTarget={clearAnnotFormatUi}
                       onAddedTextCommitted={handleAddedTextCommitted}
                       onTextBoxOverlayActionsChange={handleTextBoxOverlayActions}
+                      signatureImageBase64={signatureImageBase64}
                       onBeginNativeTextEdit={(block, extras) => {
                         if (extras?.presetFormat && !extras?._maskColorHexSeed) {
                           setTextFormat(extras.presetFormat)
@@ -974,6 +1015,11 @@ export default function PdfEditor({ sessionId, onBack }) {
           />
         )}
       </div>
+      <SignatureCreationModal
+        open={signatureModalOpen}
+        onClose={handleSignatureModalClose}
+        onDone={handleSignatureModalDone}
+      />
       <EditPdfShortcutsModal open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
       <DownloadCompleteModal
         open={Boolean(downloadCompleteModal)}

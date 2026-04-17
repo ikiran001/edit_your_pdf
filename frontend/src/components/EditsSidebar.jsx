@@ -10,6 +10,8 @@ function annotTypeLabel(type) {
       return 'Highlight'
     case 'rect':
       return 'Rectangle'
+    case 'signature':
+      return 'Signature'
     default:
       return 'Markup'
   }
