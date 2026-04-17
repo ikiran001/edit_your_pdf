@@ -81,6 +81,8 @@ router.post('/edit', express.json({ limit: '52mb' }), async (req, res) => {
      * Replaces session-edits.json so removals are not resurrected from the old merge-with-persisted logic.
      */
     annotationsAuthoritative,
+    /** When true, pdf-lib flattens AcroForm fields into page content (no fillable widgets). */
+    flattenForms,
   } = req.body || {};
   if (!sessionId || typeof sessionId !== 'string') {
     return res.status(400).json({ error: 'sessionId required' });
@@ -144,7 +146,8 @@ router.post('/edit', express.json({ limit: '52mb' }), async (req, res) => {
     }
 
     const merged = mergeEditsWithNative(pagesEdits || { pages: [] }, mergedNative);
-    const out = await applyEditsToPdf(pdfBytes, merged);
+    const doFlatten = flattenForms === true;
+    const out = await applyEditsToPdf(pdfBytes, merged, { flattenForms: doFlatten });
     fs.writeFileSync(outPath, out);
 
     if (debugEdit) {
