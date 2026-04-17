@@ -176,6 +176,11 @@ export default function WordToPdfPage() {
                 “404” on convert because Express does not expose Gotenberg’s routes.
               </p>
             ) : null}
+            {caps?.gotenbergHealthHint ? (
+              <p className="mt-2 mb-0 rounded-lg border border-red-200 bg-red-50/90 px-3 py-2 text-red-950 dark:border-red-900 dark:bg-red-950/40 dark:text-red-100">
+                {caps.gotenbergHealthHint}
+              </p>
+            ) : null}
             <p className="mt-2 mb-0">
               Your API answered, but Word → PDF is off on <strong>that</strong> server: set{' '}
               <code className="rounded bg-zinc-200 px-1 font-mono text-xs dark:bg-zinc-800">GOTENBERG_URL</code>{' '}
