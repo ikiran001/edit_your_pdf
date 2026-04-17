@@ -16,6 +16,8 @@ export const ANALYTICS_TOOL = {
   watermark_pdf: 'watermark_pdf',
   /** Camera / image scan → single PDF (browser-only). */
   scan_to_pdf: 'scan_to_pdf',
+  /** DOCX → PDF via server (Gotenberg when configured). */
+  word_to_pdf: 'word_to_pdf',
 }
 
 /** Toolkit registry `id` → analytics feature key for `feature_used` */
@@ -32,5 +34,5 @@ export const REGISTRY_ID_TO_FEATURE = {
   'add-watermark': ANALYTICS_TOOL.watermark_pdf,
   'scan-to-pdf': ANALYTICS_TOOL.scan_to_pdf,
   'pdf-to-word': 'pdf_to_word',
-  'word-to-pdf': 'word_to_pdf',
+  'word-to-pdf': ANALYTICS_TOOL.word_to_pdf,
 }

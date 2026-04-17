@@ -61,5 +61,12 @@ export const TOOL_REGISTRY = [
     icon: 'Droplets',
   },
   { id: 'pdf-to-word', path: '/tools/pdf-to-word', title: 'PDF to Word', description: 'DOC/DOCX export via server (planned).', implemented: false, icon: 'FileType2' },
-  { id: 'word-to-pdf', path: '/tools/word-to-pdf', title: 'Word to PDF', description: 'DOC/DOCX to PDF (planned).', implemented: false, icon: 'FileText' },
+  {
+    id: 'word-to-pdf',
+    path: '/tools/word-to-pdf',
+    title: 'Word to PDF',
+    description: 'Upload a .docx; download a PDF (server converter).',
+    implemented: true,
+    icon: 'FileText',
+  },
 ]

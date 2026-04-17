@@ -8,12 +8,42 @@ import uploadRouter from './routes/upload.js';
 import editRouter from './routes/edit.js';
 import downloadRouter from './routes/download.js';
 import unlockRouter from './routes/unlock.js';
+import documentFlowRouter from './routes/documentFlow.js';
+import { getDocumentFlowCapabilities } from './services/documentFlowConvert.js';
 import { startSessionCleanup } from './utils/sessionCleanup.js';
 import { getQpdfBinary } from './utils/resolveQpdf.js';
 import { getGhostscriptBinary } from './utils/resolveGhostscript.js';
 import { ensureNotoFontsReady } from './services/pdfUnicodeFonts.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+/** Optional local overrides (gitignored). Does not replace vars already set in the shell. */
+function loadBackendDotEnv() {
+  try {
+    const envPath = path.join(__dirname, '.env');
+    if (!fs.existsSync(envPath)) return;
+    const text = fs.readFileSync(envPath, 'utf8');
+    for (const line of text.split(/\r?\n/)) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) continue;
+      const eq = trimmed.indexOf('=');
+      if (eq < 1) continue;
+      const key = trimmed.slice(0, eq).trim();
+      let val = trimmed.slice(eq + 1).trim();
+      if (
+        (val.startsWith('"') && val.endsWith('"')) ||
+        (val.startsWith("'") && val.endsWith("'"))
+      ) {
+        val = val.slice(1, -1);
+      }
+      if (key && process.env[key] === undefined) process.env[key] = val;
+    }
+  } catch (e) {
+    console.warn('[env] could not read .env:', e?.message || e);
+  }
+}
+loadBackendDotEnv();
+
 const uploadsDir = path.join(__dirname, 'uploads');
 
 if (!fs.existsSync(uploadsDir)) {
@@ -79,6 +109,7 @@ app.use(uploadRouter);
 app.use(editRouter);
 app.use(downloadRouter);
 app.use(unlockRouter);
+app.use(documentFlowRouter);
 
 /** Serve PDF for pdf.js: latest edited file when present, else original upload. */
 app.get('/pdf/:sessionId', (req, res) => {
@@ -130,6 +161,14 @@ function logUnlockBackends() {
   }
 }
 logUnlockBackends();
+
+const docFlow = getDocumentFlowCapabilities();
+console.log(
+  '[document-flow]',
+  docFlow.pdfToDocx ? 'PDF→DOCX (SOFFICE_PATH)' : 'PDF→DOCX off',
+  '·',
+  docFlow.docxToPdf ? 'DOCX→PDF (GOTENBERG_URL)' : 'DOCX→PDF off'
+);
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
