@@ -495,4 +495,52 @@ export const TOOL_SEO_BY_ID = {
       },
     ],
   },
+
+  'scan-to-pdf': {
+    featureName: 'Scan to PDF',
+    intro: [
+      'Turn phone or laptop camera shots into a clean multi-page PDF. pdfpilot runs in your browser: you grant camera access only for this tab, capture each page, reorder or retake, then download one file.',
+      'If you cannot use the camera (permission denied or desktop without a webcam), upload existing photos instead — the same trim and contrast tools apply before the PDF is built.',
+    ],
+    steps: [
+      'Open Scan to PDF from the toolkit.',
+      'Choose whether to auto-trim bright margins and enhance contrast (defaults are on for typical paper scans).',
+      'Tap Scan document and allow the camera, or use Upload photos for gallery files.',
+      'Capture each page while the live preview is steady; add as many pages as you need.',
+      'Use Done to review thumbnails, drag to reorder, retake a bad page, or remove extras.',
+      'Download PDF when the order looks right.',
+    ],
+    benefits: [
+      {
+        title: 'No scanner hardware required',
+        body: 'Use the camera you already carry for receipts, forms, and whiteboard notes.',
+      },
+      {
+        title: 'Graceful fallbacks',
+        body: 'Blocked camera or missing hardware is not a dead end — upload images and continue.',
+      },
+      {
+        title: 'Readable exports',
+        body: 'Optional contrast stretch and margin trimming help text pop before pages become PDF.',
+      },
+      {
+        title: 'Private by design',
+        body: 'Frames are processed locally in the browser; only the final PDF leaves your device when you save it.',
+      },
+    ],
+    highlights: [
+      {
+        title: 'Multi-page capture',
+        body: 'Stack several shots in order for a single download.',
+      },
+      {
+        title: 'Reorder and retake',
+        body: 'Drag rows to fix sequence or open the camera again for one page.',
+      },
+      {
+        title: 'Mobile friendly',
+        body: 'Large tap targets and a vertical layout work on phones in landscape or portrait.',
+      },
+    ],
+  },
 }

@@ -8,6 +8,7 @@ import SplitPdfPage from '../features/split-pdf/SplitPdfPage.jsx'
 import CompressPdfPage from '../features/compress-pdf/CompressPdfPage.jsx'
 import PdfToJpgPage from '../features/pdf-to-jpg/PdfToJpgPage.jsx'
 import JpgToPdfPage from '../features/jpg-to-pdf/JpgToPdfPage.jsx'
+import ScanToPdfPage from '../features/scan-to-pdf/ScanToPdfPage.jsx'
 import SignPdfPage from '../features/sign-pdf/SignPdfPage.jsx'
 import UnlockPdfPage from '../features/unlock-pdf/UnlockPdfPage.jsx'
 import OrganizePdfPage from '../features/organize-pdf/OrganizePdfPage.jsx'
@@ -41,6 +42,7 @@ export default function AppRoutes() {
         <Route path="/tools/compress-pdf" element={<CompressPdfPage />} />
         <Route path="/tools/pdf-to-jpg" element={<PdfToJpgPage />} />
         <Route path="/tools/jpg-to-pdf" element={<JpgToPdfPage />} />
+        <Route path="/tools/scan-to-pdf" element={<ScanToPdfPage />} />
         <Route path="/tools/sign-pdf" element={<SignPdfPage />} />
         <Route path="/tools/unlock-pdf" element={<UnlockPdfPage />} />
         <Route path="/tools/organize-pdf" element={<OrganizePdfPage />} />

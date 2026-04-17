@@ -14,6 +14,8 @@ export const ANALYTICS_TOOL = {
   unlock_pdf: 'unlock_pdf',
   organize_pdf: 'organize_pdf',
   watermark_pdf: 'watermark_pdf',
+  /** Camera / image scan → single PDF (browser-only). */
+  scan_to_pdf: 'scan_to_pdf',
 }
 
 /** Toolkit registry `id` → analytics feature key for `feature_used` */
@@ -28,6 +30,7 @@ export const REGISTRY_ID_TO_FEATURE = {
   'unlock-pdf': ANALYTICS_TOOL.unlock_pdf,
   'organize-pdf': ANALYTICS_TOOL.organize_pdf,
   'add-watermark': ANALYTICS_TOOL.watermark_pdf,
+  'scan-to-pdf': ANALYTICS_TOOL.scan_to_pdf,
   'pdf-to-word': 'pdf_to_word',
   'word-to-pdf': 'word_to_pdf',
 }

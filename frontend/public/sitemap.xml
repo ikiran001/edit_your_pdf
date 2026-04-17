@@ -41,6 +41,11 @@
     <priority>0.85</priority>
   </url>
   <url>
+    <loc>https://pdfpilot.pro/tools/scan-to-pdf</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
     <loc>https://pdfpilot.pro/tools/unlock-pdf</loc>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
