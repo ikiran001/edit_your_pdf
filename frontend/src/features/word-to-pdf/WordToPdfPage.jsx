@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import ToolPageShell from '../../shared/components/ToolPageShell.jsx'
 import ToolFeatureSeoSection from '../../shared/components/ToolFeatureSeoSection.jsx'
 import FileDropzone from '../../shared/components/FileDropzone.jsx'
-import { apiUrl } from '../../lib/apiBase.js'
+import { apiUrl, isApiBaseConfigured } from '../../lib/apiBase.js'
 import { useToolEngagement } from '../../hooks/useToolEngagement.js'
 import {
   pageView,
@@ -28,8 +28,16 @@ function triggerDownloadBlob(blob, filename) {
 }
 
 export default function WordToPdfPage() {
+  /** loading | ready | error — avoids showing “converter not configured” before we know, or on fetch failure */
+  const [capsStatus, setCapsStatus] = useState(() =>
+    import.meta.env.PROD && !isApiBaseConfigured() ? 'error' : 'loading'
+  )
   const [caps, setCaps] = useState(null)
-  const [loadError, setLoadError] = useState(null)
+  const [loadError, setLoadError] = useState(() =>
+    import.meta.env.PROD && !isApiBaseConfigured()
+      ? 'This production build does not know your API URL. Rebuild the frontend with VITE_API_BASE_URL set to your API origin (same value you use for Edit PDF / other tools), e.g. https://your-api.onrender.com'
+      : null
+  )
   const [busy, setBusy] = useState(false)
   const [actionError, setActionError] = useState(null)
 
@@ -42,16 +50,23 @@ export default function WordToPdfPage() {
 
   useEffect(() => {
     let cancelled = false
+    if (import.meta.env.PROD && !isApiBaseConfigured()) return
     ;(async () => {
       try {
         const r = await fetch(apiUrl('/document-flow/capabilities'))
         const j = await r.json().catch(() => ({}))
         if (!r.ok) throw new Error(j?.error || r.statusText)
-        if (!cancelled) setCaps(j)
+        if (!cancelled) {
+          setCaps(j)
+          setCapsStatus('ready')
+        }
       } catch (e) {
         if (!cancelled) {
-          setLoadError(e?.message || 'Could not reach the API')
-          setCaps({ docxToPdf: false, pdfToDocx: false })
+          setLoadError(
+            e?.message ||
+              'Could not load /document-flow/capabilities from the API. If the site is static hosting, set VITE_API_BASE_URL when building.'
+          )
+          setCapsStatus('error')
         }
       }
     })()
@@ -62,6 +77,12 @@ export default function WordToPdfPage() {
 
   const onDocx = useCallback(async (file) => {
     if (!file) return
+    if (import.meta.env.PROD && !isApiBaseConfigured()) {
+      setActionError(
+        'Set VITE_API_BASE_URL when building the frontend so uploads reach your API.'
+      )
+      return
+    }
     setActionError(null)
     setBusy(true)
     try {
@@ -124,7 +145,13 @@ export default function WordToPdfPage() {
           </p>
         )}
 
-        {caps?.docxToPdf ? (
+        {capsStatus === 'loading' && (
+          <p className="rounded-xl border border-zinc-200 bg-zinc-50/80 px-4 py-3 text-center text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-400">
+            Checking converter…
+          </p>
+        )}
+
+        {capsStatus === 'ready' && caps?.docxToPdf ? (
           <>
             <FileDropzone
               accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -138,11 +165,22 @@ export default function WordToPdfPage() {
               slightly in the PDF.
             </p>
           </>
-        ) : (
+        ) : capsStatus === 'ready' && !caps?.docxToPdf ? (
           <div className="rounded-2xl border border-zinc-200 bg-zinc-50/90 p-6 text-sm text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900/50 dark:text-zinc-300">
             <p className="m-0 font-medium text-zinc-900 dark:text-zinc-100">Converter not configured</p>
             <p className="mt-2 mb-0">
-              The API needs a reachable{' '}
+              Your API answered, but Word → PDF is off on <strong>that</strong> server: set{' '}
+              <code className="rounded bg-zinc-200 px-1 font-mono text-xs dark:bg-zinc-800">GOTENBERG_URL</code>{' '}
+              (full <code className="font-mono text-xs">https://…</code> base URL to Gotenberg) or{' '}
+              <code className="font-mono text-xs">GOTENBERG_HOSTPORT</code> in the environment of the{' '}
+              <strong>Node API</strong> process, then redeploy. With Render Blueprints,{' '}
+              <code className="font-mono text-xs">render.yaml</code> wires{' '}
+              <code className="font-mono text-xs">GOTENBERG_URL</code> from the Gotenberg service only if your
+              Render service <strong>names</strong> match <code className="font-mono text-xs">render.yaml</code>{' '}
+              (API <code className="font-mono text-xs">name</code> = your{' '}
+              <code className="font-mono text-xs">*.onrender.com</code> service name, plus{' '}
+              <code className="font-mono text-xs">pdfpilot-gotenberg</code>); otherwise paste your Gotenberg URL
+              manually under Environment. See{' '}
               <a
                 className="text-indigo-600 underline-offset-2 hover:underline dark:text-cyan-400"
                 href="https://gotenberg.dev/"
@@ -150,15 +188,11 @@ export default function WordToPdfPage() {
                 rel="noreferrer"
               >
                 Gotenberg
-              </a>{' '}
-              instance: set <code className="rounded bg-zinc-200 px-1 font-mono text-xs dark:bg-zinc-800">GOTENBERG_URL</code>{' '}
-              (full URL) on the server, or deploy with the repo{' '}
-              <code className="font-mono text-xs">render.yaml</code> so production gets{' '}
-              <code className="font-mono text-xs">GOTENBERG_HOSTPORT</code> automatically. For local dev, see{' '}
-              <code className="font-mono text-xs">docker-compose.document-flow.yml</code>.
+              </a>
+              . Local dev: <code className="font-mono text-xs">docker-compose.document-flow.yml</code>.
             </p>
           </div>
-        )}
+        ) : null}
 
         {actionError && (
           <p

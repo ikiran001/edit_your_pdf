@@ -17,6 +17,7 @@ const uploadsRoot = path.join(__dirname, '..', 'uploads');
 const router = Router();
 
 router.get('/document-flow/capabilities', (_req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
   res.json(getDocumentFlowCapabilities());
 });
 
