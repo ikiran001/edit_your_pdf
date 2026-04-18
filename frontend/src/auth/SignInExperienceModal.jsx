@@ -48,9 +48,14 @@ export default function SignInExperienceModal({
     }
   }, [open, initialMode])
 
+  /**
+   * Default auth panel: close when sign-in completes.
+   * Download gate: parent closes after a successful resume download (do not call onClose here — it
+   * cleared sessionStorage pending intent and raced the resume effect when signing in elsewhere).
+   */
   useEffect(() => {
-    if (open && user) onClose()
-  }, [open, user, onClose])
+    if (open && user && variant !== 'download') onClose()
+  }, [open, user, onClose, variant])
 
   useEffect(() => {
     if (!open) return undefined
