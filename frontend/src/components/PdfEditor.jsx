@@ -13,7 +13,6 @@ import { uint8ToBase64 } from '../features/sign-pdf/signPdfGeometry.js'
 import ThumbnailSidebar from './ThumbnailSidebar'
 import EditsSidebar from './EditsSidebar'
 import PdfPageCanvas from './PdfPageCanvas'
-import TextFormatToolbar from './TextFormatToolbar'
 import { defaultTextFormat, formatFromTextBlock } from '../lib/textFormatDefaults'
 import {
   nativeTextRecordsAreSameSlot,
@@ -40,6 +39,11 @@ import { persistEditSession } from '../features/edit-pdf/editSessionStorage.js'
 import { fetchEditPdfDownload } from '../features/edit-pdf/editPdfDownload.js'
 
 const EDIT_TOOL = 'edit_pdf'
+
+/** Page column width at zoom 1.0; higher zoom uses explicit width so the page can grow past the viewport (horizontal scroll). */
+const EDITOR_PAGE_BASE_CSS_PX = 896
+const EDITOR_ZOOM_MIN = 0.5
+const EDITOR_ZOOM_MAX = 4
 
 /** Stable when `pagesItems[i]` is missing — inline `[]` would be a new reference every render and break `commitText` / overlay effects in PdfPageCanvas. */
 const EMPTY_PAGE_ANNOT_ITEMS = []
@@ -128,7 +132,7 @@ export default function PdfEditor({
   textFormatRef.current = textFormat
   const [editTextMode, setEditTextMode] = useState(true)
   const [inlineTextEditorOpen, setInlineTextEditorOpen] = useState(false)
-  /** After placing “Add Text”, keep Text format sidebar open for styling (in addition to native line edit). */
+  /** After placing “Add Text”, keep Text format bar open for styling (in addition to native line edit). */
   const [addedTextFormatOpen, setAddedTextFormatOpen] = useState(false)
   const [annotFormatTarget, setAnnotFormatTarget] = useState(null)
   /** Done / Reset for add-text draft or placed-text edit (driven by PdfPageCanvas). */
@@ -145,8 +149,14 @@ export default function PdfEditor({
   const [toastMessage, setToastMessage] = useState(null)
   const toastTimerRef = useRef(null)
   const [zoom, setZoom] = useState(1.0)
-  const zoomIn  = useCallback(() => setZoom((z) => Math.min(2.0, Math.round((z + 0.25) * 100) / 100)), [])
-  const zoomOut = useCallback(() => setZoom((z) => Math.max(0.5, Math.round((z - 0.25) * 100) / 100)), [])
+  const zoomIn = useCallback(
+    () => setZoom((z) => Math.min(EDITOR_ZOOM_MAX, Math.round((z + 0.25) * 100) / 100)),
+    []
+  )
+  const zoomOut = useCallback(
+    () => setZoom((z) => Math.max(EDITOR_ZOOM_MIN, Math.round((z - 0.25) * 100) / 100)),
+    []
+  )
   /** When true, POST /edit asks the server to flatten AcroForm fields into static content. */
   const [flattenFormsOnSave, setFlattenFormsOnSave] = useState(true)
   const flattenFormsOnSaveRef = useRef(true)
@@ -222,6 +232,33 @@ export default function PdfEditor({
     setActiveTool('editText')
     setEditTextMode(true)
   }, [])
+
+  const textFormatInline = useMemo(() => {
+    const show =
+      (activeTool === 'editText' &&
+        editTextMode &&
+        (inlineTextEditorOpen || addedTextFormatOpen || annotFormatTarget != null)) ||
+      activeTool === 'text' ||
+      textBoxOverlayActions != null
+    if (!show) return null
+    return {
+      format: textFormat,
+      onChange: setTextFormat,
+      disabled: false,
+      overlayActions: textBoxOverlayActions
+        ? { done: textBoxOverlayActions.done, reset: textBoxOverlayActions.reset }
+        : null,
+    }
+  }, [
+    activeTool,
+    editTextMode,
+    inlineTextEditorOpen,
+    addedTextFormatOpen,
+    annotFormatTarget,
+    textBoxOverlayActions,
+    textFormat,
+  ])
+
   const { pagesItems, commit, undo, redo, canUndo, canRedo, reset } = usePagesHistory({})
   pagesItemsRef.current = pagesItems
   nativeTextEditsRef.current = nativeTextEdits
@@ -1089,16 +1126,16 @@ export default function PdfEditor({
         onRedo={handleRedo}
         canUndo={canUndo}
         canRedo={canRedo}
-        onSave={handleSave}
-        onDownload={handleDownload}
-        saving={saving}
-        downloading={downloading}
+        showSaveDownload={false}
         onShortcutsClick={() => setShortcutsOpen(true)}
         zoom={zoom}
+        zoomMin={EDITOR_ZOOM_MIN}
+        zoomMax={EDITOR_ZOOM_MAX}
         onZoomIn={zoomIn}
         onZoomOut={zoomOut}
         flattenFormsOnSave={flattenFormsOnSave}
         onFlattenFormsOnSaveChange={setFlattenFormsOnSave}
+        textFormatInline={textFormatInline}
       />
       {saveHint && (
         <div
@@ -1134,7 +1171,7 @@ export default function PdfEditor({
         />
         <div
           ref={scrollRef}
-          className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 md:px-6 md:py-4"
+          className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-auto px-3 py-3 md:px-6 md:py-4"
         >
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <button
@@ -1165,22 +1202,23 @@ export default function PdfEditor({
                 <kbd className="rounded bg-amber-200/80 px-1 dark:bg-amber-900/50">Ctrl+Enter</kbd>
                 ), your text is saved to this session automatically — no need to press{' '}
                 <strong>Save PDF</strong> first. Use <strong>Save PDF</strong> or{' '}
-                <strong>Download PDF</strong> anytime for a full sync or file download. For fillable
-                forms, leave <strong>Flatten forms on save</strong> checked in the toolbar so viewers
+                <strong>Download PDF</strong> in the <strong>Edits</strong> panel (side) anytime for a
+                full sync or file download. For fillable forms, leave{' '}
+                <strong>Flatten forms on save</strong> checked in the toolbar so viewers
                 do not tint fields blue; turn it off only if you need the downloaded PDF to stay
                 editable as a form.
               </p>
             </div>
           )}
-          <div className="flex flex-col items-center gap-8 pb-24">
+          <div className="mx-auto flex w-max flex-col items-center gap-8 pb-24">
             {pageNodes?.map((i) => (
               <div
                 key={i}
                 ref={(el) => {
                   pageRefs.current[i] = el
                 }}
-                className="w-full"
-                style={{ maxWidth: `${Math.round(896 * zoom)}px` }}
+                className="shrink-0"
+                style={{ width: `${Math.round(EDITOR_PAGE_BASE_CSS_PX * zoom)}px` }}
               >
                 <div className="mb-2 text-sm font-medium text-zinc-500">Page {i + 1}</div>
                 <LazyPageLoader pdfDoc={pdfDoc} pageIndex={i} scrollRef={scrollRef}>
@@ -1243,22 +1281,6 @@ export default function PdfEditor({
           downloading={downloading}
           listSyncing={editingListSync}
         />
-        {((activeTool === 'editText' &&
-          editTextMode &&
-          (inlineTextEditorOpen || addedTextFormatOpen || annotFormatTarget != null)) ||
-          activeTool === 'text' ||
-          textBoxOverlayActions != null) && (
-          <TextFormatToolbar
-            format={textFormat}
-            onChange={setTextFormat}
-            disabled={false}
-            overlayActions={
-              textBoxOverlayActions
-                ? { done: textBoxOverlayActions.done, reset: textBoxOverlayActions.reset }
-                : null
-            }
-          />
-        )}
       </div>
       <SignatureCreationModal
         open={signatureModalOpen}

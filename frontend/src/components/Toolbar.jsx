@@ -2,6 +2,7 @@ import ThemeToggle from '../shared/components/ThemeToggle.jsx'
 import AccountMenu from '../shared/components/AccountMenu.jsx'
 import BrandLogoLink from '../shared/components/BrandLogoLink.jsx'
 import { BRAND_NAME, MSG } from '../shared/constants/branding.js'
+import ToolbarTextFormatInline from './ToolbarTextFormatInline.jsx'
 
 const textTools = [
   { id: 'editText', label: 'Edit text' },
@@ -40,13 +41,23 @@ export default function Toolbar({
   onDownload,
   saving,
   downloading,
+  /** When false, Save/Download are omitted (e.g. shown only in Edits sidebar). */
+  showSaveDownload = true,
   onShortcutsClick,
   zoom = 1.0,
+  zoomMin = 0.5,
+  zoomMax = 4,
   onZoomIn,
   onZoomOut,
   flattenFormsOnSave = true,
   onFlattenFormsOnSaveChange,
+  /** When set, text format row is shown after TEXT tools (same glass header row). */
+  textFormatInline = null,
 }) {
+  const fileActions =
+    showSaveDownload &&
+    typeof onSave === 'function' &&
+    typeof onDownload === 'function'
   const editModeClass = editTextMode
     ? 'fx-focus-ring rounded-lg px-2 py-1.5 text-xs font-medium transition sm:px-3 sm:text-sm min-h-9 sm:min-h-0 bg-indigo-600 text-white shadow-md ring-2 ring-indigo-400/70 ring-offset-2 ring-offset-white dark:ring-indigo-300/50 dark:ring-offset-zinc-900'
     : 'fx-focus-ring rounded-lg px-2 py-1.5 text-xs font-medium transition sm:px-3 sm:text-sm min-h-9 sm:min-h-0 bg-zinc-100 text-zinc-800 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700'
@@ -69,7 +80,7 @@ export default function Toolbar({
         </button>
       )}
       <ToolbarDivider />
-      <span className="hidden text-[10px] font-semibold uppercase tracking-wide text-zinc-400 sm:inline dark:text-zinc-500">
+      <span className="hidden text-[11px] font-bold uppercase tracking-wide text-zinc-600 sm:inline sm:text-xs dark:text-zinc-300">
         Text
       </span>
       {textTools.map((t) => (
@@ -82,8 +93,19 @@ export default function Toolbar({
           {t.label}
         </button>
       ))}
+      {textFormatInline ? (
+        <>
+          <ToolbarDivider />
+          <ToolbarTextFormatInline
+            format={textFormatInline.format}
+            onChange={textFormatInline.onChange}
+            disabled={Boolean(textFormatInline.disabled)}
+            overlayActions={textFormatInline.overlayActions ?? null}
+          />
+        </>
+      ) : null}
       <ToolbarDivider />
-      <span className="hidden text-[10px] font-semibold uppercase tracking-wide text-zinc-400 sm:inline dark:text-zinc-500">
+      <span className="hidden text-[11px] font-bold uppercase tracking-wide text-zinc-600 sm:inline sm:text-xs dark:text-zinc-300">
         Markup
       </span>
       {markupTools.map((t) => (
@@ -116,33 +138,52 @@ export default function Toolbar({
       {(onZoomIn || onZoomOut) && (
         <>
           <ToolbarDivider />
-          <span className="hidden text-[10px] font-semibold uppercase tracking-wide text-zinc-400 sm:inline dark:text-zinc-500">
-            View
-          </span>
-          <button
-            type="button"
-            onClick={onZoomOut}
-            disabled={zoom <= 0.5}
-            title="Zoom out"
-            className="fx-focus-ring rounded-lg bg-zinc-100 px-2 py-1.5 text-xs font-medium text-zinc-800 disabled:opacity-40 sm:px-2.5 sm:text-sm min-h-9 min-w-9 dark:bg-zinc-800 dark:text-zinc-100"
-          >
-            −
-          </button>
-          <span className="min-w-[3rem] text-center text-xs font-medium tabular-nums text-zinc-600 dark:text-zinc-300">
-            {Math.round(zoom * 100)}%
-          </span>
-          <button
-            type="button"
-            onClick={onZoomIn}
-            disabled={zoom >= 2.0}
-            title="Zoom in"
-            className="fx-focus-ring rounded-lg bg-zinc-100 px-2 py-1.5 text-xs font-medium text-zinc-800 disabled:opacity-40 sm:px-2.5 sm:text-sm min-h-9 min-w-9 dark:bg-zinc-800 dark:text-zinc-100"
-          >
-            +
-          </button>
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <span className="hidden text-[11px] font-bold uppercase tracking-wide text-zinc-600 sm:inline sm:text-xs dark:text-zinc-300">
+              View
+            </span>
+            {/*
+              Keep zoom controls in one inline-flex so − / % / + share a baseline when the toolbar wraps
+              (e.g. text format row); loose flex items were mis-aligning the + button vertically.
+            */}
+            <div className="inline-flex h-9 items-center gap-0.5 rounded-lg border border-zinc-200/90 bg-zinc-100/90 px-0.5 dark:border-zinc-600 dark:bg-zinc-800/90">
+              <button
+                type="button"
+                onClick={onZoomOut}
+                disabled={zoom <= zoomMin}
+                title="Zoom out"
+                className="fx-focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-base font-semibold leading-none text-zinc-800 disabled:opacity-40 dark:text-zinc-100"
+              >
+                −
+              </button>
+              <span className="min-w-[2.75rem] select-none text-center text-xs font-semibold tabular-nums leading-none text-zinc-700 dark:text-zinc-200 sm:min-w-[3rem] sm:text-sm">
+                {Math.round(zoom * 100)}%
+              </span>
+              <button
+                type="button"
+                onClick={onZoomIn}
+                disabled={zoom >= zoomMax}
+                title="Zoom in"
+                className="fx-focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-base font-semibold leading-none text-zinc-800 disabled:opacity-40 dark:text-zinc-100"
+              >
+                +
+              </button>
+            </div>
+            {onShortcutsClick && (
+              <button
+                type="button"
+                onClick={onShortcutsClick}
+                title="Tips and keyboard shortcuts (?)"
+                className="fx-focus-ring inline-flex h-9 min-w-9 shrink-0 items-center justify-center rounded-lg border border-zinc-300 bg-white px-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50 sm:px-2.5 sm:text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              >
+                <span className="sm:hidden">?</span>
+                <span className="max-sm:hidden">Tips</span>
+              </button>
+            )}
+          </div>
         </>
       )}
-      {onShortcutsClick && (
+      {!(onZoomIn || onZoomOut) && onShortcutsClick && (
         <button
           type="button"
           onClick={onShortcutsClick}
@@ -158,9 +199,11 @@ export default function Toolbar({
         <ThemeToggle />
         <ToolbarDivider />
         <div className="flex flex-col items-stretch gap-1 sm:items-end">
-          <span className="hidden text-[10px] font-semibold uppercase tracking-wide text-zinc-400 sm:block sm:text-right dark:text-zinc-500">
-            File
-          </span>
+          {(fileActions || typeof onFlattenFormsOnSaveChange === 'function') && (
+            <span className="hidden text-[11px] font-bold uppercase tracking-wide text-zinc-600 sm:block sm:text-right sm:text-xs dark:text-zinc-300">
+              File
+            </span>
+          )}
           {typeof onFlattenFormsOnSaveChange === 'function' && (
             <label className="flex cursor-pointer select-none items-center justify-end gap-2 text-[11px] text-zinc-600 dark:text-zinc-400">
               <input
@@ -174,24 +217,26 @@ export default function Toolbar({
               </span>
             </label>
           )}
-          <div className="flex flex-wrap justify-end gap-2">
-            <button
-              type="button"
-              onClick={onSave}
-              disabled={saving || downloading}
-              className="fx-focus-ring rounded-lg border border-emerald-700 bg-white px-2.5 py-2 text-xs font-semibold text-emerald-800 shadow-sm hover:bg-emerald-50 disabled:opacity-50 sm:px-4 sm:py-1.5 sm:text-sm min-h-11 dark:border-emerald-500 dark:bg-zinc-900 dark:text-emerald-200 dark:hover:bg-emerald-950/40"
-            >
-              {saving ? MSG.finalizingPdf : 'Save PDF'}
-            </button>
-            <button
-              type="button"
-              onClick={onDownload}
-              disabled={saving || downloading}
-              className="fx-focus-ring rounded-lg bg-emerald-600 px-2.5 py-2 text-xs font-semibold text-white shadow hover:bg-emerald-700 disabled:opacity-50 sm:px-4 sm:py-1.5 sm:text-sm min-h-11"
-            >
-              {downloading ? MSG.processingFile : 'Download PDF'}
-            </button>
-          </div>
+          {fileActions && (
+            <div className="flex flex-wrap justify-end gap-2">
+              <button
+                type="button"
+                onClick={onSave}
+                disabled={saving || downloading}
+                className="fx-focus-ring rounded-lg border border-emerald-700 bg-white px-2.5 py-2 text-xs font-semibold text-emerald-800 shadow-sm hover:bg-emerald-50 disabled:opacity-50 sm:px-4 sm:py-1.5 sm:text-sm min-h-11 dark:border-emerald-500 dark:bg-zinc-900 dark:text-emerald-200 dark:hover:bg-emerald-950/40"
+              >
+                {saving ? MSG.finalizingPdf : 'Save PDF'}
+              </button>
+              <button
+                type="button"
+                onClick={onDownload}
+                disabled={saving || downloading}
+                className="fx-focus-ring rounded-lg bg-emerald-600 px-2.5 py-2 text-xs font-semibold text-white shadow hover:bg-emerald-700 disabled:opacity-50 sm:px-4 sm:py-1.5 sm:text-sm min-h-11"
+              >
+                {downloading ? MSG.processingFile : 'Download PDF'}
+              </button>
+            </div>
+          )}
           <span className="text-center text-[10px] font-medium text-zinc-400 sm:text-right dark:text-zinc-500">
             {BRAND_NAME}
           </span>
