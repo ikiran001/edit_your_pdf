@@ -173,7 +173,7 @@ export default function SignInExperienceModal({
 
             {isDownload ? (
               <p className="mt-4 text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">
-                Sign in or create an account, then your edited PDF downloads. You stay signed in on this device.
+                Sign in or create an account, then your file downloads automatically. You stay signed in on this device.
               </p>
             ) : null}
 

@@ -22,6 +22,7 @@ import {
   processCanvasToJpegBlob,
   processScannedImageBlob,
 } from './scanImagePipeline.js'
+import { useClientToolDownloadAuth } from '../../auth/ClientToolDownloadAuthContext.jsx'
 
 const SCAN_TOOL = ANALYTICS_TOOL.scan_to_pdf
 
@@ -88,6 +89,7 @@ function stopStream(stream) {
  */
 
 export default function ScanToPdfPage() {
+  const { runWithSignInForDownload } = useClientToolDownloadAuth()
   const [phase, setPhase] = useState('home')
   /** @type {React.MutableRefObject<MediaStream | null>} */
   const streamRef = useRef(null)
@@ -368,24 +370,35 @@ export default function ScanToPdfPage() {
     setBusy(true)
     const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
     try {
-      const blobs = pages.map((p) => p.blob)
-      const bytes = await imageBlobsToPdfBytes(blobs)
-      downloadUint8(bytes, 'scan.pdf')
-      trackToolCompleted(SCAN_TOOL, true)
-      trackFileDownloaded({
-        tool: SCAN_TOOL,
-        file_size: bytes.byteLength / 1024,
-        total_pages: blobs.length,
-      })
-      const elapsed =
-        (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0
-      trackProcessingTime(SCAN_TOOL, elapsed)
-      setFileReadyHint(MSG.fileReady)
-      window.setTimeout(() => setFileReadyHint(null), 6000)
+      await runWithSignInForDownload(
+        async () => {
+          const blobs = pages.map((p) => p.blob)
+          const bytes = await imageBlobsToPdfBytes(blobs)
+          downloadUint8(bytes, 'scan.pdf')
+          trackToolCompleted(SCAN_TOOL, true)
+          trackFileDownloaded({
+            tool: SCAN_TOOL,
+            file_size: bytes.byteLength / 1024,
+            total_pages: blobs.length,
+          })
+          const elapsed =
+            (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0
+          trackProcessingTime(SCAN_TOOL, elapsed)
+          setFileReadyHint(MSG.fileReady)
+          window.setTimeout(() => setFileReadyHint(null), 6000)
+        },
+        { onAuthLoading: () => setError('Still checking sign-in… try again in a moment.') }
+      )
     } catch (e) {
-      console.error(e)
-      trackErrorOccurred(SCAN_TOOL, e?.message || 'build_pdf_failed')
-      setError(e?.message || 'Could not build PDF')
+      if (e?.code === 'EYP_AUTH_CANCELLED') {
+        /* dismissed */
+      } else if (e?.code === 'EYP_AUTH_LOADING') {
+        setError(e.message || 'Still checking sign-in.')
+      } else {
+        console.error(e)
+        trackErrorOccurred(SCAN_TOOL, e?.message || 'build_pdf_failed')
+        setError(e?.message || 'Could not build PDF')
+      }
     } finally {
       setBusy(false)
     }

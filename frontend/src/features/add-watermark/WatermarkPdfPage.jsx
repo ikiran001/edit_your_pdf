@@ -17,6 +17,7 @@ import { applyWatermarkToPdf, resolvePageIndices } from '../../lib/watermarkPdfC
 import { parsePageRangeInput } from '../../lib/pdfMergeSplitCore.js'
 import '../../lib/pdfjs.js'
 import WatermarkPreview from './WatermarkPreview.jsx'
+import { useClientToolDownloadAuth } from '../../auth/ClientToolDownloadAuthContext.jsx'
 
 const TOOL = ANALYTICS_TOOL.watermark_pdf
 const LS_KEY = 'pdfpilot_watermark_settings_v1'
@@ -54,6 +55,7 @@ function saveSettings(partial) {
 }
 
 export default function WatermarkPdfPage() {
+  const { runWithSignInForDownload } = useClientToolDownloadAuth()
   const [pdfFile, setPdfFile] = useState(null)
   /** Master PDF bytes (pdf.js must not consume this buffer — pass `.slice()` into getDocument). */
   const [pdfBytes, setPdfBytes] = useState(null)
@@ -279,39 +281,50 @@ export default function WatermarkPdfPage() {
     setProgress({ done: 0, total: 0 })
     const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
     try {
-      const indices = resolvePageIndices(pageScope, pageRangeInput, numPages)
-      setProgress({ done: 0, total: indices.length })
-      const u8 = await applyWatermarkToPdf(pdfBytes, {
-        mode,
-        text: (text || '').trim(),
-        fontSize,
-        colorHex,
-        opacityPct,
-        rotationDeg,
-        imageBytes: mode === 'image' ? imageBytes : undefined,
-        imageKind: mode === 'image' ? imageKind : undefined,
-        imageScalePreset,
-        imageScalePercent,
-        position,
-        pageScope,
-        pageRangeInput: pageScope === 'range' ? pageRangeInput : '',
-        onProgress: (done, total) => setProgress({ done, total }),
-      })
-      const base = pdfFile.name.replace(/\.pdf$/i, '') || 'document'
-      downloadUint8(u8, `${base}-watermarked.pdf`)
-      trackToolCompleted(TOOL, true)
-      trackFileDownloaded({
-        tool: TOOL,
-        file_size: u8.byteLength / 1024,
-        total_pages: numPages,
-      })
-      trackProcessingTime(TOOL, (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0)
-      setSuccessHint('Watermarked PDF downloaded successfully.')
-      window.setTimeout(() => setSuccessHint(null), 6000)
+      await runWithSignInForDownload(
+        async () => {
+          const indices = resolvePageIndices(pageScope, pageRangeInput, numPages)
+          setProgress({ done: 0, total: indices.length })
+          const u8 = await applyWatermarkToPdf(pdfBytes, {
+            mode,
+            text: (text || '').trim(),
+            fontSize,
+            colorHex,
+            opacityPct,
+            rotationDeg,
+            imageBytes: mode === 'image' ? imageBytes : undefined,
+            imageKind: mode === 'image' ? imageKind : undefined,
+            imageScalePreset,
+            imageScalePercent,
+            position,
+            pageScope,
+            pageRangeInput: pageScope === 'range' ? pageRangeInput : '',
+            onProgress: (done, total) => setProgress({ done, total }),
+          })
+          const base = pdfFile.name.replace(/\.pdf$/i, '') || 'document'
+          downloadUint8(u8, `${base}-watermarked.pdf`)
+          trackToolCompleted(TOOL, true)
+          trackFileDownloaded({
+            tool: TOOL,
+            file_size: u8.byteLength / 1024,
+            total_pages: numPages,
+          })
+          trackProcessingTime(TOOL, (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0)
+          setSuccessHint('Watermarked PDF downloaded successfully.')
+          window.setTimeout(() => setSuccessHint(null), 6000)
+        },
+        { onAuthLoading: () => setError('Still checking sign-in… try again in a moment.') }
+      )
     } catch (e) {
-      console.error(e)
-      trackErrorOccurred(TOOL, e?.message || 'watermark_failed')
-      setError(e?.message || 'Could not apply watermark.')
+      if (e?.code === 'EYP_AUTH_CANCELLED') {
+        /* dismissed */
+      } else if (e?.code === 'EYP_AUTH_LOADING') {
+        setError(e.message || 'Still checking sign-in.')
+      } else {
+        console.error(e)
+        trackErrorOccurred(TOOL, e?.message || 'watermark_failed')
+        setError(e?.message || 'Could not apply watermark.')
+      }
     } finally {
       setBusy(false)
       setProgress({ done: 0, total: 0 })

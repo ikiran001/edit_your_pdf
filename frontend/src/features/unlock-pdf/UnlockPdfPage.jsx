@@ -14,6 +14,7 @@ import {
 } from '../../lib/analytics.js'
 import { ANALYTICS_TOOL } from '../../shared/constants/analyticsTools.js'
 import { MSG } from '../../shared/constants/branding.js'
+import { useClientToolDownloadAuth } from '../../auth/ClientToolDownloadAuthContext.jsx'
 
 const UNLOCK_TOOL = ANALYTICS_TOOL.unlock_pdf
 
@@ -28,6 +29,7 @@ function downloadBlob(blob, name) {
 }
 
 export default function UnlockPdfPage() {
+  const { runWithSignInForDownload } = useClientToolDownloadAuth()
   const [file, setFile] = useState(null)
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
@@ -60,65 +62,80 @@ export default function UnlockPdfPage() {
     const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
 
     try {
-      const fd = new FormData()
-      fd.append('file', file)
-      fd.append('password', password)
+      await runWithSignInForDownload(
+        async () => {
+          const fd = new FormData()
+          fd.append('file', file)
+          fd.append('password', password)
 
-      const url = apiUrl('/unlock-pdf')
-      const res = await fetch(url, { method: 'POST', body: fd, credentials: 'include' })
+          const url = apiUrl('/unlock-pdf')
+          const res = await fetch(url, { method: 'POST', body: fd, credentials: 'include' })
 
-      const contentType = res.headers.get('Content-Type') || ''
+          const contentType = res.headers.get('Content-Type') || ''
 
-      if (!res.ok) {
-        let msg = res.statusText || 'Request failed'
-        if (contentType.includes('application/json')) {
-          try {
-            const j = await res.json()
-            if (j?.error) msg = j.error
-          } catch {
-            /* ignore */
+          if (!res.ok) {
+            let msg = res.statusText || 'Request failed'
+            if (contentType.includes('application/json')) {
+              try {
+                const j = await res.json()
+                if (j?.error) msg = j.error
+              } catch {
+                /* ignore */
+              }
+            }
+            if (res.status === 401) {
+              console.warn('[unlock-pdf] password validation: FAILED')
+            } else {
+              console.warn('[unlock-pdf] request failed:', res.status, msg)
+            }
+            trackErrorOccurred(UNLOCK_TOOL, msg || `http_${res.status}`)
+            setError(msg)
+            return
           }
-        }
-        if (res.status === 401) {
-          console.warn('[unlock-pdf] password validation: FAILED')
-        } else {
-          console.warn('[unlock-pdf] request failed:', res.status, msg)
-        }
-        trackErrorOccurred(UNLOCK_TOOL, msg || `http_${res.status}`)
-        setError(msg)
-        return
-      }
 
-      if (!contentType.includes('application/pdf')) {
-        const text = await res.text()
-        console.warn('[unlock-pdf] unexpected response:', contentType, text.slice(0, 200))
-        trackErrorOccurred(UNLOCK_TOOL, 'unexpected_response_type')
-        setError('Server did not return a PDF. Is the API running with qpdf installed?')
-        return
-      }
+          if (!contentType.includes('application/pdf')) {
+            const text = await res.text()
+            console.warn('[unlock-pdf] unexpected response:', contentType, text.slice(0, 200))
+            trackErrorOccurred(UNLOCK_TOOL, 'unexpected_response_type')
+            setError('Server did not return a PDF. Is the API running with qpdf installed?')
+            return
+          }
 
-      const blob = await res.blob()
-      const outName = `unlocked_${Date.now()}.pdf`
-      console.log('[unlock-pdf] password validation: OK')
-      console.log('[unlock-pdf] output file:', outName, 'bytes:', blob.size)
-      downloadBlob(blob, outName)
-      setFileReadyHint(MSG.fileReady)
-      window.setTimeout(() => setFileReadyHint(null), 6000)
-      trackToolCompleted(UNLOCK_TOOL, true)
-      trackFileDownloaded({
-        tool: UNLOCK_TOOL,
-        file_size: blob.size / 1024,
-      })
-      const elapsed =
-        (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0
-      trackProcessingTime(UNLOCK_TOOL, elapsed)
-    } catch (e) {
-      console.error('[unlock-pdf]', e)
-      trackErrorOccurred(
-        UNLOCK_TOOL,
-        e?.message === 'Failed to fetch' ? 'fetch_failed' : e?.message || 'unlock_failed'
+          const blob = await res.blob()
+          const outName = `unlocked_${Date.now()}.pdf`
+          console.log('[unlock-pdf] password validation: OK')
+          console.log('[unlock-pdf] output file:', outName, 'bytes:', blob.size)
+          downloadBlob(blob, outName)
+          setFileReadyHint(MSG.fileReady)
+          window.setTimeout(() => setFileReadyHint(null), 6000)
+          trackToolCompleted(UNLOCK_TOOL, true)
+          trackFileDownloaded({
+            tool: UNLOCK_TOOL,
+            file_size: blob.size / 1024,
+          })
+          const elapsed =
+            (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0
+          trackProcessingTime(UNLOCK_TOOL, elapsed)
+        },
+        { onAuthLoading: () => setError('Still checking sign-in… try again in a moment.') }
       )
-      setError(e?.message === 'Failed to fetch' ? 'Could not reach the API. Start the backend (port 3001) or check your network.' : e?.message || 'Could not unlock PDF')
+    } catch (e) {
+      if (e?.code === 'EYP_AUTH_CANCELLED') {
+        /* dismissed */
+      } else if (e?.code === 'EYP_AUTH_LOADING') {
+        setError(e.message || 'Still checking sign-in.')
+      } else {
+        console.error('[unlock-pdf]', e)
+        trackErrorOccurred(
+          UNLOCK_TOOL,
+          e?.message === 'Failed to fetch' ? 'fetch_failed' : e?.message || 'unlock_failed'
+        )
+        setError(
+          e?.message === 'Failed to fetch'
+            ? 'Could not reach the API. Start the backend (port 3001) or check your network.'
+            : e?.message || 'Could not unlock PDF'
+        )
+      }
     } finally {
       setBusy(false)
     }

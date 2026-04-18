@@ -6,6 +6,7 @@ import FileDropzone from '../../shared/components/FileDropzone.jsx'
 import { useToolEngagement } from '../../hooks/useToolEngagement.js'
 import { ANALYTICS_TOOL } from '../../shared/constants/analyticsTools.js'
 import { mergePdfsToUint8 } from '../../lib/pdfMergeSplitCore.js'
+import { useClientToolDownloadAuth } from '../../auth/ClientToolDownloadAuthContext.jsx'
 
 const TOOL = ANALYTICS_TOOL.pdf_merge
 
@@ -21,6 +22,7 @@ function downloadUint8(u8, name) {
 }
 
 export default function MergePdfPage() {
+  const { runWithSignInForDownload } = useClientToolDownloadAuth()
   const [items, setItems] = useState([])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
@@ -73,11 +75,21 @@ export default function MergePdfPage() {
     setError(null)
     setSuccess(null)
     try {
-      const ordered = items.map((x) => x.file)
-      const out = await mergePdfsToUint8(ordered)
-      downloadUint8(out, 'merged.pdf')
-      setSuccess('Merged PDF downloaded as merged.pdf.')
+      await runWithSignInForDownload(
+        async () => {
+          const ordered = items.map((x) => x.file)
+          const out = await mergePdfsToUint8(ordered)
+          downloadUint8(out, 'merged.pdf')
+          setSuccess('Merged PDF downloaded as merged.pdf.')
+        },
+        { onAuthLoading: () => setError('Still checking sign-in… try again in a moment.') }
+      )
     } catch (e) {
+      if (e?.code === 'EYP_AUTH_CANCELLED') return
+      if (e?.code === 'EYP_AUTH_LOADING') {
+        setError(e.message || 'Still checking sign-in.')
+        return
+      }
       console.error(e)
       setError(e?.message || 'Could not merge PDFs.')
     } finally {

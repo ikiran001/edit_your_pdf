@@ -10,6 +10,7 @@ import {
   compressPdfBytes,
   normalizeCompressionLevel,
 } from '../../lib/pdfCompressCore.js'
+import { useClientToolDownloadAuth } from '../../auth/ClientToolDownloadAuthContext.jsx'
 
 const TOOL = ANALYTICS_TOOL.compress_pdf
 
@@ -56,6 +57,7 @@ function outputName(originalName) {
 }
 
 export default function CompressPdfPage() {
+  const { runWithSignInForDownload } = useClientToolDownloadAuth()
   const [items, setItems] = useState([])
   const [level, setLevel] = useState('medium')
   const [busy, setBusy] = useState(false)
@@ -127,35 +129,63 @@ export default function CompressPdfPage() {
     }
   }
 
-  const downloadOne = (it) => {
-    if (!it.compressedBytes) return
-    const blob = new Blob([it.compressedBytes], { type: 'application/pdf' })
-    downloadBlob(blob, outputName(it.file.name))
-  }
+  const downloadOne = useCallback(
+    async (it) => {
+      if (!it.compressedBytes) return
+      try {
+        await runWithSignInForDownload(async () => {
+          const blob = new Blob([it.compressedBytes], { type: 'application/pdf' })
+          downloadBlob(blob, outputName(it.file.name))
+        })
+      } catch (e) {
+        if (e?.code === 'EYP_AUTH_CANCELLED') return
+        if (e?.code !== 'EYP_AUTH_LOADING') console.error(e)
+      }
+    },
+    [runWithSignInForDownload]
+  )
 
-  const downloadAll = async () => {
+  const downloadAll = useCallback(async () => {
     const ready = items.filter((x) => x.compressedBytes)
     if (!ready.length) return
-    if (ready.length === 1) {
-      downloadOne(ready[0])
-      return
-    }
-    const zip = new JSZip()
-    const used = new Set()
-    ready.forEach((it) => {
-      const base = it.file.name.replace(/\.pdf$/i, '') || 'document'
-      let candidate = `${base}-compressed.pdf`
-      let n = 1
-      while (used.has(candidate)) {
-        n += 1
-        candidate = `${base}-${n}-compressed.pdf`
+    try {
+      await runWithSignInForDownload(
+        async () => {
+          if (ready.length === 1) {
+            const it = ready[0]
+            if (!it.compressedBytes) return
+            const blob = new Blob([it.compressedBytes], { type: 'application/pdf' })
+            downloadBlob(blob, outputName(it.file.name))
+            return
+          }
+          const zip = new JSZip()
+          const used = new Set()
+          ready.forEach((it) => {
+            const base = it.file.name.replace(/\.pdf$/i, '') || 'document'
+            let candidate = `${base}-compressed.pdf`
+            let n = 1
+            while (used.has(candidate)) {
+              n += 1
+              candidate = `${base}-${n}-compressed.pdf`
+            }
+            used.add(candidate)
+            zip.file(candidate, it.compressedBytes)
+          })
+          const blob = await zip.generateAsync({ type: 'blob' })
+          downloadBlob(blob, 'compressed-pdfs.zip')
+        },
+        { onAuthLoading: () => setError('Still checking sign-in… try again in a moment.') }
+      )
+    } catch (e) {
+      if (e?.code === 'EYP_AUTH_CANCELLED') return
+      if (e?.code === 'EYP_AUTH_LOADING') {
+        setError(e.message || 'Still checking sign-in.')
+      } else {
+        console.error(e)
+        setError(e?.message || 'Download failed.')
       }
-      used.add(candidate)
-      zip.file(candidate, it.compressedBytes)
-    })
-    const blob = await zip.generateAsync({ type: 'blob' })
-    downloadBlob(blob, 'compressed-pdfs.zip')
-  }
+    }
+  }, [items, runWithSignInForDownload])
 
   const totalOriginal = items.reduce((s, x) => s + (x.originalSize || 0), 0)
   const totalCompressed = items.every((x) => x.compressedSize != null)
@@ -348,7 +378,7 @@ export default function CompressPdfPage() {
               <button
                 type="button"
                 disabled={busy}
-                onClick={() => downloadAll()}
+                onClick={() => void downloadAll()}
                 className="rounded-xl border border-indigo-200 bg-white px-8 py-3 text-sm font-semibold text-indigo-700 hover:bg-indigo-50 dark:border-indigo-500/40 dark:bg-zinc-900 dark:text-cyan-300 dark:hover:bg-indigo-950/50"
               >
                 {items.filter((x) => x.compressedBytes).length === 1
