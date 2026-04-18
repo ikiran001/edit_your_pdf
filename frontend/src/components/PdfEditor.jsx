@@ -36,10 +36,7 @@ import {
 import { isFirebaseClientConfigured } from '../auth/firebaseClient.js'
 import { getFirebaseAuthErrorHint } from '../lib/firebase.js'
 import { persistEditSession } from '../features/edit-pdf/editSessionStorage.js'
-import {
-  fetchEditPdfDownload,
-  isRequireSignInForEditPdfDownload,
-} from '../features/edit-pdf/editPdfDownload.js'
+import { fetchEditPdfDownload } from '../features/edit-pdf/editPdfDownload.js'
 import { syncUserLibraryEntry } from '../features/my-documents/userLibrary.js'
 
 const EDIT_TOOL = 'edit_pdf'
@@ -151,6 +148,8 @@ export default function PdfEditor({
   const [downloadAuthSuccess, setDownloadAuthSuccess] = useState(null)
   const pendingResumeAfterAuthRef = useRef(false)
   const postAuthResumeLockRef = useRef(false)
+  /** Prevents duplicate POST /download when both the modal OAuth handler and the resume effect run. */
+  const executePostAuthDownloadInFlightRef = useRef(false)
   const [showOnboarding, setShowOnboarding] = useState(readEditorOnboardingVisible)
   const [toastMessage, setToastMessage] = useState(null)
   const toastTimerRef = useRef(null)
@@ -600,9 +599,6 @@ export default function PdfEditor({
 
   const runAuthenticatedDownload = useCallback(
     async () => {
-      if (isRequireSignInForEditPdfDownload() && !user) {
-        return { ok: false, needsAuth: true }
-      }
       const idToken = user ? await getFreshIdToken().catch(() => null) : null
       if (user && !idToken) {
         return {
@@ -637,30 +633,36 @@ export default function PdfEditor({
   )
 
   const executePostAuthDownload = useCallback(async () => {
+    if (executePostAuthDownloadInFlightRef.current) return
+    executePostAuthDownloadInFlightRef.current = true
     const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
-    const idToken = await getFreshIdToken()
-    if (!idToken) {
-      throw new Error('Could not refresh your session. Please try signing in again.')
+    try {
+      const idToken = await getFreshIdToken()
+      if (!idToken) {
+        throw new Error('Could not refresh your session. Please try signing in again.')
+      }
+      await persistPdfToServer()
+      clearAnnotFormatUi()
+      setTextBoxOverlayActions(null)
+      const r = await fetchEditPdfDownload({
+        sessionId,
+        downloadToken: null,
+        idToken,
+      })
+      if (!r.ok) {
+        const msg =
+          r.errPayload?.message || r.errPayload?.error || 'Download failed after sign-in.'
+        throw new Error(String(msg))
+      }
+      await finalizeDownloadFromBlob(r.blob, t0, { usedAnonymousToken: false })
+      setDownloadAuthModalOpen(false)
+      setDownloadAuthError(null)
+      setDownloadAuthSuccess(null)
+      clearPendingDownload()
+      pendingResumeAfterAuthRef.current = false
+    } finally {
+      executePostAuthDownloadInFlightRef.current = false
     }
-    await persistPdfToServer()
-    clearAnnotFormatUi()
-    setTextBoxOverlayActions(null)
-    const r = await fetchEditPdfDownload({
-      sessionId,
-      downloadToken: null,
-      idToken,
-    })
-    if (!r.ok) {
-      const msg =
-        r.errPayload?.message || r.errPayload?.error || 'Download failed after sign-in.'
-      throw new Error(String(msg))
-    }
-    await finalizeDownloadFromBlob(r.blob, t0, { usedAnonymousToken: false })
-    setDownloadAuthModalOpen(false)
-    setDownloadAuthError(null)
-    setDownloadAuthSuccess(null)
-    clearPendingDownload()
-    pendingResumeAfterAuthRef.current = false
   }, [
     sessionId,
     getFreshIdToken,
@@ -1002,7 +1004,6 @@ export default function PdfEditor({
 
   const runPopupOauthThenDownload = useCallback(
     async (signInFn) => {
-      clearPendingDownload()
       setDownloadAuthBusy(true)
       setDownloadAuthError(null)
       setDownloadAuthSuccess(null)
@@ -1068,6 +1069,25 @@ export default function PdfEditor({
       await persistPdfToServer()
       clearAnnotFormatUi()
       setTextBoxOverlayActions(null)
+
+      if (authLoading) {
+        showErrorHint('Still checking sign-in… wait a moment, then tap Download PDF again.')
+        return
+      }
+
+      /**
+       * When Firebase Auth is live, require a signed-in user before hitting /download so we never
+       * flash a failed anonymous request. Work is already persisted above; pending intent lets the
+       * resume effect (or modal OAuth) finish the download after sign-in.
+       */
+      if (!user && isFirebaseClientConfigured()) {
+        pendingResumeAfterAuthRef.current = true
+        writePendingDownload({ kind: 'edit', sessionId })
+        persistEditSession({ sessionId, downloadToken, fileName: originalFileName })
+        setDownloadAuthSuccess(null)
+        setDownloadAuthModalOpen(true)
+        return
+      }
 
       const result = await runAuthenticatedDownload()
       if (result.ok) {
@@ -1308,12 +1328,8 @@ export default function PdfEditor({
           onDownload={handleDownload}
           saving={saving}
           downloading={downloading}
+          authLoading={authLoading}
           listSyncing={editingListSync}
-          downloadSignInNote={
-            isRequireSignInForEditPdfDownload() && !user
-              ? 'Sign in is required to download your PDF from this site.'
-              : null
-          }
         />
       </div>
       <SignatureCreationModal

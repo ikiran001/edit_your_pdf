@@ -38,9 +38,9 @@ export default function EditsSidebar({
   onDownload,
   saving,
   downloading,
+  /** True while Firebase auth state is still resolving — avoids racing Download before we know guest vs signed-in. */
+  authLoading = false,
   listSyncing = false,
-  /** Shown under Download when the build requires sign-in and the user is signed out. */
-  downloadSignInNote = null,
 }) {
   const entries = []
 
@@ -74,6 +74,7 @@ export default function EditsSidebar({
 
   const count = entries.length
   const busy = saving || downloading || listSyncing
+  const downloadBusy = busy || authLoading
 
   return (
     <aside
@@ -152,16 +153,11 @@ export default function EditsSidebar({
             type="button"
             onMouseDown={(ev) => ev.preventDefault()}
             onClick={onDownload}
-            disabled={busy}
+            disabled={downloadBusy}
             className="w-full rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow hover:bg-emerald-700 disabled:opacity-50"
           >
-            {downloading ? MSG.processingFile : 'Download PDF'}
+            {authLoading ? 'Checking sign-in…' : downloading ? MSG.processingFile : 'Download PDF'}
           </button>
-          {downloadSignInNote ? (
-            <p className="m-0 text-center text-[11px] leading-snug text-amber-800 dark:text-amber-200/90">
-              {downloadSignInNote}
-            </p>
-          ) : null}
           <button
             type="button"
             onMouseDown={(ev) => ev.preventDefault()}
