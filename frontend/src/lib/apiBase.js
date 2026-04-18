@@ -1,17 +1,37 @@
 /**
- * In production, set VITE_API_BASE_URL to your public API origin (no trailing slash), e.g.
- * https://edit-pdf-api.onrender.com — then build: `VITE_API_BASE_URL=... npm run build`
- * Leave unset for local dev (Vite proxy) or same-origin hosting.
+ * API origin (no trailing slash), in order:
+ * 1. `VITE_API_BASE_URL` at build time (preferred).
+ * 2. `window.__PDFPILOT_API_BASE__` from `pdfpilot-api-config.js` (CI writes this from the same secret).
+ *
+ * Local dev: leave both unset; Vite proxies `/upload`, `/edit`, etc. to port 3001.
  */
-const base = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
+function resolveApiBase() {
+  const env = String(import.meta.env.VITE_API_BASE_URL || '')
+    .trim()
+    .replace(/\/$/, '')
+  if (env) return env
+  if (typeof window !== 'undefined') {
+    const rt = String(window.__PDFPILOT_API_BASE__ ?? '')
+      .trim()
+      .replace(/\/$/, '')
+    if (rt) return rt
+  }
+  return ''
+}
 
-/** False when unset — local dev uses the Vite proxy; GitHub Pages needs this set at build time. */
+/** Absolute API origin, or empty string if requests stay on the current site (dev proxy / misconfigured prod). */
+export function getResolvedApiBase() {
+  return resolveApiBase()
+}
+
+/** False when no API base — local dev uses the Vite proxy. */
 export function isApiBaseConfigured() {
-  return Boolean(base)
+  return Boolean(resolveApiBase())
 }
 
 export function apiUrl(path) {
   const p = path.startsWith('/') ? path : `/${path}`
-  if (!base) return p
-  return `${base}${p}`
+  const b = resolveApiBase()
+  if (!b) return p
+  return `${b}${p}`
 }

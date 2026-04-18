@@ -3,6 +3,8 @@ import LandingPage from '../../components/LandingPage.jsx'
 import PdfEditor from '../../components/PdfEditor.jsx'
 import ToolPageShell from '../../shared/components/ToolPageShell.jsx'
 import ToolFeatureSeoSection from '../../shared/components/ToolFeatureSeoSection.jsx'
+import { useAuth } from '../../auth/AuthContext.jsx'
+import { syncUserLibraryEntry } from '../my-documents/userLibrary.js'
 import {
   markFunnelUpload,
   trackErrorOccurred,
@@ -26,6 +28,7 @@ export default function EditPdfSessionFlow({
   uploadProgress,
 }) {
   const [uploadError, setUploadError] = useState(null)
+  const { user, getFreshIdToken } = useAuth()
 
   const onFileSelected = useCallback(
     async (file) => {
@@ -38,16 +41,27 @@ export default function EditPdfSessionFlow({
           file_size: file.size / 1024,
           tool: EDIT_TOOL,
         })
+        const fileName = res.filename || file?.name || 'document.pdf'
         setEditSession({
           sessionId: res.sessionId,
           downloadToken: res.downloadToken || null,
+          fileName,
         })
+        if (user) {
+          void syncUserLibraryEntry({
+            getFreshIdToken,
+            user,
+            sessionId: res.sessionId,
+            fileName,
+            tool: 'edit_pdf',
+          })
+        }
       } catch (e) {
         trackErrorOccurred(EDIT_TOOL, e?.message || 'upload_failed')
         setUploadError(e?.message || 'Upload failed. Please try again.')
       }
     },
-    [upload, setEditSession]
+    [upload, setEditSession, user, getFreshIdToken]
   )
 
   const sessionId = editSession?.sessionId ?? null
@@ -87,6 +101,7 @@ export default function EditPdfSessionFlow({
     <PdfEditor
       key={sessionId}
       sessionId={sessionId}
+      originalFileName={editSession?.fileName || 'document.pdf'}
       downloadToken={editSession?.downloadToken ?? null}
       onDownloadTokenConsumed={() =>
         setEditSession((prev) =>

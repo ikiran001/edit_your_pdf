@@ -1,0 +1,16 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    /**
+     * Per-user document library (My Documents).
+     * Deploy: `firebase deploy --only firestore:rules` (requires Firebase CLI & project).
+     */
+    match /users/{userId}/documents/{docId} {
+      allow read, create, update, delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /userProfiles/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}

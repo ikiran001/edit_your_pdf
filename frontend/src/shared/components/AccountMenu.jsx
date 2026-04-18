@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { Link } from 'react-router-dom'
 import { UserRound } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext.jsx'
 import SignInExperienceModal from '../../auth/SignInExperienceModal.jsx'
@@ -196,10 +197,18 @@ export default function AccountMenu({ compact = false }) {
             {email || 'Account'}
           </p>
         )}
+        <Link
+          to="/my-documents"
+          role="menuitem"
+          className="mt-3 block w-full rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-center text-xs font-medium text-indigo-900 hover:bg-indigo-100 dark:border-indigo-500/30 dark:bg-indigo-950/40 dark:text-indigo-100 dark:hover:bg-indigo-900/50"
+          onClick={() => setAccountMenuOpen(false)}
+        >
+          My documents
+        </Link>
         <button
           type="button"
           role="menuitem"
-          className="mt-3 w-full rounded-lg border border-zinc-200 px-3 py-2 text-xs font-medium text-zinc-800 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-100 dark:hover:bg-zinc-800"
+          className="mt-2 w-full rounded-lg border border-zinc-200 px-3 py-2 text-xs font-medium text-zinc-800 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-100 dark:hover:bg-zinc-800"
           onClick={() => void signOut().then(() => setAccountMenuOpen(false))}
         >
           Sign out
