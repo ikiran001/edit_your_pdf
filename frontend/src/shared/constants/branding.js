@@ -6,6 +6,7 @@ export const DOC_TITLE_HOME = 'Edit PDF Online Free | pdfpilot.pro'
 
 const TOOL_DOC_TITLES = {
   '/tools/edit-pdf': 'pdfpilot - Edit PDF',
+  '/tools/edit-pdf/editor': 'pdfpilot - Edit PDF',
   '/tools/merge-pdf': 'pdfpilot - Merge PDF',
   '/tools/split-pdf': 'pdfpilot - Split PDF',
   '/tools/compress-pdf': 'pdfpilot - Compress PDF',

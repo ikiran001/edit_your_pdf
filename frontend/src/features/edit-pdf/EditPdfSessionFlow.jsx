@@ -13,11 +13,14 @@ import { ANALYTICS_TOOL } from '../../shared/constants/analyticsTools.js'
 const EDIT_TOOL = ANALYTICS_TOOL.edit_pdf
 
 /**
- * Original Edit PDF flow (upload → session → PdfEditor). Unchanged behavior.
+ * @param {{ sessionId: string, downloadToken?: string | null } | null} editSession
+ * @param {(s: { sessionId: string, downloadToken?: string | null } | null) => void} setEditSession
+ * @param {() => void} props.onLeaveEditor Clear session and return to upload (toolbar Back).
  */
 export default function EditPdfSessionFlow({
-  sessionId,
-  setSessionId,
+  editSession,
+  setEditSession,
+  onLeaveEditor,
   upload,
   uploading,
   uploadProgress,
@@ -28,21 +31,26 @@ export default function EditPdfSessionFlow({
     async (file) => {
       setUploadError(null)
       try {
-        const sid = await upload(file)
+        const res = await upload(file)
         markFunnelUpload(EDIT_TOOL)
         trackFileUploaded({
           file_type: 'pdf',
           file_size: file.size / 1024,
           tool: EDIT_TOOL,
         })
-        setSessionId(sid)
+        setEditSession({
+          sessionId: res.sessionId,
+          downloadToken: res.downloadToken || null,
+        })
       } catch (e) {
         trackErrorOccurred(EDIT_TOOL, e?.message || 'upload_failed')
         setUploadError(e?.message || 'Upload failed. Please try again.')
       }
     },
-    [upload, setSessionId]
+    [upload, setEditSession]
   )
+
+  const sessionId = editSession?.sessionId ?? null
 
   if (!sessionId) {
     return (
@@ -79,7 +87,13 @@ export default function EditPdfSessionFlow({
     <PdfEditor
       key={sessionId}
       sessionId={sessionId}
-      onBack={() => setSessionId(null)}
+      downloadToken={editSession?.downloadToken ?? null}
+      onDownloadTokenConsumed={() =>
+        setEditSession((prev) =>
+          prev ? { ...prev, downloadToken: null } : prev
+        )
+      }
+      onBack={onLeaveEditor}
     />
   )
 }

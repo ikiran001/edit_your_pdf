@@ -1,11 +1,12 @@
 import ThemeToggle from './ThemeToggle.jsx'
+import AccountMenu from './AccountMenu.jsx'
 import BrandLogoLink from './BrandLogoLink.jsx'
 import { toolOnBrand } from '../constants/branding.js'
 
 export default function ToolPageShell({ title, subtitle, children }) {
   return (
     <div className="flex min-h-svh flex-col bg-transparent text-zinc-900 dark:text-zinc-100">
-      <header className="fx-glass-header sticky top-0 z-30 px-4 py-3 md:px-8">
+      <header className="fx-glass-header sticky top-0 z-40 px-4 py-3 md:px-8">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
           <div className="flex min-w-0 flex-1 items-center gap-3 md:gap-4">
             <BrandLogoLink className="min-w-0" />
@@ -23,7 +24,10 @@ export default function ToolPageShell({ title, subtitle, children }) {
               </p>
             </div>
           </div>
-          <ThemeToggle />
+          <div className="flex shrink-0 items-center gap-2">
+            <AccountMenu />
+            <ThemeToggle />
+          </div>
         </div>
       </header>
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 md:px-8">{children}</main>

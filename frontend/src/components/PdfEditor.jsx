@@ -3,6 +3,7 @@ import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
 import { apiUrl } from '../lib/apiBase'
 import { usePagesHistory } from '../hooks/usePagesHistory'
 import ThemeToggle from '../shared/components/ThemeToggle.jsx'
+import AccountMenu from '../shared/components/AccountMenu.jsx'
 import EditorOnboardingBanner from '../shared/components/EditorOnboardingBanner.jsx'
 import EditPdfShortcutsModal from '../shared/components/EditPdfShortcutsModal.jsx'
 import DownloadCompleteModal from '../shared/components/DownloadCompleteModal.jsx'
@@ -26,6 +27,17 @@ import {
   trackToolCompleted,
 } from '../lib/analytics.js'
 import { MSG } from '../shared/constants/branding.js'
+import { useAuth } from '../auth/AuthContext.jsx'
+import ContinueDownloadModal from '../auth/ContinueDownloadModal.jsx'
+import {
+  clearPendingDownload,
+  readPendingDownload,
+  writePendingDownload,
+} from '../auth/pendingDownloadStorage.js'
+import { isFirebaseClientConfigured } from '../auth/firebaseClient.js'
+import { getFirebaseAuthErrorHint } from '../lib/firebase.js'
+import { persistEditSession } from '../features/edit-pdf/editSessionStorage.js'
+import { fetchEditPdfDownload } from '../features/edit-pdf/editPdfDownload.js'
 
 const EDIT_TOOL = 'edit_pdf'
 
@@ -83,7 +95,12 @@ function editsPayloadToPresentMap(edits) {
   return out
 }
 
-export default function PdfEditor({ sessionId, onBack }) {
+export default function PdfEditor({
+  sessionId,
+  onBack,
+  downloadToken = null,
+  onDownloadTokenConsumed,
+}) {
   const [pdfDoc, setPdfDoc] = useState(null)
   const [loadError, setLoadError] = useState(null)
   /** Default to Edit text so Word-style editing works without an extra click. */
@@ -118,6 +135,12 @@ export default function PdfEditor({ sessionId, onBack }) {
   const [textBoxOverlayActions, setTextBoxOverlayActions] = useState(null)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [downloadCompleteModal, setDownloadCompleteModal] = useState(null)
+  const [downloadAuthModalOpen, setDownloadAuthModalOpen] = useState(false)
+  const [downloadAuthBusy, setDownloadAuthBusy] = useState(false)
+  const [downloadAuthError, setDownloadAuthError] = useState(null)
+  const [downloadAuthSuccess, setDownloadAuthSuccess] = useState(null)
+  const pendingResumeAfterAuthRef = useRef(false)
+  const postAuthResumeLockRef = useRef(false)
   const [showOnboarding, setShowOnboarding] = useState(readEditorOnboardingVisible)
   const [toastMessage, setToastMessage] = useState(null)
   const toastTimerRef = useRef(null)
@@ -131,6 +154,16 @@ export default function PdfEditor({ sessionId, onBack }) {
   /** PNG bytes from the modal; used for new placements. */
   const [signaturePng, setSignaturePng] = useState(null)
   const [signatureModalOpen, setSignatureModalOpen] = useState(false)
+
+  const {
+    user,
+    loading: authLoading,
+    getFreshIdToken,
+    signInWithGooglePopup,
+    requestPasswordResetEmail,
+    signInWithEmailPassword,
+    signUpWithEmailPassword,
+  } = useAuth()
 
   const showErrorHint = useCallback((msg) => {
     if (errorHintTimerRef.current != null) {
@@ -339,7 +372,7 @@ export default function PdfEditor({ sessionId, onBack }) {
     return () => {
       cancelled = true
     }
-  }, [sessionId, reset, pdfBust])
+  }, [sessionId, reset, pdfBust, showErrorHint])
 
   const loadErrorTracked = useRef(null)
   useEffect(() => {
@@ -480,6 +513,128 @@ export default function PdfEditor({ sessionId, onBack }) {
     setPdfDoc(null)
     setPdfBust((v) => v + 1)
   }, [])
+
+  const finalizeDownloadFromBlob = useCallback(
+    async (blob, t0, { usedAnonymousToken }) => {
+      const href = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = href
+      a.download = 'edited.pdf'
+      a.rel = 'noopener'
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(href)
+
+      reloadPdfFromServer()
+      setDownloadCompleteModal({ fileName: 'edited.pdf', fileSizeBytes: blob.size })
+      trackToolCompleted(EDIT_TOOL, true)
+      trackFileDownloaded({
+        tool: EDIT_TOOL,
+        file_size: blob.size / 1024,
+        total_pages: numPages,
+      })
+      const elapsed =
+        (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0
+      trackProcessingTime(EDIT_TOOL, elapsed)
+      if (usedAnonymousToken && typeof onDownloadTokenConsumed === 'function') {
+        onDownloadTokenConsumed()
+      }
+    },
+    [reloadPdfFromServer, numPages, onDownloadTokenConsumed]
+  )
+
+  const runAuthenticatedDownload = useCallback(
+    async () => {
+      const idToken = user ? await getFreshIdToken().catch(() => null) : null
+      if (user && !idToken) {
+        return {
+          ok: false,
+          message: 'Could not refresh your session. Try again in a moment.',
+        }
+      }
+      const anonTok = user ? null : downloadToken
+      const r = await fetchEditPdfDownload({
+        sessionId,
+        downloadToken: anonTok,
+        idToken,
+      })
+      if (r.ok) {
+        return { ok: true, blob: r.blob, usedAnonymousToken: Boolean(anonTok) }
+      }
+      if (r.status === 503 && r.errPayload?.error === 'download_auth_misconfigured') {
+        return {
+          ok: false,
+          message: 'Downloads are temporarily unavailable. Please try again later.',
+        }
+      }
+      if (r.status === 401 && r.errPayload?.error === 'download_auth_required') {
+        return { ok: false, needsAuth: true }
+      }
+      const msg =
+        (r.errPayload && (r.errPayload.message || r.errPayload.error)) ||
+        (r.status === 401 ? 'Download was blocked. Try again.' : 'Download failed')
+      return { ok: false, message: String(msg) }
+    },
+    [sessionId, downloadToken, user, getFreshIdToken]
+  )
+
+  const executePostAuthDownload = useCallback(async () => {
+    const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
+    const idToken = await getFreshIdToken()
+    if (!idToken) {
+      throw new Error('Could not refresh your session. Please try signing in again.')
+    }
+    await persistPdfToServer()
+    clearAnnotFormatUi()
+    setTextBoxOverlayActions(null)
+    const r = await fetchEditPdfDownload({
+      sessionId,
+      downloadToken: null,
+      idToken,
+    })
+    if (!r.ok) {
+      const msg =
+        r.errPayload?.message || r.errPayload?.error || 'Download failed after sign-in.'
+      throw new Error(String(msg))
+    }
+    await finalizeDownloadFromBlob(r.blob, t0, { usedAnonymousToken: false })
+    setDownloadAuthModalOpen(false)
+    setDownloadAuthError(null)
+    setDownloadAuthSuccess(null)
+    clearPendingDownload()
+    pendingResumeAfterAuthRef.current = false
+  }, [
+    sessionId,
+    getFreshIdToken,
+    persistPdfToServer,
+    clearAnnotFormatUi,
+    finalizeDownloadFromBlob,
+  ])
+
+  useEffect(() => {
+    if (authLoading || !user || !pdfDoc) return
+    const pending = readPendingDownload()
+    if (!pending || pending.kind !== 'edit' || pending.sessionId !== sessionId) return
+    if (postAuthResumeLockRef.current) return
+    postAuthResumeLockRef.current = true
+    void (async () => {
+      setDownloading(true)
+      setDownloadAuthError(null)
+      try {
+        await executePostAuthDownload()
+      } catch (e) {
+        console.error(e)
+        trackErrorOccurred(EDIT_TOOL, e?.message || 'download_resume_failed')
+        clearPendingDownload()
+        setDownloadAuthError(e?.message || 'Could not complete download. Try again.')
+        setDownloadAuthModalOpen(true)
+      } finally {
+        postAuthResumeLockRef.current = false
+        setDownloading(false)
+      }
+    })()
+  }, [authLoading, user, pdfDoc, sessionId, executePostAuthDownload])
 
   /**
    * Blur any open inline native editor so PdfPageCanvas commits, then wait for timers / React
@@ -770,41 +925,108 @@ export default function PdfEditor({ sessionId, onBack }) {
     }
   }
 
+  const dismissDownloadAuthModal = useCallback(() => {
+    if (downloadAuthBusy) return
+    setDownloadAuthModalOpen(false)
+    setDownloadAuthError(null)
+    setDownloadAuthSuccess(null)
+    pendingResumeAfterAuthRef.current = false
+    clearPendingDownload()
+  }, [downloadAuthBusy])
+
+  const runPopupOauthThenDownload = useCallback(
+    async (signInFn) => {
+      clearPendingDownload()
+      setDownloadAuthBusy(true)
+      setDownloadAuthError(null)
+      setDownloadAuthSuccess(null)
+      try {
+        await signInFn()
+        setDownloading(true)
+        await executePostAuthDownload()
+      } catch (e) {
+        console.error(e)
+        const code = e?.code || ''
+        if (code === 'auth/popup-blocked') {
+          setDownloadAuthError(
+            'Your browser blocked the sign-in window. Allow popups for this site, then try “Continue with Google” again.'
+          )
+        } else if (code === 'auth/cancelled-popup-request' || code === 'auth/popup-closed-by-user') {
+          setDownloadAuthError(null)
+        } else {
+          setDownloadAuthError(
+            getFirebaseAuthErrorHint(e) ||
+              e?.message ||
+              'We could not connect. Check your network and try again.'
+          )
+        }
+        trackErrorOccurred(EDIT_TOOL, e?.message || 'oauth_failed')
+      } finally {
+        setDownloading(false)
+        setDownloadAuthBusy(false)
+      }
+    },
+    [executePostAuthDownload]
+  )
+
+  const runPasswordResetForDownload = useCallback(
+    async (email) => {
+      setDownloadAuthBusy(true)
+      setDownloadAuthError(null)
+      setDownloadAuthSuccess(null)
+      try {
+        await requestPasswordResetEmail(email)
+        setDownloadAuthSuccess(
+          'If an account exists for that email, we sent reset instructions. Check your inbox and spam folder. After you set a new password, sign in here with email and password.'
+        )
+      } catch (e) {
+        console.error(e)
+        setDownloadAuthError(
+          getFirebaseAuthErrorHint(e) || e?.message || 'Could not send reset email.'
+        )
+        trackErrorOccurred(EDIT_TOOL, e?.message || 'password_reset_failed')
+      } finally {
+        setDownloadAuthBusy(false)
+      }
+    },
+    [requestPasswordResetEmail]
+  )
+
   const handleDownload = async () => {
     cancelScheduledAutosave()
     await commitActiveInlineEditor()
     setDownloading(true)
+    setDownloadAuthError(null)
     const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
     try {
       await persistPdfToServer()
       clearAnnotFormatUi()
       setTextBoxOverlayActions(null)
-      const dl = await fetch(
-        apiUrl(`/download?sessionId=${encodeURIComponent(sessionId)}`)
-      )
-      if (!dl.ok) throw new Error('Download failed')
-      const blob = await dl.blob()
-      const href = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = href
-      a.download = 'edited.pdf'
-      a.rel = 'noopener'
-      document.body.appendChild(a)
-      a.click()
-      a.remove()
-      URL.revokeObjectURL(href)
 
-      reloadPdfFromServer()
-      setDownloadCompleteModal({ fileName: 'edited.pdf', fileSizeBytes: blob.size })
-      trackToolCompleted(EDIT_TOOL, true)
-      trackFileDownloaded({
-        tool: EDIT_TOOL,
-        file_size: blob.size / 1024,
-        total_pages: numPages,
-      })
-      const elapsed =
-        (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0
-      trackProcessingTime(EDIT_TOOL, elapsed)
+      const result = await runAuthenticatedDownload()
+      if (result.ok) {
+        await finalizeDownloadFromBlob(result.blob, t0, {
+          usedAnonymousToken: result.usedAnonymousToken,
+        })
+        return
+      }
+      if (result.needsAuth) {
+        if (!isFirebaseClientConfigured()) {
+          showErrorHint(
+            'Secure download is not set up in this build yet. If you are the site owner, configure Firebase (see backend .env.example) and redeploy.'
+          )
+          return
+        }
+        pendingResumeAfterAuthRef.current = true
+        writePendingDownload({ kind: 'edit', sessionId })
+        persistEditSession({ sessionId, downloadToken })
+        setDownloadAuthSuccess(null)
+        setDownloadAuthModalOpen(true)
+        return
+      }
+      if (result.message) {
+        showErrorHint(result.message)
+      }
     } catch (e) {
       console.error(e)
       trackErrorOccurred(EDIT_TOOL, e?.message || 'download_failed')
@@ -817,7 +1039,8 @@ export default function PdfEditor({ sessionId, onBack }) {
   if (loadError) {
     return (
       <div className="relative flex min-h-svh flex-col items-center justify-center gap-4 p-6">
-        <div className="fixed right-4 top-4 z-[200]">
+        <div className="fixed right-4 top-4 z-[200] flex items-center gap-2">
+          <AccountMenu compact />
           <ThemeToggle />
         </div>
         <p className="text-red-600 dark:text-red-400">{loadError}</p>
@@ -835,7 +1058,8 @@ export default function PdfEditor({ sessionId, onBack }) {
   if (!pdfDoc) {
     return (
       <div className="relative flex min-h-svh flex-col items-center justify-center gap-6 bg-zinc-50 px-4 py-10 dark:bg-zinc-950">
-        <div className="fixed right-4 top-4 z-[200]">
+        <div className="fixed right-4 top-4 z-[200] flex items-center gap-2">
+          <AccountMenu compact />
           <ThemeToggle />
         </div>
         <p className="sr-only">{MSG.loadingPdf}</p>
@@ -1048,6 +1272,29 @@ export default function PdfEditor({ sessionId, onBack }) {
         fileName={downloadCompleteModal?.fileName ?? 'edited.pdf'}
         fileSizeBytes={downloadCompleteModal?.fileSizeBytes ?? 0}
       />
+      <ContinueDownloadModal
+        open={downloadAuthModalOpen}
+        busy={downloadAuthBusy || downloading}
+        errorHint={downloadAuthError}
+        successHint={downloadAuthSuccess}
+        onDismiss={dismissDownloadAuthModal}
+        onGooglePopup={() => runPopupOauthThenDownload(signInWithGooglePopup)}
+        onAuthMessage={(msg) => {
+          if (msg == null) setDownloadAuthError(null)
+          else {
+            setDownloadAuthError(msg)
+            setDownloadAuthSuccess(null)
+          }
+        }}
+        onEmailSignIn={(email, password) =>
+          runPopupOauthThenDownload(() => signInWithEmailPassword(email, password))
+        }
+        onEmailSignUp={(payload) =>
+          runPopupOauthThenDownload(() => signUpWithEmailPassword(payload))
+        }
+        onSendPasswordReset={(email) => runPasswordResetForDownload(email)}
+      />
+
       {toastMessage && (
         <div
           role="status"

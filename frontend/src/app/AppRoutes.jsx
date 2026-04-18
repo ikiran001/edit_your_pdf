@@ -37,6 +37,7 @@ export default function AppRoutes() {
         <RouteAnalytics />
         <Routes>
         <Route path="/" element={<ToolkitHomePage />} />
+        <Route path="/tools/edit-pdf/editor" element={<EditPdfPage />} />
         <Route path="/tools/edit-pdf" element={<EditPdfPage />} />
         <Route path="/tools/merge-pdf" element={<MergePdfPage />} />
         <Route path="/tools/split-pdf" element={<SplitPdfPage />} />

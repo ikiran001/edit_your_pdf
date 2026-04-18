@@ -1,4 +1,5 @@
 import ThemeToggle from '../shared/components/ThemeToggle.jsx'
+import AccountMenu from '../shared/components/AccountMenu.jsx'
 import BrandLogoLink from '../shared/components/BrandLogoLink.jsx'
 import { BRAND_NAME, MSG } from '../shared/constants/branding.js'
 
@@ -153,6 +154,7 @@ export default function Toolbar({
         </button>
       )}
       <div className="ml-auto flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:justify-start sm:gap-3">
+        <AccountMenu compact />
         <ThemeToggle />
         <ToolbarDivider />
         <div className="flex flex-col items-stretch gap-1 sm:items-end">

@@ -1,0 +1,41 @@
+/** Month options for date of birth (value = MM). */
+export const SIGNUP_MONTHS = [
+  { value: '', label: 'Month' },
+  { value: '01', label: 'January' },
+  { value: '02', label: 'February' },
+  { value: '03', label: 'March' },
+  { value: '04', label: 'April' },
+  { value: '05', label: 'May' },
+  { value: '06', label: 'June' },
+  { value: '07', label: 'July' },
+  { value: '08', label: 'August' },
+  { value: '09', label: 'September' },
+  { value: '10', label: 'October' },
+  { value: '11', label: 'November' },
+  { value: '12', label: 'December' },
+]
+
+/** Common countries (extend as needed). Stored value = English name. */
+export const SIGNUP_COUNTRIES = [
+  { value: '', label: 'Country/Region' },
+  { value: 'India', label: 'India' },
+  { value: 'United States', label: 'United States' },
+  { value: 'United Kingdom', label: 'United Kingdom' },
+  { value: 'Canada', label: 'Canada' },
+  { value: 'Australia', label: 'Australia' },
+  { value: 'Germany', label: 'Germany' },
+  { value: 'France', label: 'France' },
+  { value: 'Japan', label: 'Japan' },
+  { value: 'Singapore', label: 'Singapore' },
+  { value: 'United Arab Emirates', label: 'United Arab Emirates' },
+  { value: 'Brazil', label: 'Brazil' },
+  { value: 'Mexico', label: 'Mexico' },
+  { value: 'Spain', label: 'Spain' },
+  { value: 'Italy', label: 'Italy' },
+  { value: 'Netherlands', label: 'Netherlands' },
+  { value: 'South Korea', label: 'South Korea' },
+  { value: 'Indonesia', label: 'Indonesia' },
+  { value: 'South Africa', label: 'South Africa' },
+  { value: 'Nigeria', label: 'Nigeria' },
+  { value: 'Other', label: 'Other' },
+]

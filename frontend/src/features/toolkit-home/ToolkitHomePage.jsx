@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Search, X } from 'lucide-react'
 import ToolCard from '../../shared/components/ToolCard.jsx'
 import ThemeToggle from '../../shared/components/ThemeToggle.jsx'
+import AccountMenu from '../../shared/components/AccountMenu.jsx'
 import BrandLogoLink from '../../shared/components/BrandLogoLink.jsx'
 import { TOOL_REGISTRY } from '../../shared/constants/toolRegistry.js'
 import { trackFeatureUsed } from '../../lib/analytics.js'
@@ -23,10 +24,13 @@ export default function ToolkitHomePage() {
 
   return (
     <div className="flex min-h-svh flex-col bg-transparent text-zinc-900 dark:text-zinc-100">
-      <header className="fx-glass-header px-4 py-4 md:px-10">
+      <header className="fx-glass-header relative z-40 px-4 py-4 md:px-10">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
           <BrandLogoLink />
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <AccountMenu />
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 

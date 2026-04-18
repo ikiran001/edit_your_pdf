@@ -10,6 +10,8 @@ import downloadRouter from './routes/download.js';
 import unlockRouter from './routes/unlock.js';
 import documentFlowRouter from './routes/documentFlow.js';
 import { getDocumentFlowCapabilities } from './services/documentFlowConvert.js';
+import { isDownloadAuthEnabled, isFirstAnonymousDownloadEnabled } from './services/downloadAuthPolicy.js';
+import { isFirebaseAdminReady } from './services/firebaseAdmin.js';
 import { startSessionCleanup } from './utils/sessionCleanup.js';
 import { getQpdfBinary } from './utils/resolveQpdf.js';
 import { getGhostscriptBinary } from './utils/resolveGhostscript.js';
@@ -169,6 +171,18 @@ console.log(
   '·',
   docFlow.docxToPdf ? 'DOCX→PDF (GOTENBERG_URL)' : 'DOCX→PDF off'
 );
+
+if (isDownloadAuthEnabled()) {
+  const fb = isFirebaseAdminReady();
+  console.log(
+    '[download-auth] ON · first anonymous download:',
+    isFirstAnonymousDownloadEnabled(),
+    '· firebase-admin:',
+    fb ? 'ready' : 'MISSING — /download returns 503 until credentials are set'
+  );
+} else {
+  console.log('[download-auth] off (set DOWNLOAD_AUTH_ENABLED=true to require sign-in or one-time token)');
+}
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
