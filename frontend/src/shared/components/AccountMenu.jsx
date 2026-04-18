@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { UserRound } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext.jsx'
 import SignInExperienceModal from '../../auth/SignInExperienceModal.jsx'
@@ -49,9 +49,12 @@ function useMenuPosition(open, triggerRef) {
  * Signed-in: compact account menu. Guest: full-screen sign-in / create account (Adobe-style).
  */
 export default function AccountMenu({ compact = false }) {
+  const navigate = useNavigate()
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [signOutBusy, setSignOutBusy] = useState(false)
+  const [signOutError, setSignOutError] = useState(null)
   const [error, setError] = useState(null)
   const [successHint, setSuccessHint] = useState(null)
   const triggerRef = useRef(null)
@@ -99,6 +102,10 @@ export default function AccountMenu({ compact = false }) {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
+  }, [accountMenuOpen])
+
+  useEffect(() => {
+    if (accountMenuOpen) setSignOutError(null)
   }, [accountMenuOpen])
 
   const runPopup = async (fn) => {
@@ -208,11 +215,30 @@ export default function AccountMenu({ compact = false }) {
         <button
           type="button"
           role="menuitem"
-          className="mt-2 w-full rounded-lg border border-zinc-200 px-3 py-2 text-xs font-medium text-zinc-800 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-100 dark:hover:bg-zinc-800"
-          onClick={() => void signOut().then(() => setAccountMenuOpen(false))}
+          disabled={signOutBusy}
+          className="mt-2 w-full rounded-lg border border-zinc-200 px-3 py-2 text-xs font-medium text-zinc-800 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:text-zinc-100 dark:hover:bg-zinc-800"
+          onClick={() => {
+            if (signOutBusy) return
+            setSignOutError(null)
+            setSignOutBusy(true)
+            void signOut()
+              .then(() => {
+                setAccountMenuOpen(false)
+                navigate('/', { replace: true })
+              })
+              .catch((e) => {
+                setSignOutError(getFirebaseAuthErrorHint(e) || e?.message || 'Could not sign out. Try again.')
+              })
+              .finally(() => setSignOutBusy(false))
+          }}
         >
-          Sign out
+          {signOutBusy ? 'Signing out…' : 'Sign out'}
         </button>
+        {signOutError ? (
+          <p className="mt-2 text-xs text-red-600 dark:text-red-400" role="alert">
+            {signOutError}
+          </p>
+        ) : null}
       </div>
     ) : null
 

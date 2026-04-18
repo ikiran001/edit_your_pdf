@@ -20,6 +20,7 @@ import {
 } from 'firebase/auth'
 import { doc, getFirestore, serverTimestamp, setDoc } from 'firebase/firestore'
 import { getFirebaseAuth } from '../lib/firebase.js'
+import { runAuthLogoutCleanup } from './authLogoutCleanup.js'
 
 const AuthContext = createContext(null)
 
@@ -130,8 +131,14 @@ export function AuthProvider({ children }) {
   )
 
   const signOutUser = useCallback(async () => {
-    if (!auth?.currentUser) return
-    await signOut(auth)
+    runAuthLogoutCleanup()
+    if (!auth) return
+    try {
+      await signOut(auth)
+    } catch (e) {
+      console.warn('[auth] signOut failed:', e)
+      throw e
+    }
   }, [auth])
 
   const value = useMemo(

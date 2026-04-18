@@ -11,6 +11,7 @@ import { useAuth } from './AuthContext.jsx'
 import ContinueDownloadModal from './ContinueDownloadModal.jsx'
 import { isFirebaseClientConfigured } from './firebaseClient.js'
 import { getFirebaseAuthErrorHint } from '../lib/firebase.js'
+import { subscribeAuthLogoutCleanup } from './authLogoutCleanup.js'
 
 const ClientToolDownloadAuthContext = createContext(null)
 
@@ -51,6 +52,25 @@ export function ClientToolDownloadAuthProvider({ children }) {
     setModalError(null)
     setModalSuccess(null)
   }, [modalBusy])
+
+  useEffect(() => {
+    return subscribeAuthLogoutCleanup(() => {
+      pendingRunRef.current = null
+      try {
+        gateResolversRef.current?.reject(
+          Object.assign(new Error('Signed out.'), { code: 'EYP_AUTH_SIGNED_OUT' })
+        )
+      } catch {
+        /* ignore */
+      }
+      gateResolversRef.current = null
+      flushInFlightRef.current = false
+      setModalOpen(false)
+      setModalBusy(false)
+      setModalError(null)
+      setModalSuccess(null)
+    })
+  }, [])
 
   const flushPendingRun = useCallback(async () => {
     if (flushInFlightRef.current) return
