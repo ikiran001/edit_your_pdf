@@ -10,7 +10,7 @@
 
 services:
   gotenberg:
-    image: gotenberg/gotenberg:8
+    image: gotenberg/gotenberg:8-libreoffice
     ports:
       - '3044:3000'
     # Chromium is unused for DOCX→PDF; slim profile is fine if your Gotenberg version supports it.

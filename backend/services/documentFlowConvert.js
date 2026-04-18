@@ -50,45 +50,82 @@ function assertGotenbergNotSameHostAsApi(gotenbergBaseUrl) {
   throw err;
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function transientHealthStatus(status) {
+  return status === 502 || status === 503 || status === 504;
+}
+
 /**
  * GET Gotenberg `/health` so we can treat dead hostnames (e.g. Render `no-server`) as unreachable.
+ * Retries transient gateway errors (502/503/504) — common right after a cold start on Render.
+ *
  * @param {string} gotenbergBaseUrl
+ * @param {{ maxAttempts?: number, retryDelayMs?: number }} [opts]
  * @returns {Promise<{ ok: true } | { ok: false, status?: number, noServer?: boolean, hint: string }>}
  */
-export async function probeGotenbergHealth(gotenbergBaseUrl) {
+export async function probeGotenbergHealth(gotenbergBaseUrl, opts = {}) {
   const base = gotenbergBaseUrl.replace(/\/$/, '');
   const healthUrl = `${base}/health`;
-  try {
-    const r = await fetch(healthUrl, {
-      method: 'GET',
-      redirect: 'follow',
-      signal: AbortSignal.timeout(12_000),
-    });
-    const noServer = r.status === 404 && r.headers.get('x-render-routing') === 'no-server';
-    if (noServer) {
-      return {
-        ok: false,
-        status: 404,
-        noServer: true,
-        hint:
-          'GOTENBERG_URL uses a hostname where Render has no running Web Service (404 + x-render-routing: no-server). In the Render dashboard, create a separate Web Service from the Gotenberg image (see render.yaml in this repo), deploy it, then set GOTENBERG_URL to the exact https URL on that service’s Overview page. Checking /health on your PDF API (edit-your-pdf-…) is not the same as checking Gotenberg.',
-      };
+  const envAttempts = Number((process.env.GOTENBERG_HEALTH_ATTEMPTS || '').trim());
+  const maxAttempts = Math.min(
+    8,
+    Math.max(1, Number.isFinite(envAttempts) && envAttempts > 0 ? envAttempts : opts.maxAttempts ?? 4)
+  );
+  const envDelay = Number((process.env.GOTENBERG_HEALTH_RETRY_MS || '').trim());
+  const retryDelayMs = Math.min(
+    15_000,
+    Math.max(500, Number.isFinite(envDelay) && envDelay > 0 ? envDelay : opts.retryDelayMs ?? 2000)
+  );
+
+  let lastStatus;
+  let lastHint;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      const r = await fetch(healthUrl, {
+        method: 'GET',
+        redirect: 'follow',
+        signal: AbortSignal.timeout(12_000),
+      });
+      lastStatus = r.status;
+      const noServer = r.status === 404 && r.headers.get('x-render-routing') === 'no-server';
+      if (noServer) {
+        return {
+          ok: false,
+          status: 404,
+          noServer: true,
+          hint:
+            'GOTENBERG_URL uses a hostname where Render has no running Web Service (404 + x-render-routing: no-server). In the Render dashboard, create a separate Web Service from the Gotenberg image (see render.yaml in this repo), deploy it, then set GOTENBERG_URL to the exact https URL on that service’s Overview page. Checking /health on your PDF API (edit-your-pdf-…) is not the same as checking Gotenberg.',
+        };
+      }
+      if (r.ok) return { ok: true };
+      lastHint = `Gotenberg GET ${healthUrl} returned HTTP ${r.status}. Fix GOTENBERG_URL or redeploy the Gotenberg service.${
+        transientHealthStatus(r.status)
+          ? ' Persistent 502 often means the Gotenberg instance is out of memory — use docker.io/gotenberg/gotenberg:8-libreoffice and/or a larger Render plan (see render.yaml in this repo).'
+          : ''
+      }`;
+      if (transientHealthStatus(r.status) && attempt < maxAttempts) {
+        await sleep(retryDelayMs);
+        continue;
+      }
+      return { ok: false, status: r.status, hint: lastHint };
+    } catch (e) {
+      const label = e?.name === 'TimeoutError' ? 'timed out' : e?.message || 'request failed';
+      lastHint = `Could not reach Gotenberg at ${healthUrl} (${label}).`;
+      if (attempt < maxAttempts) {
+        await sleep(retryDelayMs);
+        continue;
+      }
+      return { ok: false, hint: lastHint };
     }
-    if (!r.ok) {
-      return {
-        ok: false,
-        status: r.status,
-        hint: `Gotenberg GET ${healthUrl} returned HTTP ${r.status}. Fix GOTENBERG_URL or redeploy the Gotenberg service.`,
-      };
-    }
-    return { ok: true };
-  } catch (e) {
-    const label = e?.name === 'TimeoutError' ? 'timed out' : e?.message || 'request failed';
-    return {
-      ok: false,
-      hint: `Could not reach Gotenberg at ${healthUrl} (${label}).`,
-    };
   }
+  return {
+    ok: false,
+    status: lastStatus,
+    hint: lastHint || `Gotenberg GET ${healthUrl} failed after ${maxAttempts} attempts.`,
+  };
 }
 
 /**
