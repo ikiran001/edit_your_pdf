@@ -72,7 +72,7 @@ export async function probeGotenbergHealth(gotenbergBaseUrl, opts = {}) {
   const envAttempts = Number((process.env.GOTENBERG_HEALTH_ATTEMPTS || '').trim());
   const maxAttempts = Math.min(
     8,
-    Math.max(1, Number.isFinite(envAttempts) && envAttempts > 0 ? envAttempts : opts.maxAttempts ?? 4)
+    Math.max(1, Number.isFinite(envAttempts) && envAttempts > 0 ? envAttempts : opts.maxAttempts ?? 5)
   );
   const envDelay = Number((process.env.GOTENBERG_HEALTH_RETRY_MS || '').trim());
   const retryDelayMs = Math.min(
@@ -203,8 +203,19 @@ export async function convertPdfFileToDocxBuffer(opts) {
   }
 }
 
+function buildDocxMultipartForm(docxBuffer, filename) {
+  const form = new FormData();
+  const file = new File([new Uint8Array(docxBuffer)], filename, {
+    type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  });
+  form.append('files', file);
+  return form;
+}
+
 /**
  * DOCX → PDF via Gotenberg LibreOffice module.
+ * Retries transient 502/503/504 and timeouts (Render cold start / gateway) — does not fix chronic OOM; upgrade RAM/plan for that.
+ *
  * @param {{ gotenbergBaseUrl: string, docxBuffer: Buffer, filename?: string }} opts
  * @returns {Promise<Buffer>}
  */
@@ -214,40 +225,77 @@ export async function convertDocxBufferToPdfBuffer(opts) {
   assertGotenbergNotSameHostAsApi(base);
   const url = `${base}/forms/libreoffice/convert`;
 
-  const form = new FormData();
-  const file = new File([new Uint8Array(docxBuffer)], filename, {
-    type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  });
-  form.append('files', file);
+  const envAttempts = Number((process.env.GOTENBERG_CONVERT_MAX_ATTEMPTS || '').trim());
+  const maxAttempts = Math.min(
+    8,
+    Math.max(1, Number.isFinite(envAttempts) && envAttempts > 0 ? envAttempts : 3)
+  );
+  const envDelay = Number((process.env.GOTENBERG_CONVERT_RETRY_MS || '').trim());
+  const retryDelayMs = Math.min(
+    20_000,
+    Math.max(800, Number.isFinite(envDelay) && envDelay > 0 ? envDelay : 2500)
+  );
+  const envTimeout = Number((process.env.GOTENBERG_CONVERT_TIMEOUT_MS || '').trim());
+  const timeoutMs = Math.min(
+    600_000,
+    Math.max(45_000, Number.isFinite(envTimeout) && envTimeout > 0 ? envTimeout : 180_000)
+  );
 
-  const res = await fetch(url, { method: 'POST', body: form });
-  const buf = Buffer.from(await res.arrayBuffer());
-  if (!res.ok) {
-    let msg = buf.slice(0, 800).toString('utf8') || res.statusText;
-    if (res.status === 404) {
-      const noServer = res.headers.get('x-render-routing') === 'no-server';
-      if (noServer) {
-        const host = (() => {
-          try {
-            return new URL(base).hostname;
-          } catch {
-            return base;
+  let lastErr;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const form = buildDocxMultipartForm(docxBuffer, filename);
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        body: form,
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+      const buf = Buffer.from(await res.arrayBuffer());
+      if (!res.ok) {
+        if (transientHealthStatus(res.status) && attempt < maxAttempts) {
+          await sleep(retryDelayMs);
+          continue;
+        }
+        let msg = buf.slice(0, 800).toString('utf8') || res.statusText;
+        if (res.status === 404) {
+          const noServer = res.headers.get('x-render-routing') === 'no-server';
+          if (noServer) {
+            const host = (() => {
+              try {
+                return new URL(base).hostname;
+              } catch {
+                return base;
+              }
+            })();
+            msg += `\n\nRender reports no web service for host "${host}" (x-render-routing: no-server). That hostname is not attached to a running service — create or resume your Gotenberg Web Service on Render and set GOTENBERG_URL to the exact URL shown on that service’s Overview page (not a guessed *.onrender.com name).`;
+          } else {
+            msg += `\n\n404 usually means GOTENBERG_URL is not a Gotenberg base URL (this app calls POST …/forms/libreoffice/convert). Try GET ${base}/health in a browser — Gotenberg returns JSON; if you see HTML, 404, or your own API, set GOTENBERG_URL to your separate Gotenberg Web Service on Render.`;
           }
-        })();
-        msg += `\n\nRender reports no web service for host "${host}" (x-render-routing: no-server). That hostname is not attached to a running service — create or resume your Gotenberg Web Service on Render and set GOTENBERG_URL to the exact URL shown on that service’s Overview page (not a guessed *.onrender.com name).`;
-      } else {
-        msg += `\n\n404 usually means GOTENBERG_URL is not a Gotenberg base URL (this app calls POST …/forms/libreoffice/convert). Try GET ${base}/health in a browser — Gotenberg returns JSON; if you see HTML, 404, or your own API, set GOTENBERG_URL to your separate Gotenberg Web Service on Render.`;
+        }
+        const err = new Error(`Gotenberg error ${res.status}: ${msg}`);
+        err.code = 'GOTENBERG_HTTP';
+        err.status = res.status;
+        throw err;
       }
+      if (buf.length < 64 || buf.toString('ascii', 0, 4) !== '%PDF') {
+        const err = new Error('Gotenberg response was not a PDF');
+        err.code = 'GOTENBERG_NOT_PDF';
+        throw err;
+      }
+      return buf;
+    } catch (e) {
+      lastErr = e;
+      const timedOut = e?.name === 'TimeoutError' || e?.name === 'AbortError';
+      const transientNet =
+        !e?.status &&
+        typeof e?.message === 'string' &&
+        /fetch|ECONNRESET|ECONNREFUSED|socket|network/i.test(e.message);
+      if ((timedOut || transientNet) && attempt < maxAttempts) {
+        await sleep(retryDelayMs);
+        continue;
+      }
+      throw e;
     }
-    const err = new Error(`Gotenberg error ${res.status}: ${msg}`);
-    err.code = 'GOTENBERG_HTTP';
-    err.status = res.status;
-    throw err;
   }
-  if (buf.length < 64 || buf.toString('ascii', 0, 4) !== '%PDF') {
-    const err = new Error('Gotenberg response was not a PDF');
-    err.code = 'GOTENBERG_NOT_PDF';
-    throw err;
-  }
-  return buf;
+  throw lastErr || new Error('Gotenberg convert failed after retries');
 }
