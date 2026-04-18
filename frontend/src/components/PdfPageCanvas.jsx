@@ -584,7 +584,7 @@ export default function PdfPageCanvas({
     if (!editingAnnotId) return
     const el = annotEditorRef.current
     if (!el) return
-    el.focus()
+    el.focus({ preventScroll: true })
     try {
       const sel = window.getSelection()
       const range = document.createRange()
@@ -854,7 +854,8 @@ export default function PdfPageCanvas({
       cancelAnimationFrame(idInner)
       ro.disconnect()
     }
-  }, [pdfPage, ready, paintOverlay])
+    /* Re-sync when inline edit opens/closes — toolbar reflow / overflow can change CSS vs bitmap mapping for one frame. */
+  }, [pdfPage, ready, paintOverlay, nativeEdit])
 
   const normPoint = (e) => {
     const overlay = overlayRef.current
@@ -1494,7 +1495,8 @@ export default function PdfPageCanvas({
       if (!el2) return
       const latest = readStr()
       if (el2.textContent !== latest) el2.textContent = latest
-      el2.focus()
+      /* preventScroll: otherwise the browser scrolls the scroll root to “show” the editor and the PDF/zoom feel misaligned. */
+      el2.focus({ preventScroll: true })
       try {
         const sel = window.getSelection()
         const range = document.createRange()
@@ -1652,7 +1654,7 @@ export default function PdfPageCanvas({
       const el = nativeEditorElRef.current
       const block = nativeEditRef.current?.block
       if (!el || !block) return
-      el.focus()
+      el.focus({ preventScroll: true })
       try {
         document.execCommand('insertText', false, t)
       } catch {
