@@ -1,7 +1,8 @@
 # Render Blueprint — https://render.com/docs/blueprint-spec
 #
-# - `pdfpilot-gotenberg`: prebuilt Gotenberg image for DOCX → PDF (Word to PDF tool).
-#   Render injects `PORT`; Gotenberg defaults to 3000 — override CMD so it listens on `$PORT`.
+# - `pdfpilot-gotenberg`: Gotenberg for DOCX → PDF (Word to PDF). Uses `8-libreoffice` (not the full
+#   `8` image) so the container fits Render starter RAM — full Chromium+LO often OOMs → HTTP 502 on /health.
+#   Render injects `PORT`; override CMD so the API listens on `$PORT`.
 # - API web service (`name` below): MUST match your Render service name exactly (same as the
 #   `https://<name>.onrender.com` host). If names differ, Blueprint `fromService` env never applies—set
 #   `GOTENBERG_URL` manually on the API, or fix `name` here and sync the Blueprint.
@@ -14,7 +15,7 @@ services:
     name: pdfpilot-gotenberg
     runtime: image
     image:
-      url: docker.io/gotenberg/gotenberg:8
+      url: docker.io/gotenberg/gotenberg:8-libreoffice
     healthCheckPath: /health
     dockerCommand: gotenberg --api-port-from-env=PORT
 

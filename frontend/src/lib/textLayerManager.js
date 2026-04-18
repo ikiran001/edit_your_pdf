@@ -35,7 +35,7 @@ function pickDominantRunStyle(runs) {
 }
 
 /** Vertical overlap / min line height — catches same-line duplicates with low box IoU. */
-function verticalOverlapRatio(a, b) {
+export function verticalOverlapRatio(a, b) {
   const ay2 = a.top + a.height
   const by2 = b.top + b.height
   const y1 = Math.max(a.top, b.top)
@@ -46,7 +46,7 @@ function verticalOverlapRatio(a, b) {
 }
 
 /** Horizontal overlap / min width — avoids merging two same-string cells in one table row. */
-function horizontalOverlapRatio(a, b) {
+export function horizontalOverlapRatio(a, b) {
   const ax2 = a.left + a.width
   const bx2 = b.left + b.width
   const x1 = Math.max(a.left, b.left)
@@ -466,4 +466,67 @@ export function hitTestTextBlockNearest(blocks, px, py, pad = 6) {
     }
   }
   return best
+}
+
+/** @param {number} py */
+function verticalDistanceToBand(py, top, bottom) {
+  if (py < top) return top - py
+  if (py > bottom) return py - bottom
+  return 0
+}
+
+/** Baseline Y in the same space as `block.top` / pdf.js viewport (see `buildTextRuns`). */
+function blockBaselineY(b) {
+  const runs = b.runs
+  if (runs?.length) {
+    for (let i = runs.length - 1; i >= 0; i -= 1) {
+      const by = runs[i]?.baselineY
+      if (typeof by === 'number' && Number.isFinite(by)) return by
+    }
+  }
+  return b.top + b.height * 0.82
+}
+
+/**
+ * Pick which text block the user intended at a point (bitmap / pdf.js viewport px, same as `block.left/top`).
+ * Prefers the line whose **baseline** is closest to `py` (not bbox midpoint — that mimicked “nearest line”
+ * and picked the wrong row when boxes overlapped). Optional `clipById` tightens the vertical gate.
+ *
+ * @param {Array<Record<string, unknown>>} blocks
+ * @param {Map<string, { top: number, bottom: number }>|null|undefined} clipById
+ * @param {number} px
+ * @param {number} py
+ * @param {{ padX?: number, padY?: number, maxVerticalSlop?: number }} [opts]
+ */
+export function pickNativeTextBlockAtBitmapPoint(blocks, clipById, px, py, opts = {}) {
+  if (!blocks?.length) return null
+  const padX = opts.padX ?? 4
+  const padY = opts.padY ?? 6
+  const maxVD = opts.maxVerticalSlop ?? 30
+
+  const scored = []
+  for (const b of blocks) {
+    const hl = b.left - padX
+    const hr = b.left + b.width + padX
+    if (px < hl || px > hr) continue
+
+    const clip = clipById?.get?.(b.id)
+    const bt = clip?.top ?? b.top
+    const bb = clip?.bottom ?? (b.top + b.height)
+    const vt = bt - padY
+    const vb = bb + padY
+    const vd = verticalDistanceToBand(py, vt, vb)
+    if (vd > maxVD) continue
+
+    const baselineY = blockBaselineY(b)
+    const bd = Math.abs(py - baselineY)
+    scored.push({ b, bd, vd, top: b.top })
+  }
+  if (!scored.length) return null
+  scored.sort((a, b) => {
+    if (a.bd !== b.bd) return a.bd - b.bd
+    if (a.vd !== b.vd) return a.vd - b.vd
+    return a.top - b.top
+  })
+  return scored[0].b
 }

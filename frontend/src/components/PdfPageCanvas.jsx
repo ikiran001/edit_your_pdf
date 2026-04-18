@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { buildTextRuns } from '../lib/pdfTextRuns'
 import { hexLuminance, sampleBackgroundColorHex, sampleInkColorHex } from '../lib/sampleCanvasInkColor'
-import { buildPageTextItemBlocks } from '../lib/textLayerManager'
+import {
+  buildPageTextItemBlocks,
+  horizontalOverlapRatio,
+  pickNativeTextBlockAtBitmapPoint,
+  verticalOverlapRatio,
+} from '../lib/textLayerManager'
 import { editorFontFamilyWithPdfHint } from '../lib/editorUnicodeFonts'
 import {
   cssAnnotPreviewFontStack,
@@ -298,7 +303,80 @@ export default function PdfPageCanvas({
       return { ...b, str }
     })
   }, [baseTextBlocks, blockTextOverrides, pageIndex, sessionNativeTextEdits])
+
+  /**
+   * DOM stacking order for hit targets: later siblings paint on top and win hit-testing.
+   * Sort by descending top so deeper lines render first (under) and shallower lines last (on top).
+   * Ascending top (old behaviour) put the lower line on top and it stole taps from the line above.
+   */
+  const textBlocksPaintOrder = useMemo(() => {
+    return [...textBlocks].sort((a, b) => {
+      const dt = b.top - a.top
+      if (Math.abs(dt) > 0.75) return dt
+      const dl = a.left - b.left
+      if (Math.abs(dl) > 0.75) return dl
+      const ia = Number.isFinite(a.pdfTextItemIndex) ? a.pdfTextItemIndex : 0
+      const ib = Number.isFinite(b.pdfTextItemIndex) ? b.pdfTextItemIndex : 0
+      return ia - ib
+    })
+  }, [textBlocks])
+
+  /**
+   * Tighten hit targets between vertically neighbouring lines in the same column so tight
+   * leading does not send taps to the lower line when the user aimed at the upper one.
+   */
+  const nativeTextHitClipById = useMemo(() => {
+    const list = [...textBlocks].sort((a, b) => {
+      const dt = a.top - b.top
+      if (Math.abs(dt) > 0.75) return dt
+      return a.left - b.left
+    })
+    /** @type {Map<string, { top: number, bottom: number }>} */
+    const m = new Map()
+    for (const b of list) {
+      m.set(b.id, { top: b.top, bottom: b.top + b.height })
+    }
+    const nudgeOnce = () => {
+      let changed = false
+      for (let i = 0; i < list.length - 1; i++) {
+        const a = list[i]
+        const b = list[i + 1]
+        /* Low threshold: short second lines still share a column with a long line above. */
+        if (horizontalOverlapRatio(a, b) < 0.06) continue
+        const ca = m.get(a.id)
+        const cb = m.get(b.id)
+        if (!ca || !cb) continue
+        const ah = ca.bottom - ca.top
+        const bh = cb.bottom - cb.top
+        const gap = cb.top - ca.bottom
+        const ov = verticalOverlapRatio(
+          { top: ca.top, height: ah },
+          { top: cb.top, height: bh }
+        )
+        if (gap > Math.min(ah, bh) * 0.5 && ov < 0.04) continue
+
+        const ySplit = (ca.bottom + cb.top) * 0.5
+        const newABottom = Math.max(ca.top + 2, Math.min(ca.bottom, ySplit))
+        const newBTop = Math.min(cb.bottom - 2, Math.max(cb.top, ySplit))
+        if (newABottom < ca.bottom - 0.05) {
+          ca.bottom = newABottom
+          changed = true
+        }
+        if (newBTop > cb.top + 0.05) {
+          cb.top = newBTop
+          changed = true
+        }
+      }
+      return changed
+    }
+    let guard = 0
+    while (guard < 8 && nudgeOnce()) guard += 1
+    return m
+  }, [textBlocks])
+
   const textBlocksRef = useRef(textBlocks)
+  /** Same-frame as `textBlocks` — used with client coords so DOM hit target does not choose the line. */
+  const nativeTextHitClipByIdRef = useRef(nativeTextHitClipById)
   const [nativeEdit, setNativeEdit] = useState(null)
   const nativeEditRef = useRef(null)
   const nativeEditorElRef = useRef(null)
@@ -361,7 +439,8 @@ export default function PdfPageCanvas({
 
   useLayoutEffect(() => {
     textBlocksRef.current = textBlocks
-  }, [textBlocks])
+    nativeTextHitClipByIdRef.current = nativeTextHitClipById
+  }, [textBlocks, nativeTextHitClipById])
 
   const patchAnnotItem = useCallback(
     (id, partial) => {
@@ -535,8 +614,9 @@ export default function PdfPageCanvas({
     el.style.textAlign = f.align || 'left'
     el.style.color = f.color || '#000000'
     el.style.opacity = String(f.opacity ?? 1)
-    el.style.whiteSpace = 'pre-wrap'
-    el.style.overflowWrap = 'break-word'
+    /* Match single-line PDF items: pre-wrap + narrow pdf.js width forces "Financial Year" to break at the space. */
+    el.style.whiteSpace = 'pre'
+    el.style.overflowWrap = 'normal'
     el.style.backgroundColor = nativeEdit.maskFillHex || '#ffffff'
   }, [nativeEdit, textFormat])
 
@@ -1279,6 +1359,21 @@ export default function PdfPageCanvas({
   const sx = bmpW > 0 ? cw / bmpW : 1
   const sy = bmpH > 0 ? ch / bmpH : 1
 
+  /* Same mapping as `normPoint` (overlay canvas CSS rect ↔ bitmap px) — avoids drift vs the PDF bitmap. */
+  const resolveNativeTextPickFromClient = useCallback((clientX, clientY, fallbackBlock) => {
+    const overlay = overlayRef.current
+    const blocks = textBlocksRef.current
+    const clip = nativeTextHitClipByIdRef.current
+    if (!overlay || !blocks?.length) return fallbackBlock
+    const r = overlay.getBoundingClientRect()
+    if (r.width < 1 || r.height < 1 || !overlay.width || !overlay.height) return fallbackBlock
+    const scaleX = overlay.width / r.width
+    const scaleY = overlay.height / r.height
+    const px = (clientX - r.left) * scaleX
+    const py = (clientY - r.top) * scaleY
+    return pickNativeTextBlockAtBitmapPoint(blocks, clip, px, py) ?? fallbackBlock
+  }, [])
+
   const overlayActive = tool && tool !== 'editText'
 
   const showTextLayer = editTextMode && tool === 'editText' && ready
@@ -1990,7 +2085,7 @@ export default function PdfPageCanvas({
             overflow: nativeEdit ? 'visible' : undefined,
           }}
         >
-          {[...textBlocks].reverse().map((block) => {
+          {textBlocksPaintOrder.map((block) => {
             const isEditing = nativeEdit?.block?.id === block.id
             const w = Math.max(block.width * sx, 4)
             const h = Math.max(block.height * sy, Math.max(10, block.fontSizePx * sy * 1.15))
@@ -2010,12 +2105,19 @@ export default function PdfPageCanvas({
             const wrapperMinH = isEditing
               ? Math.max(h, editorLineHeightPx + 4)
               : h
-            /* No scrollbars: wrap inside PDF width and grow height; overflow stays hidden. */
+            /*
+             * Idle: fixed pdf.js quad width (hit target).
+             * Editing: minWidth = quad width (often under-estimates rendered ink vs substitute fonts).
+             * width max-content lets one logical line stay horizontal like the PDF; maxWidth caps at canvas.
+             */
+            const editorMaxW = Math.max(w, Math.max(0, cw - left - 4))
             const wrapperStyle = isEditing
               ? {
                   left,
                   top,
-                  width: w,
+                  minWidth: w,
+                  width: 'max-content',
+                  maxWidth: editorMaxW,
                   minHeight: wrapperMinH,
                   height: 'auto',
                   zIndex: 2,
@@ -2024,7 +2126,7 @@ export default function PdfPageCanvas({
             return (
               <div
                 key={block.id}
-                className="pointer-events-auto absolute touch-manipulation"
+                className="absolute touch-manipulation pointer-events-none"
                 style={wrapperStyle}
                 title={isEditing ? undefined : 'Tap to edit'}
                 data-text-block-id={block.id}
@@ -2041,7 +2143,7 @@ export default function PdfPageCanvas({
                     contentEditable
                     suppressContentEditableWarning
                     data-pdf-inline-editor-root
-                    className="pdf-text-layer-editor relative z-[1] box-border cursor-text select-text overflow-hidden rounded-sm border border-solid border-[#4A90E2] outline-none transition-[border-color,background-color] duration-150"
+                    className="pdf-text-layer-editor pointer-events-auto relative z-[1] box-border cursor-text select-text overflow-x-visible overflow-y-visible rounded-sm border border-solid border-[#4A90E2] outline-none transition-[border-color,background-color] duration-150"
                     style={{
                       colorScheme: 'light',
                       backgroundColor: nativeEdit?.maskFillHex || '#ffffff',
@@ -2056,8 +2158,9 @@ export default function PdfPageCanvas({
                       opacity: fmt.opacity ?? 1,
                       transform: rotDeg ? `rotate(${rotDeg}deg)` : 'none',
                       transformOrigin: rotDeg ? 'top left' : undefined,
-                      whiteSpace: 'pre-wrap',
-                      overflowWrap: 'break-word',
+                      whiteSpace: 'pre',
+                      overflowWrap: 'normal',
+                      wordBreak: 'normal',
                     }}
                     onFocus={() => {
                       if (nativeBlurTimerRef.current) {
@@ -2103,8 +2206,9 @@ export default function PdfPageCanvas({
                       el.style.textDecoration = f.underline ? 'underline' : 'none'
                       const lh = Math.max(14, Math.round(Math.max(6, Math.min(240, vfs * sx)) * 1.2))
                       el.style.lineHeight = `${lh}px`
-                      el.style.whiteSpace = 'pre-wrap'
-                      el.style.overflowWrap = 'break-word'
+                      el.style.whiteSpace = 'pre'
+                      el.style.overflowWrap = 'normal'
+                      el.style.wordBreak = 'normal'
                       scheduleNativeSync(block)
                     }}
                     onKeyDown={(e) => {
@@ -2131,7 +2235,7 @@ export default function PdfPageCanvas({
                   {nativeEditSlotIdRef.current && (
                     <div
                       data-pdf-inline-editor-root
-                      className="absolute left-0 top-full z-[10] mt-0.5 flex items-center gap-1"
+                      className="pointer-events-auto absolute left-0 top-full z-[10] mt-0.5 flex items-center gap-1"
                     >
                       <button
                         type="button"
@@ -2155,12 +2259,16 @@ export default function PdfPageCanvas({
                     data-pdf-text-line-tap
                     aria-label="Edit PDF text"
                     title="Tap to edit"
-                    className={`pdf-text-layer-hit pdf-text-layer-tap-target absolute inset-0 z-[1] overflow-hidden border bg-transparent p-0 font-inherit outline-none transition-[border-color,background-color] duration-150 select-none ${
+                    className={`pdf-text-layer-hit pdf-text-layer-tap-target pointer-events-auto absolute inset-0 z-[1] overflow-hidden border bg-transparent p-0 font-inherit outline-none transition-[border-color,background-color] duration-150 select-none ${
                       hoverBlockId === block.id
                         ? 'border border-dashed border-[#ccc]'
                         : 'border border-transparent'
                     }`}
-                    style={{ color: 'transparent', caretColor: 'transparent', touchAction: 'manipulation' }}
+                    style={{
+                      color: 'transparent',
+                      caretColor: 'transparent',
+                      touchAction: 'manipulation',
+                    }}
                     onPointerEnter={() => setHoverBlockId(block.id)}
                     onPointerLeave={() =>
                       setHoverBlockId((id) => (id === block.id ? null : id))
@@ -2169,8 +2277,9 @@ export default function PdfPageCanvas({
                       if (!e.isPrimary) return
                       if (e.pointerType === 'mouse' && e.button !== 0) return
                       e.stopPropagation()
+                      const picked = resolveNativeTextPickFromClient(e.clientX, e.clientY, block)
                       const cur = nativeEditRef.current
-                      if (cur && cur.block.id !== block.id) {
+                      if (cur && cur.block.id !== picked.id) {
                         const ed = nativeEditorElRef.current
                         commitNativeEdit(ed?.innerText ?? '')
                       }
@@ -2178,16 +2287,17 @@ export default function PdfPageCanvas({
                       if (e.pointerType === 'touch' || e.pointerType === 'pen') {
                         e.preventDefault()
                       }
-                      openNativeEditorForBlock(block)
+                      openNativeEditorForBlock(picked)
                     }}
                     onClick={(e) => {
                       e.stopPropagation()
+                      const picked = resolveNativeTextPickFromClient(e.clientX, e.clientY, block)
                       const cur = nativeEditRef.current
-                      if (cur && cur.block.id !== block.id) {
+                      if (cur && cur.block.id !== picked.id) {
                         const ed = nativeEditorElRef.current
                         commitNativeEdit(ed?.innerText ?? '')
                       }
-                      openNativeEditorForBlock(block)
+                      openNativeEditorForBlock(picked)
                     }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
