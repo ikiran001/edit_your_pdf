@@ -39,6 +39,8 @@ export default function EditsSidebar({
   saving,
   downloading,
   listSyncing = false,
+  /** Shown under Download when the build requires sign-in and the user is signed out. */
+  downloadSignInNote = null,
 }) {
   const entries = []
 
@@ -155,6 +157,11 @@ export default function EditsSidebar({
           >
             {downloading ? MSG.processingFile : 'Download PDF'}
           </button>
+          {downloadSignInNote ? (
+            <p className="m-0 text-center text-[11px] leading-snug text-amber-800 dark:text-amber-200/90">
+              {downloadSignInNote}
+            </p>
+          ) : null}
           <button
             type="button"
             onMouseDown={(ev) => ev.preventDefault()}

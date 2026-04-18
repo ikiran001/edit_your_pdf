@@ -1,6 +1,16 @@
 import { apiUrl } from '../../lib/apiBase.js'
 
 /**
+ * When true (Vite env at build time), Edit PDF skips anonymous download attempts and opens the
+ * sign-in modal for signed-out users. Pair with Render env `DOWNLOAD_AUTH_ENABLED=true` and
+ * `DOWNLOAD_FIRST_ANONYMOUS=false` so the API does not accept unauthenticated downloads.
+ */
+export function isRequireSignInForEditPdfDownload() {
+  const v = String(import.meta.env.VITE_REQUIRE_SIGN_IN_FOR_EDIT_PDF_DOWNLOAD ?? '').trim().toLowerCase()
+  return v === '1' || v === 'true' || v === 'yes'
+}
+
+/**
  * @param {{ sessionId: string, downloadToken?: string | null, idToken?: string | null }} p
  * @returns {Promise<{ ok: true, blob: Blob } | { ok: false, status: number, errPayload: object | null }>}
  */

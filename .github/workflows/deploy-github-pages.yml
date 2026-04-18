@@ -54,6 +54,8 @@ jobs:
       #   VITE_GA_MEASUREMENT_ID — overrides .env.production when set. Must match gtag id in frontend/index.html
       #   or remove the secret so the committed ID is used (stale secret = wrong stream in JS bundle).
       #   VITE_SUPPORT_PAYMENT_URL — optional Razorpay (or other) tip link for the post-download modal.
+      #   VITE_REQUIRE_SIGN_IN_FOR_EDIT_PDF_DOWNLOAD — optional "true": Edit PDF opens sign-in before download
+      #     (use with API DOWNLOAD_AUTH_ENABLED=true and DOWNLOAD_FIRST_ANONYMOUS=false on Render).
       - name: Build
         working-directory: frontend
         env:
@@ -68,6 +70,9 @@ jobs:
           fi
           if [ -n "${{ secrets.VITE_SUPPORT_PAYMENT_URL }}" ]; then
             export VITE_SUPPORT_PAYMENT_URL="${{ secrets.VITE_SUPPORT_PAYMENT_URL }}"
+          fi
+          if [ -n "${{ secrets.VITE_REQUIRE_SIGN_IN_FOR_EDIT_PDF_DOWNLOAD }}" ]; then
+            export VITE_REQUIRE_SIGN_IN_FOR_EDIT_PDF_DOWNLOAD="${{ secrets.VITE_REQUIRE_SIGN_IN_FOR_EDIT_PDF_DOWNLOAD }}"
           fi
           if [ -n "${{ secrets.VITE_BASE_PATH }}" ]; then
             export VITE_BASE_PATH="${{ secrets.VITE_BASE_PATH }}"

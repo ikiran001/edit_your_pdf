@@ -36,7 +36,10 @@ import {
 import { isFirebaseClientConfigured } from '../auth/firebaseClient.js'
 import { getFirebaseAuthErrorHint } from '../lib/firebase.js'
 import { persistEditSession } from '../features/edit-pdf/editSessionStorage.js'
-import { fetchEditPdfDownload } from '../features/edit-pdf/editPdfDownload.js'
+import {
+  fetchEditPdfDownload,
+  isRequireSignInForEditPdfDownload,
+} from '../features/edit-pdf/editPdfDownload.js'
 import { syncUserLibraryEntry } from '../features/my-documents/userLibrary.js'
 
 const EDIT_TOOL = 'edit_pdf'
@@ -597,6 +600,9 @@ export default function PdfEditor({
 
   const runAuthenticatedDownload = useCallback(
     async () => {
+      if (isRequireSignInForEditPdfDownload() && !user) {
+        return { ok: false, needsAuth: true }
+      }
       const idToken = user ? await getFreshIdToken().catch(() => null) : null
       if (user && !idToken) {
         return {
@@ -1303,6 +1309,11 @@ export default function PdfEditor({
           saving={saving}
           downloading={downloading}
           listSyncing={editingListSync}
+          downloadSignInNote={
+            isRequireSignInForEditPdfDownload() && !user
+              ? 'Sign in is required to download your PDF from this site.'
+              : null
+          }
         />
       </div>
       <SignatureCreationModal
