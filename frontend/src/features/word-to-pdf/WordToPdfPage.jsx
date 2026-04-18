@@ -88,9 +88,11 @@ export default function WordToPdfPage() {
     try {
       const fd = new FormData()
       fd.append('file', file)
+      /* Server may retry Gotenberg cold starts (502/503/504); allow several minutes before the browser gives up. */
       const r = await fetch(apiUrl('/document-flow/convert-docx-to-pdf'), {
         method: 'POST',
         body: fd,
+        signal: AbortSignal.timeout(600_000),
       })
       if (!r.ok) {
         const j = await r.json().catch(() => ({}))
@@ -107,7 +109,14 @@ export default function WordToPdfPage() {
       trackToolCompleted(WORD_TO_PDF_TOOL, true)
     } catch (e) {
       trackErrorOccurred(WORD_TO_PDF_TOOL, e?.message || 'convert_docx_failed')
-      setActionError(e?.message || 'Conversion failed')
+      let msg = e?.message || 'Conversion failed'
+      if (e?.name === 'TimeoutError' || e?.name === 'AbortError') {
+        msg =
+          'Conversion timed out in the browser. The server may still be waking the converter—try again in a minute, or upgrade your Gotenberg instance on Render (more RAM / paid plan).'
+      } else if (/50[234]|Bad Gateway|Gateway|ECONNRESET/i.test(msg)) {
+        msg += ' Repeated gateway errors usually mean the Gotenberg service is out of memory or sleeping—use gotenberg/gotenberg:8-libreoffice and a larger Render plan for that service.'
+      }
+      setActionError(msg)
     } finally {
       setBusy(false)
     }
@@ -160,10 +169,18 @@ export default function WordToPdfPage() {
               onFiles={onDocxFiles}
               label={busy ? 'Converting…' : 'Drop your Word file here or click to browse'}
             />
-            <p className="rounded-xl border border-zinc-200 bg-zinc-50/80 px-4 py-3 text-center text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-400">
-              One <strong>.docx</strong> at a time (Microsoft Word or compatible). Layout may shift
-              slightly in the PDF.
-            </p>
+            {busy ? (
+              <p className="rounded-xl border border-sky-200 bg-sky-50/90 px-4 py-3 text-center text-sm text-sky-950 dark:border-sky-900 dark:bg-sky-950/35 dark:text-sky-100">
+                The converter runs on a <strong>separate</strong> cloud service. After idle it may need{' '}
+                <strong>30–90 seconds</strong> to wake up; the API retries automatically. Please keep this tab
+                open.
+              </p>
+            ) : (
+              <p className="rounded-xl border border-zinc-200 bg-zinc-50/80 px-4 py-3 text-center text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-400">
+                One <strong>.docx</strong> at a time (Microsoft Word or compatible). Layout may shift slightly
+                in the PDF.
+              </p>
+            )}
           </>
         ) : capsStatus === 'ready' && !caps?.docxToPdf ? (
           <div className="rounded-2xl border border-zinc-200 bg-zinc-50/90 p-6 text-sm text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900/50 dark:text-zinc-300">
