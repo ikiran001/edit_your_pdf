@@ -4,6 +4,11 @@ import path from 'path';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import { fileURLToPath } from 'url';
+import { createOneTimeDownloadToken } from '../services/sessionDownloadToken.js';
+import {
+  isDownloadAuthEnabled,
+  isFirstAnonymousDownloadEnabled,
+} from '../services/downloadAuthPolicy.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const uploadsRoot = path.join(__dirname, '..', 'uploads');
@@ -66,7 +71,15 @@ router.post('/upload', (req, res) => {
       fs.rmSync(dir, { recursive: true, force: true });
       return res.status(400).json({ error: 'Could not validate uploaded file.' });
     }
-    return res.json({ sessionId, filename: req.file.originalname });
+    const payload = { sessionId, filename: req.file.originalname };
+    if (isDownloadAuthEnabled() && isFirstAnonymousDownloadEnabled()) {
+      try {
+        payload.downloadToken = createOneTimeDownloadToken(dir);
+      } catch (e) {
+        console.error('[upload] download token:', e?.message || e);
+      }
+    }
+    return res.json(payload);
   });
 });
 
