@@ -37,6 +37,7 @@ import { isFirebaseClientConfigured } from '../auth/firebaseClient.js'
 import { getFirebaseAuthErrorHint } from '../lib/firebase.js'
 import { persistEditSession } from '../features/edit-pdf/editSessionStorage.js'
 import { fetchEditPdfDownload } from '../features/edit-pdf/editPdfDownload.js'
+import { syncUserLibraryEntry } from '../features/my-documents/userLibrary.js'
 
 const EDIT_TOOL = 'edit_pdf'
 
@@ -102,6 +103,8 @@ function editsPayloadToPresentMap(edits) {
 export default function PdfEditor({
   sessionId,
   onBack,
+  /** Original upload filename for My Documents. */
+  originalFileName = 'document.pdf',
   downloadToken = null,
   onDownloadTokenConsumed,
 }) {
@@ -174,6 +177,17 @@ export default function PdfEditor({
     signInWithEmailPassword,
     signUpWithEmailPassword,
   } = useAuth()
+
+  useEffect(() => {
+    if (!user || !sessionId) return
+    void syncUserLibraryEntry({
+      getFreshIdToken,
+      user,
+      sessionId,
+      fileName: originalFileName,
+      tool: 'edit_pdf',
+    })
+  }, [user, sessionId, getFreshIdToken, originalFileName])
 
   const showErrorHint = useCallback((msg) => {
     if (errorHintTimerRef.current != null) {
@@ -953,6 +967,15 @@ export default function PdfEditor({
       const elapsed =
         (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0
       trackProcessingTime(EDIT_TOOL, elapsed)
+      if (user) {
+        void syncUserLibraryEntry({
+          getFreshIdToken,
+          user,
+          sessionId,
+          fileName: originalFileName,
+          tool: 'edit_pdf',
+        })
+      }
     } catch (e) {
       console.error(e)
       trackErrorOccurred(EDIT_TOOL, e?.message || 'save_failed')
@@ -1056,7 +1079,7 @@ export default function PdfEditor({
         }
         pendingResumeAfterAuthRef.current = true
         writePendingDownload({ kind: 'edit', sessionId })
-        persistEditSession({ sessionId, downloadToken })
+        persistEditSession({ sessionId, downloadToken, fileName: originalFileName })
         setDownloadAuthSuccess(null)
         setDownloadAuthModalOpen(true)
         return

@@ -40,6 +40,12 @@ jobs:
             echo "Then re-run this workflow."
             exit 1
           fi
+      - name: Write pdfpilot-api-config.js (runtime API base fallback)
+        working-directory: frontend
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+        run: |
+          node -e 'const fs=require("fs");const u=String(process.env.VITE_API_BASE_URL||"").trim().replace(/\/+$/,"");fs.writeFileSync("public/pdfpilot-api-config.js","window.__PDFPILOT_API_BASE__="+JSON.stringify(u)+"\\n");'
       # Vite base URL for asset paths:
       #   Secret VITE_BASE_PATH — always wins if set.
       #   If public/CNAME is a real domain (not *.github.io), assume custom domain at site root → base /.

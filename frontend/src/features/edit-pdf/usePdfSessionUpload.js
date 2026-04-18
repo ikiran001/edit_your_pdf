@@ -65,9 +65,14 @@ export function usePdfSessionUpload() {
         throw new Error(`No sessionId from API.\nURL: ${uploadUrl}\nResponse: ${text.slice(0, 200)}`)
       }
       setUploadProgress(100)
+      const filename =
+        typeof data.filename === 'string' && data.filename.trim()
+          ? data.filename.trim()
+          : 'document.pdf'
       return {
         sessionId: data.sessionId,
         downloadToken: typeof data.downloadToken === 'string' ? data.downloadToken : null,
+        filename,
       }
     } finally {
       setUploading(false)

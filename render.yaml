@@ -10,6 +10,10 @@
 #
 # If you deploy the API only (no Blueprint sync), set GOTENBERG_URL manually on the API service
 # to any reachable Gotenberg base URL (e.g. https://your-gotenberg.onrender.com).
+#
+# My Documents + secured download: set FIREBASE_SERVICE_ACCOUNT_JSON on the API service (Dashboard →
+# Environment) to your Firebase service account JSON (one line). Same project must have Firestore enabled.
+# Do not commit secrets into this file; use sync: false below or paste only in the Render UI.
 services:
   - type: web
     name: pdfpilot-gotenberg
@@ -37,3 +41,6 @@ services:
           name: pdfpilot-gotenberg
           type: web
           property: hostport
+      # Paste value in Render Dashboard (secret). Required for My Documents + optional download auth.
+      - key: FIREBASE_SERVICE_ACCOUNT_JSON
+        sync: false

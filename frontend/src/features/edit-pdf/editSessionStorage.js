@@ -1,7 +1,7 @@
 const KEY = 'eyp_edit_session_v1'
 
 /**
- * @returns {{ sessionId: string, downloadToken: string | null } | null}
+ * @returns {{ sessionId: string, downloadToken: string | null, fileName?: string | null } | null}
  */
 export function readPersistedEditSession() {
   try {
@@ -12,13 +12,14 @@ export function readPersistedEditSession() {
     return {
       sessionId: j.sessionId,
       downloadToken: typeof j.downloadToken === 'string' ? j.downloadToken : null,
+      fileName: typeof j.fileName === 'string' && j.fileName.trim() ? j.fileName.trim() : null,
     }
   } catch {
     return null
   }
 }
 
-/** @param {{ sessionId: string, downloadToken?: string | null } | null} s */
+/** @param {{ sessionId: string, downloadToken?: string | null, fileName?: string | null } | null} s */
 export function persistEditSession(s) {
   try {
     if (!s?.sessionId) {
@@ -27,7 +28,11 @@ export function persistEditSession(s) {
     }
     sessionStorage.setItem(
       KEY,
-      JSON.stringify({ sessionId: s.sessionId, downloadToken: s.downloadToken || null })
+      JSON.stringify({
+        sessionId: s.sessionId,
+        downloadToken: s.downloadToken || null,
+        fileName: typeof s.fileName === 'string' && s.fileName.trim() ? s.fileName.trim() : null,
+      })
     )
   } catch {
     /* ignore quota / private mode */

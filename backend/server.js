@@ -9,9 +9,10 @@ import editRouter from './routes/edit.js';
 import downloadRouter from './routes/download.js';
 import unlockRouter from './routes/unlock.js';
 import documentFlowRouter from './routes/documentFlow.js';
+import userSessionsRouter from './routes/userSessions.js';
 import { getDocumentFlowCapabilities } from './services/documentFlowConvert.js';
 import { isDownloadAuthEnabled, isFirstAnonymousDownloadEnabled } from './services/downloadAuthPolicy.js';
-import { isFirebaseAdminReady } from './services/firebaseAdmin.js';
+import { getFirebaseAdminHealthInfo, isFirebaseAdminReady } from './services/firebaseAdmin.js';
 import { startSessionCleanup } from './utils/sessionCleanup.js';
 import { getQpdfBinary } from './utils/resolveQpdf.js';
 import { getGhostscriptBinary } from './utils/resolveGhostscript.js';
@@ -104,6 +105,7 @@ app.get('/health', (_req, res) => {
     ghostscriptPath: gsBin,
     ghostscriptVersion: gsVersion,
     unlock,
+    ...getFirebaseAdminHealthInfo(),
   });
 });
 
@@ -112,6 +114,7 @@ app.use(editRouter);
 app.use(downloadRouter);
 app.use(unlockRouter);
 app.use(documentFlowRouter);
+app.use(userSessionsRouter);
 
 /** Serve PDF for pdf.js: latest edited file when present, else original upload. */
 app.get('/pdf/:sessionId', (req, res) => {
