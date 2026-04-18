@@ -15,6 +15,7 @@ import {
 import { ANALYTICS_TOOL } from '../../shared/constants/analyticsTools.js'
 import { MSG } from '../../shared/constants/branding.js'
 import { imagesToPdfBytes } from './jpgToPdfCore.js'
+import { useClientToolDownloadAuth } from '../../auth/ClientToolDownloadAuthContext.jsx'
 
 const MERGE_TOOL = ANALYTICS_TOOL.merge_pdf
 
@@ -30,6 +31,7 @@ function downloadUint8(u8, name) {
 }
 
 export default function JpgToPdfPage() {
+  const { runWithSignInForDownload } = useClientToolDownloadAuth()
   const [items, setItems] = useState([])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
@@ -92,24 +94,35 @@ export default function JpgToPdfPage() {
     setBusy(true)
     const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
     try {
-      const ordered = items.map((x) => x.file)
-      const bytes = await imagesToPdfBytes(ordered)
-      downloadUint8(bytes, 'images.pdf')
-      trackToolCompleted(MERGE_TOOL, true)
-      trackFileDownloaded({
-        tool: MERGE_TOOL,
-        file_size: bytes.byteLength / 1024,
-        total_pages: ordered.length,
-      })
-      const elapsed =
-        (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0
-      trackProcessingTime(MERGE_TOOL, elapsed)
-      setFileReadyHint(MSG.fileReady)
-      window.setTimeout(() => setFileReadyHint(null), 6000)
+      await runWithSignInForDownload(
+        async () => {
+          const ordered = items.map((x) => x.file)
+          const bytes = await imagesToPdfBytes(ordered)
+          downloadUint8(bytes, 'images.pdf')
+          trackToolCompleted(MERGE_TOOL, true)
+          trackFileDownloaded({
+            tool: MERGE_TOOL,
+            file_size: bytes.byteLength / 1024,
+            total_pages: ordered.length,
+          })
+          const elapsed =
+            (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0
+          trackProcessingTime(MERGE_TOOL, elapsed)
+          setFileReadyHint(MSG.fileReady)
+          window.setTimeout(() => setFileReadyHint(null), 6000)
+        },
+        { onAuthLoading: () => setError('Still checking sign-in… try again in a moment.') }
+      )
     } catch (e) {
-      console.error(e)
-      trackErrorOccurred(MERGE_TOOL, e?.message || 'build_pdf_failed')
-      setError(e?.message || 'Could not build PDF')
+      if (e?.code === 'EYP_AUTH_CANCELLED') {
+        /* dismissed */
+      } else if (e?.code === 'EYP_AUTH_LOADING') {
+        setError(e.message || 'Still checking sign-in.')
+      } else {
+        console.error(e)
+        trackErrorOccurred(MERGE_TOOL, e?.message || 'build_pdf_failed')
+        setError(e?.message || 'Could not build PDF')
+      }
     } finally {
       setBusy(false)
     }

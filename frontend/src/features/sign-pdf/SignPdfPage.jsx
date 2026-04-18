@@ -24,6 +24,7 @@ import {
   uint8ToDataUrlPng,
   viewportRectToPdfDrawImage,
 } from './signPdfGeometry.js'
+import { useClientToolDownloadAuth } from '../../auth/ClientToolDownloadAuthContext.jsx'
 
 function downloadUint8(u8, name) {
   const blob = new Blob([u8], { type: 'application/pdf' })
@@ -40,6 +41,7 @@ const PLACE_OFFSET = 0.02
 const SIGN_TOOL = ANALYTICS_TOOL.sign_pdf
 
 export default function SignPdfPage() {
+  const { runWithSignInForDownload } = useClientToolDownloadAuth()
   const viewerRef = useRef(null)
   const prevPlacementsLen = useRef(0)
   const placementClipboardRef = useRef(null)
@@ -171,50 +173,61 @@ export default function SignPdfPage() {
     setFileReadyHint(null)
     const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
     try {
-      const pdfBytes = await pdfFile.arrayBuffer()
-      const doc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true })
-      const sigImage = await doc.embedPng(signaturePng)
+      await runWithSignInForDownload(
+        async () => {
+          const pdfBytes = await pdfFile.arrayBuffer()
+          const doc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true })
+          const sigImage = await doc.embedPng(signaturePng)
 
-      const ordered = [...placements].sort((a, b) => {
-        if (a.pageIndex !== b.pageIndex) return a.pageIndex - b.pageIndex
-        return a.ny - b.ny
-      })
-      for (const p of ordered) {
-        const pageCount = doc.getPageCount()
-        if (p.pageIndex < 0 || p.pageIndex >= pageCount) continue
-        const viewport = await api.getViewportForPage(p.pageIndex)
-        if (!viewport) continue
-        const vx = p.nx * viewport.width
-        const vy = p.ny * viewport.height
-        const sw = p.nw * viewport.width
-        const sh = p.nh * viewport.height
-        const { x, y, width, height } = viewportRectToPdfDrawImage(viewport, vx, vy, sw, sh)
-        const page = doc.getPage(p.pageIndex)
-        page.drawImage(sigImage, { x, y, width, height })
-      }
+          const ordered = [...placements].sort((a, b) => {
+            if (a.pageIndex !== b.pageIndex) return a.pageIndex - b.pageIndex
+            return a.ny - b.ny
+          })
+          for (const p of ordered) {
+            const pageCount = doc.getPageCount()
+            if (p.pageIndex < 0 || p.pageIndex >= pageCount) continue
+            const viewport = await api.getViewportForPage(p.pageIndex)
+            if (!viewport) continue
+            const vx = p.nx * viewport.width
+            const vy = p.ny * viewport.height
+            const sw = p.nw * viewport.width
+            const sh = p.nh * viewport.height
+            const { x, y, width, height } = viewportRectToPdfDrawImage(viewport, vx, vy, sw, sh)
+            const page = doc.getPage(p.pageIndex)
+            page.drawImage(sigImage, { x, y, width, height })
+          }
 
-      const out = await doc.save()
-      const pageCount = doc.getPageCount()
-      downloadUint8(out, pdfFile.name.replace(/\.pdf$/i, '') + '-signed.pdf')
-      trackToolCompleted(SIGN_TOOL, true)
-      trackFileDownloaded({
-        tool: SIGN_TOOL,
-        file_size: out.byteLength / 1024,
-        total_pages: pageCount,
-      })
-      const elapsed =
-        (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0
-      trackProcessingTime(SIGN_TOOL, elapsed)
-      setFileReadyHint(MSG.fileReady)
-      window.setTimeout(() => setFileReadyHint(null), 6000)
+          const out = await doc.save()
+          const pageCount = doc.getPageCount()
+          downloadUint8(out, pdfFile.name.replace(/\.pdf$/i, '') + '-signed.pdf')
+          trackToolCompleted(SIGN_TOOL, true)
+          trackFileDownloaded({
+            tool: SIGN_TOOL,
+            file_size: out.byteLength / 1024,
+            total_pages: pageCount,
+          })
+          const elapsed =
+            (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0
+          trackProcessingTime(SIGN_TOOL, elapsed)
+          setFileReadyHint(MSG.fileReady)
+          window.setTimeout(() => setFileReadyHint(null), 6000)
+        },
+        { onAuthLoading: () => setError('Still checking sign-in… try again in a moment.') }
+      )
     } catch (e) {
-      console.error(e)
-      trackErrorOccurred(SIGN_TOOL, e?.message || 'sign_apply_failed')
-      setError(e?.message || 'Could not embed signature')
+      if (e?.code === 'EYP_AUTH_CANCELLED') {
+        /* user closed modal */
+      } else if (e?.code === 'EYP_AUTH_LOADING') {
+        setError(e.message || 'Still checking sign-in.')
+      } else {
+        console.error(e)
+        trackErrorOccurred(SIGN_TOOL, e?.message || 'sign_apply_failed')
+        setError(e?.message || 'Could not embed signature')
+      }
     } finally {
       setBusy(false)
     }
-  }, [pdfFile, signaturePng, placements])
+  }, [pdfFile, signaturePng, placements, runWithSignInForDownload])
 
   const canPaste = Boolean(signaturePng?.length && clipboardRev > 0 && placementClipboardRef.current)
 

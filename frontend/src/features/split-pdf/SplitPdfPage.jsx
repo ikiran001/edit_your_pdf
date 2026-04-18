@@ -11,6 +11,7 @@ import {
   splitPdfByRanges,
   splitPdfEveryPage,
 } from '../../lib/pdfMergeSplitCore.js'
+import { useClientToolDownloadAuth } from '../../auth/ClientToolDownloadAuthContext.jsx'
 
 const TOOL = ANALYTICS_TOOL.split_pdf
 
@@ -26,6 +27,7 @@ function downloadUint8(u8, name) {
 }
 
 export default function SplitPdfPage() {
+  const { runWithSignInForDownload } = useClientToolDownloadAuth()
   const [file, setFile] = useState(null)
   const [pageCount, setPageCount] = useState(0)
   const [extractAll, setExtractAll] = useState(false)
@@ -66,54 +68,65 @@ export default function SplitPdfPage() {
     setError(null)
     setSuccess(null)
     try {
-      if (extractAll) {
-        const parts = await splitPdfEveryPage(file)
-        if (parts.length === 1) {
-          downloadUint8(parts[0], 'page-1.pdf')
-        } else {
-          const zip = new JSZip()
-          parts.forEach((u8, i) => {
-            zip.file(`page-${i + 1}.pdf`, u8)
-          })
-          const blob = await zip.generateAsync({ type: 'blob' })
-          const url = URL.createObjectURL(blob)
-          const a = document.createElement('a')
-          a.href = url
-          a.download = 'split-pages.zip'
-          a.rel = 'noopener'
-          a.click()
-          URL.revokeObjectURL(url)
-        }
-        setSuccess(
-          parts.length === 1
-            ? 'Downloaded one PDF.'
-            : `Downloaded ZIP with ${parts.length} PDFs.`
-        )
-      } else {
-        const groups = parsePageRangeInput(rangeText, pageCount)
-        const parts = await splitPdfByRanges(file, groups)
-        if (parts.length === 1) {
-          downloadUint8(parts[0], 'split.pdf')
-          setSuccess('Downloaded split.pdf.')
-        } else {
-          const zip = new JSZip()
-          parts.forEach((u8, i) => {
-            zip.file(`split-${i + 1}.pdf`, u8)
-          })
-          const blob = await zip.generateAsync({ type: 'blob' })
-          const url = URL.createObjectURL(blob)
-          const a = document.createElement('a')
-          a.href = url
-          a.download = 'split-output.zip'
-          a.rel = 'noopener'
-          a.click()
-          URL.revokeObjectURL(url)
-          setSuccess(`Downloaded ZIP with ${parts.length} PDFs.`)
-        }
-      }
+      await runWithSignInForDownload(
+        async () => {
+          if (extractAll) {
+            const parts = await splitPdfEveryPage(file)
+            if (parts.length === 1) {
+              downloadUint8(parts[0], 'page-1.pdf')
+            } else {
+              const zip = new JSZip()
+              parts.forEach((u8, i) => {
+                zip.file(`page-${i + 1}.pdf`, u8)
+              })
+              const blob = await zip.generateAsync({ type: 'blob' })
+              const url = URL.createObjectURL(blob)
+              const a = document.createElement('a')
+              a.href = url
+              a.download = 'split-pages.zip'
+              a.rel = 'noopener'
+              a.click()
+              URL.revokeObjectURL(url)
+            }
+            setSuccess(
+              parts.length === 1
+                ? 'Downloaded one PDF.'
+                : `Downloaded ZIP with ${parts.length} PDFs.`
+            )
+          } else {
+            const groups = parsePageRangeInput(rangeText, pageCount)
+            const parts = await splitPdfByRanges(file, groups)
+            if (parts.length === 1) {
+              downloadUint8(parts[0], 'split.pdf')
+              setSuccess('Downloaded split.pdf.')
+            } else {
+              const zip = new JSZip()
+              parts.forEach((u8, i) => {
+                zip.file(`split-${i + 1}.pdf`, u8)
+              })
+              const blob = await zip.generateAsync({ type: 'blob' })
+              const url = URL.createObjectURL(blob)
+              const a = document.createElement('a')
+              a.href = url
+              a.download = 'split-output.zip'
+              a.rel = 'noopener'
+              a.click()
+              URL.revokeObjectURL(url)
+              setSuccess(`Downloaded ZIP with ${parts.length} PDFs.`)
+            }
+          }
+        },
+        { onAuthLoading: () => setError('Still checking sign-in… try again in a moment.') }
+      )
     } catch (e) {
-      console.error(e)
-      setError(e?.message || 'Could not split PDF.')
+      if (e?.code === 'EYP_AUTH_CANCELLED') {
+        /* dismissed */
+      } else if (e?.code === 'EYP_AUTH_LOADING') {
+        setError(e.message || 'Still checking sign-in.')
+      } else {
+        console.error(e)
+        setError(e?.message || 'Could not split PDF.')
+      }
     } finally {
       setBusy(false)
     }

@@ -15,6 +15,7 @@ import {
 import { ANALYTICS_TOOL } from '../../shared/constants/analyticsTools.js'
 import { MSG } from '../../shared/constants/branding.js'
 import { pdfToJpegBlobs } from './pdfToJpgCore.js'
+import { useClientToolDownloadAuth } from '../../auth/ClientToolDownloadAuthContext.jsx'
 
 const JPG_TOOL = ANALYTICS_TOOL.pdf_to_jpg
 
@@ -29,6 +30,7 @@ function downloadBlob(blob, name) {
 }
 
 export default function PdfToJpgPage() {
+  const { runWithSignInForDownload } = useClientToolDownloadAuth()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   const [fileReadyHint, setFileReadyHint] = useState(null)
@@ -52,34 +54,45 @@ export default function PdfToJpgPage() {
       })
       const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
       try {
-        const buf = await file.arrayBuffer()
-        const blobs = await pdfToJpegBlobs(buf, { scale, quality: 0.92 })
-        const zip = new JSZip()
-        blobs.forEach((blob, idx) => {
-          zip.file(`page-${String(idx + 1).padStart(3, '0')}.jpg`, blob)
-        })
-        const zblob = await zip.generateAsync({ type: 'blob' })
-        downloadBlob(zblob, `${base}-pages.zip`)
-        trackToolCompleted(JPG_TOOL, true)
-        trackFileDownloaded({
-          tool: JPG_TOOL,
-          file_size: zblob.size / 1024,
-          total_pages: blobs.length,
-        })
-        const elapsed =
-          (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0
-        trackProcessingTime(JPG_TOOL, elapsed)
-        setFileReadyHint(MSG.fileReady)
-        window.setTimeout(() => setFileReadyHint(null), 6000)
+        await runWithSignInForDownload(
+          async () => {
+            const buf = await file.arrayBuffer()
+            const blobs = await pdfToJpegBlobs(buf, { scale, quality: 0.92 })
+            const zip = new JSZip()
+            blobs.forEach((blob, idx) => {
+              zip.file(`page-${String(idx + 1).padStart(3, '0')}.jpg`, blob)
+            })
+            const zblob = await zip.generateAsync({ type: 'blob' })
+            downloadBlob(zblob, `${base}-pages.zip`)
+            trackToolCompleted(JPG_TOOL, true)
+            trackFileDownloaded({
+              tool: JPG_TOOL,
+              file_size: zblob.size / 1024,
+              total_pages: blobs.length,
+            })
+            const elapsed =
+              (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0
+            trackProcessingTime(JPG_TOOL, elapsed)
+            setFileReadyHint(MSG.fileReady)
+            window.setTimeout(() => setFileReadyHint(null), 6000)
+          },
+          { onAuthLoading: () => setError('Still checking sign-in… try again in a moment.') }
+        )
       } catch (e) {
-        console.error(e)
-        trackErrorOccurred(JPG_TOOL, e?.message || 'conversion_failed')
-        setError(e?.message || 'Conversion failed')
+        if (e?.code === 'EYP_AUTH_CANCELLED') {
+          /* dismissed */
+        } else if (e?.code === 'EYP_AUTH_LOADING') {
+          setError(e.message || 'Still checking sign-in.')
+        } else {
+          console.error(e)
+          trackErrorOccurred(JPG_TOOL, e?.message || 'conversion_failed')
+          setError(e?.message || 'Conversion failed')
+        }
       } finally {
         setBusy(false)
       }
     },
-    [scale]
+    [scale, runWithSignInForDownload]
   )
 
   return (

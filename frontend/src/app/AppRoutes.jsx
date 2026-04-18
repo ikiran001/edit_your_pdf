@@ -18,6 +18,7 @@ import WordToPdfPage from '../features/word-to-pdf/WordToPdfPage.jsx'
 import MyDocumentsPage from '../features/my-documents/MyDocumentsPage.jsx'
 import { pageView } from '../lib/analytics.js'
 import { docTitleForPath } from '../shared/constants/branding.js'
+import { ClientToolDownloadAuthProvider } from '../auth/ClientToolDownloadAuthContext.jsx'
 
 function RouteAnalytics() {
   const loc = useLocation()
@@ -34,9 +35,10 @@ export default function AppRoutes() {
   const basename = raw === '/' ? undefined : raw.replace(/\/$/, '')
   return (
     <BrowserRouter basename={basename}>
-      <ErrorBoundary>
-        <RouteAnalytics />
-        <Routes>
+      <ClientToolDownloadAuthProvider>
+        <ErrorBoundary>
+          <RouteAnalytics />
+          <Routes>
         <Route path="/" element={<ToolkitHomePage />} />
         <Route path="/my-documents" element={<MyDocumentsPage />} />
         <Route path="/tools/edit-pdf/editor" element={<EditPdfPage />} />
@@ -61,8 +63,9 @@ export default function AppRoutes() {
           }
         />
         <Route path="/tools/word-to-pdf" element={<WordToPdfPage />} />
-        </Routes>
-      </ErrorBoundary>
+          </Routes>
+        </ErrorBoundary>
+      </ClientToolDownloadAuthProvider>
     </BrowserRouter>
   )
 }

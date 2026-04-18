@@ -16,6 +16,7 @@ import {
 import { ANALYTICS_TOOL } from '../../shared/constants/analyticsTools.js'
 import { buildOrganizedPdf } from '../../lib/organizePdfCore.js'
 import '../../lib/pdfjs.js'
+import { useClientToolDownloadAuth } from '../../auth/ClientToolDownloadAuthContext.jsx'
 import OrganizePageGrid from './OrganizePageGrid.jsx'
 
 const TOOL = ANALYTICS_TOOL.organize_pdf
@@ -50,6 +51,7 @@ function downloadUint8(u8, name) {
 }
 
 export default function OrganizePdfPage() {
+  const { runWithSignInForDownload } = useClientToolDownloadAuth()
   const [file, setFile] = useState(null)
   const [pdfDoc, setPdfDoc] = useState(null)
   const [pages, setPages] = useState([])
@@ -217,27 +219,38 @@ export default function OrganizePdfPage() {
     setSuccessHint(null)
     const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
     try {
-      const ordered = pages.map((p) => ({
-        sourceIndex: p.sourceIndex,
-        rotationDelta: p.rotationDelta || 0,
-      }))
-      const u8 = await buildOrganizedPdf(file, ordered)
-      const base = file.name.replace(/\.pdf$/i, '') || 'document'
-      downloadUint8(u8, `${base}-organized.pdf`)
-      trackToolCompleted(TOOL, true)
-      trackFileDownloaded({
-        tool: TOOL,
-        file_size: u8.byteLength / 1024,
-        total_pages: pages.length,
-      })
-      const elapsed = (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0
-      trackProcessingTime(TOOL, elapsed)
-      setSuccessHint('Your organized PDF downloaded successfully.')
-      window.setTimeout(() => setSuccessHint(null), 5000)
+      await runWithSignInForDownload(
+        async () => {
+          const ordered = pages.map((p) => ({
+            sourceIndex: p.sourceIndex,
+            rotationDelta: p.rotationDelta || 0,
+          }))
+          const u8 = await buildOrganizedPdf(file, ordered)
+          const base = file.name.replace(/\.pdf$/i, '') || 'document'
+          downloadUint8(u8, `${base}-organized.pdf`)
+          trackToolCompleted(TOOL, true)
+          trackFileDownloaded({
+            tool: TOOL,
+            file_size: u8.byteLength / 1024,
+            total_pages: pages.length,
+          })
+          const elapsed = (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0
+          trackProcessingTime(TOOL, elapsed)
+          setSuccessHint('Your organized PDF downloaded successfully.')
+          window.setTimeout(() => setSuccessHint(null), 5000)
+        },
+        { onAuthLoading: () => setError('Still checking sign-in… try again in a moment.') }
+      )
     } catch (e) {
-      console.error(e)
-      trackErrorOccurred(TOOL, e?.message || 'organize_failed')
-      setError(e?.message || 'Could not build the PDF. Try again.')
+      if (e?.code === 'EYP_AUTH_CANCELLED') {
+        /* dismissed */
+      } else if (e?.code === 'EYP_AUTH_LOADING') {
+        setError(e.message || 'Still checking sign-in.')
+      } else {
+        console.error(e)
+        trackErrorOccurred(TOOL, e?.message || 'organize_failed')
+        setError(e?.message || 'Could not build the PDF. Try again.')
+      }
     } finally {
       setBusy(false)
     }
