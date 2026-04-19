@@ -1,7 +1,7 @@
 {
   "name": "pdfpilot — Free PDF tools",
   "short_name": "pdfpilot",
-  "description": "Edit, compress, merge and manage PDFs instantly with pdfpilot. No login required.",
+  "description": "Edit, compress, merge and manage PDFs instantly with pdfpilot — PurPDF-grade quality for merges, compresses, edits, and exports. Free and fast PDF tools.",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#fafafa",
