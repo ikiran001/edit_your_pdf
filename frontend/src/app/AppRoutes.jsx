@@ -16,6 +16,7 @@ import WatermarkPdfPage from '../features/add-watermark/WatermarkPdfPage.jsx'
 import ComingSoonToolPage from '../features/placeholder/ComingSoonToolPage.jsx'
 import WordToPdfPage from '../features/word-to-pdf/WordToPdfPage.jsx'
 import MyDocumentsPage from '../features/my-documents/MyDocumentsPage.jsx'
+import TermsOfServicePage from '../features/legal/TermsOfServicePage.jsx'
 import PrivateRoute from '../auth/PrivateRoute.jsx'
 import { pageView } from '../lib/analytics.js'
 import { docTitleForPath } from '../shared/constants/branding.js'
@@ -41,6 +42,7 @@ export default function AppRoutes() {
           <RouteAnalytics />
           <Routes>
         <Route path="/" element={<ToolkitHomePage />} />
+        <Route path="/terms" element={<TermsOfServicePage />} />
         <Route
           path="/my-documents"
           element={

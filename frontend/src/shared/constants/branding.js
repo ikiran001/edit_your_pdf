@@ -1,5 +1,19 @@
 /** Single source of truth for product branding. */
 export const BRAND_NAME = 'pdfpilot'
+
+/** Shown on Terms of Service and legal footers. */
+export const LEGAL_ENTITY_NAME = 'pdfpilot'
+export const LEGAL_CONTACT_EMAIL = 'ijkiranp@gmail.com'
+/** ISO-style date for “Last updated” on legal pages. */
+export const TERMS_LAST_UPDATED = '2026-04-18'
+
+/**
+ * Contractual governing law / courts (where local law allows parties to choose).
+ * Does **not** override mandatory consumer, employment, or public-policy rules in a user’s country.
+ * Confirm with counsel for your entity’s seat, users, and risk tolerance.
+ */
+export const LEGAL_GOVERNING_LAW_PLACE = 'India'
+export const LEGAL_GOVERNING_COURTS = 'the courts of India'
 export const TAGLINE = 'Navigate your PDFs effortlessly'
 
 /** Main subheading on the toolkit home (under the brand name). */
@@ -28,6 +42,7 @@ const TOOL_DOC_TITLES = {
   '/tools/add-watermark': 'pdfpilot - Add Watermark',
   '/tools/pdf-to-word': 'pdfpilot - PDF to Word',
   '/tools/word-to-pdf': 'pdfpilot - Word to PDF',
+  '/terms': 'pdfpilot - Terms of Service',
 }
 
 /**
