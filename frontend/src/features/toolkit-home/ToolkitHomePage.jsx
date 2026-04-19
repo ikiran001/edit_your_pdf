@@ -8,7 +8,7 @@ import BrandLogoLink from '../../shared/components/BrandLogoLink.jsx'
 import { TOOL_REGISTRY } from '../../shared/constants/toolRegistry.js'
 import { trackFeatureUsed } from '../../lib/analytics.js'
 import { ANALYTICS_TOOL } from '../../shared/constants/analyticsTools.js'
-import { BRAND_NAME, TAGLINE } from '../../shared/constants/branding.js'
+import { BRAND_NAME, HOME_HERO_SUBLINE, TAGLINE } from '../../shared/constants/branding.js'
 
 function matchesToolSearch(tool, q) {
   if (!q) return true
@@ -39,7 +39,7 @@ export default function ToolkitHomePage() {
           {BRAND_NAME}
         </h1>
         <p className="mx-auto mt-3 max-w-2xl text-lg font-medium text-zinc-700 md:text-xl dark:text-zinc-300">
-          Edit, compress, merge and manage PDFs instantly — no login required.
+          {HOME_HERO_SUBLINE}
         </p>
         <p className="mx-auto mt-2 max-w-xl text-sm text-zinc-500 dark:text-zinc-400">{TAGLINE}</p>
       </section>

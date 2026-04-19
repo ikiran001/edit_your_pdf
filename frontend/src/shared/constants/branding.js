@@ -2,6 +2,14 @@
 export const BRAND_NAME = 'pdfpilot'
 export const TAGLINE = 'Navigate your PDFs effortlessly'
 
+/** Main subheading on the toolkit home (under the brand name). */
+export const HOME_HERO_SUBLINE =
+  'Edit, compress, merge and manage PDFs instantly — PurPDF-grade clarity, speed, and trustworthy exports from pdfpilot.'
+
+/** Default SEO / social description (mirrored in frontend/index.html and manifest). */
+export const DEFAULT_SITE_DESCRIPTION =
+  'Edit, compress, merge and manage PDFs instantly with pdfpilot — PurPDF-grade quality for merges, compresses, edits, and exports. Free and fast PDF tools.'
+
 export const DOC_TITLE_HOME = 'Edit PDF Online Free | pdfpilot.pro'
 
 const TOOL_DOC_TITLES = {
