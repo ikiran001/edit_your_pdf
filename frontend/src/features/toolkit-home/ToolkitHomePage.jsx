@@ -5,6 +5,7 @@ import ToolCard from '../../shared/components/ToolCard.jsx'
 import ThemeToggle from '../../shared/components/ThemeToggle.jsx'
 import AccountMenu from '../../shared/components/AccountMenu.jsx'
 import BrandLogoLink from '../../shared/components/BrandLogoLink.jsx'
+import LegalFooter from '../../shared/components/LegalFooter.jsx'
 import { TOOL_REGISTRY } from '../../shared/constants/toolRegistry.js'
 import { trackFeatureUsed } from '../../lib/analytics.js'
 import { ANALYTICS_TOOL } from '../../shared/constants/analyticsTools.js'
@@ -106,18 +107,7 @@ export default function ToolkitHomePage() {
         </p>
       </section>
 
-      <footer className="mt-auto border-t border-indigo-200/40 bg-white/40 px-4 py-8 text-center text-xs text-zinc-500 dark:border-indigo-500/15 dark:bg-zinc-950/40 dark:text-zinc-400">
-        <p className="m-0 font-medium text-zinc-600 dark:text-zinc-300">© 2026 pdfpilot</p>
-        <p className="mt-2 mb-0">
-          <span className="cursor-default" title="Coming soon">
-            Privacy
-          </span>
-          {' · '}
-          <span className="cursor-default" title="Coming soon">
-            Terms
-          </span>
-        </p>
-      </footer>
+      <LegalFooter className="py-8" />
     </div>
   )
 }

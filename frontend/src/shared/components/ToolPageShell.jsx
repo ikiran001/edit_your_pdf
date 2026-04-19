@@ -1,6 +1,7 @@
 import ThemeToggle from './ThemeToggle.jsx'
 import AccountMenu from './AccountMenu.jsx'
 import BrandLogoLink from './BrandLogoLink.jsx'
+import LegalFooter from './LegalFooter.jsx'
 import { toolOnBrand } from '../constants/branding.js'
 
 export default function ToolPageShell({ title, subtitle, children }) {
@@ -31,6 +32,7 @@ export default function ToolPageShell({ title, subtitle, children }) {
         </div>
       </header>
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 md:px-8">{children}</main>
+      <LegalFooter />
     </div>
   )
 }
