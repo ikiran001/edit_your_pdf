@@ -61,7 +61,7 @@ export default function EditPdfPage() {
 
   const leaveEditor = () => {
     setEditSessionAndClearStorage(null)
-    navigate('/tools/edit-pdf', { replace: true })
+    navigate({ pathname: '/tools/edit-pdf' }, { replace: true })
   }
 
   return (

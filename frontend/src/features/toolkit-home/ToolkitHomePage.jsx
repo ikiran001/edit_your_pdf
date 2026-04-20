@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { Search, X } from 'lucide-react'
 import ToolCard from '../../shared/components/ToolCard.jsx'
 import ThemeToggle from '../../shared/components/ThemeToggle.jsx'
@@ -7,9 +7,8 @@ import AccountMenu from '../../shared/components/AccountMenu.jsx'
 import BrandLogoLink from '../../shared/components/BrandLogoLink.jsx'
 import LegalFooter from '../../shared/components/LegalFooter.jsx'
 import { TOOL_REGISTRY } from '../../shared/constants/toolRegistry.js'
-import { trackFeatureUsed } from '../../lib/analytics.js'
-import { ANALYTICS_TOOL } from '../../shared/constants/analyticsTools.js'
-import { BRAND_NAME, HOME_HERO_SUBLINE, TAGLINE } from '../../shared/constants/branding.js'
+import HeroSection from './HeroSection.jsx'
+import { peekFeedbackPrompt } from '../../lib/reviewPromptStorage.js'
 
 function matchesToolSearch(tool, q) {
   if (!q) return true
@@ -18,10 +17,16 @@ function matchesToolSearch(tool, q) {
 }
 
 export default function ToolkitHomePage() {
+  const navigate = useNavigate()
   const [toolQuery, setToolQuery] = useState('')
   const q = toolQuery.trim().toLowerCase()
 
   const filteredTools = useMemo(() => TOOL_REGISTRY.filter((t) => matchesToolSearch(t, q)), [q])
+
+  useEffect(() => {
+    if (!peekFeedbackPrompt()) return
+    navigate('/feedback?from=download', { replace: true })
+  }, [navigate])
 
   return (
     <div className="flex min-h-svh flex-col bg-transparent text-zinc-900 dark:text-zinc-100">
@@ -35,15 +40,7 @@ export default function ToolkitHomePage() {
         </div>
       </header>
 
-      <section className="mx-auto w-full max-w-6xl px-4 pb-6 pt-4 text-center md:px-10 md:pb-10 md:pt-6">
-        <h1 className="bg-gradient-to-r from-zinc-900 via-indigo-700 to-violet-700 bg-clip-text text-4xl font-bold tracking-tight text-transparent md:text-5xl dark:from-white dark:via-cyan-200 dark:to-indigo-300">
-          {BRAND_NAME}
-        </h1>
-        <p className="mx-auto mt-3 max-w-2xl text-lg font-medium text-zinc-700 md:text-xl dark:text-zinc-300">
-          {HOME_HERO_SUBLINE}
-        </p>
-        <p className="mx-auto mt-2 max-w-xl text-sm text-zinc-500 dark:text-zinc-400">{TAGLINE}</p>
-      </section>
+      <HeroSection />
 
       <section className="fx-toolkit-fade mx-auto max-w-6xl flex-1 px-4 py-6 md:px-10 md:py-10">
         <h2 className="mb-4 text-center font-mono text-sm font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-cyan-400/85">
@@ -95,15 +92,18 @@ export default function ToolkitHomePage() {
           ))}
         </div>
         <p className="mt-12 text-center text-xs text-zinc-500 dark:text-zinc-500">
+          Files are processed in your session. Need the raw API? See the project README for self-hosting on GitHub
+          Pages.
+        </p>
+        <p className="mt-6 text-center text-sm">
           <Link
-            to="/tools/edit-pdf"
-            onClick={() => trackFeatureUsed(ANALYTICS_TOOL.edit_pdf)}
-            className="text-indigo-600 underline-offset-2 transition hover:text-violet-600 hover:underline dark:text-cyan-400 dark:hover:text-cyan-300"
+            to="/feedback"
+            className="font-medium text-indigo-600 underline-offset-2 hover:underline dark:text-cyan-400 dark:hover:text-cyan-300"
           >
-            Jump straight to Edit PDF
+            Share feedback
           </Link>
-          {' · '}
-          Files are processed in your session; review our README for API hosting on GitHub Pages.
+          <span className="text-zinc-400 dark:text-zinc-600"> · </span>
+          <span className="text-xs text-zinc-500 dark:text-zinc-500">Ratings and comments are shown only after real submissions.</span>
         </p>
       </section>
 

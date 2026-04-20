@@ -16,6 +16,13 @@ export default function LegalFooter({ className = '' }) {
         </span>
         {' · '}
         <Link
+          to="/feedback"
+          className="text-indigo-600 underline-offset-2 hover:underline dark:text-cyan-400 dark:hover:text-cyan-300"
+        >
+          Share feedback
+        </Link>
+        {' · '}
+        <Link
           to="/terms"
           className="text-indigo-600 underline-offset-2 hover:underline dark:text-cyan-400 dark:hover:text-cyan-300"
         >

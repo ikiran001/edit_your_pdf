@@ -38,6 +38,7 @@ import { getFirebaseAuthErrorHint } from '../lib/firebase.js'
 import { persistEditSession } from '../features/edit-pdf/editSessionStorage.js'
 import { fetchEditPdfDownload } from '../features/edit-pdf/editPdfDownload.js'
 import { syncUserLibraryEntry } from '../features/my-documents/userLibrary.js'
+import { setFeedbackPromptAfterDownload } from '../lib/reviewPromptStorage.js'
 
 const EDIT_TOOL = 'edit_pdf'
 
@@ -587,6 +588,7 @@ export default function PdfEditor({
         file_size: blob.size / 1024,
         total_pages: numPages,
       })
+      setFeedbackPromptAfterDownload()
       const elapsed =
         (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0
       trackProcessingTime(EDIT_TOOL, elapsed)

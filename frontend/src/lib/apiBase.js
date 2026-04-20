@@ -29,6 +29,17 @@ export function isApiBaseConfigured() {
   return Boolean(resolveApiBase())
 }
 
+/**
+ * Whether the browser can reach `/feedback` (and other proxied API routes).
+ * In **development**, Vite proxies same-origin `/feedback` to the backend without `VITE_API_BASE_URL`.
+ * In **production** builds, requests go to the deployed site host — set `VITE_API_BASE_URL` or
+ * `pdfpilot-api-config.js` so feedback hits your API, not static hosting.
+ */
+export function isFeedbackApiReachable() {
+  if (isApiBaseConfigured()) return true
+  return Boolean(import.meta.env.DEV)
+}
+
 export function apiUrl(path) {
   const p = path.startsWith('/') ? path : `/${path}`
   const b = resolveApiBase()

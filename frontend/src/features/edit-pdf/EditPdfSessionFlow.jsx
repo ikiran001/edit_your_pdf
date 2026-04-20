@@ -1,4 +1,5 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import LandingPage from '../../components/LandingPage.jsx'
 import PdfEditor from '../../components/PdfEditor.jsx'
 import ToolPageShell from '../../shared/components/ToolPageShell.jsx'
@@ -29,6 +30,11 @@ export default function EditPdfSessionFlow({
 }) {
   const [uploadError, setUploadError] = useState(null)
   const { user, getFreshIdToken } = useAuth()
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
+  const sampleAutoloadStarted = useRef(false)
+
+  const sessionId = editSession?.sessionId ?? null
 
   const onFileSelected = useCallback(
     async (file) => {
@@ -64,7 +70,28 @@ export default function EditPdfSessionFlow({
     [upload, setEditSession, user, getFreshIdToken]
   )
 
-  const sessionId = editSession?.sessionId ?? null
+  useEffect(() => {
+    if (searchParams.get('sample') !== '1') return
+    if (sessionId) return
+    if (sampleAutoloadStarted.current) return
+    sampleAutoloadStarted.current = true
+
+    ;(async () => {
+      try {
+        const base = (import.meta.env.BASE_URL || '/').replace(/\/$/, '')
+        const path = `${base ? `${base}/` : '/'}hero-sample.pdf`
+        const res = await fetch(path)
+        if (!res.ok) throw new Error('Could not load the sample PDF.')
+        const blob = await res.blob()
+        const file = new File([blob], 'pdfpilot-sample.pdf', { type: 'application/pdf' })
+        await onFileSelected(file)
+        navigate({ pathname: '/tools/edit-pdf' }, { replace: true })
+      } catch (e) {
+        setUploadError(e?.message || 'Sample could not be loaded.')
+        sampleAutoloadStarted.current = false
+      }
+    })()
+  }, [searchParams, sessionId, onFileSelected, navigate])
 
   if (!sessionId) {
     return (
