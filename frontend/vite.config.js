@@ -37,6 +37,7 @@ export default defineConfig(({ mode }) => {
         '/unlock-pdf': { target: 'http://localhost:3001', changeOrigin: true },
         '/document-flow': { target: 'http://localhost:3001', changeOrigin: true },
         '/user-sessions': { target: 'http://localhost:3001', changeOrigin: true },
+        '/feedback': { target: 'http://localhost:3001', changeOrigin: true },
       },
     },
     preview: {
@@ -49,6 +50,7 @@ export default defineConfig(({ mode }) => {
         '/unlock-pdf': { target: 'http://localhost:3001', changeOrigin: true },
         '/document-flow': { target: 'http://localhost:3001', changeOrigin: true },
         '/user-sessions': { target: 'http://localhost:3001', changeOrigin: true },
+        '/feedback': { target: 'http://localhost:3001', changeOrigin: true },
       },
     },
   }

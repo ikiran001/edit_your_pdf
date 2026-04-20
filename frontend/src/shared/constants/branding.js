@@ -43,6 +43,8 @@ const TOOL_DOC_TITLES = {
   '/tools/pdf-to-word': 'pdfpilot - PDF to Word',
   '/tools/word-to-pdf': 'pdfpilot - Word to PDF',
   '/terms': 'pdfpilot - Terms of Service',
+  '/feedback': 'pdfpilot - Share feedback',
+  '/admin/feedback': 'pdfpilot - Feedback admin',
 }
 
 /**

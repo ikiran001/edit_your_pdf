@@ -5,6 +5,7 @@ backend/.env
 frontend/.env.development
 **/.env.local
 backend/uploads/
+backend/data/site-feedback.json
 *.log
 .DS_Store
 backend/fonts/*.ttf

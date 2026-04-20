@@ -10,6 +10,7 @@ import downloadRouter from './routes/download.js';
 import unlockRouter from './routes/unlock.js';
 import documentFlowRouter from './routes/documentFlow.js';
 import userSessionsRouter from './routes/userSessions.js';
+import feedbackRouter from './routes/feedback.js';
 import { getDocumentFlowCapabilities } from './services/documentFlowConvert.js';
 import { isDownloadAuthEnabled, isFirstAnonymousDownloadEnabled } from './services/downloadAuthPolicy.js';
 import { getFirebaseAdminHealthInfo, isFirebaseAdminReady } from './services/firebaseAdmin.js';
@@ -115,6 +116,7 @@ app.use(downloadRouter);
 app.use(unlockRouter);
 app.use(documentFlowRouter);
 app.use(userSessionsRouter);
+app.use(feedbackRouter);
 
 /** Serve PDF for pdf.js: latest edited file when present, else original upload. */
 app.get('/pdf/:sessionId', (req, res) => {

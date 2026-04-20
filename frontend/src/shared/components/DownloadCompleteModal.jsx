@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
-import { Check, FileText, Shield } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Check, FileText, MessageCircle, Shield } from 'lucide-react'
 import { BRAND_NAME } from '../constants/branding.js'
 import { getSupportPaymentUrl } from '../../lib/supportPaymentUrl.js'
 import { trackFeatureUsed } from '../../lib/analytics.js'
@@ -105,9 +106,18 @@ export default function DownloadCompleteModal({ open, onClose, fileName, fileSiz
           </span>
         </p>
 
+        <div className="my-4 border-t border-zinc-700/80" />
+        <Link
+          to="/feedback?from=download"
+          onClick={onClose}
+          className="mb-4 flex items-center justify-center gap-2 rounded-xl border border-zinc-600/80 bg-zinc-800/60 px-3 py-2.5 text-sm font-medium text-cyan-300 transition hover:border-cyan-500/40 hover:bg-zinc-800"
+        >
+          <MessageCircle className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
+          Share quick feedback
+        </Link>
+
         {supportUrl ? (
           <>
-            <div className="my-4 border-t border-zinc-700/80" />
             <a
               href={supportUrl}
               target="_blank"
