@@ -7,6 +7,7 @@ import {
   convertDocxBufferToPdfBuffer,
   convertPdfFileToDocxBuffer,
   getDocumentFlowCapabilities,
+  isGotenbergBaseUsableForDocx,
   isUuidLikeSessionId,
   probeGotenbergHealth,
   resolveGotenbergBaseUrl,
@@ -21,28 +22,55 @@ router.get('/document-flow/capabilities', async (_req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   const caps = getDocumentFlowCapabilities();
   const url = resolveGotenbergBaseUrl();
-  if (!url || !caps.docxToPdf) {
-    return res.json(caps);
+  const sofficeConfigured = Boolean((process.env.SOFFICE_PATH || '').trim());
+
+  if (!url || caps.gotenbergSameHostAsApi) {
+    return res.json({ ...caps, gotenbergReachable: false });
   }
+  if (!caps.docxToPdfViaGotenberg) {
+    return res.json({ ...caps, gotenbergReachable: false });
+  }
+
   try {
     const probe = await probeGotenbergHealth(url);
-    if (!probe.ok) {
+    if (probe.ok) {
+      return res.json({ ...caps, gotenbergReachable: true });
+    }
+    if (sofficeConfigured) {
       return res.json({
         ...caps,
-        docxToPdf: false,
+        docxToPdf: true,
         gotenbergReachable: false,
         gotenbergHealthHint: probe.hint,
         gotenbergProbeStatus: probe.status ?? null,
         gotenbergRenderNoServer: Boolean(probe.noServer),
+        docxToPdfFallbackLibreOffice: true,
       });
     }
-    return res.json({ ...caps, gotenbergReachable: true });
-  } catch (e) {
     return res.json({
       ...caps,
       docxToPdf: false,
       gotenbergReachable: false,
-      gotenbergHealthHint: e?.message || 'Capabilities probe failed',
+      gotenbergHealthHint: probe.hint,
+      gotenbergProbeStatus: probe.status ?? null,
+      gotenbergRenderNoServer: Boolean(probe.noServer),
+    });
+  } catch (e) {
+    const hint = e?.message || 'Capabilities probe failed';
+    if (sofficeConfigured) {
+      return res.json({
+        ...caps,
+        docxToPdf: true,
+        gotenbergReachable: false,
+        gotenbergHealthHint: hint,
+        docxToPdfFallbackLibreOffice: true,
+      });
+    }
+    return res.json({
+      ...caps,
+      docxToPdf: false,
+      gotenbergReachable: false,
+      gotenbergHealthHint: hint,
     });
   }
 });
@@ -116,15 +144,16 @@ const docxMem = multer({
 
 /**
  * POST /document-flow/convert-docx-to-pdf (multipart field `file`)
- * Returns application/pdf when GOTENBERG_URL is configured.
+ * Returns application/pdf when SOFFICE_PATH and/or a usable GOTENBERG_URL is configured.
  */
 router.post('/document-flow/convert-docx-to-pdf', (req, res) => {
-  const gotenbergUrl = resolveGotenbergBaseUrl();
-  if (!gotenbergUrl) {
+  const sofficePath = (process.env.SOFFICE_PATH || '').trim();
+  const gotenbergUrl = isGotenbergBaseUsableForDocx() ? resolveGotenbergBaseUrl() : '';
+  if (!sofficePath && !gotenbergUrl) {
     return res.status(501).json({
       error: 'docx_to_pdf_unconfigured',
       message:
-        'Set GOTENBERG_URL (full URL) or GOTENBERG_HOSTPORT (host:port for private network, e.g. from Render Blueprint).',
+        'Set SOFFICE_PATH to your LibreOffice soffice binary for on-server conversion, and/or GOTENBERG_URL (full URL) or GOTENBERG_HOSTPORT for a separate Gotenberg service.',
     });
   }
 
@@ -138,7 +167,8 @@ router.post('/document-flow/convert-docx-to-pdf', (req, res) => {
     }
     try {
       const pdf = await convertDocxBufferToPdfBuffer({
-        gotenbergBaseUrl: gotenbergUrl,
+        gotenbergBaseUrl: gotenbergUrl || '',
+        sofficePath,
         docxBuffer: req.file.buffer,
         filename: req.file.originalname || 'document.docx',
       });

@@ -1,8 +1,10 @@
 # Render Blueprint — https://render.com/docs/blueprint-spec
 #
-# - `pdfpilot-gotenberg`: Gotenberg for DOCX → PDF (Word to PDF). Uses `8-libreoffice` (not the full
-#   `8` image) so the container fits Render starter RAM — full Chromium+LO often OOMs → HTTP 502 on /health.
-#   Render injects `PORT`; override CMD so the API listens on `$PORT`.
+# - Word → PDF: the API image installs LibreOffice (`SOFFICE_PATH=/usr/bin/soffice`) and converts on-box first;
+#   `GOTENBERG_URL` remains an optional fallback if the Gotenberg service is healthy.
+# - `pdfpilot-gotenberg`: optional Gotenberg service. Uses `8-libreoffice` (not the full `8` image) so the
+#   container fits Render starter RAM — full Chromium+LO often OOMs → HTTP 502 on /health.
+#   Render injects `PORT`; override CMD so Gotenberg listens on `$PORT`.
 # - API web service (`name` below): MUST match your Render service name exactly (same as the
 #   `https://<name>.onrender.com` host). If names differ, Blueprint `fromService` env never applies—set
 #   `GOTENBERG_URL` manually on the API, or fix `name` here and sync the Blueprint.
@@ -31,6 +33,8 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: SOFFICE_PATH
+        value: /usr/bin/soffice
       - key: GOTENBERG_URL
         fromService:
           name: pdfpilot-gotenberg

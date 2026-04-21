@@ -2,7 +2,7 @@
 FROM node:22-bookworm-slim
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends qpdf \
+  && apt-get install -y --no-install-recommends qpdf libreoffice-writer \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -16,6 +16,7 @@ COPY . .
 RUN npm run fonts:noto
 
 ENV NODE_ENV=production
+ENV SOFFICE_PATH=/usr/bin/soffice
 EXPOSE 3001
 
 CMD ["node", "server.js"]

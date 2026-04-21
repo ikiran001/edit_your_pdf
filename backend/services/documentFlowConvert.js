@@ -128,10 +128,21 @@ export async function probeGotenbergHealth(gotenbergBaseUrl, opts = {}) {
   };
 }
 
+/** True when GOTENBERG_URL resolves and is not the same host as this API (Render public URL). */
+export function isGotenbergBaseUsableForDocx() {
+  const gotenbergUrl = resolveGotenbergBaseUrl();
+  if (!gotenbergUrl) return false;
+  const apiPublic = (process.env.RENDER_EXTERNAL_URL || '').trim();
+  if (apiPublic && sameHostname(gotenbergUrl, apiPublic)) return false;
+  return true;
+}
+
 /**
  * @returns {{
  *   pdfToDocx: boolean,
  *   docxToPdf: boolean,
+ *   docxToPdfViaSoffice: boolean,
+ *   docxToPdfViaGotenberg: boolean,
  *   sofficePath: string | null,
  *   gotenbergUrl: string | null,
  *   gotenbergSameHostAsApi?: boolean,
@@ -143,9 +154,12 @@ export function getDocumentFlowCapabilities() {
   const apiPublic = (process.env.RENDER_EXTERNAL_URL || '').trim();
   const sameHost =
     Boolean(gotenbergUrl && apiPublic) && sameHostname(gotenbergUrl, apiPublic);
+  const viaGotenberg = Boolean(gotenbergUrl) && !sameHost;
   const out = {
     pdfToDocx: Boolean(sofficePath),
-    docxToPdf: Boolean(gotenbergUrl) && !sameHost,
+    docxToPdf: Boolean(sofficePath) || viaGotenberg,
+    docxToPdfViaSoffice: Boolean(sofficePath),
+    docxToPdfViaGotenberg: viaGotenberg,
     sofficePath: sofficePath ? '(set)' : null,
     gotenbergUrl: gotenbergUrl ? '(set)' : null,
   };
@@ -212,6 +226,65 @@ function buildDocxMultipartForm(docxBuffer, filename) {
   return form;
 }
 
+function safeDocxInputName(filename) {
+  const raw = path.basename(filename || 'document.docx');
+  const cleaned = raw.replace(/[^\w.\- \u00C0-\u024f()]+/g, '_').slice(0, 120) || 'document.docx';
+  return cleaned.toLowerCase().endsWith('.docx') ? cleaned : `${cleaned}.docx`;
+}
+
+/**
+ * DOCX → PDF using local LibreOffice (`soffice`), same pattern as PDF → DOCX.
+ *
+ * @param {{ docxBuffer: Buffer, filename?: string, sofficePath: string }} opts
+ * @returns {Promise<Buffer>}
+ */
+export async function convertDocxBufferToPdfWithSoffice(opts) {
+  const { docxBuffer, filename = 'document.docx', sofficePath } = opts;
+  const inputName = safeDocxInputName(filename);
+  const stem = inputName.toLowerCase().endsWith('.docx') ? inputName.slice(0, -5) : inputName;
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pdfpilot-docx2pdf-'));
+  const inputAbs = path.join(tmp, inputName);
+  try {
+    fs.writeFileSync(inputAbs, docxBuffer);
+    await execFileAsync(
+      sofficePath,
+      [
+        '--headless',
+        '--nologo',
+        '--nofirststartwizard',
+        '--norestore',
+        '--convert-to',
+        'pdf',
+        '--outdir',
+        tmp,
+        inputAbs,
+      ],
+      { timeout: 180_000, maxBuffer: 64 * 1024 * 1024 }
+    );
+    const outPdf = path.join(tmp, `${stem}.pdf`);
+    if (!fs.existsSync(outPdf)) {
+      const err = new Error(
+        'LibreOffice finished but the PDF was not created (unsupported or corrupt .docx).'
+      );
+      err.code = 'CONVERT_MISSING_OUTPUT';
+      throw err;
+    }
+    const buf = fs.readFileSync(outPdf);
+    if (buf.length < 64 || buf.toString('ascii', 0, 4) !== '%PDF') {
+      const err = new Error('LibreOffice output was not a valid PDF');
+      err.code = 'CONVERT_NOT_PDF';
+      throw err;
+    }
+    return buf;
+  } finally {
+    try {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
 /**
  * DOCX → PDF via Gotenberg LibreOffice module.
  * Retries transient 502/503/504 and timeouts (Render cold start / gateway) — does not fix chronic OOM; upgrade RAM/plan for that.
@@ -219,7 +292,7 @@ function buildDocxMultipartForm(docxBuffer, filename) {
  * @param {{ gotenbergBaseUrl: string, docxBuffer: Buffer, filename?: string }} opts
  * @returns {Promise<Buffer>}
  */
-export async function convertDocxBufferToPdfBuffer(opts) {
+export async function convertDocxBufferToPdfViaGotenberg(opts) {
   const { gotenbergBaseUrl, docxBuffer, filename = 'document.docx' } = opts;
   const base = gotenbergBaseUrl.replace(/\/$/, '');
   assertGotenbergNotSameHostAsApi(base);
@@ -298,4 +371,61 @@ export async function convertDocxBufferToPdfBuffer(opts) {
     }
   }
   throw lastErr || new Error('Gotenberg convert failed after retries');
+}
+
+/**
+ * DOCX → PDF: uses **SOFFICE_PATH** first when set, then falls back to Gotenberg if `gotenbergBaseUrl` is provided.
+ *
+ * @param {{
+ *   gotenbergBaseUrl?: string,
+ *   docxBuffer: Buffer,
+ *   filename?: string,
+ *   sofficePath?: string,
+ * }} opts
+ * @returns {Promise<Buffer>}
+ */
+export async function convertDocxBufferToPdfBuffer(opts) {
+  const { gotenbergBaseUrl = '', docxBuffer, filename = 'document.docx', sofficePath: sofficeOpt } = opts;
+  const sofficePath = (sofficeOpt || process.env.SOFFICE_PATH || '').trim();
+  const gotenberg = (gotenbergBaseUrl || '').trim();
+
+  const engine = (process.env.DOCX_TO_PDF_ENGINE || 'auto').trim().toLowerCase();
+
+  if (engine === 'gotenberg') {
+    if (!gotenberg) {
+      const err = new Error('DOCX_TO_PDF_ENGINE=gotenberg but GOTENBERG_URL is not usable');
+      err.code = 'DOCX_TO_PDF_UNCONFIGURED';
+      throw err;
+    }
+    return convertDocxBufferToPdfViaGotenberg({ gotenbergBaseUrl: gotenberg, docxBuffer, filename });
+  }
+  if (engine === 'soffice') {
+    if (!sofficePath) {
+      const err = new Error('DOCX_TO_PDF_ENGINE=soffice but SOFFICE_PATH is not set');
+      err.code = 'DOCX_TO_PDF_UNCONFIGURED';
+      throw err;
+    }
+    return convertDocxBufferToPdfWithSoffice({ docxBuffer, filename, sofficePath });
+  }
+
+  if (sofficePath) {
+    try {
+      return await convertDocxBufferToPdfWithSoffice({ docxBuffer, filename, sofficePath });
+    } catch (e) {
+      console.warn('[document-flow] LibreOffice DOCX→PDF failed:', e?.message || e);
+      if (gotenberg) {
+        console.warn('[document-flow] Falling back to Gotenberg');
+        return convertDocxBufferToPdfViaGotenberg({ gotenbergBaseUrl: gotenberg, docxBuffer, filename });
+      }
+      throw e;
+    }
+  }
+  if (gotenberg) {
+    return convertDocxBufferToPdfViaGotenberg({ gotenbergBaseUrl: gotenberg, docxBuffer, filename });
+  }
+  const err = new Error(
+    'DOCX→PDF: set SOFFICE_PATH (LibreOffice on this server) and/or GOTENBERG_URL (separate Gotenberg service).'
+  );
+  err.code = 'DOCX_TO_PDF_UNCONFIGURED';
+  throw err;
 }
