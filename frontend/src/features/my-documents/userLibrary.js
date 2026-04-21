@@ -2,6 +2,29 @@ import { apiUrl } from '../../lib/apiBase.js'
 
 const EDIT_TOOL_KEY = 'edit_pdf'
 
+/**
+ * Cached `/health` probe: avoids repeated `/user-sessions/register` 503s when the API does not have
+ * `FIREBASE_SERVICE_ACCOUNT_JSON` set (e.g. local dev). One fetch per page load.
+ *
+ * @type {Promise<boolean> | null}
+ */
+let _adminReadyProbe = null
+
+function probeAdminReady() {
+  if (_adminReadyProbe) return _adminReadyProbe
+  _adminReadyProbe = (async () => {
+    try {
+      const res = await fetch(apiUrl('/health'), { method: 'GET' })
+      if (!res.ok) return false
+      const data = await res.json().catch(() => ({}))
+      return Boolean(data?.firebaseAdminReady)
+    } catch {
+      return false
+    }
+  })()
+  return _adminReadyProbe
+}
+
 /** @param {string} tool */
 export function libraryToolLabel(tool) {
   const t = String(tool || EDIT_TOOL_KEY)
@@ -17,6 +40,11 @@ export function libraryToolLabel(tool) {
 export async function registerUserSessionOnServer({ getFreshIdToken, sessionId, fileName, tool }) {
   const token = await getFreshIdToken()
   if (!token) return { ok: false, status: 0, error: 'no_token' }
+  const adminReady = await probeAdminReady()
+  if (!adminReady) {
+    /* Local dev without FIREBASE_SERVICE_ACCOUNT_JSON: skip the 503 round-trip entirely. */
+    return { ok: false, status: 0, error: 'admin_unavailable', libraryIndexed: false }
+  }
   try {
     const res = await fetch(apiUrl('/user-sessions/register'), {
       method: 'POST',
@@ -146,7 +174,9 @@ export async function syncUserLibraryEntry(p) {
     tool,
   })
   if (!server.ok) {
-    console.warn('[userLibrary] register failed:', server.error)
+    if (server.error !== 'admin_unavailable') {
+      console.warn('[userLibrary] register failed:', server.error)
+    }
   } else if (server.libraryIndexed === false) {
     console.warn(
       '[userLibrary] Session saved on server but library index skipped — enable Firestore on the Firebase project and ensure the Admin service account can write to Firestore.'
