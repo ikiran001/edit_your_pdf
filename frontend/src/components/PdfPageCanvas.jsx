@@ -4,7 +4,6 @@ import { hexLuminance, sampleBackgroundColorHex, sampleInkColorHex } from '../li
 import {
   buildPageTextItemBlocks,
   horizontalOverlapRatio,
-  pickNativeTextBlockAtBitmapPoint,
   verticalOverlapRatio,
 } from '../lib/textLayerManager'
 import { editorFontFamilyWithPdfHint } from '../lib/editorUnicodeFonts'
@@ -46,6 +45,29 @@ function rawBase64ToUint8(b64) {
 
 function clamp01(v) {
   return Math.min(1, Math.max(0, v))
+}
+
+/**
+ * Native PDF text inline editor: map bitmap/viewport metrics to CSS px using the same scale as
+ * `left`/`top` (`sx`/`sy`), then scale when the user changes the toolbar font size relative to open.
+ * `toolbarFontAtOpen` must be the toolbar `fontSizeCss` captured when the editor opened (bitmap-based).
+ */
+function nativeInlineEditorMetrics(block, fmt, toolbarFontAtOpen, sx, sy) {
+  const s = sx > 0 && sy > 0 ? Math.min(sx, sy) : sx || sy || 1
+  const syEff = sy > 0 ? sy : s
+  const bmpFs = Math.max(6, Math.min(200, Number(block.fontSizePx) || 12))
+  const geomFontCss = bmpFs * s
+  const denom = Math.max(1, Number(toolbarFontAtOpen) || bmpFs)
+  const cur = Math.max(1, Number(fmt?.fontSizeCss) || denom)
+  const rel = denom > 0 ? cur / denom : 1
+  const editorFontCssPx = Math.max(6, Math.min(240, geomFontCss * rel))
+  const bmpH = Math.max(bmpFs * 0.92, Number(block.height) || bmpFs)
+  const geomLineCss = bmpH * syEff
+  const lineHeightPx = Math.max(
+    Math.round(editorFontCssPx * 1.06),
+    Math.round(geomLineCss * rel)
+  )
+  return { editorFontCssPx, lineHeightPx, rel }
 }
 
 /** Added text is drawn with no fill in the viewer and on export — PDF shows through. */
@@ -322,8 +344,9 @@ export default function PdfPageCanvas({
   }, [textBlocks])
 
   /**
-   * Tighten hit targets between vertically neighbouring lines in the same column so tight
-   * leading does not send taps to the lower line when the user aimed at the upper one.
+   * Tighten **idle** hit targets between vertically neighbouring lines (same column) so a large
+   * fontSize-based box does not overlap the line above — taps then hit the intended row.
+   * Active editing still uses full `block` geometry below.
    */
   const nativeTextHitClipById = useMemo(() => {
     const list = [...textBlocks].sort((a, b) => {
@@ -341,7 +364,6 @@ export default function PdfPageCanvas({
       for (let i = 0; i < list.length - 1; i++) {
         const a = list[i]
         const b = list[i + 1]
-        /* Low threshold: short second lines still share a column with a long line above. */
         if (horizontalOverlapRatio(a, b) < 0.06) continue
         const ca = m.get(a.id)
         const cb = m.get(b.id)
@@ -375,8 +397,6 @@ export default function PdfPageCanvas({
   }, [textBlocks])
 
   const textBlocksRef = useRef(textBlocks)
-  /** Same-frame as `textBlocks` — used with client coords so DOM hit target does not choose the line. */
-  const nativeTextHitClipByIdRef = useRef(nativeTextHitClipById)
   const [nativeEdit, setNativeEdit] = useState(null)
   const nativeEditRef = useRef(null)
   const nativeEditorElRef = useRef(null)
@@ -389,6 +409,8 @@ export default function PdfPageCanvas({
   const nativeOpenBaselineStrRef = useRef('')
   /** Toolbar snapshot at open — so bold/italic/underline-only edits still persist when text is unchanged. */
   const nativeOpenBaselineFormatRef = useRef(null)
+  /** Toolbar `fontSizeCss` at open — denominator for live size scaling (bitmap-consistent; see `formatFromTextBlock`). */
+  const nativeOpenToolbarFontCssRef = useRef(null)
   /** PDF user-space font size from the text item (`block.pdf.fontSize`) — authoritative for saved output. */
   const nativeOpenBaselinePdfFontSizeRef = useRef(null)
   const [hoverBlockId, setHoverBlockId] = useState(null)
@@ -439,8 +461,7 @@ export default function PdfPageCanvas({
 
   useLayoutEffect(() => {
     textBlocksRef.current = textBlocks
-    nativeTextHitClipByIdRef.current = nativeTextHitClipById
-  }, [textBlocks, nativeTextHitClipById])
+  }, [textBlocks])
 
   const patchAnnotItem = useCallback(
     (id, partial) => {
@@ -604,6 +625,17 @@ export default function PdfPageCanvas({
     if (!el) return
     const f = textFormatRef?.current ?? textFormat ?? defaultTextFormat()
     const b = nativeEdit.block
+    const { cssW: cwL, cssH: chL, bmpW: bwL, bmpH: bhL } = canvasLayout
+    const sxL = bwL > 0 ? cwL / bwL : 1
+    const syL = bhL > 0 ? chL / bhL : 1
+    const toolbarOpen =
+      nativeOpenToolbarFontCssRef.current ??
+      Math.max(1, Number(f.fontSizeCss) || Number(b.fontSizePx) || 12)
+    const { editorFontCssPx, lineHeightPx } = nativeInlineEditorMetrics(b, f, toolbarOpen, sxL, syL)
+    el.style.fontSize = `${editorFontCssPx}px`
+    el.style.lineHeight = `${lineHeightPx}px`
+    el.style.letterSpacing = 'normal'
+    el.style.wordSpacing = 'normal'
     el.style.fontFamily = editorFontFamilyWithPdfHint(
       cssDisplayFontFromPdf(b.pdfFontFamily, f.fontFamily)
     )
@@ -618,7 +650,7 @@ export default function PdfPageCanvas({
     el.style.whiteSpace = 'pre'
     el.style.overflowWrap = 'normal'
     el.style.backgroundColor = nativeEdit.maskFillHex || '#ffffff'
-  }, [nativeEdit, textFormat])
+  }, [nativeEdit, textFormat, canvasLayout])
 
   const [textDiag, setTextDiag] = useState(null)
 
@@ -1360,20 +1392,78 @@ export default function PdfPageCanvas({
   const sx = bmpW > 0 ? cw / bmpW : 1
   const sy = bmpH > 0 ? ch / bmpH : 1
 
-  /* Same mapping as `normPoint` (overlay canvas CSS rect ↔ bitmap px) — avoids drift vs the PDF bitmap. */
-  const resolveNativeTextPickFromClient = useCallback((clientX, clientY, fallbackBlock) => {
-    const overlay = overlayRef.current
-    const blocks = textBlocksRef.current
-    const clip = nativeTextHitClipByIdRef.current
-    if (!overlay || !blocks?.length) return fallbackBlock
-    const r = overlay.getBoundingClientRect()
-    if (r.width < 1 || r.height < 1 || !overlay.width || !overlay.height) return fallbackBlock
-    const scaleX = overlay.width / r.width
-    const scaleY = overlay.height / r.height
-    const px = (clientX - r.left) * scaleX
-    const py = (clientY - r.top) * scaleY
-    return pickNativeTextBlockAtBitmapPoint(blocks, clip, px, py) ?? fallbackBlock
-  }, [])
+  /**
+   * Resolve which text block contains the click at `(clientX, clientY)`.
+   * Uses the same clipped idle bands the hit targets use, so dense layouts do not route a click to
+   * a neighbour because of DOM stacking or z-index. Falls back to the tapped button’s `block` only
+   * when the cursor sits outside every clipped band (e.g. a tall letter above its tight band).
+   *
+   * @param {number} clientX
+   * @param {number} clientY
+   * @param {Record<string, unknown>} fallbackBlock
+   */
+  const resolveBlockUnderClient = useCallback(
+    (clientX, clientY, fallbackBlock) => {
+      const overlay = overlayRef.current
+      const blocks = textBlocksRef.current
+      if (!overlay || !blocks?.length) return fallbackBlock
+      const r = overlay.getBoundingClientRect()
+      if (r.width < 1 || r.height < 1 || !overlay.width || !overlay.height) return fallbackBlock
+      const scaleX = overlay.width / r.width
+      const scaleY = overlay.height / r.height
+      const px = (clientX - r.left) * scaleX
+      const py = (clientY - r.top) * scaleY
+
+      /* Pass 1: strict containment inside the clipped idle band (the hit rect the user sees).
+       * Upper bounds are EXCLUSIVE so the shared boundary between two adjacent blocks belongs to
+       * the LOWER block only. This prevents a click at the exact clip midpoint from matching the
+       * upper block (causing it to re-open after the lower block was already opened by pointerdown). */
+      let strict = null
+      let strictArea = Infinity
+      for (const b of blocks) {
+        const clip = nativeTextHitClipById.get(b.id)
+        const bt = clip?.top ?? b.top
+        const bb = clip?.bottom ?? b.top + b.height
+        const bl = b.left
+        const br = b.left + b.width
+        if (px < bl || px >= br) continue
+        if (py < bt || py >= bb) continue
+        /* Tie-break: prefer the smallest containing rect (the most specific line). */
+        const a = Math.max(1, (br - bl) * Math.max(1, bb - bt))
+        if (a < strictArea) {
+          strict = b
+          strictArea = a
+        }
+      }
+      if (strict) return strict
+
+      /* Pass 2: nearest-by-band with a small vertical slop, biased to horizontal containment. */
+      let near = null
+      let nearScore = Infinity
+      const slop = Math.max(4, (r.height > 0 ? overlay.height / r.height : 1) * 4)
+      for (const b of blocks) {
+        const bl = b.left
+        const br = b.left + b.width
+        if (px < bl - slop || px > br + slop) continue
+        const clip = nativeTextHitClipById.get(b.id)
+        const bt = clip?.top ?? b.top
+        const bb = clip?.bottom ?? b.top + b.height
+        let vd
+        if (py < bt) vd = bt - py
+        else if (py > bb) vd = py - bb
+        else vd = 0
+        if (vd > slop) continue
+        const hd = px < bl ? bl - px : px > br ? px - br : 0
+        const score = vd * 4 + hd
+        if (score < nearScore) {
+          nearScore = score
+          near = b
+        }
+      }
+      return near ?? fallbackBlock
+    },
+    [nativeTextHitClipById]
+  )
 
   const overlayActive = tool && tool !== 'editText'
 
@@ -1442,6 +1532,10 @@ export default function PdfPageCanvas({
           sampleColorHex ?? undefined,
           layoutHint
         )
+        nativeOpenToolbarFontCssRef.current = Math.max(
+          1,
+          Number(presetFormat.fontSizeCss) || Number(block.fontSizePx) || 12
+        )
         onBeginNativeTextEdit?.(block, {
           sampleColorHex: sampleColorHex ?? undefined,
           presetFormat,
@@ -1450,6 +1544,7 @@ export default function PdfPageCanvas({
         })
       } catch (err) {
         console.error('formatFromTextBlock failed', err)
+        nativeOpenToolbarFontCssRef.current = Math.max(1, Number(block.fontSizePx) || 12)
         onBeginNativeTextEdit?.(block, {
           sampleColorHex: sampleColorHex ?? undefined,
           layoutHint,
@@ -1465,6 +1560,7 @@ export default function PdfPageCanvas({
   useLayoutEffect(() => {
     if (!nativeEdit) {
       nativeOpenBaselineFormatRef.current = null
+      nativeOpenToolbarFontCssRef.current = null
       nativeOpenBaselinePdfFontSizeRef.current = null
       nativeEditSlotIdRef.current = null
       return
@@ -1699,6 +1795,23 @@ export default function PdfPageCanvas({
     [onNativeTextEdit, buildNativePayload, flushNativeSyncTimer]
   )
 
+  /**
+   * Commit the currently-open editor (if any) and open `nextBlock` for editing. Declared after
+   * `commitNativeEdit` + `openNativeEditorForBlock` so their `const` bindings are initialized —
+   * otherwise the `useCallback` deps array trips a TDZ ReferenceError on render.
+   */
+  const switchEditorToBlockIfDifferent = useCallback(
+    (nextBlock) => {
+      const cur = nativeEditRef.current
+      if (cur && cur.block.id !== nextBlock.id) {
+        const ed = nativeEditorElRef.current
+        commitNativeEdit(ed?.innerText ?? '')
+      }
+      openNativeEditorForBlock(nextBlock)
+    },
+    [commitNativeEdit, openNativeEditorForBlock]
+  )
+
   useEffect(() => {
     if (tool === 'editText') return
     if (!nativeEditRef.current) return
@@ -1733,7 +1846,33 @@ export default function PdfPageCanvas({
     if (!nativeEdit) return
     const onDocPointerDown = (e) => {
       const t = e.target
-      if (t.closest?.('[data-pdf-inline-editor-root]')) return
+      /*
+       * Defensive re-route: if the click happens to land inside the currently-editing contenteditable
+       * but the cursor is actually over a different text block (DOM stacking / overlapping wrappers on
+       * dense layouts), commit the current edit and open the block truly under the cursor — *before*
+       * the native caret jumps inside this editor.
+       */
+      if (t.closest?.('[data-pdf-inline-editor-root]')) {
+        /*
+         * Revert button click: skip coordinate re-routing entirely — the user
+         * explicitly wants to revert, not switch editors. Let the button's own
+         * onMouseDown handle it without interference.
+         */
+        if (t.closest?.('[data-pdf-revert-button]')) return
+        const editing = nativeEditRef.current?.block
+        if (editing) {
+          const under = resolveBlockUnderClient(e.clientX, e.clientY, editing)
+          if (under && under.id !== editing.id) {
+            e.preventDefault()
+            e.stopPropagation()
+            const el = nativeEditorElRef.current
+            commitNativeEdit(el?.innerText ?? '')
+            openNativeEditorForBlock(under)
+            return
+          }
+        }
+        return
+      }
       if (t.closest?.('[data-text-format-panel]')) return
       if (t.closest?.('[data-pdf-edits-sidebar]')) return
       if (t.closest?.('[data-pdf-annot-text-root]')) return
@@ -1750,7 +1889,7 @@ export default function PdfPageCanvas({
     }
     document.addEventListener('pointerdown', onDocPointerDown, true)
     return () => document.removeEventListener('pointerdown', onDocPointerDown, true)
-  }, [nativeEdit, commitNativeEdit])
+  }, [nativeEdit, commitNativeEdit, openNativeEditorForBlock, resolveBlockUnderClient])
 
   /** Parent removed this slot (sidebar ✕) or cleared the session — close inline editor without re-committing. */
   useEffect(() => {
@@ -2090,25 +2229,42 @@ export default function PdfPageCanvas({
           {textBlocksPaintOrder.map((block) => {
             const isEditing = nativeEdit?.block?.id === block.id
             const w = Math.max(block.width * sx, 4)
-            const h = Math.max(block.height * sy, Math.max(10, block.fontSizePx * sy * 1.15))
             const left = block.left * sx
             const top = block.top * sy
-            /* Viewport font size (pdf.js space) → CSS px on screen: same scale as left/top (avoids huge/blurry text). */
+            /*
+             * Idle taps: use vertically clipped bands between neighbours so a heading-sized min-height
+             * does not paint a hit target into the line above (which then won DOM hit-testing).
+             * Editing keeps full pdf quad + font-based min height so the contenteditable still fits.
+             */
+            const clipRow = nativeTextHitClipById.get(block.id)
+            const effTopPdf = clipRow?.top ?? block.top
+            const effBotPdf = clipRow?.bottom ?? block.top + block.height
+            const idleTopCss = effTopPdf * sy
+            const idleHCss = Math.max(10, (effBotPdf - effTopPdf) * sy)
             const fmt = textFormat ?? defaultTextFormat()
-            const viewportFont = fmt.fontSizeCss ?? block.fontSizePx
-            const editorFontCssPx = Math.max(6, Math.min(240, viewportFont * sx))
+            let editorFontCssPx = 12
+            let lineHeightPx = 14
+            if (isEditing) {
+              const toolbarOpen =
+                nativeOpenToolbarFontCssRef.current ??
+                Math.max(1, Number(fmt.fontSizeCss) || Number(block.fontSizePx) || 12)
+              const m = nativeInlineEditorMetrics(block, fmt, toolbarOpen, sx, sy)
+              editorFontCssPx = m.editorFontCssPx
+              lineHeightPx = m.lineHeightPx
+            }
             const rotDeg = fmt.rotationDeg ?? 0
             const editFontFamily = editorFontFamilyWithPdfHint(
               cssDisplayFontFromPdf(block.pdfFontFamily, fmt.fontFamily)
             )
-            const editorLineHeightPx = Math.max(14, Math.round(editorFontCssPx * 1.2))
-            /* PDF block box can be shorter than one rendered line (line-height + border); without this the
-               contenteditable overflows vertically and always shows a scrollbar. */
+            /* Line box tracks pdf.js bbox height (scaled) and grows with toolbar font-size via `lineHeightPx`. */
             const wrapperMinH = isEditing
-              ? Math.max(h, editorLineHeightPx + 4)
-              : h
+              ? Math.max(
+                  lineHeightPx + 6,
+                  Math.round((Number(block.height) || lineHeightPx) * (sy > 0 ? sy : 1))
+                )
+              : idleHCss
             /*
-             * Idle: fixed pdf.js quad width (hit target).
+             * Idle: clipped hit band + pdf.js quad width.
              * Editing: minWidth = quad width (often under-estimates rendered ink vs substitute fonts).
              * width max-content lets one logical line stay horizontal like the PDF; maxWidth caps at canvas.
              */
@@ -2122,9 +2278,14 @@ export default function PdfPageCanvas({
                   maxWidth: editorMaxW,
                   minHeight: wrapperMinH,
                   height: 'auto',
-                  zIndex: 2,
                 }
-              : { left, top, width: w, minHeight: wrapperMinH, height: wrapperMinH }
+              : {
+                  left,
+                  top: idleTopCss,
+                  width: w,
+                  minHeight: idleHCss,
+                  height: idleHCss,
+                }
             return (
               <div
                 key={block.id}
@@ -2150,7 +2311,9 @@ export default function PdfPageCanvas({
                       colorScheme: 'light',
                       backgroundColor: nativeEdit?.maskFillHex || '#ffffff',
                       fontSize: `${editorFontCssPx}px`,
-                      lineHeight: editorLineHeightPx + 'px',
+                      lineHeight: `${lineHeightPx}px`,
+                      letterSpacing: 'normal',
+                      wordSpacing: 'normal',
                       fontFamily: editFontFamily,
                       fontWeight: fmt.bold ? 700 : 400,
                       fontStyle: fmt.italic ? 'italic' : 'normal',
@@ -2163,6 +2326,8 @@ export default function PdfPageCanvas({
                       whiteSpace: 'pre',
                       overflowWrap: 'normal',
                       wordBreak: 'normal',
+                      padding: 0,
+                      margin: 0,
                     }}
                     onFocus={() => {
                       if (nativeBlurTimerRef.current) {
@@ -2193,12 +2358,32 @@ export default function PdfPageCanvas({
                     }}
                     onInput={(e) => {
                       const el = e.currentTarget
-                      const f = textFormat ?? defaultTextFormat()
-                      const vfs = f.fontSizeCss ?? block.fontSizePx
+                      const f = textFormatRef?.current ?? textFormat ?? defaultTextFormat()
+                      const ov = overlayRef.current
+                      const r = ov?.getBoundingClientRect()
+                      const bw = ov?.width > 0 ? ov.width : metaRef.current.bmpW || 1
+                      const bh = ov?.height > 0 ? ov.height : metaRef.current.bmpH || 1
+                      const cwIn = r && r.width > 0 ? r.width : metaRef.current.cssW || 1
+                      const chIn = r && r.height > 0 ? r.height : metaRef.current.cssH || 1
+                      const sxIn = bw > 0 ? cwIn / bw : 1
+                      const syIn = bh > 0 ? chIn / bh : 1
+                      const toolbarOpen =
+                        nativeOpenToolbarFontCssRef.current ??
+                        Math.max(1, Number(f.fontSizeCss) || Number(block.fontSizePx) || 12)
+                      const { editorFontCssPx: fsPx, lineHeightPx: lhPx } = nativeInlineEditorMetrics(
+                        block,
+                        f,
+                        toolbarOpen,
+                        sxIn,
+                        syIn
+                      )
                       el.style.colorScheme = 'light'
                       el.style.backgroundColor =
                         nativeEditRef.current?.maskFillHex || '#ffffff'
-                      el.style.fontSize = `${Math.max(6, Math.min(240, vfs * sx))}px`
+                      el.style.fontSize = `${fsPx}px`
+                      el.style.lineHeight = `${lhPx}px`
+                      el.style.letterSpacing = 'normal'
+                      el.style.wordSpacing = 'normal'
                       el.style.fontFamily = editorFontFamilyWithPdfHint(
                         cssDisplayFontFromPdf(block.pdfFontFamily, f.fontFamily)
                       )
@@ -2206,8 +2391,6 @@ export default function PdfPageCanvas({
                       el.style.fontWeight = f.bold ? '700' : '400'
                       el.style.fontStyle = f.italic ? 'italic' : 'normal'
                       el.style.textDecoration = f.underline ? 'underline' : 'none'
-                      const lh = Math.max(14, Math.round(Math.max(6, Math.min(240, vfs * sx)) * 1.2))
-                      el.style.lineHeight = `${lh}px`
                       el.style.whiteSpace = 'pre'
                       el.style.overflowWrap = 'normal'
                       el.style.wordBreak = 'normal'
@@ -2233,11 +2416,16 @@ export default function PdfPageCanvas({
                       }
                     }}
                   />
-                  {/* Revert action bar — only shown when there is an existing edit to undo */}
+                  {/* Revert action bar — floated to the right of the editing contenteditable
+                      so it never extends below the block's own vertical bounds and cannot
+                      physically overlap the idle tap-button of a nearby line below.
+                      `data-pdf-revert-button` lets the document capture handler skip
+                      coordinate-based re-routing for clicks on this button. */}
                   {nativeEditSlotIdRef.current && (
                     <div
                       data-pdf-inline-editor-root
-                      className="pointer-events-auto absolute left-0 top-full z-[10] mt-0.5 flex items-center gap-1"
+                      data-pdf-revert-button
+                      className="pointer-events-none absolute right-0 top-0 z-[10] flex translate-x-full items-center pl-1"
                     >
                       <button
                         type="button"
@@ -2247,7 +2435,7 @@ export default function PdfPageCanvas({
                           e.preventDefault()
                           revertNativeEdit()
                         }}
-                        className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 shadow-sm hover:bg-amber-200 dark:bg-amber-900/60 dark:text-amber-200 dark:hover:bg-amber-800/80"
+                        className="pointer-events-auto whitespace-nowrap rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 shadow-sm hover:bg-amber-200 dark:bg-amber-900/60 dark:text-amber-200 dark:hover:bg-amber-800/80"
                       >
                         Revert
                       </button>
@@ -2279,32 +2467,33 @@ export default function PdfPageCanvas({
                       if (!e.isPrimary) return
                       if (e.pointerType === 'mouse' && e.button !== 0) return
                       e.stopPropagation()
-                      const picked = resolveNativeTextPickFromClient(e.clientX, e.clientY, block)
-                      const cur = nativeEditRef.current
-                      if (cur && cur.block.id !== picked.id) {
-                        const ed = nativeEditorElRef.current
-                        commitNativeEdit(ed?.innerText ?? '')
-                      }
-                      /* iPad / iOS WebKit (incl. Chrome) often skips click on overlay buttons; always use pointerdown. */
+                      /*
+                       * Each idle button represents exactly one block. Use `block` directly —
+                       * no coordinate resolution needed here. Coordinate re-routing is only
+                       * required in the document capture handler (for the rare case where the
+                       * editing contenteditable itself covers a neighbour's position).
+                       * iPad / iOS WebKit often skips click on overlay buttons; always act on pointerdown.
+                       */
                       if (e.pointerType === 'touch' || e.pointerType === 'pen') {
                         e.preventDefault()
                       }
-                      openNativeEditorForBlock(picked)
+                      switchEditorToBlockIfDifferent(block)
                     }}
                     onClick={(e) => {
                       e.stopPropagation()
-                      const picked = resolveNativeTextPickFromClient(e.clientX, e.clientY, block)
-                      const cur = nativeEditRef.current
-                      if (cur && cur.block.id !== picked.id) {
-                        const ed = nativeEditorElRef.current
-                        commitNativeEdit(ed?.innerText ?? '')
-                      }
-                      openNativeEditorForBlock(picked)
+                      /*
+                       * Do NOT call resolveBlockUnderClient here. By the time `click` fires, React
+                       * has already re-rendered (pointerdown opened B's editor, A became idle). A
+                       * fresh coordinate lookup at this point can land on the clip-band boundary and
+                       * return the WRONG block (the one we just committed), causing it to re-open.
+                       * The button's own `block` is always the correct target for a click event.
+                       */
+                      switchEditorToBlockIfDifferent(block)
                     }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault()
-                        openNativeEditorForBlock(block)
+                        switchEditorToBlockIfDifferent(block)
                       }
                     }}
                   />

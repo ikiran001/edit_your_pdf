@@ -115,12 +115,23 @@ export function defaultTextFormat() {
 export function formatFromTextBlock(block, prev, sampleColorHex, layoutHint) {
   const base = { ...defaultTextFormat(), ...prev }
   if (!block) return base
+  /*
+   * Prefer bbox-derived `fontSizePx` (pdf.js viewport / canvas bitmap space). It matches what we
+   * render on the canvas. `pdfFs / scale` is “logical CSS at page width” and must not be merged
+   * with `max(...)` — the inline editor applies canvas scale separately; mixing the two made the
+   * edit box look much larger than the PDF text.
+   */
   let fs = Math.round(Math.max(8, Math.min(200, block.fontSizePx || 14)))
   const scale = Number(layoutHint?.pdfToCssScale)
   const pdfFs = Number(block.pdf?.fontSize)
-  if (Number.isFinite(pdfFs) && pdfFs > 0 && Number.isFinite(scale) && scale > 0) {
-    const fromPdf = Math.round(Math.min(200, Math.max(8, pdfFs / scale)))
-    fs = Math.max(fs, fromPdf)
+  if (
+    (!Number.isFinite(block.fontSizePx) || block.fontSizePx < 4) &&
+    Number.isFinite(pdfFs) &&
+    pdfFs > 0 &&
+    Number.isFinite(scale) &&
+    scale > 0
+  ) {
+    fs = Math.round(Math.min(200, Math.max(8, pdfFs / scale)))
   }
   const pdfFam = block.pdfFontFamily || ''
   const server = block.serverFontFamily || mapPdfFontNameToServer(pdfFam)
