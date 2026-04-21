@@ -15,7 +15,7 @@ function trackEditEntry() {
 
 export default function HeroSection() {
   return (
-    <section className="relative overflow-hidden border-b border-indigo-200/30 bg-gradient-to-b from-indigo-50/80 via-white to-transparent px-4 pb-10 pt-6 dark:border-indigo-500/10 dark:from-indigo-950/40 dark:via-zinc-950 dark:to-transparent md:px-10 md:pb-14 md:pt-10">
+    <section className="relative overflow-hidden border-b border-indigo-200/30 bg-gradient-to-b from-indigo-50/80 via-white to-transparent px-4 pb-10 pt-6 dark:border-indigo-500/10 dark:from-indigo-950/40 dark:via-zinc-950 dark:to-transparent md:px-8 md:pb-14 md:pt-10">
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(99,102,241,0.22),transparent)] dark:bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(99,102,241,0.12),transparent)]"
         aria-hidden

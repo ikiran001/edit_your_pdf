@@ -8,6 +8,7 @@ import BrandLogoLink from '../../shared/components/BrandLogoLink.jsx'
 import LegalFooter from '../../shared/components/LegalFooter.jsx'
 import { TOOL_REGISTRY } from '../../shared/constants/toolRegistry.js'
 import HeroSection from './HeroSection.jsx'
+import ToolkitNavMenus from './ToolkitNavMenus.jsx'
 import { peekFeedbackPrompt } from '../../lib/reviewPromptStorage.js'
 
 function matchesToolSearch(tool, q) {
@@ -30,23 +31,26 @@ export default function ToolkitHomePage() {
 
   return (
     <div className="flex min-h-svh flex-col bg-transparent text-zinc-900 dark:text-zinc-100">
-      <header className="fx-glass-header relative z-40 px-4 py-4 md:px-10">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
-          <BrandLogoLink />
-          <div className="flex items-center gap-2">
+      <header className="fx-glass-header relative z-40 px-4 py-3 md:px-8">
+        <div className="mx-auto grid max-w-[min(100%,96rem)] grid-cols-[1fr_auto] items-center gap-x-4 gap-y-2 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:gap-x-6">
+          <BrandLogoLink className="min-w-0 justify-self-start" />
+          <div className="flex shrink-0 items-center justify-end gap-2 lg:col-start-3 lg:row-start-1">
             <AccountMenu />
             <ThemeToggle />
+          </div>
+          <div className="col-span-2 -mx-4 min-w-0 overflow-x-auto px-4 pb-0.5 [scrollbar-width:thin] lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:mx-0 lg:px-0 lg:pb-0">
+            <ToolkitNavMenus />
           </div>
         </div>
       </header>
 
       <HeroSection />
 
-      <section className="fx-toolkit-fade mx-auto max-w-6xl flex-1 px-4 py-6 md:px-10 md:py-10">
+      <section className="fx-toolkit-fade relative isolate mx-auto w-full max-w-[min(100%,96rem)] flex-1 px-4 py-6 md:px-8 md:py-10">
         <h2 className="mb-4 text-center font-mono text-sm font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-cyan-400/85">
           Choose a tool
         </h2>
-        <div className="mx-auto mb-6 max-w-lg" role="search">
+        <div className="mx-auto mb-6 max-w-2xl" role="search">
           <label htmlFor="toolkit-tool-search" className="sr-only">
             Search tools by name or task
           </label>
@@ -84,7 +88,7 @@ export default function ToolkitHomePage() {
             </p>
           ) : null}
         </div>
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
           {filteredTools.map((tool) => (
             <div key={tool.id} className="aspect-square min-h-0 sm:aspect-auto sm:min-h-[200px]">
               <ToolCard tool={tool} />
