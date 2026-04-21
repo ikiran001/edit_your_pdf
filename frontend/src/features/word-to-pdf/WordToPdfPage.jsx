@@ -124,10 +124,10 @@ export default function WordToPdfPage() {
         let msg = e?.message || 'Conversion failed'
         if (e?.name === 'TimeoutError' || e?.name === 'AbortError') {
           msg =
-            'Conversion timed out in the browser. The server may still be waking the converter—try again in a minute, or upgrade your Gotenberg instance on Render (more RAM / paid plan).'
+            'Conversion timed out in the browser. If you use Gotenberg, the service may still be cold-starting—try again in a minute or add more RAM. If you use LibreOffice on the API, very large .docx files can also exceed the client wait — try a smaller file or increase timeout.'
         } else if (/50[234]|Bad Gateway|Gateway|ECONNRESET/i.test(msg)) {
           msg +=
-            ' Repeated gateway errors usually mean the Gotenberg service is out of memory or sleeping—use gotenberg/gotenberg:8-libreoffice and a larger Render plan for that service.'
+            ' If conversion goes through Gotenberg, repeated gateway errors often mean that service is out of memory or sleeping—use gotenberg/gotenberg:8-libreoffice and a larger Render plan, or switch to SOFFICE_PATH on the API server.'
         }
         setActionError(msg)
       }
@@ -176,6 +176,13 @@ export default function WordToPdfPage() {
 
         {capsStatus === 'ready' && caps?.docxToPdf ? (
           <>
+            {caps?.docxToPdfFallbackLibreOffice && caps?.gotenbergHealthHint ? (
+              <p className="m-0 rounded-xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/35 dark:text-amber-100">
+                Gotenberg is not healthy right now, but Word → PDF still works using{' '}
+                <strong>LibreOffice on this API server</strong> (<code className="font-mono text-xs">SOFFICE_PATH</code>
+                ). You can fix or remove Gotenberg in your deployment settings.
+              </p>
+            ) : null}
             <FileDropzone
               accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
               multiple={false}
@@ -185,14 +192,37 @@ export default function WordToPdfPage() {
             />
             {busy ? (
               <p className="rounded-xl border border-sky-200 bg-sky-50/90 px-4 py-3 text-center text-sm text-sky-950 dark:border-sky-900 dark:bg-sky-950/35 dark:text-sky-100">
-                The converter runs on a <strong>separate</strong> cloud service. After idle it may need{' '}
-                <strong>30–90 seconds</strong> to wake up; the API retries automatically. Please keep this tab
-                open.
+                {caps?.docxToPdfViaSoffice &&
+                (!caps?.docxToPdfViaGotenberg ||
+                  !caps?.gotenbergReachable ||
+                  caps?.docxToPdfFallbackLibreOffice) ? (
+                  <>
+                    Converting with <strong>LibreOffice</strong> on this server. Large documents can take a few
+                    minutes — please keep this tab open.
+                  </>
+                ) : caps?.docxToPdfViaSoffice && caps?.docxToPdfViaGotenberg && caps?.gotenbergReachable ? (
+                  <>
+                    The API tries <strong>LibreOffice</strong> on this server first; if that fails it falls back to
+                    your <strong>Gotenberg</strong> service (which may need <strong>30–90 seconds</strong> to wake after
+                    idle). Please keep this tab open.
+                  </>
+                ) : (
+                  <>
+                    The converter runs on a <strong>separate</strong> cloud service. After idle it may need{' '}
+                    <strong>30–90 seconds</strong> to wake up; the API retries automatically. Please keep this tab open.
+                  </>
+                )}
               </p>
             ) : (
               <p className="rounded-xl border border-zinc-200 bg-zinc-50/80 px-4 py-3 text-center text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-400">
-                One <strong>.docx</strong> at a time (Microsoft Word or compatible). Layout may shift slightly
-                in the PDF.
+                One <strong>.docx</strong> at a time (Microsoft Word or compatible). Layout may shift slightly in the
+                PDF.
+                {caps?.docxToPdfViaSoffice && !caps?.docxToPdfViaGotenberg ? (
+                  <>
+                    {' '}
+                    Conversion uses <strong>LibreOffice</strong> on the API (no separate Gotenberg service required).
+                  </>
+                ) : null}
               </p>
             )}
           </>
@@ -213,18 +243,17 @@ export default function WordToPdfPage() {
               </p>
             ) : null}
             <p className="mt-2 mb-0">
-              Your API answered, but Word → PDF is off on <strong>that</strong> server: set{' '}
+              Your API answered, but Word → PDF is off on <strong>that</strong> server. Either set{' '}
+              <code className="rounded bg-zinc-200 px-1 font-mono text-xs dark:bg-zinc-800">SOFFICE_PATH</code> to
+              your LibreOffice <code className="font-mono text-xs">soffice</code> binary so conversion runs on the API
+              (same variable as PDF → Word), <strong>or</strong> set{' '}
               <code className="rounded bg-zinc-200 px-1 font-mono text-xs dark:bg-zinc-800">GOTENBERG_URL</code>{' '}
-              (full <code className="font-mono text-xs">https://…</code> base URL to Gotenberg) or{' '}
-              <code className="font-mono text-xs">GOTENBERG_HOSTPORT</code> in the environment of the{' '}
-              <strong>Node API</strong> process, then redeploy. With Render Blueprints,{' '}
-              <code className="font-mono text-xs">render.yaml</code> wires{' '}
-              <code className="font-mono text-xs">GOTENBERG_URL</code> from the Gotenberg service only if your
-              Render service <strong>names</strong> match <code className="font-mono text-xs">render.yaml</code>{' '}
-              (API <code className="font-mono text-xs">name</code> = your{' '}
-              <code className="font-mono text-xs">*.onrender.com</code> service name, plus{' '}
-              <code className="font-mono text-xs">pdfpilot-gotenberg</code>); otherwise paste your Gotenberg URL
-              manually under Environment. See{' '}
+              (full <code className="font-mono text-xs">https://…</code> base URL to a separate Gotenberg service) or{' '}
+              <code className="font-mono text-xs">GOTENBERG_HOSTPORT</code>, then redeploy. With both set, the API
+              tries LibreOffice first and uses Gotenberg only if that fails. Render Blueprint:{' '}
+              <code className="font-mono text-xs">render.yaml</code> can wire{' '}
+              <code className="font-mono text-xs">GOTENBERG_URL</code> when service names match; otherwise paste the URL
+              under Environment. See{' '}
               <a
                 className="text-indigo-600 underline-offset-2 hover:underline dark:text-cyan-400"
                 href="https://gotenberg.dev/"

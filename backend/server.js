@@ -172,11 +172,16 @@ function logUnlockBackends() {
 logUnlockBackends();
 
 const docFlow = getDocumentFlowCapabilities();
+const docxBackends = [];
+if (docFlow.docxToPdfViaSoffice) docxBackends.push('LibreOffice');
+if (docFlow.docxToPdfViaGotenberg) docxBackends.push('Gotenberg');
 console.log(
   '[document-flow]',
   docFlow.pdfToDocx ? 'PDF→DOCX (SOFFICE_PATH)' : 'PDF→DOCX off',
   '·',
-  docFlow.docxToPdf ? 'DOCX→PDF (GOTENBERG_URL)' : 'DOCX→PDF off'
+  docFlow.docxToPdf
+    ? `DOCX→PDF (${docxBackends.join(' + ') || 'configured'})`
+    : 'DOCX→PDF off'
 );
 
 if (isDownloadAuthEnabled()) {
