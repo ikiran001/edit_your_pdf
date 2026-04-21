@@ -13,7 +13,6 @@ import {
 } from '../../lib/analytics.js'
 import { ANALYTICS_TOOL } from '../../shared/constants/analyticsTools.js'
 import { docTitleForPath } from '../../shared/constants/branding.js'
-import { useClientToolDownloadAuth } from '../../auth/ClientToolDownloadAuthContext.jsx'
 
 const WORD_TO_PDF_TOOL = ANALYTICS_TOOL.word_to_pdf
 const DOC_TITLE = docTitleForPath('/tools/word-to-pdf')
@@ -29,7 +28,6 @@ function triggerDownloadBlob(blob, filename) {
 }
 
 export default function WordToPdfPage() {
-  const { runWithSignInForDownload } = useClientToolDownloadAuth()
   /** loading | ready | error — avoids showing “converter not configured” before we know, or on fetch failure */
   const [capsStatus, setCapsStatus] = useState(() =>
     import.meta.env.PROD && !isApiBaseConfigured() ? 'error' : 'loading'
@@ -88,53 +86,53 @@ export default function WordToPdfPage() {
     setActionError(null)
     setBusy(true)
     try {
-      await runWithSignInForDownload(
-        async () => {
-          const fd = new FormData()
-          fd.append('file', file)
-          /* Server may retry Gotenberg cold starts (502/503/504); allow several minutes before the browser gives up. */
-          const r = await fetch(apiUrl('/document-flow/convert-docx-to-pdf'), {
-            method: 'POST',
-            body: fd,
-            signal: AbortSignal.timeout(600_000),
-          })
-          if (!r.ok) {
-            const j = await r.json().catch(() => ({}))
-            throw new Error(j?.message || j?.error || r.statusText)
-          }
-          const blob = await r.blob()
-          const base = (file.name || 'document').replace(/\.docx$/i, '') || 'document'
-          triggerDownloadBlob(blob, `${base}.pdf`)
-          trackFileDownloaded({
-            tool: WORD_TO_PDF_TOOL,
-            file_size: blob.size / 1024,
-            total_pages: 1,
-          })
-          trackToolCompleted(WORD_TO_PDF_TOOL, true)
-        },
-        { onAuthLoading: () => setActionError('Still checking sign-in… try again in a moment.') }
-      )
-    } catch (e) {
-      if (e?.code === 'EYP_AUTH_CANCELLED') {
-        /* dismissed */
-      } else if (e?.code === 'EYP_AUTH_LOADING') {
-        setActionError(e.message || 'Still checking sign-in.')
-      } else {
-        trackErrorOccurred(WORD_TO_PDF_TOOL, e?.message || 'convert_docx_failed')
-        let msg = e?.message || 'Conversion failed'
-        if (e?.name === 'TimeoutError' || e?.name === 'AbortError') {
-          msg =
-            'Conversion timed out in the browser. If you use Gotenberg, the service may still be cold-starting—try again in a minute or add more RAM. If you use LibreOffice on the API, very large .docx files can also exceed the client wait — try a smaller file or increase timeout.'
-        } else if (/50[234]|Bad Gateway|Gateway|ECONNRESET/i.test(msg)) {
-          msg +=
-            ' If conversion goes through Gotenberg, repeated gateway errors often mean that service is out of memory or sleeping—use gotenberg/gotenberg:8-libreoffice and a larger Render plan, or switch to SOFFICE_PATH on the API server.'
+      const fd = new FormData()
+      fd.append('file', file)
+      /* Server may retry Gotenberg cold starts (502/503/504); allow several minutes before the browser gives up. */
+      const r = await fetch(apiUrl('/document-flow/convert-docx-to-pdf'), {
+        method: 'POST',
+        body: fd,
+        signal: AbortSignal.timeout(600_000),
+      })
+      if (!r.ok) {
+        const ct = r.headers.get('content-type') || ''
+        let detail = r.statusText
+        if (ct.includes('application/json')) {
+          const j = await r.json().catch(() => ({}))
+          detail = j?.message || j?.error || detail
+        } else {
+          const t = await r.text().catch(() => '')
+          if (t && t.length < 500) detail = t
         }
-        setActionError(msg)
+        throw new Error(detail || `HTTP ${r.status}`)
       }
+      const blob = await r.blob()
+      const base = (file.name || 'document').replace(/\.docx$/i, '') || 'document'
+      triggerDownloadBlob(blob, `${base}.pdf`)
+      trackFileDownloaded({
+        tool: WORD_TO_PDF_TOOL,
+        file_size: blob.size / 1024,
+        total_pages: 1,
+      })
+      trackToolCompleted(WORD_TO_PDF_TOOL, true)
+    } catch (e) {
+      trackErrorOccurred(WORD_TO_PDF_TOOL, e?.message || 'convert_docx_failed')
+      let msg = e?.message || 'Conversion failed'
+      if (e?.name === 'TimeoutError' || e?.name === 'AbortError') {
+        msg =
+          'Conversion timed out in the browser. If you use Gotenberg, the service may still be cold-starting—try again in a minute or add more RAM. If you use LibreOffice on the API, very large .docx files can also exceed the client wait — try a smaller file or increase timeout.'
+      } else if (/Failed to fetch|NetworkError|load failed|CORS/i.test(msg)) {
+        msg =
+          'Could not reach the API from this site. Confirm GitHub Actions rebuilt the site after setting VITE_API_BASE_URL, and that the API allows your domain (CORS). Open /document-flow/capabilities on the API host in a new tab to verify it is up.'
+      } else if (/50[234]|Bad Gateway|Gateway|ECONNRESET/i.test(msg)) {
+        msg +=
+          ' If conversion goes through Gotenberg, repeated gateway errors often mean that service is out of memory or sleeping—use gotenberg/gotenberg:8-libreoffice and a larger Render plan, or switch to SOFFICE_PATH on the API server.'
+      }
+      setActionError(msg)
     } finally {
       setBusy(false)
     }
-  }, [runWithSignInForDownload])
+  }, [])
 
   const onDocxFiles = useCallback(
     (files) => {
