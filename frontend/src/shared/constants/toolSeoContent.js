@@ -400,6 +400,53 @@ export const TOOL_SEO_BY_ID = {
     ],
   },
 
+  'encrypt-pdf': {
+    featureName: 'Encrypt PDF',
+    intro: [
+      'Add an open password to a PDF with AES-256 so only people who know the password can open it. pdfpilot encrypts the file on your API server with qpdf—the same stack many teams already use for Unlock PDF.',
+      'Use a strong, unique password and store it in a password manager. Encrypted PDFs are still only as safe as the password you choose and how you share it.',
+    ],
+    steps: [
+      'Open Encrypt PDF and upload an unencrypted PDF (or unlock first if it already has a password).',
+      'Create a strong password (12+ characters with mixed case, numbers, and symbols is ideal).',
+      'Confirm the password so typos do not lock you out of your own file.',
+      'Start encryption and download the protected PDF over HTTPS.',
+      'Open the download in a PDF reader to verify it asks for the password before showing pages.',
+    ],
+    benefits: [
+      {
+        title: 'AES-256',
+        body: 'Industry-standard encryption applied by qpdf when your backend has it installed.',
+      },
+      {
+        title: 'HTTPS in transit',
+        body: 'Upload and download happen over your configured API—avoid public “free converter” sites for sensitive documents.',
+      },
+      {
+        title: 'Pairs with Unlock',
+        body: 'Remove an old password with Unlock PDF, then apply a new one here when you rotate access.',
+      },
+      {
+        title: 'Clear workflow',
+        body: 'Upload, set password, confirm, download—no extra installers.',
+      },
+    ],
+    highlights: [
+      {
+        title: 'Password-gated files',
+        body: 'Recipients need the password you set before the document opens normally.',
+      },
+      {
+        title: 'Server-side qpdf',
+        body: 'Matches the deployment story you already use for unlocking PDFs.',
+      },
+      {
+        title: 'Built for real policies',
+        body: 'Use alongside your org’s rules on sharing, retention, and key storage.',
+      },
+    ],
+  },
+
   'organize-pdf': {
     featureName: 'Organize PDF Pages',
     intro: [
