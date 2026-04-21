@@ -61,7 +61,8 @@ export function nativeTextNormsAreSameSlot(normA, normB) {
   if (vy > 0.42 && hx > 0.12) return true
   const da = Number(normA.baselineN)
   const db = Number(normB.baselineN)
-  if (Number.isFinite(da) && Number.isFinite(db) && Math.abs(da - db) < 0.018 && hx > 0.08) {
+  /* Tighten vs 0.018 — adjacent bullets often differ by ~0.014–0.017 norm and were mis-merged. */
+  if (Number.isFinite(da) && Number.isFinite(db) && Math.abs(da - db) < 0.007 && hx > 0.08) {
     return true
   }
   return false
@@ -78,13 +79,25 @@ export function nativeTextPdfSlotsAreSameSlot(a, b) {
   const by = Number(b?.y)
   const bb = Number(b?.baseline)
   if (![ax, ay, ab, bx, by, bb].every(Number.isFinite)) return false
-  const tol = 16
-  return Math.abs(ax - bx) < tol && Math.abs(ay - by) < tol && Math.abs(ab - bb) < tol
+  /*
+   * Same logical line after tiny re-render drift — not “same column” bullets (often under 16pt apart).
+   * tol=16 caused every new bullet edit to evict the previous line on the same page.
+   */
+  const tolXY = 4
+  const tolB = 3
+  return (
+    Math.abs(ax - bx) < tolXY &&
+    Math.abs(ay - by) < tolXY &&
+    Math.abs(ab - bb) < tolB
+  )
 }
 
 /** Full record match: norm overlap and/or PDF-slot proximity (handles missing norm). */
 export function nativeTextRecordsAreSameSlot(a, b) {
   if (!a || !b) return false
+  const aid = typeof a.blockId === 'string' && a.blockId.length
+  const bid = typeof b.blockId === 'string' && b.blockId.length
+  if (aid && bid && a.blockId !== b.blockId) return false
   if (nativeTextNormsAreSameSlot(a.norm, b.norm)) return true
   return nativeTextPdfSlotsAreSameSlot(a, b)
 }
