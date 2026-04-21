@@ -63,6 +63,26 @@ app.use(
   })
 );
 
+/** Root URL — browsers and uptime checks often hit `/` first (Docker/Render default). */
+app.get('/', (req, res) => {
+  if (req.accepts('html')) {
+    res.type('html').send(`<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>pdfpilot API</title></head><body style="font-family:system-ui,sans-serif;max-width:40rem;margin:2rem;line-height:1.5">
+<h1 style="font-size:1.25rem">pdfpilot API</h1>
+<p>This URL is the <strong>backend</strong> for the PDF editor and tools. There is no web app here — open your <strong>frontend</strong> site instead.</p>
+<p>Useful checks: <a href="/health">GET /health</a> · <a href="/document-flow/capabilities">GET /document-flow/capabilities</a></p>
+</body></html>`);
+    return;
+  }
+  res.json({
+    ok: true,
+    service: 'pdfpilot-api',
+    message: 'Backend only — open the frontend app in the browser.',
+    get: { health: '/health', documentFlowCapabilities: '/document-flow/capabilities' },
+  });
+});
+
 /** Production check: GET https://your-api.onrender.com/health */
 app.get('/health', (_req, res) => {
   const qpdfBin = getQpdfBinary();
