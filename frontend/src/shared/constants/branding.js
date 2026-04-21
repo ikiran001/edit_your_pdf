@@ -38,6 +38,7 @@ const TOOL_DOC_TITLES = {
   '/tools/jpg-to-pdf': 'pdfpilot - JPG to PDF',
   '/tools/scan-to-pdf': 'pdfpilot - Scan to PDF',
   '/tools/unlock-pdf': 'pdfpilot - Unlock PDF',
+  '/tools/encrypt-pdf': 'pdfpilot - Encrypt PDF',
   '/tools/organize-pdf': 'pdfpilot - Organize PDF Pages',
   '/tools/add-watermark': 'pdfpilot - Add Watermark',
   '/tools/pdf-to-word': 'pdfpilot - PDF to Word',

@@ -12,6 +12,7 @@ export const ANALYTICS_TOOL = {
   compress_pdf: 'compress_pdf',
   pdf_to_jpg: 'pdf_to_jpg',
   unlock_pdf: 'unlock_pdf',
+  encrypt_pdf: 'encrypt_pdf',
   organize_pdf: 'organize_pdf',
   watermark_pdf: 'watermark_pdf',
   /** Camera / image scan → single PDF (browser-only). */
@@ -30,6 +31,7 @@ export const REGISTRY_ID_TO_FEATURE = {
   'pdf-to-jpg': ANALYTICS_TOOL.pdf_to_jpg,
   'jpg-to-pdf': ANALYTICS_TOOL.merge_pdf,
   'unlock-pdf': ANALYTICS_TOOL.unlock_pdf,
+  'encrypt-pdf': ANALYTICS_TOOL.encrypt_pdf,
   'organize-pdf': ANALYTICS_TOOL.organize_pdf,
   'add-watermark': ANALYTICS_TOOL.watermark_pdf,
   'scan-to-pdf': ANALYTICS_TOOL.scan_to_pdf,

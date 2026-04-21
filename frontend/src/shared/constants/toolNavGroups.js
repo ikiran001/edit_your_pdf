@@ -25,7 +25,7 @@ export const TOOL_NAV_GROUPS = [
   {
     label: 'Security',
     tint: 'sky',
-    toolIds: ['unlock-pdf'],
+    toolIds: ['unlock-pdf', 'encrypt-pdf'],
   },
 ]
 

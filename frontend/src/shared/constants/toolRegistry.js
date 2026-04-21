@@ -53,6 +53,14 @@ export const TOOL_REGISTRY = [
   },
   { id: 'unlock-pdf', path: '/tools/unlock-pdf', title: 'Unlock PDF', description: 'Remove password in the browser.', implemented: true, icon: 'LockOpen' },
   {
+    id: 'encrypt-pdf',
+    path: '/tools/encrypt-pdf',
+    title: 'Encrypt PDF',
+    description: 'Password-protect with AES-256 (qpdf on the server).',
+    implemented: true,
+    icon: 'Lock',
+  },
+  {
     id: 'add-watermark',
     path: '/tools/add-watermark',
     title: 'Add Watermark',
