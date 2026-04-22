@@ -4,6 +4,7 @@
 # Then point the Node API at Gotenberg (optional fallback for Word → PDF if the API image has LibreOffice):
 #   export GOTENBERG_URL=http://localhost:3044
 # Production Dockerfile installs LibreOffice and sets SOFFICE_PATH=/usr/bin/soffice.
+# The same API image also installs ocrmypdf + Tesseract (eng+hin) for POST /ocr-pdf (searchable PDF).
 # Local API: install LibreOffice and set:
 #   export SOFFICE_PATH=/usr/bin/soffice
 # macOS example:

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
 import { apiUrl } from '../lib/apiBase'
 import { usePagesHistory } from '../hooks/usePagesHistory'
@@ -61,9 +62,9 @@ const ONBOARDING_STORAGE_KEY = 'pdfpilot_editor_onboarding_dismissed'
 const NAMED_COPY_SESSION_ID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
-function hintForSaveError(message) {
+function rawSaveErrorSuggestsOcr(message) {
   const m = String(message || '').toLowerCase()
-  if (
+  return (
     m.includes('ocr') ||
     m.includes('scanned') ||
     m.includes('image-only') ||
@@ -72,8 +73,13 @@ function hintForSaveError(message) {
     m.includes('extractable text') ||
     m.includes('raster') ||
     m.includes('bitmap')
-  ) {
-    return 'This PDF may be mostly images or scans. Editing works best when text is selectable in another PDF viewer. Run OCR elsewhere, then upload again.'
+  )
+}
+
+function hintForSaveError(message) {
+  const m = String(message || '').toLowerCase()
+  if (rawSaveErrorSuggestsOcr(message)) {
+    return 'This PDF may be mostly images or scans. Use the toolkit OCR PDF tool to add a searchable text layer, download the result, then upload it here again. Editing works best when text is selectable in another viewer.'
   }
   if (m.includes('timeout') || m.includes('network') || m.includes('failed to fetch')) {
     return 'We could not reach the server. Check your connection and try Save PDF again.'
@@ -153,6 +159,8 @@ export default function PdfEditor({
   const [editingListSync, setEditingListSync] = useState(false)
   const [saveHint, setSaveHint] = useState(null)
   const [errorHint, setErrorHint] = useState(null)
+  /** When true, error banner shows a link to /tools/ocr-pdf (scan-style save failures). */
+  const [saveErrorSuggestOcr, setSaveErrorSuggestOcr] = useState(false)
   const errorHintTimerRef = useRef(null)
   /** Bumped after a successful save so pdf.js refetches (edited.pdf) instead of a cached original. */
   const [pdfBust, setPdfBust] = useState(0)
@@ -229,14 +237,16 @@ export default function PdfEditor({
     })
   }, [user, sessionId, getFreshIdToken, originalFileName])
 
-  const showErrorHint = useCallback((msg) => {
+  const showErrorHint = useCallback((msg, options = {}) => {
     if (errorHintTimerRef.current != null) {
       window.clearTimeout(errorHintTimerRef.current)
       errorHintTimerRef.current = null
     }
     setErrorHint(msg)
+    setSaveErrorSuggestOcr(Boolean(options.suggestOcr))
     errorHintTimerRef.current = window.setTimeout(() => {
       setErrorHint(null)
+      setSaveErrorSuggestOcr(false)
       errorHintTimerRef.current = null
     }, 8000)
   }, [])
@@ -954,7 +964,10 @@ export default function PdfEditor({
       } catch (e) {
         console.error(e)
         showErrorHint(
-          e?.message || 'Could not update the PDF after removing that edit. Try Save PDF.'
+          e?.message
+            ? hintForSaveError(e.message)
+            : 'Could not update the PDF after removing that edit. Try Save PDF.',
+          { suggestOcr: rawSaveErrorSuggestsOcr(e?.message) }
         )
       } finally {
         setEditingListSync(false)
@@ -992,7 +1005,10 @@ export default function PdfEditor({
       } catch (e) {
         console.error(e)
         showErrorHint(
-          e?.message || 'Could not update the PDF after removing that markup. Try Save PDF.'
+          e?.message
+            ? hintForSaveError(e.message)
+            : 'Could not update the PDF after removing that markup. Try Save PDF.',
+          { suggestOcr: rawSaveErrorSuggestsOcr(e?.message) }
         )
       } finally {
         setEditingListSync(false)
@@ -1044,7 +1060,10 @@ export default function PdfEditor({
       } catch (e) {
         console.error(e)
         showErrorHint(
-          e?.message || 'Could not clear the PDF on the server. Try Save PDF or reload the page.'
+          e?.message
+            ? hintForSaveError(e.message)
+            : 'Could not clear the PDF on the server. Try Save PDF or reload the page.',
+          { suggestOcr: rawSaveErrorSuggestsOcr(e?.message) }
         )
       } finally {
         setEditingListSync(false)
@@ -1092,7 +1111,7 @@ export default function PdfEditor({
     } catch (e) {
       console.error(e)
       trackErrorOccurred(EDIT_TOOL, e?.message || 'save_failed')
-      showErrorHint(hintForSaveError(e?.message))
+      showErrorHint(hintForSaveError(e?.message), { suggestOcr: rawSaveErrorSuggestsOcr(e?.message) })
     } finally {
       setSaving(false)
     }
@@ -1378,17 +1397,34 @@ export default function PdfEditor({
       {errorHint && (
         <div
           role="alert"
-          className="flex items-center justify-between border-b border-red-300 bg-red-50 px-3 py-1.5 text-xs text-red-900 dark:border-red-700 dark:bg-red-950/60 dark:text-red-200"
+          className="flex flex-wrap items-center justify-between gap-2 border-b border-red-300 bg-red-50 px-3 py-2 text-xs text-red-900 dark:border-red-700 dark:bg-red-950/60 dark:text-red-200"
         >
-          <span>{errorHint}</span>
-          <button
-            type="button"
-            aria-label="Dismiss"
-            className="ml-3 shrink-0 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200"
-            onClick={() => setErrorHint(null)}
-          >
-            ✕
-          </button>
+          <span className="min-w-0 flex-1 leading-snug">{errorHint}</span>
+          <div className="flex shrink-0 items-center gap-2">
+            {saveErrorSuggestOcr ? (
+              <Link
+                to="/tools/ocr-pdf"
+                className="rounded-md bg-red-900 px-2.5 py-1 text-[11px] font-semibold text-white no-underline hover:bg-red-950 dark:bg-red-300 dark:text-red-950 dark:hover:bg-red-200"
+              >
+                Open OCR PDF
+              </Link>
+            ) : null}
+            <button
+              type="button"
+              aria-label="Dismiss"
+              className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200"
+              onClick={() => {
+                setErrorHint(null)
+                setSaveErrorSuggestOcr(false)
+                if (errorHintTimerRef.current != null) {
+                  window.clearTimeout(errorHintTimerRef.current)
+                  errorHintTimerRef.current = null
+                }
+              }}
+            >
+              ✕
+            </button>
+          </div>
         </div>
       )}
       <div className="flex min-h-0 flex-1 flex-col md:flex-row">

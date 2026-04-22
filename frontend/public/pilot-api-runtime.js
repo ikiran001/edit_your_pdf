@@ -1,4 +1,5 @@
-/* Default API origin; CI may overwrite this file from the VITE_API_BASE_URL Actions secret before build.
- * Path must NOT start with `/pdf` — Vite dev proxies `/pdf` to the API and would swallow `pdfpilot-*.js`. */
-window.__PDFPILOT_API_BASE__ =
-  window.__PDFPILOT_API_BASE__ || 'https://edit-your-pdf-1.onrender.com'
+/* Default: empty so `npm run dev` uses same-origin URLs and the Vite proxy to localhost:3001.
+ * GitHub Actions overwrites this file before build (see deploy-github-pages.yml) with VITE_API_BASE_URL.
+ * To point local dev at a remote API instead, set VITE_API_BASE_URL in frontend/.env.development.
+ * Path must NOT start with `/pdf…` — Vite proxies `/pdf` to the API. */
+window.__PDFPILOT_API_BASE__ = window.__PDFPILOT_API_BASE__ || ''

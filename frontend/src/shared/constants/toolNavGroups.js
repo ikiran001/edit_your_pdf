@@ -25,6 +25,7 @@ export const TOOL_NAV_GROUPS = [
       'pdf-to-jpg',
       'jpg-to-pdf',
       'scan-to-pdf',
+      'ocr-pdf',
       'word-to-pdf',
       'pdf-to-word',
       'gst-invoice',

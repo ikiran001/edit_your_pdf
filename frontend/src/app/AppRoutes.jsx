@@ -11,6 +11,7 @@ import JpgToPdfPage from '../features/jpg-to-pdf/JpgToPdfPage.jsx'
 import ScanToPdfPage from '../features/scan-to-pdf/ScanToPdfPage.jsx'
 import SignPdfPage from '../features/sign-pdf/SignPdfPage.jsx'
 import UnlockPdfPage from '../features/unlock-pdf/UnlockPdfPage.jsx'
+import OcrPdfPage from '../features/ocr-pdf/OcrPdfPage.jsx'
 import EncryptPdfPage from '../features/encrypt-pdf/EncryptPdfPage.jsx'
 import OrganizePdfPage from '../features/organize-pdf/OrganizePdfPage.jsx'
 import WatermarkPdfPage from '../features/add-watermark/WatermarkPdfPage.jsx'
@@ -78,6 +79,7 @@ export default function AppRoutes() {
         <Route path="/tools/scan-to-pdf" element={<ScanToPdfPage />} />
         <Route path="/tools/sign-pdf" element={<SignPdfPage />} />
         <Route path="/tools/unlock-pdf" element={<UnlockPdfPage />} />
+        <Route path="/tools/ocr-pdf" element={<OcrPdfPage />} />
         <Route path="/tools/encrypt-pdf" element={<EncryptPdfPage />} />
         <Route path="/tools/organize-pdf" element={<OrganizePdfPage />} />
         <Route path="/tools/add-watermark" element={<WatermarkPdfPage />} />
