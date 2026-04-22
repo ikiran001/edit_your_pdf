@@ -43,6 +43,7 @@ const TOOL_DOC_TITLES = {
   '/tools/add-watermark': 'pdfpilot - Add Watermark',
   '/tools/pdf-to-word': 'pdfpilot - PDF to Word',
   '/tools/word-to-pdf': 'pdfpilot - Word to PDF',
+  '/tools/gst-invoice': 'pdfpilot - GST invoice PDF',
   '/terms': 'pdfpilot - Terms of Service',
   '/feedback': 'pdfpilot - Share feedback',
   '/admin/feedback': 'pdfpilot - Feedback admin',

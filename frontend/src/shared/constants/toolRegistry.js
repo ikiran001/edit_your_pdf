@@ -77,4 +77,12 @@ export const TOOL_REGISTRY = [
     implemented: true,
     icon: 'FileText',
   },
+  {
+    id: 'gst-invoice',
+    path: '/tools/gst-invoice',
+    title: 'GST invoice PDF',
+    description: 'Supplier, buyer, HSN lines — download a tax invoice PDF in the browser.',
+    implemented: true,
+    icon: 'Receipt',
+  },
 ]

@@ -16,6 +16,7 @@ import OrganizePdfPage from '../features/organize-pdf/OrganizePdfPage.jsx'
 import WatermarkPdfPage from '../features/add-watermark/WatermarkPdfPage.jsx'
 import ComingSoonToolPage from '../features/placeholder/ComingSoonToolPage.jsx'
 import WordToPdfPage from '../features/word-to-pdf/WordToPdfPage.jsx'
+import GstInvoicePage from '../features/gst-invoice/GstInvoicePage.jsx'
 import MyDocumentsPage from '../features/my-documents/MyDocumentsPage.jsx'
 import TermsOfServicePage from '../features/legal/TermsOfServicePage.jsx'
 import FeedbackPage from '../features/feedback/FeedbackPage.jsx'
@@ -81,6 +82,7 @@ export default function AppRoutes() {
           }
         />
         <Route path="/tools/word-to-pdf" element={<WordToPdfPage />} />
+        <Route path="/tools/gst-invoice" element={<GstInvoicePage />} />
           </Routes>
         </ErrorBoundary>
       </ClientToolDownloadAuthProvider>

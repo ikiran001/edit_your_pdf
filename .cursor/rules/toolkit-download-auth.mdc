@@ -1,0 +1,29 @@
+---
+description: Toolkit pages must gate user-visible PDF/file output behind sign-in when Firebase is enabled.
+globs: frontend/src/features/**/*.jsx
+alwaysApply: false
+---
+
+# Client tool download authentication
+
+New or updated **client-side toolkit** pages (anything under `frontend/src/features/`) that **download a file**, **open a generated PDF in a new tab**, or otherwise hand the user a finished document **must** use the same pattern as Merge PDF, Compress, GST invoice, etc.
+
+1. Import `useClientToolDownloadAuth` from `../../auth/ClientToolDownloadAuthContext.jsx` (adjust path depth).
+2. Call `const { runWithSignInForDownload } = useClientToolDownloadAuth()`.
+3. Wrap the code that triggers download or opens the output PDF:
+
+```js
+await runWithSignInForDownload(
+  async () => {
+    // build bytes/blob, then download and/or track analytics
+  },
+  { onAuthLoading: () => setError('Still checking sign-in… try again in a moment.') }
+)
+```
+
+4. In the surrounding `try/catch`, ignore `e?.code === 'EYP_AUTH_CANCELLED'` (user closed the modal). Handle `EYP_AUTH_LOADING` if you surface errors.
+5. If Firebase is **not** configured, `runWithSignInForDownload` runs the callback immediately (local/dev stays usable).
+
+Brief UI copy is encouraged so users know preview/download may require sign-in when accounts are enabled.
+
+The app wraps routes in `ClientToolDownloadAuthProvider` (`AppRoutes.jsx`); the modal supports Google and email sign-in / sign-up.

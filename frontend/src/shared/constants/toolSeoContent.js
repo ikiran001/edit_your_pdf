@@ -590,4 +590,52 @@ export const TOOL_SEO_BY_ID = {
       },
     ],
   },
+
+  'gst-invoice': {
+    featureName: 'GST invoice PDF',
+    intro: [
+      'Create a simple GST-style tax invoice as a downloadable PDF directly in your browser. Fill supplier and buyer details, line items with HSN and GST%, and pdfpilot totals taxable value plus CGST/SGST (intra-state) or IGST (inter-state) from the two-digit state codes you enter.',
+      'This tool is for drafts and internal paperwork — always confirm format, e-invoicing, and return filing with a qualified chartered accountant before you rely on it for compliance.',
+    ],
+    steps: [
+      'Open GST invoice PDF from the toolkit.',
+      'Enter seller and buyer legal names, addresses, GSTINs, and two-digit state codes (e.g. 27 for Maharashtra).',
+      'Set invoice number, invoice date, and place of supply.',
+      'Add one or more line items: description, HSN/SAC, quantity, taxable rate per unit (before GST), and GST %.',
+      'Click Generate PDF — totals update from your lines and state codes.',
+      'Download the PDF and store or share it like any other document.',
+    ],
+    benefits: [
+      {
+        title: 'No server upload for the form',
+        body: 'Invoice data is turned into a PDF locally in the browser on pdfpilot.',
+      },
+      {
+        title: 'Clear split of taxes',
+        body: 'CGST/SGST vs IGST follows whether supplier and buyer state codes match.',
+      },
+      {
+        title: 'Editable line table',
+        body: 'Add or remove rows for multiple goods or services on one invoice.',
+      },
+      {
+        title: 'Fast for small businesses',
+        body: 'Useful when you already know the numbers and just need a clean PDF attachment.',
+      },
+    ],
+    highlights: [
+      {
+        title: 'HSN and GST% per line',
+        body: 'Each row carries its own rate slab for taxable value and tax math.',
+      },
+      {
+        title: 'Reverse charge flag',
+        body: 'Mark when supply is under reverse charge for your records.',
+      },
+      {
+        title: 'Disclaimer built in',
+        body: 'The PDF reminds readers that professional verification is still required.',
+      },
+    ],
+  },
 }
