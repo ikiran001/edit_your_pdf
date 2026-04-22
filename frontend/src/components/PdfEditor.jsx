@@ -39,7 +39,11 @@ import { isFirebaseClientConfigured } from '../auth/firebaseClient.js'
 import { getFirebaseAuthErrorHint } from '../lib/firebase.js'
 import { persistEditSession } from '../features/edit-pdf/editSessionStorage.js'
 import { fetchEditPdfDownload } from '../features/edit-pdf/editPdfDownload.js'
-import { syncUserLibraryEntry } from '../features/my-documents/userLibrary.js'
+import {
+  duplicateUserSessionOnServer,
+  suggestLibraryDuplicateFileName,
+  syncUserLibraryEntry,
+} from '../features/my-documents/userLibrary.js'
 import { setFeedbackPromptAfterDownload } from '../lib/reviewPromptStorage.js'
 
 const EDIT_TOOL = 'edit_pdf'
@@ -53,6 +57,9 @@ const EDITOR_ZOOM_MAX = 4
 const EMPTY_PAGE_ANNOT_ITEMS = []
 
 const ONBOARDING_STORAGE_KEY = 'pdfpilot_editor_onboarding_dismissed'
+
+const NAMED_COPY_SESSION_ID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 function hintForSaveError(message) {
   const m = String(message || '').toLowerCase()
@@ -130,6 +137,8 @@ export default function PdfEditor({
   originalFileName = 'document.pdf',
   downloadToken = null,
   onDownloadTokenConsumed,
+  /** After a successful “named copy”, parent switches to the new `sessionId` (see POST /user-sessions/duplicate). */
+  onSessionFork = null,
 }) {
   const [pdfDoc, setPdfDoc] = useState(null)
   const [loadError, setLoadError] = useState(null)
@@ -137,6 +146,7 @@ export default function PdfEditor({
   const [activeTool, setActiveTool] = useState('editText')
   const [activePage, setActivePage] = useState(0)
   const [saving, setSaving] = useState(false)
+  const [namedCopyBusy, setNamedCopyBusy] = useState(false)
   const [downloading, setDownloading] = useState(false)
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false)
   /** True while POST /edit + PDF reload after edits-list remove / clear (keeps UI in sync with file). */
@@ -1088,6 +1098,63 @@ export default function PdfEditor({
     }
   }
 
+  const namedCopyUiEnabled = Boolean(user) && typeof onSessionFork === 'function'
+
+  const handleNamedCopy = useCallback(async () => {
+    if (!user || typeof onSessionFork !== 'function') return
+    const suggestion = suggestLibraryDuplicateFileName(originalFileName)
+    const entered = window.prompt(
+      'Name for this copy (shown in My Documents).\nWe save your PDF first, then open the new copy.',
+      suggestion
+    )
+    if (entered === null) return
+    const trimmed = String(entered).trim()
+    const fileName = trimmed.length > 0 ? trimmed : suggestion
+    cancelScheduledAutosave()
+    setNamedCopyBusy(true)
+    try {
+      await commitActiveInlineEditor()
+      await persistPdfToServer()
+      const dup = await duplicateUserSessionOnServer({
+        getFreshIdToken,
+        sourceSessionId: sessionId,
+        fileName,
+      })
+      if (!dup.ok) {
+        const msg =
+          dup.error === 'admin_unavailable'
+            ? 'Named copy needs Firebase Admin on the API (for local dev, set FIREBASE_SERVICE_ACCOUNT_JSON).'
+            : String(dup.error || 'Could not create a named copy.')
+        throw new Error(msg)
+      }
+      if (!NAMED_COPY_SESSION_ID_RE.test(dup.newSessionId)) {
+        throw new Error('Unexpected server response when creating a named copy.')
+      }
+      if (dup.libraryIndexed === false) {
+        console.warn('[PdfEditor] Named copy created but Firestore library index may be skipped.')
+      }
+      showToast(`Opening copy: ${dup.fileName}`)
+      onSessionFork({ sessionId: dup.newSessionId, fileName: dup.fileName })
+    } catch (e) {
+      console.error(e)
+      trackErrorOccurred(EDIT_TOOL, e?.message || 'named_copy_failed')
+      showErrorHint(String(e?.message || 'Could not create a named copy.'))
+    } finally {
+      setNamedCopyBusy(false)
+    }
+  }, [
+    user,
+    onSessionFork,
+    originalFileName,
+    cancelScheduledAutosave,
+    commitActiveInlineEditor,
+    persistPdfToServer,
+    getFreshIdToken,
+    sessionId,
+    showToast,
+    showErrorHint,
+  ])
+
   const dismissDownloadAuthModal = useCallback(() => {
     if (downloadAuthBusy) return
     setDownloadAuthModalOpen(false)
@@ -1450,6 +1517,10 @@ export default function PdfEditor({
           authLoading={authLoading}
           listSyncing={editingListSync}
           lastSavedAt={lastSavedAt}
+          namedCopyEnabled={namedCopyUiEnabled}
+          userSignedIn={Boolean(user)}
+          namedCopyBusy={namedCopyBusy}
+          onNamedCopy={handleNamedCopy}
         />
       </div>
       <SignatureCreationModal

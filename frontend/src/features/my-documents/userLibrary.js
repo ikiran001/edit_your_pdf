@@ -2,6 +2,14 @@ import { apiUrl } from '../../lib/apiBase.js'
 
 const EDIT_TOOL_KEY = 'edit_pdf'
 
+/** Suggested filename for a duplicate row in My Documents or the editor named-copy prompt. */
+export function suggestLibraryDuplicateFileName(fileName) {
+  const s = String(fileName || 'document.pdf').trim() || 'document.pdf'
+  const m = s.match(/^(.+)\.pdf$/i)
+  if (m?.[1]) return `${m[1]} (copy).pdf`
+  return `${s} (copy).pdf`
+}
+
 /**
  * Cached `/health` probe: avoids repeated `/user-sessions/register` 503s when the API does not have
  * `FIREBASE_SERVICE_ACCOUNT_JSON` set (e.g. local dev). One fetch per page load.
@@ -37,6 +45,80 @@ export function libraryToolLabel(tool) {
 /**
  * @param {{ getFreshIdToken: () => Promise<string|null>, sessionId: string, fileName?: string, tool?: string }} p
  */
+/**
+ * @param {{ getFreshIdToken: () => Promise<string|null>, sourceSessionId: string, fileName?: string }} p
+ */
+/**
+ * @param {{ getFreshIdToken: () => Promise<string|null>, sessionId: string, fileName: string }} p
+ */
+export async function renameUserSessionOnServer({ getFreshIdToken, sessionId, fileName }) {
+  const token = await getFreshIdToken()
+  if (!token) return { ok: false, status: 0, error: 'no_token' }
+  const adminReady = await probeAdminReady()
+  if (!adminReady) {
+    return { ok: false, status: 0, error: 'admin_unavailable', libraryIndexed: false }
+  }
+  try {
+    const res = await fetch(apiUrl(`/user-sessions/${encodeURIComponent(sessionId)}`), {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ fileName: fileName || 'document.pdf' }),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) {
+      const err = data?.message || data?.error || `HTTP ${res.status}`
+      return { ok: false, status: res.status, error: err, libraryIndexed: false }
+    }
+    return {
+      ok: true,
+      status: res.status,
+      fileName: typeof data.fileName === 'string' ? data.fileName : fileName,
+      libraryIndexed: Boolean(data.libraryIndexed),
+    }
+  } catch (e) {
+    return { ok: false, status: 0, error: e?.message || 'network_error', libraryIndexed: false }
+  }
+}
+
+export async function duplicateUserSessionOnServer({ getFreshIdToken, sourceSessionId, fileName }) {
+  const token = await getFreshIdToken()
+  if (!token) return { ok: false, status: 0, error: 'no_token' }
+  const adminReady = await probeAdminReady()
+  if (!adminReady) {
+    return { ok: false, status: 0, error: 'admin_unavailable', libraryIndexed: false }
+  }
+  try {
+    const res = await fetch(apiUrl('/user-sessions/duplicate'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        sourceSessionId,
+        fileName: fileName || 'document.pdf',
+      }),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) {
+      const err = data?.message || data?.error || `HTTP ${res.status}`
+      return { ok: false, status: res.status, error: err, libraryIndexed: false }
+    }
+    return {
+      ok: true,
+      status: res.status,
+      newSessionId: String(data.newSessionId || ''),
+      fileName: typeof data.fileName === 'string' ? data.fileName : fileName || 'document.pdf',
+      libraryIndexed: Boolean(data.libraryIndexed),
+    }
+  } catch (e) {
+    return { ok: false, status: 0, error: e?.message || 'network_error', libraryIndexed: false }
+  }
+}
+
 export async function registerUserSessionOnServer({ getFreshIdToken, sessionId, fileName, tool }) {
   const token = await getFreshIdToken()
   if (!token) return { ok: false, status: 0, error: 'no_token' }

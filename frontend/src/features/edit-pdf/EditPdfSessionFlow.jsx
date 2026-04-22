@@ -36,6 +36,17 @@ export default function EditPdfSessionFlow({
 
   const sessionId = editSession?.sessionId ?? null
 
+  const handleSessionFork = useCallback(
+    ({ sessionId: forkId, fileName }) => {
+      setEditSession({
+        sessionId: forkId,
+        downloadToken: null,
+        fileName: fileName || 'document.pdf',
+      })
+    },
+    [setEditSession]
+  )
+
   const onFileSelected = useCallback(
     async (file) => {
       setUploadError(null)
@@ -135,6 +146,7 @@ export default function EditPdfSessionFlow({
           prev ? { ...prev, downloadToken: null } : prev
         )
       }
+      onSessionFork={handleSessionFork}
       onBack={onLeaveEditor}
     />
   )

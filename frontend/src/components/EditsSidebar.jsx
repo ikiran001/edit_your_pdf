@@ -55,6 +55,11 @@ export default function EditsSidebar({
   listSyncing = false,
   /** Set when the server last accepted a full persist (save, autosave, list sync, etc.). */
   lastSavedAt = null,
+  /** When true and signed in, show “Save named copy” (server duplicate + library row). */
+  namedCopyEnabled = false,
+  userSignedIn = false,
+  namedCopyBusy = false,
+  onNamedCopy,
 }) {
   const entries = []
 
@@ -87,7 +92,7 @@ export default function EditsSidebar({
   }
 
   const count = entries.length
-  const busy = saving || downloading || listSyncing
+  const busy = saving || downloading || listSyncing || namedCopyBusy
   const downloadBusy = busy || authLoading
   const savedLabel = formatLastSaved(lastSavedAt)
 
@@ -173,6 +178,17 @@ export default function EditsSidebar({
           >
             {saving ? MSG.finalizingPdf : 'Save PDF'}
           </button>
+          {namedCopyEnabled && userSignedIn && typeof onNamedCopy === 'function' ? (
+            <button
+              type="button"
+              onMouseDown={(ev) => ev.preventDefault()}
+              onClick={onNamedCopy}
+              disabled={busy || authLoading}
+              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-semibold text-zinc-800 shadow-sm hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800/80"
+            >
+              {namedCopyBusy ? 'Creating named copy…' : 'Save named copy…'}
+            </button>
+          ) : null}
           <button
             type="button"
             onMouseDown={(ev) => ev.preventDefault()}
