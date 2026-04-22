@@ -27,6 +27,18 @@ function truncate(s, max = 48) {
  * Lists session edits (native text replacements + page annotations) with per-item remove
  * and session-level Save / Download / Clear all.
  */
+function formatLastSaved(ts) {
+  if (ts == null || !Number.isFinite(ts)) return null
+  try {
+    return new Date(ts).toLocaleString(undefined, {
+      dateStyle: 'short',
+      timeStyle: 'short',
+    })
+  } catch {
+    return null
+  }
+}
+
 export default function EditsSidebar({
   nativeTextEdits = [],
   pagesItems = {},
@@ -41,6 +53,8 @@ export default function EditsSidebar({
   /** True while Firebase auth state is still resolving — avoids racing Download before we know guest vs signed-in. */
   authLoading = false,
   listSyncing = false,
+  /** Set when the server last accepted a full persist (save, autosave, list sync, etc.). */
+  lastSavedAt = null,
 }) {
   const entries = []
 
@@ -75,6 +89,7 @@ export default function EditsSidebar({
   const count = entries.length
   const busy = saving || downloading || listSyncing
   const downloadBusy = busy || authLoading
+  const savedLabel = formatLastSaved(lastSavedAt)
 
   return (
     <aside
@@ -90,6 +105,15 @@ export default function EditsSidebar({
           Remove one change with ✕, or clear everything. Use Save PDF then Download PDF when
           you are done.
         </p>
+        {savedLabel ? (
+          <p className="mt-1 text-[10px] leading-snug text-zinc-400 dark:text-zinc-500">
+            Last saved to session: <span className="font-medium text-zinc-600 dark:text-zinc-400">{savedLabel}</span>
+          </p>
+        ) : (
+          <p className="mt-1 text-[10px] leading-snug text-zinc-400 dark:text-zinc-500">
+            Not synced to the server yet — use Save PDF when you want a full write.
+          </p>
+        )}
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-2 py-2">

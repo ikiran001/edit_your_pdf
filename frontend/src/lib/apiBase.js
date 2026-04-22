@@ -1,7 +1,7 @@
 /**
  * API origin (no trailing slash), in order:
  * 1. `VITE_API_BASE_URL` at build time (preferred).
- * 2. `window.__PDFPILOT_API_BASE__` from `pdfpilot-api-config.js` (CI writes this from the same secret).
+ * 2. `window.__PDFPILOT_API_BASE__` from `/pilot-api-runtime.js` (public/; CI may overwrite before build).
  *
  * Local dev: leave both unset; Vite proxies `/upload`, `/edit`, etc. to port 3001.
  */
@@ -33,7 +33,7 @@ export function isApiBaseConfigured() {
  * Whether the browser can reach `/feedback` (and other proxied API routes).
  * In **development**, Vite proxies same-origin `/feedback` to the backend without `VITE_API_BASE_URL`.
  * In **production** builds, requests go to the deployed site host — set `VITE_API_BASE_URL` or
- * `pdfpilot-api-config.js` so feedback hits your API, not static hosting.
+ * `pilot-api-runtime.js` so feedback hits your API, not static hosting.
  */
 export function isFeedbackApiReachable() {
   if (isApiBaseConfigured()) return true

@@ -54,6 +54,26 @@ const EMPTY_PAGE_ANNOT_ITEMS = []
 
 const ONBOARDING_STORAGE_KEY = 'pdfpilot_editor_onboarding_dismissed'
 
+function hintForSaveError(message) {
+  const m = String(message || '').toLowerCase()
+  if (
+    m.includes('ocr') ||
+    m.includes('scanned') ||
+    m.includes('image-only') ||
+    m.includes('image only') ||
+    m.includes('no text') ||
+    m.includes('extractable text') ||
+    m.includes('raster') ||
+    m.includes('bitmap')
+  ) {
+    return 'This PDF may be mostly images or scans. Editing works best when text is selectable in another PDF viewer. Run OCR elsewhere, then upload again.'
+  }
+  if (m.includes('timeout') || m.includes('network') || m.includes('failed to fetch')) {
+    return 'We could not reach the server. Check your connection and try Save PDF again.'
+  }
+  return String(message || 'Save failed — check your connection and try again.')
+}
+
 function readEditorOnboardingVisible() {
   try {
     return localStorage.getItem(ONBOARDING_STORAGE_KEY) !== '1'
@@ -130,7 +150,10 @@ export default function PdfEditor({
   const scrollRef = useRef(null)
   const pagesItemsRef = useRef({})
   const nativeTextEditsRef = useRef([])
+  const lastServerSaveAtRef = useRef(0)
+  const lastEditAtRef = useRef(0)
   const [nativeTextEdits, setNativeTextEdits] = useState([])
+  const [lastSavedAt, setLastSavedAt] = useState(null)
   const autosaveTimerRef = useRef(null)
   /** Single source of truth for on-canvas text: block id → latest string (survives re-parse / re-render). */
   const [blockTextOverrides, setBlockTextOverrides] = useState({})
@@ -255,17 +278,20 @@ export default function PdfEditor({
   }, [])
 
   const textFormatInline = useMemo(() => {
-    const show =
-      (activeTool === 'editText' &&
-        editTextMode &&
-        (inlineTextEditorOpen || addedTextFormatOpen || annotFormatTarget != null)) ||
+    const showStrip =
+      (activeTool === 'editText' && editTextMode) ||
       activeTool === 'text' ||
       textBoxOverlayActions != null
-    if (!show) return null
+    if (!showStrip) return null
+    const activelyEditing =
+      Boolean(textBoxOverlayActions) ||
+      (activeTool === 'editText' &&
+        editTextMode &&
+        (inlineTextEditorOpen || addedTextFormatOpen || annotFormatTarget != null))
     return {
       format: textFormat,
       onChange: setTextFormat,
-      disabled: false,
+      disabled: !activelyEditing,
       overlayActions: textBoxOverlayActions
         ? { done: textBoxOverlayActions.done, reset: textBoxOverlayActions.reset }
         : null,
@@ -349,6 +375,26 @@ export default function PdfEditor({
     setShowOnboarding(false)
   }, [])
 
+  const editorHasUnpersistedEdits = useCallback(() => {
+    const hasNative = nativeTextEditsRef.current.length > 0
+    const hasAnnot = Object.values(pagesItemsRef.current).some((arr) => arr && arr.length > 0)
+    if (!hasNative && !hasAnnot) return false
+    return lastEditAtRef.current > lastServerSaveAtRef.current
+  }, [])
+
+  const handleBackClick = useCallback(() => {
+    if (editorHasUnpersistedEdits()) {
+      if (
+        !window.confirm(
+          'Leave the editor? Unsaved changes may be lost. Use Save PDF first if you want them on the server.'
+        )
+      ) {
+        return
+      }
+    }
+    onBack()
+  }, [onBack, editorHasUnpersistedEdits])
+
   const handleUndo = useCallback(() => {
     if (!canUndo) return
     undo()
@@ -423,6 +469,12 @@ export default function PdfEditor({
         } else {
           reset({})
         }
+        window.setTimeout(() => {
+          if (cancelled) return
+          const now = Date.now()
+          lastServerSaveAtRef.current = now
+          lastEditAtRef.current = now
+        }, 0)
       } catch (e) {
         if (!cancelled) setLoadError(e?.message || 'Failed to load PDF')
       }
@@ -565,7 +617,29 @@ export default function PdfEditor({
     if (import.meta.env.DEV) {
       console.debug('[save] /edit ok', res.status)
     }
+    const syncedAt = Date.now()
+    setLastSavedAt(syncedAt)
+    lastServerSaveAtRef.current = syncedAt
   }, [sessionId])
+
+  useEffect(() => {
+    if (!pdfDoc) return
+    lastEditAtRef.current = Date.now()
+  }, [pdfDoc, nativeTextEdits, pagesItems])
+
+  useEffect(() => {
+    const onBeforeUnload = (e) => {
+      if (!pdfDoc) return
+      const hasNative = nativeTextEditsRef.current.length > 0
+      const hasAnnot = Object.values(pagesItemsRef.current).some((arr) => arr && arr.length > 0)
+      if (!hasNative && !hasAnnot) return
+      if (lastEditAtRef.current <= lastServerSaveAtRef.current) return
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', onBeforeUnload)
+    return () => window.removeEventListener('beforeunload', onBeforeUnload)
+  }, [pdfDoc])
 
   const reloadPdfFromServer = useCallback(() => {
     setPdfDoc(null)
@@ -1008,7 +1082,7 @@ export default function PdfEditor({
     } catch (e) {
       console.error(e)
       trackErrorOccurred(EDIT_TOOL, e?.message || 'save_failed')
-      showErrorHint(e.message || 'Save failed — check your connection and try again.')
+      showErrorHint(hintForSaveError(e?.message))
     } finally {
       setSaving(false)
     }
@@ -1165,7 +1239,7 @@ export default function PdfEditor({
         <button
           type="button"
           className="fx-focus-ring rounded-lg bg-zinc-200 px-4 py-2.5 text-sm font-medium transition hover:bg-zinc-300 active:scale-[0.98] dark:bg-zinc-700 dark:hover:bg-zinc-600"
-          onClick={onBack}
+          onClick={handleBackClick}
         >
           Back
         </button>
@@ -1265,7 +1339,7 @@ export default function PdfEditor({
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={onBack}
+              onClick={handleBackClick}
               className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900"
             >
               ← New upload
@@ -1274,7 +1348,12 @@ export default function PdfEditor({
               Session <code className="text-xs">{sessionId.slice(0, 8)}…</code>
             </span>
           </div>
-          {showOnboarding && <EditorOnboardingBanner onDismiss={dismissOnboarding} />}
+          {showOnboarding && (
+            <EditorOnboardingBanner
+              onDismiss={dismissOnboarding}
+              onOpenShortcuts={() => setShortcutsOpen(true)}
+            />
+          )}
           <p className="mb-3 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
             {MSG.editorSessionPrivacyLine}
           </p>
@@ -1370,6 +1449,7 @@ export default function PdfEditor({
           downloading={downloading}
           authLoading={authLoading}
           listSyncing={editingListSync}
+          lastSavedAt={lastSavedAt}
         />
       </div>
       <SignatureCreationModal

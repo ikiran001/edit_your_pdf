@@ -71,6 +71,7 @@ export default function Toolbar({
       {onEditTextModeChange && (
         <button
           type="button"
+          aria-pressed={editTextMode}
           onClick={() => onEditTextModeChange(!editTextMode)}
           title="Show or hide detected text boxes and inline editing"
           className={editModeClass}
@@ -87,6 +88,14 @@ export default function Toolbar({
         <button
           key={t.id}
           type="button"
+          aria-pressed={activeTool === t.id}
+          title={
+            t.id === 'editText'
+              ? 'Change existing PDF wording. Ctrl+Enter applies the current line.'
+              : t.id === 'text'
+                ? 'Place a new text box on the page.'
+                : 'Place your saved signature.'
+          }
           onClick={() => onToolChange(t.id === activeTool ? null : t.id)}
           className={toolButtonClass(activeTool === t.id)}
         >
@@ -112,6 +121,14 @@ export default function Toolbar({
         <button
           key={t.id}
           type="button"
+          aria-pressed={activeTool === t.id}
+          title={
+            t.id === 'draw'
+              ? 'Freehand markup on the page.'
+              : t.id === 'highlight'
+                ? 'Highlighter strokes.'
+                : 'Draw rectangles on the page.'
+          }
           onClick={() => onToolChange(t.id === activeTool ? null : t.id)}
           className={toolButtonClass(activeTool === t.id)}
         >
@@ -205,17 +222,22 @@ export default function Toolbar({
             </span>
           )}
           {typeof onFlattenFormsOnSaveChange === 'function' && (
-            <label className="flex cursor-pointer select-none items-center justify-end gap-2 text-[11px] text-zinc-600 dark:text-zinc-400">
-              <input
-                type="checkbox"
-                className="h-3.5 w-3.5 shrink-0 rounded border-zinc-400 text-emerald-600 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:border-zinc-500"
-                checked={flattenFormsOnSave}
-                onChange={(e) => onFlattenFormsOnSaveChange(e.target.checked)}
-              />
-              <span title="Bakes fillable fields into the page so Chrome/Edge/Acrobat no longer show blue field shading. Fields become static after save.">
-                Flatten forms on save
+            <div className="flex max-w-[14rem] flex-col items-end gap-0.5 text-[11px] text-zinc-600 sm:max-w-[18rem] dark:text-zinc-400">
+              <label className="flex cursor-pointer select-none items-center justify-end gap-2">
+                <input
+                  type="checkbox"
+                  className="h-3.5 w-3.5 shrink-0 rounded border-zinc-400 text-emerald-600 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:border-zinc-500"
+                  checked={flattenFormsOnSave}
+                  onChange={(e) => onFlattenFormsOnSaveChange(e.target.checked)}
+                />
+                <span title="Bakes fillable fields into the page so Chrome/Edge/Acrobat no longer show blue field shading. Fields become static after save.">
+                  Flatten forms on save
+                </span>
+              </label>
+              <span className="hidden text-right leading-snug text-[10px] text-zinc-500 sm:block dark:text-zinc-500">
+                {MSG.editorFlattenHelper}
               </span>
-            </label>
+            </div>
           )}
           {fileActions && (
             <div className="flex flex-wrap justify-end gap-2">

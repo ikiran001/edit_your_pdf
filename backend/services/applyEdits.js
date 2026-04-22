@@ -84,21 +84,24 @@ function parseHexColor(hex) {
 }
 
 /**
- * Shrink the native-text erase mask slightly on each side. The mask is drawn on top of the
- * existing page content; a full-bleed rectangle covers nearby vector strokes (table rules,
- * form borders). Insetting keeps glyphs covered while leaving grid lines that sit on cell
- * edges much more often intact.
+ * Shrink the native-text erase mask on each side. The mask is drawn on top of existing
+ * content; a full-bleed rectangle covers vector strokes (table rules). Insetting keeps glyphs
+ * covered while leaving horizontal rules between rows / vertical rules on cell edges intact.
+ *
+ * Vertical asymmetry: inset more at the **bottom** (next row’s rule often sits on the lower
+ * edge of the pdf.js bbox) and a bit more horizontally so column borders survive.
  */
-function tightenNativeTextMaskRect(maskX, maskY, maskW, maskH, fontSizePt) {
+export function tightenNativeTextMaskRect(maskX, maskY, maskW, maskH, fontSizePt) {
   const fs = Math.max(4, Math.min(144, Number(fontSizePt) || 12));
-  const horiz = Math.min(maskW * 0.085, Math.max(0.55, fs * 0.085));
-  const vert = Math.min(maskH * 0.14, Math.max(0.75, fs * 0.1));
+  const horiz = Math.min(maskW * 0.11, Math.max(0.65, fs * 0.095));
+  const vertTop = Math.min(maskH * 0.13, Math.max(0.65, fs * 0.095));
+  const vertBot = Math.min(maskH * 0.24, Math.max(1.05, fs * 0.14));
   const nx = maskX + horiz;
-  const ny = maskY + vert;
+  const ny = maskY + vertTop;
   const nw = maskW - 2 * horiz;
-  const nh = maskH - 2 * vert;
-  const minW = Math.max(2, fs * 0.38);
-  const minH = Math.max(2, fs * 0.52);
+  const nh = maskH - vertTop - vertBot;
+  const minW = Math.max(2, fs * 0.36);
+  const minH = Math.max(2, fs * 0.48);
   if (nw < minW || nh < minH) {
     return { x: maskX, y: maskY, width: maskW, height: maskH };
   }
@@ -201,7 +204,8 @@ export async function applyEditsToPdf(pdfBytes, editsPayload, options = {}) {
               }
             }
           }
-          const pad = Math.max(2, Math.min(7, fontSizePt * 0.17));
+          /* Slightly tighter than before — large pads make table/grid strokes disappear under the mask. */
+          const pad = Math.max(1.25, Math.min(5, fontSizePt * 0.13));
           const textColor = parseHexColor(item.color);
           let opacity = Number(item.opacity);
           if (!Number.isFinite(opacity)) opacity = 1;
@@ -264,6 +268,13 @@ export async function applyEditsToPdf(pdfBytes, editsPayload, options = {}) {
             maskY = cy - maskH / 2;
           }
 
+          /* Grow for multi-line *before* tighten + draw so the white-out matches drawn text. */
+          const nativeLines = raw.split('\n');
+          const nativeLineStep = fontSizePt * ANNOT_UI_LINE_HEIGHT;
+          if (nativeLines.length > 1) {
+            maskH = Math.max(maskH, nativeLines.length * nativeLineStep);
+          }
+
           {
             const t = tightenNativeTextMaskRect(maskX, maskY, maskW, maskH, fontSizePt);
             maskX = t.x;
@@ -285,13 +296,6 @@ export async function applyEditsToPdf(pdfBytes, editsPayload, options = {}) {
             height: maskH,
             color: parseHexColor(maskHex),
           });
-
-          /* Expand mask height to cover all lines before alignment/drawing. */
-          const nativeLines = raw.split('\n');
-          const nativeLineStep = fontSizePt * ANNOT_UI_LINE_HEIGHT;
-          if (nativeLines.length > 1) {
-            maskH = Math.max(maskH, nativeLines.length * nativeLineStep);
-          }
 
           if (align === 'center') {
             textX = maskX + (maskW - textW) / 2;

@@ -40,7 +40,7 @@ jobs:
             echo "Then re-run this workflow."
             exit 1
           fi
-      - name: Write pdfpilot-api-config.js (runtime API base fallback)
+      - name: Write pilot-api-runtime.js (runtime API base fallback)
         working-directory: frontend
         env:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
@@ -49,7 +49,7 @@ jobs:
           const fs = require('fs')
           const u = String(process.env.VITE_API_BASE_URL || '').trim().replace(/\/+$/, '')
           fs.writeFileSync(
-            'public/pdfpilot-api-config.js',
+            'public/pilot-api-runtime.js',
             `window.__PDFPILOT_API_BASE__=${JSON.stringify(u)}\n`
           )
           NODE

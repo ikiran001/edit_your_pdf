@@ -34,8 +34,13 @@ export default function ToolbarTextFormatInline({ format, onChange, disabled, ov
   return (
     <div
       data-text-format-panel
-      className={`flex flex-wrap items-center gap-x-2 gap-y-2 sm:gap-x-3 ${disabled ? 'pointer-events-none opacity-50' : ''}`}
+      className={`flex flex-wrap items-center gap-x-2 gap-y-2 transition-opacity duration-200 sm:gap-x-3 ${
+        disabled
+          ? 'pointer-events-none cursor-not-allowed select-none opacity-45 saturate-[0.65] dark:opacity-40'
+          : ''
+      }`}
       aria-label="Text formatting"
+      aria-disabled={disabled || undefined}
     >
       <span className="text-[11px] font-bold uppercase tracking-wide text-zinc-700 dark:text-zinc-200 sm:text-xs">
         Text format
@@ -139,6 +144,19 @@ export default function ToolbarTextFormatInline({ format, onChange, disabled, ov
           maxLength={7}
         />
       </div>
+      <p className="basis-full text-[11px] leading-snug text-zinc-600 dark:text-zinc-300">
+        {disabled ? (
+          <>
+            Tap a line on the page (or use Add Text) — these controls turn on while you are editing so you
+            can set colour, font, and size.
+          </>
+        ) : (
+          <>
+            Pick any text colour you like — use the swatch or hex box so wording stays clear on your page
+            background.
+          </>
+        )}
+      </p>
     </div>
   )
 }

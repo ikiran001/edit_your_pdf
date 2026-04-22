@@ -74,8 +74,9 @@ export default function EditPdfShortcutsModal({ open, onClose }) {
             Not in this build
           </h3>
           <p className="mt-1.5 mb-0 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
-            OCR for scanned PDFs, version history, shareable links, and in-app page reorder need backend or heavy
-            services — they are roadmap items, not hidden toggles.
+            If nothing highlights when you tap the page, the file may be image-only (a scan) — our editor needs
+            selectable text. OCR, version history, shareable links, and in-app page reorder are roadmap items, not
+            hidden toggles.
           </p>
         </section>
       </div>
