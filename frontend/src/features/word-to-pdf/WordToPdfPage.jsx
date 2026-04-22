@@ -14,6 +14,7 @@ import {
 } from '../../lib/analytics.js'
 import { ANALYTICS_TOOL } from '../../shared/constants/analyticsTools.js'
 import { docTitleForPath } from '../../shared/constants/branding.js'
+import { useClientToolDownloadAuth } from '../../auth/ClientToolDownloadAuthContext.jsx'
 
 const WORD_TO_PDF_TOOL = ANALYTICS_TOOL.word_to_pdf
 const DOC_TITLE = docTitleForPath('/tools/word-to-pdf')
@@ -29,6 +30,7 @@ function triggerDownloadBlob(blob, filename) {
 }
 
 export default function WordToPdfPage() {
+  const { runWithSignInForDownload } = useClientToolDownloadAuth()
   /** loading | ready | error — avoids showing “converter not configured” before we know, or on fetch failure */
   const [capsStatus, setCapsStatus] = useState(() =>
     import.meta.env.PROD && !isApiBaseConfigured() ? 'error' : 'loading'
@@ -119,17 +121,38 @@ export default function WordToPdfPage() {
       const blob = await r.blob()
       const base = (file.name || 'document').replace(/\.docx$/i, '') || 'document'
       const outName = `${base}.pdf`
-      triggerDownloadBlob(blob, outName)
-      setSuccessHint(
-        `“${outName}” should appear in your downloads. If nothing happens, allow downloads for this site or check the toolbar.`
+
+      /* Conversion is done; require sign-in (when Firebase is on) before triggering the browser download. */
+      await runWithSignInForDownload(
+        async () => {
+          setActionError(null)
+          triggerDownloadBlob(blob, outName)
+          setSuccessHint(
+            `“${outName}” should appear in your downloads. If nothing happens, allow downloads for this site or check the toolbar.`
+          )
+          trackFileDownloaded({
+            tool: WORD_TO_PDF_TOOL,
+            file_size: blob.size / 1024,
+            total_pages: 1,
+          })
+          trackToolCompleted(WORD_TO_PDF_TOOL, true)
+        },
+        {
+          onAuthLoading: () =>
+            setActionError('Checking sign-in… If you are not logged in, you will be asked to sign in before the PDF downloads.'),
+        }
       )
-      trackFileDownloaded({
-        tool: WORD_TO_PDF_TOOL,
-        file_size: blob.size / 1024,
-        total_pages: 1,
-      })
-      trackToolCompleted(WORD_TO_PDF_TOOL, true)
     } catch (e) {
+      if (e?.code === 'EYP_AUTH_CANCELLED') {
+        setActionError(
+          'Sign-in was dismissed. Your file was converted, but the PDF was not downloaded. Sign in when prompted to download, or convert again.'
+        )
+        return
+      }
+      if (e?.code === 'EYP_AUTH_LOADING') {
+        setActionError(e.message || 'Still checking sign-in. Try again in a moment.')
+        return
+      }
       trackErrorOccurred(WORD_TO_PDF_TOOL, e?.message || 'convert_docx_failed')
       let msg = e?.message || 'Conversion failed'
       if (e?.name === 'TimeoutError' || e?.name === 'AbortError') {
@@ -146,7 +169,7 @@ export default function WordToPdfPage() {
     } finally {
       setBusy(false)
     }
-  }, [])
+  }, [runWithSignInForDownload])
 
   const onDocxFiles = useCallback(
     (files) => {
@@ -273,8 +296,9 @@ export default function WordToPdfPage() {
               </div>
             ) : (
               <p className="rounded-xl border border-zinc-200 bg-zinc-50/80 px-4 py-3 text-center text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-400">
-                Files stay on the line while converting — you can leave this tab open and grab the download when it
-                appears.
+                If you are <strong>not signed in</strong>, we convert your file first, then ask you to <strong>sign in</strong> before the PDF downloads (same as other download tools when accounts are enabled).
+                {' '}
+                Files stay on the line while converting — keep this tab open.
                 {caps?.docxToPdfViaSoffice && !caps?.docxToPdfViaGotenberg ? (
                   <>
                     {' '}
