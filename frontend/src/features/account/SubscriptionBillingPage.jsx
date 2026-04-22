@@ -75,41 +75,31 @@ export default function SubscriptionBillingPage() {
           {loading && !me ? (
             <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">Loading…</p>
           ) : (
-            <dl className="mt-3 space-y-2 text-sm text-zinc-700 dark:text-zinc-300">
-              <div className="flex flex-wrap justify-between gap-2">
-                <dt className="text-zinc-500 dark:text-zinc-400">Plan</dt>
-                <dd className="font-medium text-zinc-900 dark:text-zinc-100">
-                  {sub?.planLabel || 'Free'}
-                </dd>
-              </div>
-              <div className="flex flex-wrap justify-between gap-2">
-                <dt className="text-zinc-500 dark:text-zinc-400">Renewal</dt>
-                <dd>
-                  {sub?.autoRenew
-                    ? 'Automatic (card)'
-                    : 'Manual — purchase again before expiry to extend Pro.'}
-                </dd>
-              </div>
-              <div className="flex flex-wrap justify-between gap-2">
-                <dt className="text-zinc-500 dark:text-zinc-400">Pro active until</dt>
-                <dd>{sub?.isPaid ? formatIso(sub?.expiresAt) : '—'}</dd>
-              </div>
-              <div className="flex flex-wrap justify-between gap-2">
-                <dt className="text-zinc-500 dark:text-zinc-400">Cancellation</dt>
-                <dd>
-                  {sub?.cancellationRequested
-                    ? 'You asked to cancel — benefits stay until expiry (no auto-charge).'
-                    : 'Not cancelled'}
-                </dd>
-              </div>
-              <div className="flex flex-wrap justify-between gap-2">
-                <dt className="text-zinc-500 dark:text-zinc-400">Downloads today (UTC)</dt>
-                <dd>
-                  {daily?.unlimited
-                    ? 'Unlimited (Pro)'
-                    : `${daily?.usedToday ?? 0} / ${daily?.limit ?? 3} — resets ${formatIso(daily?.resetsAtUtc)}`}
-                </dd>
-              </div>
+            <dl className="mt-3 grid grid-cols-1 gap-x-4 gap-y-2.5 text-sm text-zinc-700 sm:grid-cols-[minmax(10rem,34%)_1fr] dark:text-zinc-300">
+              <dt className="text-zinc-500 dark:text-zinc-400">Plan</dt>
+              <dd className="min-w-0 font-medium text-zinc-900 dark:text-zinc-100">
+                {sub?.planLabel || 'Free'}
+              </dd>
+              <dt className="text-zinc-500 dark:text-zinc-400">Renewal</dt>
+              <dd className="min-w-0">
+                {sub?.autoRenew
+                  ? 'Automatic (card)'
+                  : 'Manual — purchase again before expiry to extend Pro.'}
+              </dd>
+              <dt className="text-zinc-500 dark:text-zinc-400">Pro active until</dt>
+              <dd className="min-w-0">{sub?.isPaid ? formatIso(sub?.expiresAt) : '—'}</dd>
+              <dt className="text-zinc-500 dark:text-zinc-400">Cancellation</dt>
+              <dd className="min-w-0">
+                {sub?.cancellationRequested
+                  ? 'You asked to cancel — benefits stay until expiry (no auto-charge).'
+                  : 'Not cancelled'}
+              </dd>
+              <dt className="text-zinc-500 dark:text-zinc-400">Downloads today (UTC)</dt>
+              <dd className="min-w-0">
+                {daily?.unlimited
+                  ? 'Unlimited (Pro)'
+                  : `${daily?.usedToday ?? 0} / ${daily?.limit ?? 3} — resets ${formatIso(daily?.resetsAtUtc)}`}
+              </dd>
             </dl>
           )}
           <div className="mt-4 flex flex-wrap gap-2">
@@ -117,8 +107,6 @@ export default function SubscriptionBillingPage() {
               type="button"
               className="fx-focus-ring rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-400"
               onClick={() => setUpgradeOpen(true)}
-              disabled={!checkoutConfigured}
-              title={!checkoutConfigured ? 'Payments not configured on API' : undefined}
             >
               {sub?.isPaid ? 'Extend or change plan' : 'Upgrade to Pro'}
             </button>
@@ -139,6 +127,15 @@ export default function SubscriptionBillingPage() {
               Saved PDFs
             </Link>
           </div>
+          {!checkoutConfigured ? (
+            <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50/90 px-3 py-2 text-xs text-amber-950 dark:border-amber-500/35 dark:bg-amber-950/40 dark:text-amber-100">
+              Checkout is disabled until the API has both{' '}
+              <strong className="font-mono">RAZORPAY_KEY_ID</strong> and{' '}
+              <strong className="font-mono">RAZORPAY_KEY_SECRET</strong> (Render → Environment).
+              You can still open the upgrade window; &quot;Pay with Razorpay&quot; will explain if the
+              server cannot create an order.
+            </p>
+          ) : null}
           {cancelMsg ? (
             <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-400">{cancelMsg}</p>
           ) : null}
