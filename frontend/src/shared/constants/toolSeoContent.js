@@ -638,4 +638,45 @@ export const TOOL_SEO_BY_ID = {
       },
     ],
   },
+  'ocr-pdf': {
+    featureName: 'OCR PDF',
+    intro: [
+      'Scanned PDFs are often pictures of pages. OCR (optical character recognition) adds a searchable text layer so you can find words, copy passages, and get better results in editors that rely on real text.',
+      'pdfpilot runs OCR on the server with open-source tools (ocrmypdf and Tesseract). You download a new PDF; keep the original if you still need the untouched scan.',
+    ],
+    steps: [
+      'Open OCR PDF from the toolkit.',
+      'Upload a PDF (camera scans, exported copies, or mixed documents).',
+      'Click Run OCR and download — large files can take a few minutes.',
+      'Open the downloaded file in Edit PDF if you want to change wording, or use it anywhere you need selectable text.',
+    ],
+    benefits: [
+      {
+        title: 'Better search and copy',
+        body: 'Searchable text makes long documents easier to navigate than image-only pages.',
+      },
+      {
+        title: 'Honest limits',
+        body: 'Very long files are processed in chunks on the server so the service stays reliable for everyone.',
+      },
+      {
+        title: 'Unlock first when locked',
+        body: 'Password-protected PDFs should be decrypted with Unlock PDF before OCR.',
+      },
+    ],
+    highlights: [
+      {
+        title: 'Server-side quality',
+        body: 'The production Docker image includes Tesseract language data for common English and Hindi text.',
+      },
+      {
+        title: 'Skip pages that already have text',
+        body: 'Pages that already contain extractable text are passed through efficiently when possible.',
+      },
+      {
+        title: 'Download and continue',
+        body: 'You always get a file you can store, email, or open again in pdfpilot.',
+      },
+    ],
+  },
 }

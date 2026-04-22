@@ -13,6 +13,8 @@
 # If you deploy the API only (no Blueprint sync), set GOTENBERG_URL manually on the API service
 # to any reachable Gotenberg base URL (e.g. https://your-gotenberg.onrender.com).
 #
+# OCR: the API Dockerfile installs ocrmypdf + Tesseract (POST /ocr-pdf). Rebuild the web service after pulling.
+#
 # My Documents + secured download: set FIREBASE_SERVICE_ACCOUNT_JSON on the API service (Dashboard →
 # Environment) to your Firebase service account JSON (one line). Same project must have Firestore enabled.
 # Do not commit secrets into this file; use sync: false below or paste only in the Render UI.

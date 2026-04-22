@@ -21,6 +21,8 @@ export const ANALYTICS_TOOL = {
   word_to_pdf: 'word_to_pdf',
   /** GST-style tax invoice PDF generated in the browser (pdf-lib). */
   gst_invoice: 'gst_invoice',
+  /** Server ocrmypdf + Tesseract → searchable PDF. */
+  ocr_pdf: 'ocr_pdf',
 }
 
 /** Toolkit registry `id` → analytics feature key for `feature_used` */
@@ -40,4 +42,5 @@ export const REGISTRY_ID_TO_FEATURE = {
   'pdf-to-word': 'pdf_to_word',
   'word-to-pdf': ANALYTICS_TOOL.word_to_pdf,
   'gst-invoice': ANALYTICS_TOOL.gst_invoice,
+  'ocr-pdf': ANALYTICS_TOOL.ocr_pdf,
 }

@@ -2,6 +2,14 @@
 export const TOOL_REGISTRY = [
   { id: 'edit-pdf', path: '/tools/edit-pdf', title: 'Edit PDF', description: 'Change text, annotate, highlight, draw.', implemented: true, icon: 'FileEdit' },
   {
+    id: 'ocr-pdf',
+    path: '/tools/ocr-pdf',
+    title: 'OCR PDF',
+    description: 'Make scans searchable (server OCR); then edit or share.',
+    implemented: true,
+    icon: 'ScanText',
+  },
+  {
     id: 'merge-pdf',
     path: '/tools/merge-pdf',
     title: 'Merge PDF',

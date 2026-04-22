@@ -8,6 +8,7 @@ import uploadRouter from './routes/upload.js';
 import editRouter from './routes/edit.js';
 import downloadRouter from './routes/download.js';
 import unlockRouter from './routes/unlock.js';
+import ocrPdfRouter from './routes/ocrPdf.js';
 import encryptRouter from './routes/encrypt.js';
 import documentFlowRouter from './routes/documentFlow.js';
 import userSessionsRouter from './routes/userSessions.js';
@@ -19,6 +20,7 @@ import { getFirebaseAdminHealthInfo, isFirebaseAdminReady } from './services/fir
 import { startSessionCleanup } from './utils/sessionCleanup.js';
 import { getQpdfBinary } from './utils/resolveQpdf.js';
 import { getGhostscriptBinary } from './utils/resolveGhostscript.js';
+import { getOcrmypdfBinary } from './utils/resolveOcrmypdf.js';
 import { ensureNotoFontsReady } from './services/pdfUnicodeFonts.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -61,6 +63,7 @@ app.use(
   cors({
     origin: true,
     credentials: true,
+    exposedHeaders: ['X-OCR-Page-Count', 'X-OCR-Truncated', 'X-OCR-Original-Pages'],
   })
 );
 
@@ -119,6 +122,21 @@ app.get('/health', (_req, res) => {
   const unlock =
     qpdfBin && qpdfVersion ? 'qpdf' : gsBin && gsVersion ? 'ghostscript' : 'none';
 
+  const ocrmypdfBin = getOcrmypdfBinary();
+  let ocrmypdfVersion = null;
+  if (ocrmypdfBin) {
+    try {
+      ocrmypdfVersion = execFileSync(ocrmypdfBin, ['--version'], {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'ignore'],
+      })
+        .trim()
+        .split('\n')[0];
+    } catch {
+      ocrmypdfVersion = null;
+    }
+  }
+
   res.json({
     ok: true,
     qpdf: Boolean(qpdfBin && qpdfVersion),
@@ -128,6 +146,9 @@ app.get('/health', (_req, res) => {
     ghostscriptPath: gsBin,
     ghostscriptVersion: gsVersion,
     unlock,
+    ocrmypdf: Boolean(ocrmypdfBin && ocrmypdfVersion),
+    ocrmypdfPath: ocrmypdfBin,
+    ocrmypdfVersion,
     /** Present on builds that include Razorpay + Firestore billing routes (404 on /subscription/me = stale deploy). */
     subscription: {
       me: '/subscription/me',
@@ -149,6 +170,7 @@ app.use(uploadRouter);
 app.use(editRouter);
 app.use(downloadRouter);
 app.use(unlockRouter);
+app.use(ocrPdfRouter);
 app.use(encryptRouter);
 app.use(documentFlowRouter);
 app.use(userSessionsRouter);
@@ -221,6 +243,12 @@ console.log(
     ? `DOCX→PDF (${docxBackends.join(' + ') || 'configured'})`
     : 'DOCX→PDF off'
 );
+
+{
+  const o = getOcrmypdfBinary();
+  if (o) console.log('[ocr] ocrmypdf —', o);
+  else console.warn('[ocr] ocrmypdf not on PATH — POST /ocr-pdf returns 503 until the Docker image installs it');
+}
 
 if (isDownloadAuthEnabled()) {
   const fb = isFirebaseAdminReady();
