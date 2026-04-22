@@ -144,7 +144,7 @@ export default function FeedbackPage() {
         {showProdApiHint ? (
           <p className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-center text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
             Feedback is saved on the pdfpilot API. Add your API URL (for example in GitHub Actions secrets or
-            pdfpilot-api-config.js) so this production build can reach your backend.
+            pilot-api-runtime.js) so this production build can reach your backend.
           </p>
         ) : null}
 

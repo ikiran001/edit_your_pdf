@@ -72,7 +72,10 @@ export const MSG = {
   redoToast: 'Redone.',
   /** Dismissible banner on first editor visit (localStorage). */
   editorOnboardingHint:
-    'Turn on Edit text and Text boxes, then tap or click a line on the PDF. Use the format panel at the side (or bottom on phones) while you edit. Ctrl+Enter applies a line; Escape cancels.',
+    '1) Turn on Text edit mode and pick Edit text. 2) Tap a line on the page — use the format panel on the side (or bottom on a phone). 3) Ctrl+Enter applies a line; Escape cancels. Save PDF / Download when you are finished.',
+  /** One-line helper next to “Flatten forms on save” in the toolbar. */
+  editorFlattenHelper:
+    'Turn on so fillable fields print as normal text instead of blue form shading.',
   /** Short privacy line under session id in the editor. */
   editorSessionPrivacyLine:
     'This file is tied to your session on our server; download or save if you need a permanent copy.',

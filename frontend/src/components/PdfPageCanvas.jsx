@@ -121,6 +121,15 @@ function hexToRgba(hex, opacity) {
   return `rgba(${r},${g},${b},${a})`
 }
 
+/** Inline editor “paper” fill — slightly translucent unless the user picked a manual mask colour. */
+function nativeEditorFillCss(maskHex, fmt) {
+  const manual =
+    fmt?.maskColorMode === 'manual' && /^#[0-9a-fA-F]{6}$/.test(fmt?.maskColorHex || '')
+  const hex = manual ? fmt.maskColorHex : maskHex || '#ffffff'
+  /* Slightly translucent auto-mask so 1px vector rules can show through the overlay. */
+  return hexToRgba(hex, manual ? 1 : 0.92)
+}
+
 /** Normalize for comparing contenteditable value vs baseline (opening string). */
 function normalizeNativeCompare(s) {
   return String(s ?? '')
@@ -346,7 +355,7 @@ export default function PdfPageCanvas({
   /**
    * Tighten **idle** hit targets between vertically neighbouring lines (same column) so a large
    * fontSize-based box does not overlap the line above — taps then hit the intended row.
-   * Active editing still uses full `block` geometry below.
+   * Inline editing reuses the same vertical band so the mask fill does not cover neighbour rows / rules.
    */
   const nativeTextHitClipById = useMemo(() => {
     const list = [...textBlocks].sort((a, b) => {
@@ -628,6 +637,10 @@ export default function PdfPageCanvas({
     const { cssW: cwL, cssH: chL, bmpW: bwL, bmpH: bhL } = canvasLayout
     const sxL = bwL > 0 ? cwL / bwL : 1
     const syL = bhL > 0 ? chL / bhL : 1
+    const clipRow = nativeTextHitClipById.get(b.id)
+    const effTopPdf = clipRow?.top ?? b.top
+    const effBotPdf = clipRow?.bottom ?? b.top + b.height
+    const idleHCssL = Math.max(10, (effBotPdf - effTopPdf) * syL)
     const toolbarOpen =
       nativeOpenToolbarFontCssRef.current ??
       Math.max(1, Number(f.fontSizeCss) || Number(b.fontSizePx) || 12)
@@ -649,8 +662,11 @@ export default function PdfPageCanvas({
     /* Match single-line PDF items: pre-wrap + narrow pdf.js width forces "Financial Year" to break at the space. */
     el.style.whiteSpace = 'pre'
     el.style.overflowWrap = 'normal'
-    el.style.backgroundColor = nativeEdit.maskFillHex || '#ffffff'
-  }, [nativeEdit, textFormat, canvasLayout])
+    el.style.maxHeight = `${idleHCssL}px`
+    el.style.maxWidth = '100%'
+    el.style.overflow = 'hidden'
+    el.style.backgroundColor = nativeEditorFillCss(nativeEdit.maskFillHex, f)
+  }, [nativeEdit, textFormat, canvasLayout, nativeTextHitClipById])
 
   const [textDiag, setTextDiag] = useState(null)
 
@@ -2269,14 +2285,16 @@ export default function PdfPageCanvas({
              * width max-content lets one logical line stay horizontal like the PDF; maxWidth caps at canvas.
              */
             const editorMaxW = Math.max(w, Math.max(0, cw - left - 4))
+            const wCell = Math.max(w, 4)
             const wrapperStyle = isEditing
               ? {
                   left,
-                  top,
-                  minWidth: w,
-                  width: 'max-content',
-                  maxWidth: editorMaxW,
-                  minHeight: wrapperMinH,
+                  /* Same vertical band as idle taps so the mask does not paint into neighbour rows / rules. */
+                  top: idleTopCss,
+                  width: wCell,
+                  minWidth: wCell,
+                  maxWidth: Math.min(editorMaxW, wCell),
+                  minHeight: Math.min(wrapperMinH, idleHCss + 2),
                   height: 'auto',
                 }
               : {
@@ -2309,7 +2327,7 @@ export default function PdfPageCanvas({
                     className="pdf-text-layer-editor pointer-events-auto relative z-[1] box-border cursor-text select-text overflow-x-visible overflow-y-visible rounded-sm border border-solid border-[#4A90E2] outline-none transition-[border-color,background-color] duration-150"
                     style={{
                       colorScheme: 'light',
-                      backgroundColor: nativeEdit?.maskFillHex || '#ffffff',
+                      backgroundColor: nativeEditorFillCss(nativeEdit?.maskFillHex, fmt),
                       fontSize: `${editorFontCssPx}px`,
                       lineHeight: `${lineHeightPx}px`,
                       letterSpacing: 'normal',
@@ -2326,6 +2344,9 @@ export default function PdfPageCanvas({
                       whiteSpace: 'pre',
                       overflowWrap: 'normal',
                       wordBreak: 'normal',
+                      maxHeight: idleHCss,
+                      maxWidth: '100%',
+                      overflow: 'hidden',
                       padding: 0,
                       margin: 0,
                     }}
@@ -2378,8 +2399,10 @@ export default function PdfPageCanvas({
                         syIn
                       )
                       el.style.colorScheme = 'light'
-                      el.style.backgroundColor =
-                        nativeEditRef.current?.maskFillHex || '#ffffff'
+                      el.style.backgroundColor = nativeEditorFillCss(
+                        nativeEditRef.current?.maskFillHex,
+                        f
+                      )
                       el.style.fontSize = `${fsPx}px`
                       el.style.lineHeight = `${lhPx}px`
                       el.style.letterSpacing = 'normal'

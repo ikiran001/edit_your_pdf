@@ -89,7 +89,7 @@ export async function fetchUserLibraryFromServer({ getFreshIdToken }) {
         ok: false,
         status: res.status,
         error:
-          'The library URL did not return JSON (often the browser is calling the static site, not your Render API). Set GitHub secret VITE_API_BASE_URL to your API origin and redeploy, or ensure pdfpilot-api-config.js is deployed.',
+          'The library URL did not return JSON (often the browser is calling the static site, not your Render API). Set GitHub secret VITE_API_BASE_URL to your API origin and redeploy, or ensure pilot-api-runtime.js is deployed.',
       }
     }
     if (!res.ok) {
@@ -104,7 +104,7 @@ export async function fetchUserLibraryFromServer({ getFreshIdToken }) {
         ok: false,
         status: res.status,
         error:
-          'Unexpected API response (no documents array). Point VITE_API_BASE_URL / pdfpilot-api-config.js at your Node API on Render, not pdfpilot.pro.',
+          'Unexpected API response (no documents array). Point VITE_API_BASE_URL / pilot-api-runtime.js at your Node API on Render, not pdfpilot.pro.',
       }
     }
     const raw = data.documents
