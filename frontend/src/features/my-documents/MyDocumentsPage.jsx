@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { FileText, Pencil, RefreshCw, Trash2, Download } from 'lucide-react'
+import { Copy, FilePenLine, FileText, Pencil, RefreshCw, Trash2, Download } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext.jsx'
 import ToolPageShell from '../../shared/components/ToolPageShell.jsx'
 import { isFirebaseConfigured, isFirebaseAuthReady } from '../../lib/firebase.js'
@@ -11,8 +11,11 @@ import { useSubscription } from '../../subscription/SubscriptionContext.jsx'
 import UpgradePlanModal from '../../subscription/UpgradePlanModal.jsx'
 import {
   deleteUserSessionOnServer,
+  duplicateUserSessionOnServer,
   fetchUserLibraryFromServer,
   libraryToolLabel,
+  renameUserSessionOnServer,
+  suggestLibraryDuplicateFileName,
 } from './userLibrary.js'
 
 function formatWhen(d) {
@@ -140,6 +143,78 @@ export default function MyDocumentsPage() {
       navigate('/tools/edit-pdf/editor')
     },
     [navigate]
+  )
+
+  const renameOne = useCallback(
+    async (sessionId, currentName) => {
+      const entered = window.prompt('Display name in Saved PDFs', currentName)
+      if (entered === null) return
+      const next = String(entered).trim()
+      if (!next || next === currentName) return
+      setBusyId(sessionId)
+      setMsg(null)
+      try {
+        const r = await renameUserSessionOnServer({ getFreshIdToken, sessionId, fileName: next })
+        if (!r.ok) {
+          const hint =
+            r.error === 'admin_unavailable'
+              ? 'Renaming needs Firebase Admin on the API (local dev: set FIREBASE_SERVICE_ACCOUNT_JSON).'
+              : r.error || 'Rename failed.'
+          setMsg(hint)
+          return
+        }
+        setMsg('Name updated.')
+        await loadLibrary()
+      } catch (e) {
+        console.error(e)
+        setMsg(e?.message || 'Rename failed.')
+      } finally {
+        setBusyId(null)
+      }
+    },
+    [getFreshIdToken, loadLibrary]
+  )
+
+  const duplicateOne = useCallback(
+    async (sessionId, fileName) => {
+      const suggestion = suggestLibraryDuplicateFileName(fileName)
+      const entered = window.prompt('Name for the duplicate (opens in the editor)', suggestion)
+      if (entered === null) return
+      const next = String(entered).trim() || suggestion
+      setBusyId(sessionId)
+      setMsg(null)
+      try {
+        const r = await duplicateUserSessionOnServer({
+          getFreshIdToken,
+          sourceSessionId: sessionId,
+          fileName: next,
+        })
+        if (!r.ok) {
+          const hint =
+            r.error === 'admin_unavailable'
+              ? 'Copy needs Firebase Admin on the API (local dev: set FIREBASE_SERVICE_ACCOUNT_JSON).'
+              : r.error || 'Could not duplicate.'
+          setMsg(hint)
+          return
+        }
+        const idOk = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+          r.newSessionId
+        )
+        if (!idOk) {
+          setMsg('Unexpected server response.')
+          return
+        }
+        setMsg('Opening your copy in the editor…')
+        openInEditor(r.newSessionId, r.fileName)
+        await loadLibrary()
+      } catch (e) {
+        console.error(e)
+        setMsg(e?.message || 'Could not duplicate.')
+      } finally {
+        setBusyId(null)
+      }
+    },
+    [getFreshIdToken, loadLibrary, openInEditor]
   )
 
   const downloadOne = useCallback(
@@ -404,7 +479,7 @@ export default function MyDocumentsPage() {
 
       {docs.length > 0 ? (
         <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white/90 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/80">
-          <table className="w-full min-w-[32rem] border-collapse text-left text-sm">
+          <table className="w-full min-w-[36rem] border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-zinc-200 bg-zinc-50/90 text-xs font-semibold uppercase tracking-wide text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-400">
                 <th className="px-4 py-3">Name</th>
@@ -439,6 +514,26 @@ export default function MyDocumentsPage() {
                       >
                         <Pencil className="h-4 w-4" aria-hidden />
                         <span className="sr-only">Edit</span>
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busyId === row.sessionId}
+                        title="Rename in library"
+                        className="fx-focus-ring inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
+                        onClick={() => renameOne(row.sessionId, row.fileName)}
+                      >
+                        <FilePenLine className="h-4 w-4" aria-hidden />
+                        <span className="sr-only">Rename</span>
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busyId === row.sessionId}
+                        title="Save a server copy and open it"
+                        className="fx-focus-ring inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
+                        onClick={() => duplicateOne(row.sessionId, row.fileName)}
+                      >
+                        <Copy className="h-4 w-4" aria-hidden />
+                        <span className="sr-only">Save a copy</span>
                       </button>
                       <button
                         type="button"
