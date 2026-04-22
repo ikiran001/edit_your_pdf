@@ -12,6 +12,7 @@ import encryptRouter from './routes/encrypt.js';
 import documentFlowRouter from './routes/documentFlow.js';
 import userSessionsRouter from './routes/userSessions.js';
 import feedbackRouter from './routes/feedback.js';
+import subscriptionRouter, { handleRazorpayWebhook } from './routes/subscription.js';
 import { getDocumentFlowCapabilities } from './services/documentFlowConvert.js';
 import { isDownloadAuthEnabled, isFirstAnonymousDownloadEnabled } from './services/downloadAuthPolicy.js';
 import { getFirebaseAdminHealthInfo, isFirebaseAdminReady } from './services/firebaseAdmin.js';
@@ -131,6 +132,12 @@ app.get('/health', (_req, res) => {
   });
 });
 
+app.post(
+  '/subscription/webhooks/razorpay',
+  express.raw({ type: 'application/json' }),
+  handleRazorpayWebhook
+);
+
 app.use(uploadRouter);
 app.use(editRouter);
 app.use(downloadRouter);
@@ -139,6 +146,7 @@ app.use(encryptRouter);
 app.use(documentFlowRouter);
 app.use(userSessionsRouter);
 app.use(feedbackRouter);
+app.use(subscriptionRouter);
 
 /** Serve PDF for pdf.js: latest edited file when present, else original upload. */
 app.get('/pdf/:sessionId', (req, res) => {

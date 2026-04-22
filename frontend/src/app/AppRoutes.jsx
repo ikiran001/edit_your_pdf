@@ -18,6 +18,7 @@ import ComingSoonToolPage from '../features/placeholder/ComingSoonToolPage.jsx'
 import WordToPdfPage from '../features/word-to-pdf/WordToPdfPage.jsx'
 import GstInvoicePage from '../features/gst-invoice/GstInvoicePage.jsx'
 import MyDocumentsPage from '../features/my-documents/MyDocumentsPage.jsx'
+import SubscriptionBillingPage from '../features/account/SubscriptionBillingPage.jsx'
 import TermsOfServicePage from '../features/legal/TermsOfServicePage.jsx'
 import FeedbackPage from '../features/feedback/FeedbackPage.jsx'
 import AdminFeedbackPage from '../features/feedback/AdminFeedbackPage.jsx'
@@ -56,6 +57,14 @@ export default function AppRoutes() {
           element={
             <PrivateRoute>
               <MyDocumentsPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/account/subscription"
+          element={
+            <PrivateRoute>
+              <SubscriptionBillingPage />
             </PrivateRoute>
           }
         />

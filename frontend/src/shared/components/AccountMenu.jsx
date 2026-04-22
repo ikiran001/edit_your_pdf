@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useNavigate } from 'react-router-dom'
-import { FolderOpen, UserRound } from 'lucide-react'
+import { CreditCard, FolderOpen, UserRound } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext.jsx'
 import SignInExperienceModal from '../../auth/SignInExperienceModal.jsx'
 import {
@@ -229,6 +229,22 @@ export default function AccountMenu({ compact = false }) {
               </span>
             </span>
           </div>
+        </Link>
+        <Link
+          to="/account/subscription"
+          role="menuitem"
+          className="fx-focus-ring mt-2 flex w-full items-center gap-3 rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-left text-sm font-medium text-zinc-800 transition hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
+          onClick={() => setAccountMenuOpen(false)}
+        >
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
+            <CreditCard className="h-4 w-4" strokeWidth={2} aria-hidden />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-semibold">Subscription & billing</span>
+            <span className="mt-0.5 block text-[11px] font-normal text-zinc-500 dark:text-zinc-400">
+              Plan, usage, Razorpay receipts
+            </span>
+          </span>
         </Link>
         <button
           type="button"

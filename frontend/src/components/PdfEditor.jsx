@@ -27,6 +27,8 @@ import {
 } from '../lib/analytics.js'
 import { MSG } from '../shared/constants/branding.js'
 import { useAuth } from '../auth/AuthContext.jsx'
+import { useSubscription } from '../subscription/SubscriptionContext.jsx'
+import UpgradePlanModal from '../subscription/UpgradePlanModal.jsx'
 import ContinueDownloadModal from '../auth/ContinueDownloadModal.jsx'
 import {
   clearPendingDownload,
@@ -116,6 +118,7 @@ export default function PdfEditor({
   const [activePage, setActivePage] = useState(0)
   const [saving, setSaving] = useState(false)
   const [downloading, setDownloading] = useState(false)
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false)
   /** True while POST /edit + PDF reload after edits-list remove / clear (keeps UI in sync with file). */
   const [editingListSync, setEditingListSync] = useState(false)
   const [saveHint, setSaveHint] = useState(null)
@@ -180,6 +183,7 @@ export default function PdfEditor({
     signInWithEmailPassword,
     signUpWithEmailPassword,
   } = useAuth()
+  const { refresh: refreshSubscription } = useSubscription()
 
   useEffect(() => {
     if (!user || !sessionId) return
@@ -626,6 +630,9 @@ export default function PdfEditor({
       if (r.status === 401 && r.errPayload?.error === 'download_auth_required') {
         return { ok: false, needsAuth: true }
       }
+      if (r.status === 403 && r.errPayload?.error === 'download_limit_exceeded') {
+        return { ok: false, needsUpgrade: true, errPayload: r.errPayload }
+      }
       const msg =
         (r.errPayload && (r.errPayload.message || r.errPayload.error)) ||
         (r.status === 401 ? 'Download was blocked. Try again.' : 'Download failed')
@@ -652,6 +659,12 @@ export default function PdfEditor({
         idToken,
       })
       if (!r.ok) {
+        if (r.status === 403 && r.errPayload?.error === 'download_limit_exceeded') {
+          const err = new Error('download_limit_exceeded')
+          err.code = 'DOWNLOAD_LIMIT_EXCEEDED'
+          err.payload = r.errPayload
+          throw err
+        }
         const msg =
           r.errPayload?.message || r.errPayload?.error || 'Download failed after sign-in.'
         throw new Error(String(msg))
@@ -688,8 +701,14 @@ export default function PdfEditor({
         console.error(e)
         trackErrorOccurred(EDIT_TOOL, e?.message || 'download_resume_failed')
         clearPendingDownload()
-        setDownloadAuthError(e?.message || 'Could not complete download. Try again.')
-        setDownloadAuthModalOpen(true)
+        if (e?.code === 'DOWNLOAD_LIMIT_EXCEEDED') {
+          setUpgradeModalOpen(true)
+          setDownloadAuthModalOpen(false)
+          setDownloadAuthError(null)
+        } else {
+          setDownloadAuthError(e?.message || 'Could not complete download. Try again.')
+          setDownloadAuthModalOpen(true)
+        }
       } finally {
         postAuthResumeLockRef.current = false
         setDownloading(false)
@@ -1016,7 +1035,10 @@ export default function PdfEditor({
       } catch (e) {
         console.error(e)
         const code = e?.code || ''
-        if (code === 'auth/popup-blocked') {
+        if (code === 'DOWNLOAD_LIMIT_EXCEEDED') {
+          setUpgradeModalOpen(true)
+          setDownloadAuthError(null)
+        } else if (code === 'auth/popup-blocked') {
           setDownloadAuthError(
             'Your browser blocked the sign-in window. Allow popups for this site, then try “Continue with Google” again.'
           )
@@ -1096,6 +1118,10 @@ export default function PdfEditor({
         await finalizeDownloadFromBlob(result.blob, t0, {
           usedAnonymousToken: result.usedAnonymousToken,
         })
+        return
+      }
+      if (result.needsUpgrade) {
+        setUpgradeModalOpen(true)
         return
       }
       if (result.needsAuth) {
@@ -1379,6 +1405,12 @@ export default function PdfEditor({
           runPopupOauthThenDownload(() => signUpWithEmailPassword(payload))
         }
         onSendPasswordReset={(email) => runPasswordResetForDownload(email)}
+      />
+
+      <UpgradePlanModal
+        open={upgradeModalOpen}
+        onClose={() => setUpgradeModalOpen(false)}
+        onPaid={() => void refreshSubscription()}
       />
 
       {toastMessage && (

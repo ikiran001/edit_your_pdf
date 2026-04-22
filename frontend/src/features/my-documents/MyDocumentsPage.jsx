@@ -7,6 +7,8 @@ import { isFirebaseConfigured, isFirebaseAuthReady } from '../../lib/firebase.js
 import { apiUrl, getResolvedApiBase, isApiBaseConfigured } from '../../lib/apiBase.js'
 import { persistEditSession } from '../edit-pdf/editSessionStorage.js'
 import { fetchEditPdfDownload } from '../edit-pdf/editPdfDownload.js'
+import { useSubscription } from '../../subscription/SubscriptionContext.jsx'
+import UpgradePlanModal from '../../subscription/UpgradePlanModal.jsx'
 import {
   deleteUserSessionOnServer,
   fetchUserLibraryFromServer,
@@ -37,6 +39,8 @@ export default function MyDocumentsPage() {
   const [loadingList, setLoadingList] = useState(false)
   const [healthProbe, setHealthProbe] = useState(null)
   const [healthBusy, setHealthBusy] = useState(false)
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false)
+  const { refresh: refreshSubscription } = useSubscription()
 
   const fbReady = isFirebaseConfigured() && isFirebaseAuthReady()
 
@@ -146,6 +150,10 @@ export default function MyDocumentsPage() {
         const token = await getFreshIdToken()
         const r = await fetchEditPdfDownload({ sessionId, downloadToken: null, idToken: token })
         if (!r.ok) {
+          if (r.status === 403 && r.errPayload?.error === 'download_limit_exceeded') {
+            setUpgradeModalOpen(true)
+            return
+          }
           setMsg(
             r.status === 404
               ? 'This file is no longer on the server. It may have expired after seven days without activity.'
@@ -460,6 +468,12 @@ export default function MyDocumentsPage() {
           </table>
         </div>
       ) : null}
+
+      <UpgradePlanModal
+        open={upgradeModalOpen}
+        onClose={() => setUpgradeModalOpen(false)}
+        onPaid={() => void refreshSubscription()}
+      />
     </ToolPageShell>
   )
 }
