@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, memo } from 'react'
+import { flushSync } from 'react-dom'
 import { buildTextRuns } from '../lib/pdfTextRuns'
 import { hexLuminance, sampleBackgroundColorHex, sampleInkColorHex } from '../lib/sampleCanvasInkColor'
 import {
@@ -20,6 +21,7 @@ import {
 import { sessionNativeMetaForBlock } from '../lib/sessionNativeTextMatch.js'
 import { defaultPlacementForPng } from '../features/sign-pdf/signPdfGeometry.js'
 import { trackSignaturePlaced } from '../lib/analytics.js'
+import { resolveTextDraftNormSize } from '../lib/textDraftLayout.js'
 
 const RENDER_SCALE = 1.35
 const MAX_DRAW_POINTS = 1000
@@ -407,6 +409,9 @@ function PdfPageCanvas({
   const textDraftResizeRef = useRef(null)
   const textDraftResizeRafRef = useRef(null)
   const textDraftResizePendingRef = useRef(null)
+  const textDraftSyncRafRef = useRef(null)
+  const textDraftImeComposingRef = useRef(false)
+  const syncTextDraftBoxFromTextareaRef = useRef(() => {})
   const [sigDraft, setSigDraft] = useState(null)
   const sigDraftRef = useRef(null)
   const sigDraftDragRef = useRef(null)
@@ -1215,6 +1220,15 @@ function PdfPageCanvas({
   const commitText = useCallback(
     (value) => {
       if (!textDraftRef.current) return
+      if (textDraftSyncRafRef.current != null) {
+        cancelAnimationFrame(textDraftSyncRafRef.current)
+        textDraftSyncRafRef.current = null
+      }
+      if (!textDraftImeComposingRef.current) {
+        flushSync(() => {
+          syncTextDraftBoxFromTextareaRef.current?.()
+        })
+      }
       if (textDraftResizeRafRef.current != null) {
         cancelAnimationFrame(textDraftResizeRafRef.current)
         textDraftResizeRafRef.current = null
@@ -1225,7 +1239,13 @@ function PdfPageCanvas({
       if (!baseDraft) return
       const draft =
         resizeP != null
-          ? { ...baseDraft, nw: resizeP.newNw, nh: resizeP.newNh, baseNh: resizeP.baseNh }
+          ? {
+              ...baseDraft,
+              nw: resizeP.newNw,
+              nh: resizeP.newNh,
+              baseNh: resizeP.baseNh,
+              nwFloor: resizeP.newNw,
+            }
           : baseDraft
       if (resizeP && typeof onTextFormatChange === 'function') {
         onTextFormatChange((prev) => ({ ...prev, fontSizeCss: resizeP.nextFont }))
@@ -1248,6 +1268,7 @@ function PdfPageCanvas({
       const bmpW =
         el && el.width > 0 ? el.width : metaRef.current.bmpW > 0 ? metaRef.current.bmpW : 1
       const fontSizePt = Math.max(4, Math.min(144, cssN * (pdfW / bmpW)))
+      /* `nw` / `fontSizeCss` match viewer layout; export uses the same line step (`ANNOT_UI_LINE_HEIGHT`) as backend/applyEdits.js. */
       /* Capture box width before draft is cleared — used for server-side alignment. */
       const draftBoxW =
         typeof draft.nw === 'number' && draft.nw > 0
@@ -1360,7 +1381,18 @@ function PdfPageCanvas({
       onTextBoxOverlayActionsChange(pageIndex, {
         done: () => commitText(draftInputRef.current?.value ?? ''),
         reset: () => {
+          if (textDraftResizeRafRef.current != null) {
+            cancelAnimationFrame(textDraftResizeRafRef.current)
+            textDraftResizeRafRef.current = null
+          }
+          if (textDraftSyncRafRef.current != null) {
+            cancelAnimationFrame(textDraftSyncRafRef.current)
+            textDraftSyncRafRef.current = null
+          }
+          textDraftResizePendingRef.current = null
+          textDraftResizeRef.current = null
           textDraftDragRef.current = null
+          textDraftImeComposingRef.current = false
           textDraftRef.current = null
           setTextDraft(null)
         },
@@ -1565,6 +1597,8 @@ function PdfPageCanvas({
             nh: p.newNh,
             baseNh: p.baseNh,
             baseFontCss: p.baseFont,
+            /* After manual resize, typing must not shrink the frame narrower than this (until new draft). */
+            nwFloor: p.newNw,
           }
         : null
     )
@@ -1665,6 +1699,7 @@ function PdfPageCanvas({
 
   /** Grow/shrink draft `nw`/`nh` from textarea metrics: `pre` = no soft wrap; width must be collapsed to read intrinsic `scrollWidth` (with `w-full`, scrollWidth often equals the box). */
   const syncTextDraftBoxFromTextarea = useCallback(() => {
+    if (textDraftImeComposingRef.current) return
     if (textDraftResizeRef.current) return
     const ta = draftInputRef.current
     const draft = textDraftRef.current
@@ -1696,10 +1731,15 @@ function PdfPageCanvas({
       ? Math.max(typedFloorPx + hPad, Math.ceil(intrinsicSw) + hPad + 4)
       : emptyMinWpx
     const wantHpx = scrollH + vPad
-    const capNw = 1 - draft.nx - 0.02
-    const capNh = 1 - draft.ny - 0.02
-    const newNw = Math.min(capNw, Math.max(0.018, wantWpx / W))
-    const newNh = Math.min(capNh, Math.max(0.016, wantHpx / H))
+    const { nw: newNw, nh: newNh } = resolveTextDraftNormSize({
+      wantWpx,
+      wantHpx,
+      W,
+      H,
+      nx: draft.nx,
+      ny: draft.ny,
+      nwFloor: draft.nwFloor,
+    })
     const ew = 2 / W
     const eh = 2 / H
     if (Math.abs(newNw - draft.nw) < ew && Math.abs(newNh - draft.nh) < eh) {
@@ -1707,6 +1747,19 @@ function PdfPageCanvas({
     }
     setTextDraft((prev) => (prev ? { ...prev, nw: newNw, nh: newNh } : null))
   }, [textFormat, textFormatRef])
+
+  useLayoutEffect(() => {
+    syncTextDraftBoxFromTextareaRef.current = syncTextDraftBoxFromTextarea
+  }, [syncTextDraftBoxFromTextarea])
+
+  const scheduleTextDraftBoxSync = useCallback(() => {
+    if (textDraftImeComposingRef.current) return
+    if (textDraftSyncRafRef.current != null) return
+    textDraftSyncRafRef.current = requestAnimationFrame(() => {
+      textDraftSyncRafRef.current = null
+      syncTextDraftBoxFromTextarea()
+    })
+  }, [syncTextDraftBoxFromTextarea])
 
   const onSigDraftResizePointerDown = useCallback((e) => {
     if (!e.isPrimary || e.button !== 0) return
@@ -1915,7 +1968,12 @@ function PdfPageCanvas({
       cancelAnimationFrame(textDraftResizeRafRef.current)
       textDraftResizeRafRef.current = null
     }
+    if (textDraftSyncRafRef.current != null) {
+      cancelAnimationFrame(textDraftSyncRafRef.current)
+      textDraftSyncRafRef.current = null
+    }
     textDraftResizePendingRef.current = null
+    textDraftImeComposingRef.current = false
     textDraftRef.current = null
     setTextDraft(null)
   }, [tool])
@@ -3220,9 +3278,14 @@ function PdfPageCanvas({
             cancelAnimationFrame(textDraftResizeRafRef.current)
             textDraftResizeRafRef.current = null
           }
+          if (textDraftSyncRafRef.current != null) {
+            cancelAnimationFrame(textDraftSyncRafRef.current)
+            textDraftSyncRafRef.current = null
+          }
           textDraftResizePendingRef.current = null
           textDraftResizeRef.current = null
           textDraftDragRef.current = null
+          textDraftImeComposingRef.current = false
           textDraftRef.current = null
           setTextDraft(null)
         }
@@ -3263,12 +3326,14 @@ function PdfPageCanvas({
               <textarea
                 ref={draftInputRef}
                 data-pdf-annot-draft-input
+                dir="auto"
                 rows={1}
                 autoFocus
-                title="Enter for a new line"
+                title="Enter for a new line. Ctrl+Enter or Command+Enter to place."
                 placeholder="Type…"
+                aria-label="Add text on the page. Press Enter for a new line. Control+Enter or Command+Enter to place text."
                 maxLength={MAX_ANNOT_TEXT_LENGTH}
-                className="pdf-annot-draft-input box-border min-h-0 w-full min-w-0 resize-none cursor-text whitespace-pre break-normal rounded-sm border-0 py-0.5 pl-0 pr-2 text-zinc-900 outline-none placeholder:text-zinc-500"
+                className="pdf-annot-draft-input box-border min-h-0 w-full min-w-0 resize-none cursor-text whitespace-pre break-normal rounded-sm border-0 py-0.5 pl-0 pr-5 pb-5 text-zinc-900 outline-none placeholder:text-zinc-500"
                 style={{
                   fontSize: `${draftPx}px`,
                   lineHeight: ANNOT_UI_LINE_HEIGHT,
@@ -3286,6 +3351,13 @@ function PdfPageCanvas({
                   backgroundColor: 'transparent',
                 }}
                 onInput={() => {
+                  scheduleTextDraftBoxSync()
+                }}
+                onCompositionStart={() => {
+                  textDraftImeComposingRef.current = true
+                }}
+                onCompositionEnd={() => {
+                  textDraftImeComposingRef.current = false
                   syncTextDraftBoxFromTextarea()
                 }}
                 onPointerDown={(e) => e.stopPropagation()}
