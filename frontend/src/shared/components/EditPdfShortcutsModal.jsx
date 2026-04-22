@@ -68,7 +68,11 @@ export default function EditPdfShortcutsModal({ open, onClose }) {
           </h3>
           <Row keys="Arrow keys">
             Nudge the selected text box or signature (not while typing in the inline editor). Hold Shift for a finer
-            step.
+            step. Placement snaps gently to nearby PDF text lines when you release a drag.
+          </Row>
+          <Row keys="Enter / Ctrl+Enter">
+            While placing <strong>Add Text</strong>, press Enter for a new line. Press Ctrl+Enter (or Cmd+Enter on
+            Mac) to finish and place the box.
           </Row>
         </section>
 

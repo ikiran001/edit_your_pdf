@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, memo } from 'react'
 import { buildTextRuns } from '../lib/pdfTextRuns'
 import { hexLuminance, sampleBackgroundColorHex, sampleInkColorHex } from '../lib/sampleCanvasInkColor'
 import {
@@ -11,6 +11,8 @@ import {
   cssAnnotPreviewFontStack,
   cssDisplayFontFromPdf,
   defaultTextFormat,
+  FONT_SIZE_MAX,
+  FONT_SIZE_MIN,
   formatFromTextBlock,
   mapPdfFontNameToServer,
   mergePdfStyleHints,
@@ -47,6 +49,86 @@ function clamp01(v) {
   return Math.min(1, Math.max(0, v))
 }
 
+const DEFAULT_SNAP_PDF_H = 792
+
+/**
+ * Snap placed markup to native PDF text grid (line tops + baselines in normalized viewport space).
+ * `item.x` / `item.y` follow the editor convention: top-left of the box in page-normalized coords.
+ */
+function snapPlacedAnnotToNativeGrid(textBlocks, item, nx, ny, pdfH) {
+  const blocks = textBlocks || []
+  const ph = Number.isFinite(pdfH) && pdfH > 72 ? pdfH : DEFAULT_SNAP_PDF_H
+  if (item?.type === 'signature') {
+    const epsY = 0.012
+    const epsX = 0.01
+    let xo = nx
+    let yo = ny
+    let bestY = epsY
+    let bestX = epsX
+    for (const b of blocks) {
+      const tn = b.norm?.ny
+      if (Number.isFinite(tn)) {
+        const d = Math.abs(ny - tn)
+        if (d < bestY) {
+          bestY = d
+          yo = tn
+        }
+      }
+      const tx = b.norm?.nx
+      if (Number.isFinite(tx)) {
+        const d = Math.abs(nx - tx)
+        if (d < bestX) {
+          bestX = d
+          xo = tx
+        }
+      }
+    }
+    return { x: clamp01(xo), y: clamp01(yo) }
+  }
+  if (item?.type !== 'text') return { x: clamp01(nx), y: clamp01(ny) }
+  const fs = Math.max(4, Number(item.fontSize) || 12)
+  const deltaN = Math.min(0.09, Math.max(0.002, (fs / ph) * 0.76))
+  const curBl = ny + deltaN
+  const eps = 0.014
+  let yOut = ny
+  let best = eps
+  for (const b of blocks) {
+    const bn = b.norm?.baselineN
+    if (!Number.isFinite(bn)) continue
+    const d = Math.abs(curBl - bn)
+    if (d < best) {
+      best = d
+      yOut = bn - deltaN
+    }
+  }
+  for (const b of blocks) {
+    const tn = b.norm?.ny
+    if (!Number.isFinite(tn)) continue
+    const d = Math.abs(ny - tn)
+    if (d < best) {
+      best = d
+      yOut = tn
+    }
+  }
+  let xOut = nx
+  best = 0.012
+  for (const b of blocks) {
+    const tx = b.norm?.nx
+    if (!Number.isFinite(tx)) continue
+    const d = Math.abs(nx - tx)
+    if (d < best) {
+      best = d
+      xOut = tx
+    }
+  }
+  return { x: clamp01(xOut), y: clamp01(yOut) }
+}
+
+function normalizePlacedAnnotDraftText(raw) {
+  const s = String(raw ?? '').replace(/\r\n/g, '\n')
+  return s.replace(/^\s+|\s+$/g, '').slice(0, MAX_ANNOT_TEXT_LENGTH)
+}
+
 /**
  * Native PDF text inline editor: map bitmap/viewport metrics to CSS px using the same scale as
  * `left`/`top` (`sx`/`sy`), then scale when the user changes the toolbar font size relative to open.
@@ -72,6 +154,15 @@ function nativeInlineEditorMetrics(block, fmt, toolbarFontAtOpen, sx, sy) {
 
 /** Added text is drawn with no fill in the viewer and on export — PDF shows through. */
 const ANNOT_TEXT_DISPLAY_BG = 'transparent'
+/** Must match backend `ANNOT_UI_LINE_HEIGHT` in applyEdits.js. */
+const ANNOT_UI_LINE_HEIGHT = 1.35
+
+/** Initial add-text draft width ≈ this many average-width characters at the toolbar font (canvas px). */
+const TEXT_DRAFT_INITIAL_CHAR_COLUMNS = 5
+/** Typical Latin sans advance width / em (between ~0.48–0.58 for UI fonts). */
+const TEXT_DRAFT_CHAR_ADVANCE_EM = 0.54
+/** Horizontal padding inside the draft ring (caret, border). */
+const TEXT_DRAFT_H_PADDING_PX = 8
 
 function normalizeHexForColorInput(c) {
   const s = String(c || '#000000').trim()
@@ -275,7 +366,7 @@ function AnnotTextContentEditable({
  * Renders one PDF page with pdf.js and an interaction overlay.
  * Annotations use normalized coords (0–1, top-left origin) for pdf-lib on the server.
  */
-export default function PdfPageCanvas({
+function PdfPageCanvas({
   pdfPage,
   pageIndex = 0,
   tool,
@@ -289,6 +380,8 @@ export default function PdfPageCanvas({
   sessionNativeTextEdits = [],
   textFormat,
   textFormatRef,
+  /** Updates toolbar text format while resizing Add Text draft (font size tracks box height). */
+  onTextFormatChange = null,
   onBeginNativeTextEdit,
   editTextMode = true,
   onInlineEditorActiveChange,
@@ -311,9 +404,13 @@ export default function PdfPageCanvas({
   const textDraftRef = useRef(null)
   const draftInputRef = useRef(null)
   const textDraftDragRef = useRef(null)
+  const textDraftResizeRef = useRef(null)
+  const textDraftResizeRafRef = useRef(null)
+  const textDraftResizePendingRef = useRef(null)
   const [sigDraft, setSigDraft] = useState(null)
   const sigDraftRef = useRef(null)
   const sigDraftDragRef = useRef(null)
+  const sigDraftResizeRef = useRef(null)
   const sigDraftWrapRef = useRef(null)
   const [sigDefaultBox, setSigDefaultBox] = useState(null)
   const dragRef = useRef(null)
@@ -585,9 +682,7 @@ export default function PdfPageCanvas({
     (id, raw) => {
       if (editingAnnotIdRef.current !== id) return
       editingAnnotIdRef.current = null
-      const v = String(raw ?? '')
-        .replace(/\r\n/g, '\n')
-        .trim()
+      const v = normalizePlacedAnnotDraftText(raw)
       if (!v) {
         onUpdateItems((prev) => prev.filter((it) => it.id !== id))
         setSelectedAnnotId(null)
@@ -939,7 +1034,33 @@ export default function PdfPageCanvas({
       window.dispatchEvent(new CustomEvent(ANNOT_SCOPE_EVENT, { detail: { pageIndex } }))
       setSelectedAnnotId(null)
       setEditingAnnotId(null)
-      setTextDraft({ nx: n.nx, ny: n.ny })
+      const { cssW: W, cssH: H, bmpW } = metaRef.current
+      if (W >= 1 && H >= 1) {
+        const fmt = textFormatRef?.current ?? textFormat ?? defaultTextFormat()
+        const fsCss = Math.max(
+          FONT_SIZE_MIN,
+          Math.min(FONT_SIZE_MAX, Number(fmt.fontSizeCss) || 14)
+        )
+        const sx0 = bmpW > 0 ? W / bmpW : 1
+        /* One-line strip: keep nh small so the frame reads as a horizontal bar, not a tall card. */
+        const linePx = Math.max(10, fsCss * sx0 * ANNOT_UI_LINE_HEIGHT)
+        const nh = Math.min(0.2, Math.max(0.016, (linePx + 2) / H))
+        const layoutFsPx = fsCss * sx0
+        const wPx =
+          TEXT_DRAFT_INITIAL_CHAR_COLUMNS * layoutFsPx * TEXT_DRAFT_CHAR_ADVANCE_EM +
+          TEXT_DRAFT_H_PADDING_PX
+        const nw = Math.min(0.62, Math.max(0.018, wPx / W))
+        setTextDraft({
+          nx: n.nx,
+          ny: n.ny,
+          nw,
+          nh,
+          baseNh: nh,
+          baseFontCss: fsCss,
+        })
+      } else {
+        setTextDraft({ nx: n.nx, ny: n.ny, nw: 0.048, nh: 0.034, baseNh: 0.034, baseFontCss: 14 })
+      }
       e.preventDefault()
       return
     }
@@ -1094,13 +1215,31 @@ export default function PdfPageCanvas({
   const commitText = useCallback(
     (value) => {
       if (!textDraftRef.current) return
-      const draft = textDraftRef.current
+      if (textDraftResizeRafRef.current != null) {
+        cancelAnimationFrame(textDraftResizeRafRef.current)
+        textDraftResizeRafRef.current = null
+      }
+      const resizeP = textDraftResizePendingRef.current
+      textDraftResizePendingRef.current = null
+      const baseDraft = textDraftRef.current
+      if (!baseDraft) return
+      const draft =
+        resizeP != null
+          ? { ...baseDraft, nw: resizeP.newNw, nh: resizeP.newNh, baseNh: resizeP.baseNh }
+          : baseDraft
+      if (resizeP && typeof onTextFormatChange === 'function') {
+        onTextFormatChange((prev) => ({ ...prev, fontSizeCss: resizeP.nextFont }))
+      }
       const fmt = textFormatRef?.current ?? textFormat ?? defaultTextFormat()
-      const cssN = Math.max(6, Math.min(144, Number(fmt.fontSizeCss) || 14))
+      const cssN = Math.max(
+        FONT_SIZE_MIN,
+        Math.min(FONT_SIZE_MAX, Number(resizeP?.nextFont ?? fmt.fontSizeCss) || 14)
+      )
+      textDraftResizeRef.current = null
       textDraftRef.current = null
       textDraftDragRef.current = null
       setTextDraft(null)
-      const v = String(value ?? '').trim().slice(0, MAX_ANNOT_TEXT_LENGTH)
+      const v = normalizePlacedAnnotDraftText(value)
       if (!v) return
       const textAnnotCount = items.filter((it) => it.type === 'text').length
       if (textAnnotCount >= MAX_ANNOT_TEXT_PER_PAGE) return
@@ -1110,8 +1249,16 @@ export default function PdfPageCanvas({
         el && el.width > 0 ? el.width : metaRef.current.bmpW > 0 ? metaRef.current.bmpW : 1
       const fontSizePt = Math.max(4, Math.min(144, cssN * (pdfW / bmpW)))
       /* Capture box width before draft is cleared — used for server-side alignment. */
-      const draftBoxW = draftInputRef.current?.offsetWidth ?? 0
-      const nw = metaCssW > 0 && draftBoxW > 0 ? draftBoxW / metaCssW : 0
+      const draftBoxW =
+        typeof draft.nw === 'number' && draft.nw > 0
+          ? draft.nw * metaCssW
+          : draftInputRef.current?.offsetWidth ?? 0
+      const nw =
+        typeof draft.nw === 'number' && draft.nw > 0
+          ? draft.nw
+          : metaCssW > 0 && draftBoxW > 0
+            ? draftBoxW / metaCssW
+            : 0
       const id = crypto.randomUUID()
       onUpdateItems((prev) => [
         ...prev,
@@ -1144,7 +1291,7 @@ export default function PdfPageCanvas({
         seedFormat: { ...defaultTextFormat(), ...fmt, fontSizeCss: cssN },
       })
     },
-    [onUpdateItems, textFormat, textFormatRef, onAddedTextCommitted, pageIndex]
+    [onUpdateItems, textFormat, textFormatRef, onTextFormatChange, onAddedTextCommitted, pageIndex]
   )
 
   const cancelSigDraft = useCallback(() => {
@@ -1343,9 +1490,12 @@ export default function PdfPageCanvas({
           (x) => x.id === id && (x.type === 'text' || x.type === 'signature') && !x.rasterizedInPdf
         )
         if (!it || typeof it.x !== 'number' || typeof it.y !== 'number') return prev
-        return prev.map((x) =>
-          x.id === id ? { ...x, x: clamp01(x.x + dx), y: clamp01(x.y + dy) } : x
-        )
+        let nx = clamp01(it.x + dx)
+        let ny = clamp01(it.y + dy)
+        const sn = snapPlacedAnnotToNativeGrid(textBlocksRef.current, it, nx, ny, metaRef.current.pdfH)
+        nx = sn.x
+        ny = sn.y
+        return prev.map((x) => (x.id === id ? { ...x, x: nx, y: ny } : x))
       })
     }
     document.addEventListener('keydown', onKey, true)
@@ -1375,6 +1525,7 @@ export default function PdfPageCanvas({
   }, [])
 
   const onDraftDragPointerMove = useCallback((e) => {
+    if (textDraftResizeRef.current) return
     const drag = textDraftDragRef.current
     if (!drag || e.pointerId !== drag.pointerId) return
     const { cssW, cssH } = metaRef.current
@@ -1388,6 +1539,319 @@ export default function PdfPageCanvas({
     const drag = textDraftDragRef.current
     if (!drag || e.pointerId !== drag.pointerId) return
     textDraftDragRef.current = null
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    } catch {
+      /* ignore */
+    }
+  }, [])
+
+  const clampAnnotFontCss = useCallback((n) => {
+    return Math.round(Math.max(FONT_SIZE_MIN, Math.min(FONT_SIZE_MAX, n)))
+  }, [])
+
+  const applyTextDraftResizePendingCore = useCallback(() => {
+    const p = textDraftResizePendingRef.current
+    if (!p) return
+    textDraftResizePendingRef.current = null
+    if (typeof onTextFormatChange === 'function') {
+      onTextFormatChange((prev) => ({ ...prev, fontSizeCss: p.nextFont }))
+    }
+    setTextDraft((prev) =>
+      prev
+        ? {
+            ...prev,
+            nw: p.newNw,
+            nh: p.newNh,
+            baseNh: p.baseNh,
+            baseFontCss: p.baseFont,
+          }
+        : null
+    )
+  }, [onTextFormatChange])
+
+  const scheduleTextDraftResizeApply = useCallback(() => {
+    if (textDraftResizeRafRef.current != null) return
+    textDraftResizeRafRef.current = requestAnimationFrame(() => {
+      textDraftResizeRafRef.current = null
+      applyTextDraftResizePendingCore()
+    })
+  }, [applyTextDraftResizePendingCore])
+
+  const onTextDraftResizePointerDown = useCallback(
+    (e) => {
+      if (!e.isPrimary || e.button !== 0) return
+      e.preventDefault()
+      e.stopPropagation()
+      const d0 = textDraftRef.current
+      if (!d0?.nw || !d0?.nh) return
+      if (textDraftResizeRafRef.current != null) {
+        cancelAnimationFrame(textDraftResizeRafRef.current)
+        textDraftResizeRafRef.current = null
+      }
+      textDraftResizePendingRef.current = null
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId)
+      } catch {
+        /* ignore */
+      }
+      textDraftResizeRef.current = {
+        pointerId: e.pointerId,
+        startCx: e.clientX,
+        startCy: e.clientY,
+        startNw: d0.nw,
+        startNh: d0.nh,
+        nx: d0.nx,
+        ny: d0.ny,
+        baseNh: d0.baseNh ?? d0.nh,
+        baseFont:
+          d0.baseFontCss ??
+          (Number.isFinite(Number(textFormatRef?.current?.fontSizeCss))
+            ? Number(textFormatRef.current.fontSizeCss)
+            : 14),
+      }
+    },
+    [textFormatRef]
+  )
+
+  const onTextDraftResizePointerMove = useCallback(
+    (e) => {
+      const d = textDraftResizeRef.current
+      if (!d || e.pointerId !== d.pointerId) return
+      e.preventDefault()
+      const { cssW: W, cssH: H } = metaRef.current
+      if (W < 1 || H < 1) return
+      const dWpx = e.clientX - d.startCx
+      const dHpx = e.clientY - d.startCy
+      const w0 = Math.max(12, d.startNw * W)
+      const h0 = Math.max(12, d.startNh * H)
+      const scale = 1 + Math.max(dWpx / w0, dHpx / h0)
+      const sc = Math.max(0.35, Math.min(4, scale))
+      let newNw = d.startNw * sc
+      let newNh = d.startNh * sc
+      newNw = Math.min(Math.max(0.06, newNw), 1 - d.nx - 0.02)
+      newNh = Math.min(Math.max(0.025, newNh), 1 - d.ny - 0.02)
+      const nextFont = clampAnnotFontCss((d.baseFont * newNh) / d.baseNh)
+      textDraftResizePendingRef.current = {
+        newNw,
+        newNh,
+        nextFont,
+        baseNh: d.baseNh,
+        baseFont: d.baseFont,
+      }
+      scheduleTextDraftResizeApply()
+    },
+    [clampAnnotFontCss, scheduleTextDraftResizeApply]
+  )
+
+  const onTextDraftResizePointerUp = useCallback(
+    (e) => {
+      const d = textDraftResizeRef.current
+      if (!d || e.pointerId !== d.pointerId) return
+      if (textDraftResizeRafRef.current != null) {
+        cancelAnimationFrame(textDraftResizeRafRef.current)
+        textDraftResizeRafRef.current = null
+      }
+      applyTextDraftResizePendingCore()
+      textDraftResizeRef.current = null
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId)
+      } catch {
+        /* ignore */
+      }
+    },
+    [applyTextDraftResizePendingCore]
+  )
+
+  /** Grow/shrink draft `nw`/`nh` from textarea metrics: `pre` = no soft wrap; width must be collapsed to read intrinsic `scrollWidth` (with `w-full`, scrollWidth often equals the box). */
+  const syncTextDraftBoxFromTextarea = useCallback(() => {
+    if (textDraftResizeRef.current) return
+    const ta = draftInputRef.current
+    const draft = textDraftRef.current
+    if (!ta || !draft) return
+    const { cssW: W, cssH: H, bmpW } = metaRef.current
+    if (W < 1 || H < 1) return
+    const fmt = textFormatRef?.current ?? textFormat ?? defaultTextFormat()
+    const fsCss = Math.max(
+      FONT_SIZE_MIN,
+      Math.min(FONT_SIZE_MAX, Number(fmt.fontSizeCss) || 14)
+    )
+    const sx0 = bmpW > 0 ? W / bmpW : 1
+    const emptyMinWpx =
+      TEXT_DRAFT_INITIAL_CHAR_COLUMNS * fsCss * sx0 * TEXT_DRAFT_CHAR_ADVANCE_EM +
+      TEXT_DRAFT_H_PADDING_PX
+    /* Extra slack so the box is never narrower than the painted line (avoids overflow + native H-scroll). */
+    const hPad = 22
+    const vPad = 8
+    const savedW = ta.style.width
+    ta.style.width = '0px'
+    const intrinsicSw = ta.scrollWidth
+    ta.style.width = savedW || ''
+    ta.style.height = '0px'
+    const scrollH = ta.scrollHeight
+    ta.style.height = `${scrollH}px`
+    const hasText = Boolean(String(ta.value ?? '').length)
+    const typedFloorPx = Math.max(8, Math.ceil(fsCss * sx0) + 4)
+    const wantWpx = hasText
+      ? Math.max(typedFloorPx + hPad, Math.ceil(intrinsicSw) + hPad + 4)
+      : emptyMinWpx
+    const wantHpx = scrollH + vPad
+    const capNw = 1 - draft.nx - 0.02
+    const capNh = 1 - draft.ny - 0.02
+    const newNw = Math.min(capNw, Math.max(0.018, wantWpx / W))
+    const newNh = Math.min(capNh, Math.max(0.016, wantHpx / H))
+    const ew = 2 / W
+    const eh = 2 / H
+    if (Math.abs(newNw - draft.nw) < ew && Math.abs(newNh - draft.nh) < eh) {
+      return
+    }
+    setTextDraft((prev) => (prev ? { ...prev, nw: newNw, nh: newNh } : null))
+  }, [textFormat, textFormatRef])
+
+  const onSigDraftResizePointerDown = useCallback((e) => {
+    if (!e.isPrimary || e.button !== 0) return
+    e.preventDefault()
+    e.stopPropagation()
+    const d0 = sigDraftRef.current
+    if (!d0?.nw || !d0?.nh) return
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId)
+    } catch {
+      /* ignore */
+    }
+    sigDraftResizeRef.current = {
+      pointerId: e.pointerId,
+      startCx: e.clientX,
+      startCy: e.clientY,
+      startNw: d0.nw,
+      startNh: d0.nh,
+      nx: d0.nx,
+      ny: d0.ny,
+    }
+  }, [])
+
+  const onSigDraftResizePointerMove = useCallback((e) => {
+    const d = sigDraftResizeRef.current
+    if (!d || e.pointerId !== d.pointerId) return
+    const { cssW: W, cssH: H } = metaRef.current
+    if (W < 1 || H < 1) return
+    const dWpx = e.clientX - d.startCx
+    const dHpx = e.clientY - d.startCy
+    const w0 = Math.max(12, d.startNw * W)
+    const h0 = Math.max(12, d.startNh * H)
+    const scale = 1 + Math.max(dWpx / w0, dHpx / h0)
+    const sc = Math.max(0.25, Math.min(5, scale))
+    let newNw = d.startNw * sc
+    let newNh = d.startNh * sc
+    newNw = Math.min(Math.max(0.04, newNw), 1 - d.nx - 0.01)
+    newNh = Math.min(Math.max(0.025, newNh), 1 - d.ny - 0.01)
+    setSigDraft((prev) => (prev ? { ...prev, nw: newNw, nh: newNh } : null))
+  }, [])
+
+  const onSigDraftResizePointerUp = useCallback((e) => {
+    const d = sigDraftResizeRef.current
+    if (!d || e.pointerId !== d.pointerId) return
+    sigDraftResizeRef.current = null
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    } catch {
+      /* ignore */
+    }
+  }, [])
+
+  const annotResizeRef = useRef(null)
+
+  const onPlacedAnnotResizePointerDown = useCallback((e, it, kind) => {
+    if (!e.isPrimary || e.button !== 0) return
+    e.preventDefault()
+    e.stopPropagation()
+    const { cssW: W, cssH: H, pdfW, bmpW } = metaRef.current
+    if (W < 1 || H < 1) return
+    const sx = bmpW > 0 ? W / bmpW : 1
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId)
+    } catch {
+      /* ignore */
+    }
+    if (kind === 'sig') {
+      annotResizeRef.current = {
+        kind: 'sig',
+        id: it.id,
+        pointerId: e.pointerId,
+        startCx: e.clientX,
+        startCy: e.clientY,
+        startW: it.w,
+        startH: it.h,
+        ox: it.x,
+        oy: it.y,
+      }
+    } else {
+      const fsCss = Math.max(
+        FONT_SIZE_MIN,
+        Math.min(FONT_SIZE_MAX, Number(it.fontSizeCss) || 14)
+      )
+      const lines = Math.max(1, String(it.text || '').split('\n').length)
+      const startNh = Math.min(
+        0.48,
+        Math.max(0.03, ((fsCss * sx * ANNOT_UI_LINE_HEIGHT) / H) * lines)
+      )
+      const startNw = Number(it.nw) > 0 ? it.nw : Math.min(0.55, Math.max(0.1, 0.22))
+      annotResizeRef.current = {
+        kind: 'text',
+        id: it.id,
+        pointerId: e.pointerId,
+        startCx: e.clientX,
+        startCy: e.clientY,
+        startNw,
+        startNh,
+        startFontCss: fsCss,
+        ox: it.x,
+        oy: it.y,
+        pdfW: pdfW > 0 ? pdfW : 612,
+        bmpW: bmpW > 0 ? bmpW : 1,
+      }
+    }
+  }, [])
+
+  const onPlacedAnnotResizePointerMove = useCallback(
+    (e) => {
+      const d = annotResizeRef.current
+      if (!d || e.pointerId !== d.pointerId) return
+      const { cssW: W, cssH: H } = metaRef.current
+      if (W < 1 || H < 1) return
+      const dWpx = e.clientX - d.startCx
+      const dHpx = e.clientY - d.startCy
+      if (d.kind === 'sig') {
+        const w0 = Math.max(12, d.startW * W)
+        const h0 = Math.max(12, d.startH * H)
+        const scale = 1 + Math.max(dWpx / w0, dHpx / h0)
+        const sc = Math.max(0.25, Math.min(5, scale))
+        let nw = d.startW * sc
+        let nh = d.startH * sc
+        nw = Math.min(Math.max(0.04, nw), 1 - d.ox - 0.01)
+        nh = Math.min(Math.max(0.025, nh), 1 - d.oy - 0.01)
+        patchAnnotItem(d.id, { w: nw, h: nh })
+      } else {
+        const w0 = Math.max(12, d.startNw * W)
+        const h0 = Math.max(12, d.startNh * H)
+        const scale = 1 + Math.max(dWpx / w0, dHpx / h0)
+        const sc = Math.max(0.35, Math.min(4, scale))
+        let newNw = d.startNw * sc
+        let newNh = d.startNh * sc
+        newNw = Math.min(Math.max(0.06, newNw), 1 - d.ox - 0.02)
+        newNh = Math.min(Math.max(0.03, newNh), 1 - d.oy - 0.02)
+        const nextCss = clampAnnotFontCss((d.startFontCss * newNh) / d.startNh)
+        const nextPt = Math.max(4, Math.min(144, (nextCss * d.pdfW) / d.bmpW))
+        patchAnnotItem(d.id, { nw: newNw, fontSizeCss: nextCss, fontSize: nextPt })
+      }
+    },
+    [clampAnnotFontCss, patchAnnotItem]
+  )
+
+  const onPlacedAnnotResizePointerUp = useCallback((e) => {
+    const d = annotResizeRef.current
+    if (!d || e.pointerId !== d.pointerId) return
+    annotResizeRef.current = null
     try {
       e.currentTarget.releasePointerCapture(e.pointerId)
     } catch {
@@ -1418,6 +1882,7 @@ export default function PdfPageCanvas({
   }, [])
 
   const onSigDraftDragPointerMove = useCallback((e) => {
+    if (sigDraftResizeRef.current) return
     const drag = sigDraftDragRef.current
     if (!drag || e.pointerId !== drag.pointerId) return
     const { cssW, cssH } = metaRef.current
@@ -1445,6 +1910,12 @@ export default function PdfPageCanvas({
   useEffect(() => {
     if (tool === 'text') return
     textDraftDragRef.current = null
+    textDraftResizeRef.current = null
+    if (textDraftResizeRafRef.current != null) {
+      cancelAnimationFrame(textDraftResizeRafRef.current)
+      textDraftResizeRafRef.current = null
+    }
+    textDraftResizePendingRef.current = null
     textDraftRef.current = null
     setTextDraft(null)
   }, [tool])
@@ -1452,6 +1923,7 @@ export default function PdfPageCanvas({
   useEffect(() => {
     if (tool === 'signature') return
     sigDraftDragRef.current = null
+    sigDraftResizeRef.current = null
     sigDraftRef.current = null
     setSigDraft(null)
     setSigDefaultBox(null)
@@ -1460,6 +1932,25 @@ export default function PdfPageCanvas({
   const { cssW: cw, cssH: ch, bmpW, bmpH } = canvasLayout
   const sx = bmpW > 0 ? cw / bmpW : 1
   const sy = bmpH > 0 ? ch / bmpH : 1
+
+  useLayoutEffect(() => {
+    if (!textDraft) return
+    syncTextDraftBoxFromTextarea()
+  }, [
+    textDraft?.nx,
+    textDraft?.ny,
+    textDraft?.nw,
+    textDraft?.nh,
+    textFormat?.fontSizeCss,
+    textFormat?.fontFamily,
+    textFormat?.bold,
+    textFormat?.italic,
+    textFormat?.underline,
+    textFormat?.align,
+    cw,
+    bmpW,
+    syncTextDraftBoxFromTextarea,
+  ])
 
   /**
    * Resolve which text block contains the click at `(clientX, clientY)`.
@@ -1779,7 +2270,7 @@ export default function PdfPageCanvas({
         const formatSame = openFmt && nativeFormatSnapshotsEqual(openFmt, curFmt)
         if (textSame && formatSame) return
         onNativeTextEdit?.(buildNativePayload(block, raw))
-      }, 280)
+      }, 450)
     },
     [onNativeTextEdit, buildNativePayload]
   )
@@ -1787,7 +2278,7 @@ export default function PdfPageCanvas({
   /**
    * Push toolbar-only changes (B/I/U, colour, font size …) immediately so they are always
    * captured in `nativeTextEditsRef` before a Save/Download that might happen within the
-   * 280ms keystroke-debounce window. The debounced sync is still responsible for keystroke
+   * keystroke-debounce window. The debounced sync is still responsible for keystroke
    * content; this effect handles format-only changes.
    */
   useEffect(() => {
@@ -2002,6 +2493,7 @@ export default function PdfPageCanvas({
 
   const annotPointerDown = (e, it) => {
     if (!annotLayerInteractive || !e.isPrimary || e.button !== 0) return
+    if (e.target instanceof Element && e.target.closest?.('[data-pdf-annot-resize]')) return
     e.stopPropagation()
     if (editingAnnotId === it.id) return
     annotDragRef.current = {
@@ -2022,6 +2514,7 @@ export default function PdfPageCanvas({
   /** Drag handle while inline-editing (editingAnnotId blocks `annotPointerDown` on the glyph). */
   const beginAnnotTextDrag = (e, it) => {
     if (!annotLayerInteractive || !e.isPrimary || e.button !== 0) return
+    if (e.target instanceof Element && e.target.closest?.('[data-pdf-annot-resize]')) return
     e.preventDefault()
     e.stopPropagation()
     annotDragRef.current = {
@@ -2063,8 +2556,19 @@ export default function PdfPageCanvas({
     const W = cw
     const H = ch
     if (d.moved && W > 0 && H > 0) {
-      const nx = clamp01(d.ox + (e.clientX - d.sx) / W)
-      const ny = clamp01(d.oy + (e.clientY - d.sy) / H)
+      let nx = clamp01(d.ox + (e.clientX - d.sx) / W)
+      let ny = clamp01(d.oy + (e.clientY - d.sy) / H)
+      if (it.type === 'text' || it.type === 'signature') {
+        const sn = snapPlacedAnnotToNativeGrid(
+          textBlocksRef.current,
+          it,
+          nx,
+          ny,
+          metaRef.current.pdfH
+        )
+        nx = sn.x
+        ny = sn.y
+      }
       patchAnnotItem(it.id, { x: nx, y: ny })
       selectAnnot(it.id, { notifyFormat: true, openEditor: false })
     } else if (!d.moved && editingAnnotIdRef.current !== it.id) {
@@ -2192,6 +2696,19 @@ export default function PdfPageCanvas({
                     {isSel && annotLayerInteractive && (
                       <TextAnnotBoxDeleteBtn onDelete={() => removeTextAnnot(it.id)} />
                     )}
+                    {isSel && annotLayerInteractive && !isEdit && (
+                      <button
+                        type="button"
+                        data-pdf-annot-resize="se"
+                        aria-label="Resize text box"
+                        title="Drag to resize — text size scales with the box"
+                        className="absolute bottom-0 right-0 z-20 h-3.5 w-3.5 cursor-nwse-resize rounded-br-md border border-blue-600 bg-white/95 shadow touch-none dark:bg-zinc-900/95"
+                        onPointerDown={(e) => onPlacedAnnotResizePointerDown(e, it, 'text')}
+                        onPointerMove={onPlacedAnnotResizePointerMove}
+                        onPointerUp={onPlacedAnnotResizePointerUp}
+                        onPointerCancel={onPlacedAnnotResizePointerUp}
+                      />
+                    )}
                     <div
                       role="text"
                       className={`inline-block max-w-full touch-none whitespace-pre-wrap break-words font-sans select-none ${
@@ -2278,6 +2795,19 @@ export default function PdfPageCanvas({
                       className="pointer-events-none h-full w-full object-contain"
                     />
                   ) : null}
+                  {isSel && annotLayerInteractive && (
+                    <button
+                      type="button"
+                      data-pdf-annot-resize="se"
+                      aria-label="Resize signature"
+                      title="Drag to resize — image scales with the box"
+                      className="absolute bottom-0 right-0 z-20 h-3.5 w-3.5 cursor-nwse-resize rounded-br-md border border-blue-600 bg-white/95 shadow touch-none dark:bg-zinc-900/95"
+                      onPointerDown={(e) => onPlacedAnnotResizePointerDown(e, it, 'sig')}
+                      onPointerMove={onPlacedAnnotResizePointerMove}
+                      onPointerUp={onPlacedAnnotResizePointerUp}
+                      onPointerCancel={onPlacedAnnotResizePointerUp}
+                    />
+                  )}
                 </div>
               </div>
             )
@@ -2299,7 +2829,6 @@ export default function PdfPageCanvas({
             const isEditing = nativeEdit?.block?.id === block.id
             const w = Math.max(block.width * sx, 4)
             const left = block.left * sx
-            const top = block.top * sy
             /*
              * Idle taps: use vertically clipped bands between neighbours so a heading-sized min-height
              * does not paint a hit target into the line above (which then won DOM hit-testing).
@@ -2657,15 +3186,42 @@ export default function PdfPageCanvas({
                   />
                 ) : null}
               </div>
+              <button
+                type="button"
+                data-pdf-annot-resize="se"
+                aria-label="Resize signature"
+                title="Drag corner to resize"
+                className="absolute bottom-0 right-0 z-20 h-3.5 w-3.5 cursor-nwse-resize rounded-br-md border border-blue-600 bg-white/95 shadow touch-none dark:bg-zinc-900/95"
+                onPointerDown={onSigDraftResizePointerDown}
+                onPointerMove={onSigDraftResizePointerMove}
+                onPointerUp={onSigDraftResizePointerUp}
+                onPointerCancel={onSigDraftResizePointerUp}
+              />
             </div>
           )
         })()}
       {textDraft && cw > 0 && (() => {
         const draftFmt = textFormat ?? defaultTextFormat()
-        const draftFsCss = Math.max(8, Math.min(144, Number(draftFmt.fontSizeCss) || 14))
-        const draftPx = Math.max(8, Math.min(144, draftFsCss * sx))
+        const draftFsCss = Math.max(
+          FONT_SIZE_MIN,
+          Math.min(FONT_SIZE_MAX, Number(draftFmt.fontSizeCss) || 14)
+        )
+        const draftPx = Math.max(FONT_SIZE_MIN, Math.min(FONT_SIZE_MAX, draftFsCss * sx))
         const draftFont = cssAnnotPreviewFontStack(draftFmt.fontFamily)
+        const boxWpx = textDraft.nw > 0 ? textDraft.nw * cw : undefined
+        const boxMinHpx = textDraft.nh > 0 ? textDraft.nh * ch : undefined
+        const lineHpx = draftPx * ANNOT_UI_LINE_HEIGHT + 8
+        const draftTaMaxH =
+          typeof boxMinHpx === 'number' && boxMinHpx > 0
+            ? Math.max(lineHpx, boxMinHpx - 4)
+            : undefined
         const cancelDraft = () => {
+          if (textDraftResizeRafRef.current != null) {
+            cancelAnimationFrame(textDraftResizeRafRef.current)
+            textDraftResizeRafRef.current = null
+          }
+          textDraftResizePendingRef.current = null
+          textDraftResizeRef.current = null
           textDraftDragRef.current = null
           textDraftRef.current = null
           setTextDraft(null)
@@ -2679,10 +3235,16 @@ export default function PdfPageCanvas({
         return (
           <div
             data-pdf-annot-draft
-            className="absolute z-[50] inline-block max-w-[min(22rem,calc(100vw-1.25rem))] cursor-default overflow-visible rounded-md shadow-md ring-2 ring-blue-600"
+            className={`absolute z-[50] flex min-h-0 flex-col cursor-default overflow-visible rounded-md shadow-md ring-2 ring-blue-600 ${
+              boxWpx ? '' : 'max-w-[min(22rem,calc(100vw-1.25rem))]'
+            }`}
             style={{
               left: textDraft.nx * cw,
               top: textDraft.ny * ch,
+              width: boxWpx,
+              ...(typeof boxMinHpx === 'number' && boxMinHpx > 0
+                ? { height: boxMinHpx, minHeight: boxMinHpx }
+                : { minHeight: boxMinHpx }),
               backgroundColor: ANNOT_TEXT_DISPLAY_BG,
             }}
           >
@@ -2697,17 +3259,22 @@ export default function PdfPageCanvas({
               onPointerCancel={onDraftDragPointerUp}
             />
             <TextAnnotBoxDeleteBtn onDelete={cancelDraft} />
-            <div className="px-0 pb-2 pt-0">
-              <input
+            <div className="relative flex h-full min-h-0 flex-col justify-center px-0 py-0">
+              <textarea
                 ref={draftInputRef}
                 data-pdf-annot-draft-input
+                rows={1}
                 autoFocus
-                placeholder="Type text…"
+                title="Enter for a new line"
+                placeholder="Type…"
                 maxLength={MAX_ANNOT_TEXT_LENGTH}
-                className="pdf-annot-draft-input min-w-0 max-w-full cursor-text rounded-sm border-0 py-0 pl-0 pr-2 text-zinc-900 outline-none placeholder:text-zinc-500"
+                className="pdf-annot-draft-input box-border min-h-0 w-full min-w-0 resize-none cursor-text whitespace-pre break-normal rounded-sm border-0 py-0.5 pl-0 pr-2 text-zinc-900 outline-none placeholder:text-zinc-500"
                 style={{
                   fontSize: `${draftPx}px`,
-                  lineHeight: 1.35, /* match ANNOT_UI_LINE_HEIGHT in backend applyEdits.js */
+                  lineHeight: ANNOT_UI_LINE_HEIGHT,
+                  maxHeight: draftTaMaxH != null ? `${draftTaMaxH}px` : undefined,
+                  overflowX: 'hidden',
+                  overflowY: 'auto',
                   color: normalizeHexForColorInput(draftFmt.color || '#000000'),
                   fontFamily: draftFont,
                   fontWeight: draftFmt.bold ? 700 : 400,
@@ -2718,13 +3285,32 @@ export default function PdfPageCanvas({
                   background: 'transparent',
                   backgroundColor: 'transparent',
                 }}
+                onInput={() => {
+                  syncTextDraftBoxFromTextarea()
+                }}
                 onPointerDown={(e) => e.stopPropagation()}
                 onKeyDown={(e) => {
                   if (e.key === 'Escape') {
                     e.preventDefault()
                     cancelDraft()
+                    return
+                  }
+                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault()
+                    commitText(draftInputRef.current?.value ?? '')
                   }
                 }}
+              />
+              <button
+                type="button"
+                data-pdf-annot-resize="se"
+                aria-label="Resize text box"
+                title="Drag corner to resize — font size follows the box"
+                className="absolute bottom-0 right-0 z-20 h-3.5 w-3.5 cursor-nwse-resize rounded-br-md border border-blue-600 bg-white/95 shadow touch-none dark:bg-zinc-900/95"
+                onPointerDown={onTextDraftResizePointerDown}
+                onPointerMove={onTextDraftResizePointerMove}
+                onPointerUp={onTextDraftResizePointerUp}
+                onPointerCancel={onTextDraftResizePointerUp}
               />
             </div>
           </div>
@@ -2733,3 +3319,7 @@ export default function PdfPageCanvas({
     </div>
   )
 }
+
+const PdfPageCanvasMemo = memo(PdfPageCanvas)
+PdfPageCanvasMemo.displayName = 'PdfPageCanvas'
+export default PdfPageCanvasMemo

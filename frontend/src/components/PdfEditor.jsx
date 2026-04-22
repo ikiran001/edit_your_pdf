@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
 import { apiUrl } from '../lib/apiBase'
@@ -56,6 +56,9 @@ const EDITOR_ZOOM_MAX = 4
 
 /** Stable when `pagesItems[i]` is missing — inline `[]` would be a new reference every render and break `commitText` / overlay effects in PdfPageCanvas. */
 const EMPTY_PAGE_ANNOT_ITEMS = []
+
+/** Stable empty ref for per-page native-edit slices so unchanged pages skip re-renders. */
+const EMPTY_NATIVE_EDITS_PAGE = []
 
 const ONBOARDING_STORAGE_KEY = 'pdfpilot_editor_onboarding_dismissed'
 
@@ -151,6 +154,9 @@ export default function PdfEditor({
   onSessionFork = null,
 }) {
   const [pdfDoc, setPdfDoc] = useState(null)
+  /** Monotonic id so in-flight PDF loads from older bust/session do not apply after a newer request. */
+  const pdfLoadRunIdRef = useRef(0)
+  const pdfDocProxyRef = useRef(null)
   const [loadError, setLoadError] = useState(null)
   /** Default to Edit text so Word-style editing works without an extra click. */
   const [activeTool, setActiveTool] = useState('editText')
@@ -351,6 +357,20 @@ export default function PdfEditor({
 
   const numPages = pdfDoc?.numPages ?? 0
 
+  useEffect(() => {
+    pdfDocProxyRef.current = pdfDoc
+  }, [pdfDoc])
+
+  const nativesPerPage = useMemo(() => {
+    if (!Number.isFinite(numPages) || numPages < 1) return []
+    const buckets = Array.from({ length: numPages }, () => [])
+    for (const e of nativeTextEdits) {
+      const p = Number(e.pageIndex)
+      if (Number.isFinite(p) && p >= 0 && p < numPages) buckets[p].push(e)
+    }
+    return buckets.map((b) => (b.length === 0 ? EMPTY_NATIVE_EDITS_PAGE : b))
+  }, [nativeTextEdits, numPages])
+
   const signatureImageBase64 = useMemo(() => {
     if (signaturePng?.length) return uint8ToBase64(signaturePng)
     for (const k of Object.keys(pagesItems || {})) {
@@ -474,6 +494,7 @@ export default function PdfEditor({
 
   useEffect(() => {
     let cancelled = false
+    const runId = ++pdfLoadRunIdRef.current
     setLoadError(null)
     const pdfUrl =
       pdfBust > 0
@@ -488,7 +509,23 @@ export default function PdfEditor({
             .then((r) => (r.ok ? r.json() : { nativeTextEdits: [], edits: { pages: [] }, _hydrationFailed: true }))
             .catch(() => ({ nativeTextEdits: [], edits: { pages: [] }, _hydrationFailed: true })),
         ])
-        if (cancelled) return
+        if (cancelled || runId !== pdfLoadRunIdRef.current) {
+          try {
+            await doc?.destroy?.()
+          } catch {
+            /* ignore */
+          }
+          return
+        }
+        const prevDoc = pdfDocProxyRef.current
+        pdfDocProxyRef.current = doc
+        if (prevDoc && prevDoc !== doc) {
+          try {
+            await prevDoc.destroy()
+          } catch {
+            /* ignore */
+          }
+        }
         setPdfDoc(doc)
 
         if (stRes._hydrationFailed) {
@@ -516,7 +553,9 @@ export default function PdfEditor({
           recomputeSessionDirtyUi()
         }, 0)
       } catch (e) {
-        if (!cancelled) setLoadError(e?.message || 'Failed to load PDF')
+        if (!cancelled && runId === pdfLoadRunIdRef.current) {
+          setLoadError(e?.message || 'Failed to load PDF')
+        }
       }
     })()
     return () => {
@@ -719,7 +758,6 @@ export default function PdfEditor({
   }, [pdfDoc])
 
   const reloadPdfFromServer = useCallback(() => {
-    setPdfDoc(null)
     setPdfBust((v) => v + 1)
   }, [])
 
@@ -967,7 +1005,7 @@ export default function PdfEditor({
       }
       // Keep ref in sync immediately so “Download” in the same gesture as textarea blur still sends edits.
       nativeTextEditsRef.current = next
-      setNativeTextEdits(next)
+      startTransition(() => setNativeTextEdits(next))
     },
     []
   )
@@ -1576,11 +1614,12 @@ export default function PdfEditor({
                       items={pagesItems[i] ?? EMPTY_PAGE_ANNOT_ITEMS}
                       onUpdateItems={pageItemUpdaters[i]}
                       blockTextOverrides={blockTextOverrides}
-                      sessionNativeTextEdits={nativeTextEdits}
+                      sessionNativeTextEdits={nativesPerPage[i] ?? EMPTY_NATIVE_EDITS_PAGE}
                       onNativeTextEdit={(payload) => addNativeTextEdit(i, payload)}
                       onRevertNativeTextEdit={revertNativeTextEdit}
                       textFormat={textFormat}
                       textFormatRef={textFormatRef}
+                      onTextFormatChange={setTextFormat}
                       editTextMode={editTextMode}
                       onInlineEditorActiveChange={setInlineTextEditorOpen}
                       formatSyncTarget={annotFormatTarget}
