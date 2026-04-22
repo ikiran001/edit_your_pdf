@@ -104,7 +104,7 @@ function editsPayloadToPresentMap(edits) {
 export default function PdfEditor({
   sessionId,
   onBack,
-  /** Original upload filename for My Documents. */
+  /** Original upload filename for Saved PDFs (library). */
   originalFileName = 'document.pdf',
   downloadToken = null,
   onDownloadTokenConsumed,

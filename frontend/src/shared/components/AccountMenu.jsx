@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useNavigate } from 'react-router-dom'
-import { UserRound } from 'lucide-react'
+import { FolderOpen, UserRound } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext.jsx'
 import SignInExperienceModal from '../../auth/SignInExperienceModal.jsx'
 import {
@@ -23,7 +23,7 @@ function useMenuPosition(open, triggerRef) {
     if (!el) return
     const r = el.getBoundingClientRect()
     const margin = 8
-    const maxW = Math.min(18 * 16, window.innerWidth - margin * 2)
+    const maxW = Math.min(20 * 16, window.innerWidth - margin * 2)
     setCoords({
       top: r.bottom + 6,
       right: Math.max(margin, window.innerWidth - r.right),
@@ -179,7 +179,7 @@ export default function AccountMenu({ compact = false }) {
       <div
         ref={accountMenuRef}
         role="menu"
-        className="fixed max-h-[min(70vh,20rem)] overflow-y-auto rounded-xl border border-zinc-200 bg-white p-3 text-sm shadow-2xl ring-1 ring-black/5 dark:border-zinc-600 dark:bg-zinc-900 dark:ring-white/10"
+        className="fixed max-h-[min(85vh,26rem)] overflow-y-auto rounded-xl border border-zinc-200 bg-white p-3 text-sm shadow-2xl ring-1 ring-black/5 dark:border-zinc-600 dark:bg-zinc-900 dark:ring-white/10"
         style={{
           zIndex: MENU_Z,
           top: coords.top,
@@ -204,19 +204,37 @@ export default function AccountMenu({ compact = false }) {
             {email || 'Account'}
           </p>
         )}
+        <hr className="my-3 border-0 border-t border-zinc-200 dark:border-zinc-700" />
         <Link
           to="/my-documents"
           role="menuitem"
-          className="mt-3 block w-full rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-center text-xs font-medium text-indigo-900 hover:bg-indigo-100 dark:border-indigo-500/30 dark:bg-indigo-950/40 dark:text-indigo-100 dark:hover:bg-indigo-900/50"
+          id="eyp-account-menu-saved-pdfs"
+          aria-describedby="eyp-account-menu-saved-pdfs-hint"
+          className="fx-focus-ring group block w-full rounded-xl border border-indigo-200/90 bg-gradient-to-br from-indigo-50 to-white px-3 py-3 text-left shadow-sm transition hover:border-indigo-300 hover:from-indigo-50/95 hover:shadow dark:border-indigo-500/35 dark:from-indigo-950/55 dark:to-zinc-900 dark:hover:border-cyan-500/30 dark:hover:from-indigo-950/70"
           onClick={() => setAccountMenuOpen(false)}
         >
-          My documents
+          <div className="flex gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-600/10 text-indigo-700 dark:bg-indigo-500/20 dark:text-cyan-300">
+              <FolderOpen className="h-5 w-5" strokeWidth={2} aria-hidden />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+                Saved PDFs and edits
+              </span>
+              <span
+                id="eyp-account-menu-saved-pdfs-hint"
+                className="mt-1 block text-[11px] leading-snug text-zinc-600 dark:text-zinc-400"
+              >
+                PDFs you changed in Edit PDF (and other tools) while signed in — open, download, or delete anytime.
+              </span>
+            </span>
+          </div>
         </Link>
         <button
           type="button"
           role="menuitem"
           disabled={signOutBusy}
-          className="mt-2 w-full rounded-lg border border-zinc-200 px-3 py-2 text-xs font-medium text-zinc-800 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:text-zinc-100 dark:hover:bg-zinc-800"
+          className="fx-focus-ring mt-2 w-full rounded-lg border border-zinc-200 px-3 py-2.5 text-xs font-medium text-zinc-800 transition hover:bg-zinc-50 disabled:opacity-50 active:scale-[0.99] dark:border-zinc-600 dark:text-zinc-100 dark:hover:bg-zinc-800"
           onClick={() => {
             if (signOutBusy) return
             setSignOutError(null)
@@ -260,7 +278,9 @@ export default function AccountMenu({ compact = false }) {
         aria-expanded={user ? accountMenuOpen : authModalOpen}
         aria-haspopup={user ? 'menu' : 'dialog'}
         id="eyp-account-menu-trigger"
-        aria-label={user ? 'Account menu' : 'Log in or sign up'}
+        aria-label={
+          user ? 'Account menu — saved PDFs from Edit PDF and other tools, sign out' : 'Log in or sign up'
+        }
         className="fx-focus-ring inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white/90 px-2 py-1.5 text-xs font-medium text-zinc-800 shadow-sm hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-900/90 dark:text-zinc-100 dark:hover:bg-zinc-800 sm:gap-2 sm:px-2.5 sm:text-sm"
       >
         <UserRound className="h-4 w-4 shrink-0 opacity-80" aria-hidden />
