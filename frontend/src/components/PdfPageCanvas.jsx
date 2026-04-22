@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, memo } from 'react'
 import { buildTextRuns } from '../lib/pdfTextRuns'
 import { hexLuminance, sampleBackgroundColorHex, sampleInkColorHex } from '../lib/sampleCanvasInkColor'
 import {
@@ -45,6 +45,86 @@ function rawBase64ToUint8(b64) {
 
 function clamp01(v) {
   return Math.min(1, Math.max(0, v))
+}
+
+const DEFAULT_SNAP_PDF_H = 792
+
+/**
+ * Snap placed markup to native PDF text grid (line tops + baselines in normalized viewport space).
+ * `item.x` / `item.y` follow the editor convention: top-left of the box in page-normalized coords.
+ */
+function snapPlacedAnnotToNativeGrid(textBlocks, item, nx, ny, pdfH) {
+  const blocks = textBlocks || []
+  const ph = Number.isFinite(pdfH) && pdfH > 72 ? pdfH : DEFAULT_SNAP_PDF_H
+  if (item?.type === 'signature') {
+    const epsY = 0.012
+    const epsX = 0.01
+    let xo = nx
+    let yo = ny
+    let bestY = epsY
+    let bestX = epsX
+    for (const b of blocks) {
+      const tn = b.norm?.ny
+      if (Number.isFinite(tn)) {
+        const d = Math.abs(ny - tn)
+        if (d < bestY) {
+          bestY = d
+          yo = tn
+        }
+      }
+      const tx = b.norm?.nx
+      if (Number.isFinite(tx)) {
+        const d = Math.abs(nx - tx)
+        if (d < bestX) {
+          bestX = d
+          xo = tx
+        }
+      }
+    }
+    return { x: clamp01(xo), y: clamp01(yo) }
+  }
+  if (item?.type !== 'text') return { x: clamp01(nx), y: clamp01(ny) }
+  const fs = Math.max(4, Number(item.fontSize) || 12)
+  const deltaN = Math.min(0.09, Math.max(0.002, (fs / ph) * 0.76))
+  const curBl = ny + deltaN
+  const eps = 0.014
+  let yOut = ny
+  let best = eps
+  for (const b of blocks) {
+    const bn = b.norm?.baselineN
+    if (!Number.isFinite(bn)) continue
+    const d = Math.abs(curBl - bn)
+    if (d < best) {
+      best = d
+      yOut = bn - deltaN
+    }
+  }
+  for (const b of blocks) {
+    const tn = b.norm?.ny
+    if (!Number.isFinite(tn)) continue
+    const d = Math.abs(ny - tn)
+    if (d < best) {
+      best = d
+      yOut = tn
+    }
+  }
+  let xOut = nx
+  best = 0.012
+  for (const b of blocks) {
+    const tx = b.norm?.nx
+    if (!Number.isFinite(tx)) continue
+    const d = Math.abs(nx - tx)
+    if (d < best) {
+      best = d
+      xOut = tx
+    }
+  }
+  return { x: clamp01(xOut), y: clamp01(yOut) }
+}
+
+function normalizePlacedAnnotDraftText(raw) {
+  const s = String(raw ?? '').replace(/\r\n/g, '\n')
+  return s.replace(/^\s+|\s+$/g, '').slice(0, MAX_ANNOT_TEXT_LENGTH)
 }
 
 /**
@@ -275,7 +355,7 @@ function AnnotTextContentEditable({
  * Renders one PDF page with pdf.js and an interaction overlay.
  * Annotations use normalized coords (0–1, top-left origin) for pdf-lib on the server.
  */
-export default function PdfPageCanvas({
+function PdfPageCanvas({
   pdfPage,
   pageIndex = 0,
   tool,
@@ -585,9 +665,7 @@ export default function PdfPageCanvas({
     (id, raw) => {
       if (editingAnnotIdRef.current !== id) return
       editingAnnotIdRef.current = null
-      const v = String(raw ?? '')
-        .replace(/\r\n/g, '\n')
-        .trim()
+      const v = normalizePlacedAnnotDraftText(raw)
       if (!v) {
         onUpdateItems((prev) => prev.filter((it) => it.id !== id))
         setSelectedAnnotId(null)
@@ -1100,7 +1178,7 @@ export default function PdfPageCanvas({
       textDraftRef.current = null
       textDraftDragRef.current = null
       setTextDraft(null)
-      const v = String(value ?? '').trim().slice(0, MAX_ANNOT_TEXT_LENGTH)
+      const v = normalizePlacedAnnotDraftText(value)
       if (!v) return
       const textAnnotCount = items.filter((it) => it.type === 'text').length
       if (textAnnotCount >= MAX_ANNOT_TEXT_PER_PAGE) return
@@ -1343,9 +1421,12 @@ export default function PdfPageCanvas({
           (x) => x.id === id && (x.type === 'text' || x.type === 'signature') && !x.rasterizedInPdf
         )
         if (!it || typeof it.x !== 'number' || typeof it.y !== 'number') return prev
-        return prev.map((x) =>
-          x.id === id ? { ...x, x: clamp01(x.x + dx), y: clamp01(x.y + dy) } : x
-        )
+        let nx = clamp01(it.x + dx)
+        let ny = clamp01(it.y + dy)
+        const sn = snapPlacedAnnotToNativeGrid(textBlocksRef.current, it, nx, ny, metaRef.current.pdfH)
+        nx = sn.x
+        ny = sn.y
+        return prev.map((x) => (x.id === id ? { ...x, x: nx, y: ny } : x))
       })
     }
     document.addEventListener('keydown', onKey, true)
@@ -1779,7 +1860,7 @@ export default function PdfPageCanvas({
         const formatSame = openFmt && nativeFormatSnapshotsEqual(openFmt, curFmt)
         if (textSame && formatSame) return
         onNativeTextEdit?.(buildNativePayload(block, raw))
-      }, 280)
+      }, 450)
     },
     [onNativeTextEdit, buildNativePayload]
   )
@@ -1787,7 +1868,7 @@ export default function PdfPageCanvas({
   /**
    * Push toolbar-only changes (B/I/U, colour, font size …) immediately so they are always
    * captured in `nativeTextEditsRef` before a Save/Download that might happen within the
-   * 280ms keystroke-debounce window. The debounced sync is still responsible for keystroke
+   * keystroke-debounce window. The debounced sync is still responsible for keystroke
    * content; this effect handles format-only changes.
    */
   useEffect(() => {
@@ -2063,8 +2144,19 @@ export default function PdfPageCanvas({
     const W = cw
     const H = ch
     if (d.moved && W > 0 && H > 0) {
-      const nx = clamp01(d.ox + (e.clientX - d.sx) / W)
-      const ny = clamp01(d.oy + (e.clientY - d.sy) / H)
+      let nx = clamp01(d.ox + (e.clientX - d.sx) / W)
+      let ny = clamp01(d.oy + (e.clientY - d.sy) / H)
+      if (it.type === 'text' || it.type === 'signature') {
+        const sn = snapPlacedAnnotToNativeGrid(
+          textBlocksRef.current,
+          it,
+          nx,
+          ny,
+          metaRef.current.pdfH
+        )
+        nx = sn.x
+        ny = sn.y
+      }
       patchAnnotItem(it.id, { x: nx, y: ny })
       selectAnnot(it.id, { notifyFormat: true, openEditor: false })
     } else if (!d.moved && editingAnnotIdRef.current !== it.id) {
@@ -2299,7 +2391,6 @@ export default function PdfPageCanvas({
             const isEditing = nativeEdit?.block?.id === block.id
             const w = Math.max(block.width * sx, 4)
             const left = block.left * sx
-            const top = block.top * sy
             /*
              * Idle taps: use vertically clipped bands between neighbours so a heading-sized min-height
              * does not paint a hit target into the line above (which then won DOM hit-testing).
@@ -2698,13 +2789,14 @@ export default function PdfPageCanvas({
             />
             <TextAnnotBoxDeleteBtn onDelete={cancelDraft} />
             <div className="px-0 pb-2 pt-0">
-              <input
+              <textarea
                 ref={draftInputRef}
                 data-pdf-annot-draft-input
+                rows={2}
                 autoFocus
-                placeholder="Type text…"
+                placeholder="Type text… (Enter for a new line)"
                 maxLength={MAX_ANNOT_TEXT_LENGTH}
-                className="pdf-annot-draft-input min-w-0 max-w-full cursor-text rounded-sm border-0 py-0 pl-0 pr-2 text-zinc-900 outline-none placeholder:text-zinc-500"
+                className="pdf-annot-draft-input min-h-[2.75em] min-w-0 max-w-full resize-y cursor-text rounded-sm border-0 py-0.5 pl-0 pr-2 text-zinc-900 outline-none placeholder:text-zinc-500"
                 style={{
                   fontSize: `${draftPx}px`,
                   lineHeight: 1.35, /* match ANNOT_UI_LINE_HEIGHT in backend applyEdits.js */
@@ -2723,6 +2815,11 @@ export default function PdfPageCanvas({
                   if (e.key === 'Escape') {
                     e.preventDefault()
                     cancelDraft()
+                    return
+                  }
+                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault()
+                    commitText(draftInputRef.current?.value ?? '')
                   }
                 }}
               />
@@ -2733,3 +2830,7 @@ export default function PdfPageCanvas({
     </div>
   )
 }
+
+const PdfPageCanvasMemo = memo(PdfPageCanvas)
+PdfPageCanvasMemo.displayName = 'PdfPageCanvas'
+export default PdfPageCanvasMemo

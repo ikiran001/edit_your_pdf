@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FONT_OPTIONS, FONT_SIZE_OPTIONS } from '../lib/textFormatDefaults'
+import { FONT_OPTIONS, FONT_SIZE_OPTIONS, TEXT_ALIGN_OPTIONS } from '../lib/textFormatDefaults'
 
 const HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/
 
@@ -22,6 +22,7 @@ function StyleToggle({ active, children, onClick, title }) {
 
 /**
  * Text format controls embedded in the main editor toolbar (`data-text-format-panel` for blur/focus).
+ * When `disabled`, only a short hint is shown so the row does not read as a wall of greyed-out inputs.
  */
 export default function ToolbarTextFormatInline({ format, onChange, disabled, overlayActions = null }) {
   const patch = (partial) => onChange({ ...format, ...partial })
@@ -31,16 +32,28 @@ export default function ToolbarTextFormatInline({ format, onChange, disabled, ov
   const selClass =
     'min-h-10 rounded-lg border border-zinc-400 bg-white px-2.5 py-2 text-sm font-medium text-zinc-900 shadow-sm dark:border-zinc-500 dark:bg-zinc-800 dark:text-zinc-100 sm:min-h-9'
 
+  if (disabled) {
+    return (
+      <div
+        data-text-format-panel
+        className="flex flex-wrap items-center gap-x-2 gap-y-1.5 sm:gap-x-3"
+        aria-label="Text formatting"
+      >
+        <span className="text-[11px] font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 sm:text-xs">
+          Text format
+        </span>
+        <p className="m-0 max-w-[min(28rem,92vw)] text-[11px] leading-snug text-zinc-600 dark:text-zinc-300 sm:text-xs">
+          Tap a PDF line or use Add Text — font, size, colour, and alignment appear here while you edit.
+        </p>
+      </div>
+    )
+  }
+
   return (
     <div
       data-text-format-panel
-      className={`flex flex-wrap items-center gap-x-2 gap-y-2 transition-opacity duration-200 sm:gap-x-3 ${
-        disabled
-          ? 'pointer-events-none cursor-not-allowed select-none opacity-45 saturate-[0.65] dark:opacity-40'
-          : ''
-      }`}
+      className="flex flex-wrap items-center gap-x-2 gap-y-2 transition-opacity duration-200 sm:gap-x-3"
       aria-label="Text formatting"
-      aria-disabled={disabled || undefined}
     >
       <span className="text-[11px] font-bold uppercase tracking-wide text-zinc-700 dark:text-zinc-200 sm:text-xs">
         Text format
@@ -144,18 +157,29 @@ export default function ToolbarTextFormatInline({ format, onChange, disabled, ov
           maxLength={7}
         />
       </div>
+      <div className="flex items-center gap-1.5">
+        <span className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">Align</span>
+        <div className="flex gap-1" role="group" aria-label="Text alignment">
+          {TEXT_ALIGN_OPTIONS.map((o) => (
+            <button
+              key={o.value}
+              type="button"
+              title={o.label}
+              aria-pressed={format.align === o.value}
+              onClick={() => patch({ align: o.value })}
+              className={`fx-focus-ring min-h-10 min-w-10 rounded-lg border px-2.5 text-xs font-bold transition sm:min-h-9 sm:px-3 ${
+                format.align === o.value
+                  ? 'border-indigo-500 bg-indigo-600 text-white shadow-md ring-2 ring-indigo-400/60 dark:ring-indigo-300/40'
+                  : 'border-zinc-400 bg-white text-zinc-900 hover:bg-zinc-100 dark:border-zinc-500 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700'
+              }`}
+            >
+              {o.value === 'left' ? 'L' : o.value === 'center' ? 'C' : 'R'}
+            </button>
+          ))}
+        </div>
+      </div>
       <p className="basis-full text-[11px] leading-snug text-zinc-600 dark:text-zinc-300">
-        {disabled ? (
-          <>
-            Tap a line on the page (or use Add Text) — these controls turn on while you are editing so you
-            can set colour, font, and size.
-          </>
-        ) : (
-          <>
-            Pick any text colour you like — use the swatch or hex box so wording stays clear on your page
-            background.
-          </>
-        )}
+        Pick colour with the swatch or hex box. Alignment applies to added text boxes and native line edits.
       </p>
     </div>
   )
