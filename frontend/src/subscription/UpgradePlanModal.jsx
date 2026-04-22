@@ -36,11 +36,16 @@ export default function UpgradePlanModal({ open, onClose, initialPlan = 'monthly
   const [message, setMessage] = useState(null)
 
   useEffect(() => {
-    if (open) {
-      setPlan(initialPlan)
+    if (!open) return
+    setPlan(initialPlan)
+    if (!checkoutConfigured || !razorpayKeyId) {
+      setMessage(
+        'Payments are not enabled on the API yet. In your server dashboard (e.g. Render), add environment variables RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET from the Razorpay dashboard, save, and restart the service. Then reload this page.'
+      )
+    } else {
       setMessage(null)
     }
-  }, [open, initialPlan])
+  }, [open, initialPlan, checkoutConfigured, razorpayKeyId])
 
   const runCheckout = useCallback(async () => {
     setBusy(true)
