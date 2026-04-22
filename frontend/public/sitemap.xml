@@ -66,6 +66,11 @@
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://pdfpilot.pro/tools/gst-invoice</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.65</priority>
+  </url>
+  <url>
     <loc>https://pdfpilot.pro/terms</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>

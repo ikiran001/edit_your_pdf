@@ -20,7 +20,15 @@ export const TOOL_NAV_GROUPS = [
   {
     label: 'Convert & export',
     tint: 'amber',
-    toolIds: ['compress-pdf', 'pdf-to-jpg', 'jpg-to-pdf', 'scan-to-pdf', 'word-to-pdf', 'pdf-to-word'],
+    toolIds: [
+      'compress-pdf',
+      'pdf-to-jpg',
+      'jpg-to-pdf',
+      'scan-to-pdf',
+      'word-to-pdf',
+      'pdf-to-word',
+      'gst-invoice',
+    ],
   },
   {
     label: 'Security',

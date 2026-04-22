@@ -4,7 +4,13 @@ import BrandLogoLink from './BrandLogoLink.jsx'
 import LegalFooter from './LegalFooter.jsx'
 import { toolOnBrand } from '../constants/branding.js'
 
-export default function ToolPageShell({ title, subtitle, children }) {
+/**
+ * @param {{ title: string, subtitle?: string|null, children: import('react').ReactNode, contentMaxWidth?: 'default' | 'wide' }} props
+ */
+export default function ToolPageShell({ title, subtitle, children, contentMaxWidth = 'default' }) {
+  const maxWidthClass =
+    contentMaxWidth === 'wide' ? 'max-w-[min(100%,96rem)]' : 'max-w-5xl'
+
   return (
     <div className="flex min-h-svh flex-col bg-transparent text-zinc-900 dark:text-zinc-100">
       <header className="fx-glass-header sticky top-0 z-40 px-4 py-3 md:px-8">
@@ -34,7 +40,7 @@ export default function ToolPageShell({ title, subtitle, children }) {
       <main
         id="site-main"
         tabIndex={-1}
-        className="mx-auto w-full max-w-5xl flex-1 scroll-mt-24 px-4 py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/45 md:px-8 md:py-12 dark:focus-visible:ring-cyan-400/35"
+        className={`mx-auto w-full ${maxWidthClass} flex-1 scroll-mt-24 px-4 py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/45 md:px-8 md:py-12 dark:focus-visible:ring-cyan-400/35`}
       >
         {children}
       </main>
