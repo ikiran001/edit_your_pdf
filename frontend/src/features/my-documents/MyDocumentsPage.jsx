@@ -204,7 +204,7 @@ export default function MyDocumentsPage() {
 
   if (gate === 'loading') {
     return (
-      <ToolPageShell title="My documents" subtitle="Loading…">
+      <ToolPageShell title="Saved PDFs" subtitle="Loading your library…">
         <p className="text-sm text-zinc-600 dark:text-zinc-400">Loading your account…</p>
       </ToolPageShell>
     )
@@ -213,12 +213,12 @@ export default function MyDocumentsPage() {
   if (gate === 'signin') {
     return (
       <ToolPageShell
-        title="My documents"
-        subtitle="Sign in to see files you have saved while logged in."
+        title="Saved PDFs"
+        subtitle="Sign in to see PDFs you edited or saved while logged in."
       >
         <div className="rounded-xl border border-zinc-200 bg-white/90 p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/80">
           <p className="m-0 text-sm text-zinc-700 dark:text-zinc-300">
-            This area lists PDFs you worked on while signed in (for example from Edit PDF). Use{' '}
+            Your library lists PDFs you worked on while signed in (for example from Edit PDF). Use{' '}
             <strong>Log in · Sign up</strong> in the header, then return here.
           </p>
           <p className="mt-4 mb-0 text-sm">
@@ -236,7 +236,7 @@ export default function MyDocumentsPage() {
 
   if (gate === 'firebase') {
     return (
-      <ToolPageShell title="My documents" subtitle="Firebase is not configured in this build.">
+      <ToolPageShell title="Saved PDFs" subtitle="Firebase is not configured in this build.">
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
           Add your Firebase web keys to the frontend environment so sign-in and cloud sync can run.
         </p>
@@ -246,8 +246,8 @@ export default function MyDocumentsPage() {
 
   return (
     <ToolPageShell
-      title="My documents"
-      subtitle="PDFs you edited or saved while signed in. Open, download, or remove any time."
+      title="Saved PDFs"
+      subtitle="PDFs you edited or exported from tools while signed in. Open, download, or remove anytime."
     >
       <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
         <button
@@ -278,7 +278,7 @@ export default function MyDocumentsPage() {
           <p className="m-0 font-semibold">The site is not pointed at your PDF API</p>
           <p className="mt-2 mb-0 text-xs leading-relaxed text-rose-100/95">
             Requests use this domain only (<strong>no</strong> <code className="rounded bg-black/25 px-1">https://…onrender.com</code> base), so My
-            Documents and /health never reach Render — Firebase Admin on the API is irrelevant until this is fixed.
+            Saved PDFs and /health never reach Render — Firebase Admin on the API is irrelevant until this is fixed.
           </p>
           <ol className="mt-3 mb-0 list-decimal space-y-1.5 pl-5 text-xs leading-relaxed text-rose-100/95">
             <li>
@@ -307,7 +307,7 @@ export default function MyDocumentsPage() {
           role="status"
           className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950/45 dark:text-amber-50"
         >
-          <p className="m-0 font-semibold">My Documents needs Firebase Admin on your API</p>
+          <p className="m-0 font-semibold">Saved PDFs needs Firebase Admin on your API</p>
           <p className="mt-2 mb-0 text-xs leading-relaxed opacity-95">
             {adminSetupMessage ||
               'The server cannot verify your ID token or write to Firestore until you add a service account.'}
@@ -346,7 +346,7 @@ export default function MyDocumentsPage() {
             </a>
             {import.meta.env.PROD && !isApiBaseConfigured() ? (
               <span className="text-xs text-amber-900/90 dark:text-amber-100/90">
-                Production build has no <code className="rounded bg-amber-200/80 px-1 dark:bg-amber-900/70">VITE_API_BASE_URL</code> — diagnostics use this site’s origin; set the API URL at build time so My Documents hits the same host where you added the key.
+                Production build has no <code className="rounded bg-amber-200/80 px-1 dark:bg-amber-900/70">VITE_API_BASE_URL</code> — diagnostics use this site’s origin; set the API URL at build time so Saved PDFs hits the same host where you added the key.
               </span>
             ) : null}
           </div>

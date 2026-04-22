@@ -27,7 +27,7 @@ export const DEFAULT_SITE_DESCRIPTION =
 export const DOC_TITLE_HOME = 'Edit PDF Online Free | pdfpilot.pro'
 
 const TOOL_DOC_TITLES = {
-  '/my-documents': 'pdfpilot - My documents',
+  '/my-documents': 'pdfpilot - Saved PDFs',
   '/tools/edit-pdf': 'pdfpilot - Edit PDF',
   '/tools/edit-pdf/editor': 'pdfpilot - Edit PDF',
   '/tools/merge-pdf': 'pdfpilot - Merge PDF',

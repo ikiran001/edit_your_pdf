@@ -24,6 +24,7 @@ import PrivateRoute from '../auth/PrivateRoute.jsx'
 import { pageView } from '../lib/analytics.js'
 import { docTitleForPath } from '../shared/constants/branding.js'
 import { ClientToolDownloadAuthProvider } from '../auth/ClientToolDownloadAuthContext.jsx'
+import SkipToContent from '../shared/components/SkipToContent.jsx'
 
 function RouteAnalytics() {
   const loc = useLocation()
@@ -40,6 +41,7 @@ export default function AppRoutes() {
   const basename = raw === '/' ? undefined : raw.replace(/\/$/, '')
   return (
     <BrowserRouter basename={basename}>
+      <SkipToContent />
       <ClientToolDownloadAuthProvider>
         <ErrorBoundary>
           <RouteAnalytics />

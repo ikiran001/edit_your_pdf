@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { CheckCircle2 } from 'lucide-react'
 import ToolPageShell from '../../shared/components/ToolPageShell.jsx'
 import ToolFeatureSeoSection from '../../shared/components/ToolFeatureSeoSection.jsx'
 import FileDropzone from '../../shared/components/FileDropzone.jsx'
@@ -40,6 +41,8 @@ export default function WordToPdfPage() {
   )
   const [busy, setBusy] = useState(false)
   const [actionError, setActionError] = useState(null)
+  /** Short-lived confirmation after a successful conversion + download trigger. */
+  const [successHint, setSuccessHint] = useState(null)
 
   useToolEngagement(WORD_TO_PDF_TOOL, true)
 
@@ -75,6 +78,12 @@ export default function WordToPdfPage() {
     }
   }, [])
 
+  useEffect(() => {
+    if (!successHint) return
+    const t = window.setTimeout(() => setSuccessHint(null), 9000)
+    return () => window.clearTimeout(t)
+  }, [successHint])
+
   const onDocx = useCallback(async (file) => {
     if (!file) return
     if (import.meta.env.PROD && !isApiBaseConfigured()) {
@@ -84,6 +93,7 @@ export default function WordToPdfPage() {
       return
     }
     setActionError(null)
+    setSuccessHint(null)
     setBusy(true)
     try {
       const fd = new FormData()
@@ -108,7 +118,11 @@ export default function WordToPdfPage() {
       }
       const blob = await r.blob()
       const base = (file.name || 'document').replace(/\.docx$/i, '') || 'document'
-      triggerDownloadBlob(blob, `${base}.pdf`)
+      const outName = `${base}.pdf`
+      triggerDownloadBlob(blob, outName)
+      setSuccessHint(
+        `“${outName}” should appear in your downloads. If nothing happens, allow downloads for this site or check the toolbar.`
+      )
       trackFileDownloaded({
         tool: WORD_TO_PDF_TOOL,
         file_size: blob.size / 1024,
@@ -144,6 +158,7 @@ export default function WordToPdfPage() {
         name.endsWith('.docx')
       if (!okType) {
         setActionError('Please choose a .docx file.')
+        setSuccessHint(null)
         return
       }
       void onDocx(file)
@@ -154,9 +169,9 @@ export default function WordToPdfPage() {
   return (
     <ToolPageShell
       title="Word to PDF"
-      subtitle="Upload a .docx file and download a PDF. Your file is sent to this app’s API for conversion."
+      subtitle="Turn a Word document into a PDF in one step — upload here, download when it’s ready."
     >
-      <div className="space-y-4">
+      <div className="mx-auto max-w-xl space-y-4">
         {loadError && (
           <p
             role="alert"
@@ -167,29 +182,73 @@ export default function WordToPdfPage() {
         )}
 
         {capsStatus === 'loading' && (
-          <p className="rounded-xl border border-zinc-200 bg-zinc-50/80 px-4 py-3 text-center text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-400">
-            Checking converter…
-          </p>
+          <div className="rounded-2xl border border-zinc-200 bg-zinc-50/90 px-6 py-8 dark:border-zinc-700 dark:bg-zinc-900/50">
+            <p className="mb-5 text-center text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              Checking converter…
+            </p>
+            <div className="space-y-2.5" aria-hidden>
+              <div className="mx-auto h-2.5 max-w-[min(100%,14rem)] rounded-full bg-zinc-200 motion-safe:animate-pulse dark:bg-zinc-700" />
+              <div className="mx-auto h-2.5 max-w-[min(100%,20rem)] rounded-full bg-zinc-200/90 motion-safe:animate-pulse dark:bg-zinc-600/90" />
+              <div className="mx-auto h-2.5 max-w-[min(100%,11rem)] rounded-full bg-zinc-200/80 motion-safe:animate-pulse dark:bg-zinc-700/80" />
+            </div>
+          </div>
         )}
 
         {capsStatus === 'ready' && caps?.docxToPdf ? (
           <>
             {caps?.docxToPdfFallbackLibreOffice && caps?.gotenbergHealthHint ? (
               <p className="m-0 rounded-xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/35 dark:text-amber-100">
-                Gotenberg is not healthy right now, but Word → PDF still works using{' '}
-                <strong>LibreOffice on this API server</strong> (<code className="font-mono text-xs">SOFFICE_PATH</code>
-                ). You can fix or remove Gotenberg in your deployment settings.
+                <span className="font-medium">You’re all set.</span> Conversion runs on this app’s server. An optional
+                backup service is temporarily unavailable — that only affects automatic failover, not this upload.
               </p>
             ) : null}
+            <ol className="m-0 flex list-none flex-wrap items-center justify-center gap-2 px-0 text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+              <li className="rounded-full bg-indigo-100 px-2.5 py-1 text-indigo-800 dark:bg-indigo-950/80 dark:text-indigo-200">
+                1 · Upload
+              </li>
+              <li aria-hidden className="text-zinc-400 dark:text-zinc-600">
+                →
+              </li>
+              <li
+                className={`rounded-full px-2.5 py-1 ${
+                  busy
+                    ? 'bg-sky-100 text-sky-900 dark:bg-sky-950/70 dark:text-sky-100'
+                    : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
+                }`}
+              >
+                2 · Convert
+              </li>
+              <li aria-hidden className="text-zinc-400 dark:text-zinc-600">
+                →
+              </li>
+              <li className="rounded-full bg-zinc-100 px-2.5 py-1 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+                3 · Download
+              </li>
+            </ol>
             <FileDropzone
               accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
               multiple={false}
-              disabled={busy}
+              disabled={false}
+              busy={busy}
               onFiles={onDocxFiles}
-              label={busy ? 'Converting…' : 'Drop your Word file here or click to browse'}
+              label={busy ? 'Converting your document…' : 'Drop your .docx here, or click to choose a file'}
+              hint="Microsoft Word .docx only — up to about 52 MB. Complex layouts may shift slightly in the PDF."
+              hideAcceptTypes
             />
             {busy ? (
-              <p className="rounded-xl border border-sky-200 bg-sky-50/90 px-4 py-3 text-center text-sm text-sky-950 dark:border-sky-900 dark:bg-sky-950/35 dark:text-sky-100">
+              <div
+                role="status"
+                aria-live="polite"
+                className="rounded-xl border border-sky-200 bg-sky-50/90 px-4 py-3 text-center text-sm text-sky-950 dark:border-sky-900 dark:bg-sky-950/35 dark:text-sky-100"
+              >
+                <p className="m-0 mb-2 inline-flex items-center justify-center gap-2">
+                  <span
+                    className="inline-block h-4 w-4 shrink-0 rounded-full border-2 border-sky-600 border-t-transparent motion-safe:animate-spin dark:border-cyan-400 dark:border-t-transparent"
+                    aria-hidden
+                  />
+                  <span className="font-medium">Working on your PDF…</span>
+                </p>
+                <p className="m-0 text-xs leading-relaxed text-sky-900/85 dark:text-sky-100/85">
                 {caps?.docxToPdfViaSoffice &&
                 (!caps?.docxToPdfViaGotenberg ||
                   !caps?.gotenbergReachable ||
@@ -210,15 +269,16 @@ export default function WordToPdfPage() {
                     <strong>30–90 seconds</strong> to wake up; the API retries automatically. Please keep this tab open.
                   </>
                 )}
-              </p>
+                </p>
+              </div>
             ) : (
               <p className="rounded-xl border border-zinc-200 bg-zinc-50/80 px-4 py-3 text-center text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-400">
-                One <strong>.docx</strong> at a time (Microsoft Word or compatible). Layout may shift slightly in the
-                PDF.
+                Files stay on the line while converting — you can leave this tab open and grab the download when it
+                appears.
                 {caps?.docxToPdfViaSoffice && !caps?.docxToPdfViaGotenberg ? (
                   <>
                     {' '}
-                    Conversion uses <strong>LibreOffice</strong> on the API (no separate Gotenberg service required).
+                    Runs on <strong>this app’s server</strong> (no extra “converter” site to manage).
                   </>
                 ) : null}
               </p>
@@ -265,13 +325,34 @@ export default function WordToPdfPage() {
           </div>
         ) : null}
 
-        {actionError && (
-          <p
-            role="alert"
-            className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900 dark:bg-red-950/50 dark:text-red-100"
+        {successHint && (
+          <div
+            role="status"
+            className="flex gap-3 rounded-xl border border-emerald-200 bg-emerald-50/95 px-4 py-3 text-sm text-emerald-950 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-50"
           >
-            {actionError}
-          </p>
+            <CheckCircle2
+              className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400"
+              strokeWidth={2}
+              aria-hidden
+            />
+            <p className="m-0 flex-1 leading-relaxed">{successHint}</p>
+          </div>
+        )}
+
+        {actionError && (
+          <div
+            role="alert"
+            className="flex flex-col gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 sm:flex-row sm:items-start sm:justify-between dark:border-red-900 dark:bg-red-950/50 dark:text-red-100"
+          >
+            <p className="m-0 flex-1 leading-relaxed">{actionError}</p>
+            <button
+              type="button"
+              className="shrink-0 self-end rounded-lg border border-red-300/80 bg-white/90 px-3 py-1.5 text-xs font-medium text-red-900 shadow-sm hover:bg-red-50 dark:border-red-800 dark:bg-red-950/80 dark:text-red-100 dark:hover:bg-red-900/60"
+              onClick={() => setActionError(null)}
+            >
+              Dismiss
+            </button>
+          </div>
         )}
 
         <p className="text-sm text-zinc-600 dark:text-zinc-400">

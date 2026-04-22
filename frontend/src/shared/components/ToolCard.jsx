@@ -7,7 +7,7 @@ export default function ToolCard({ tool }) {
   const Icon = Icons[tool.icon] || Icons.FileQuestion
   const content = (
     <article
-      className={`group relative flex h-full flex-col overflow-hidden rounded-xl border border-indigo-200/70 bg-white/85 p-3 shadow-md shadow-indigo-500/5 ring-1 ring-indigo-500/5 transition duration-300 ease-out will-change-transform sm:rounded-2xl sm:p-6 hover:-translate-y-0.5 hover:scale-[1.01] hover:border-indigo-400/50 hover:shadow-lg hover:shadow-indigo-500/15 dark:border-indigo-500/20 dark:bg-zinc-950/75 dark:shadow-[0_0_40px_-12px_rgba(99,102,241,0.25)] dark:ring-indigo-400/10 dark:hover:border-cyan-500/25 dark:hover:shadow-[0_0_48px_-8px_rgba(34,211,238,0.12)] max-sm:items-center max-sm:justify-center max-sm:text-center ${
+      className={`group relative flex h-full flex-col overflow-hidden rounded-xl border border-indigo-200/70 bg-white/85 p-3 shadow-md shadow-indigo-500/5 ring-1 ring-indigo-500/5 transition duration-300 ease-out will-change-transform sm:rounded-2xl sm:p-6 motion-safe:hover:-translate-y-0.5 motion-safe:hover:scale-[1.01] hover:border-indigo-400/50 hover:shadow-lg hover:shadow-indigo-500/15 dark:border-indigo-500/20 dark:bg-zinc-950/75 dark:shadow-[0_0_40px_-12px_rgba(99,102,241,0.25)] dark:ring-indigo-400/10 dark:hover:border-cyan-500/25 dark:hover:shadow-[0_0_48px_-8px_rgba(34,211,238,0.12)] max-sm:items-center max-sm:justify-center max-sm:text-center ${
         !tool.implemented ? 'opacity-90' : ''
       }`}
     >

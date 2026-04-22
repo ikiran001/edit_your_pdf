@@ -104,7 +104,7 @@ function editsPayloadToPresentMap(edits) {
 export default function PdfEditor({
   sessionId,
   onBack,
-  /** Original upload filename for My Documents. */
+  /** Original upload filename for Saved PDFs (library). */
   originalFileName = 'document.pdf',
   downloadToken = null,
   onDownloadTokenConsumed,
@@ -1126,7 +1126,11 @@ export default function PdfEditor({
 
   if (loadError) {
     return (
-      <div className="relative flex min-h-svh flex-col items-center justify-center gap-4 p-6">
+      <div
+        id="site-main"
+        tabIndex={-1}
+        className="relative flex min-h-svh scroll-mt-24 flex-col items-center justify-center gap-4 p-6 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/45 dark:focus-visible:ring-cyan-400/35"
+      >
         <div className="fixed right-4 top-4 z-[200] flex items-center gap-2">
           <AccountMenu compact />
           <ThemeToggle />
@@ -1134,7 +1138,7 @@ export default function PdfEditor({
         <p className="text-red-600 dark:text-red-400">{loadError}</p>
         <button
           type="button"
-          className="rounded-lg bg-zinc-200 px-4 py-2 text-sm dark:bg-zinc-700"
+          className="fx-focus-ring rounded-lg bg-zinc-200 px-4 py-2.5 text-sm font-medium transition hover:bg-zinc-300 active:scale-[0.98] dark:bg-zinc-700 dark:hover:bg-zinc-600"
           onClick={onBack}
         >
           Back
@@ -1145,7 +1149,11 @@ export default function PdfEditor({
 
   if (!pdfDoc) {
     return (
-      <div className="relative flex min-h-svh flex-col items-center justify-center gap-6 bg-zinc-50 px-4 py-10 dark:bg-zinc-950">
+      <div
+        id="site-main"
+        tabIndex={-1}
+        className="relative flex min-h-svh scroll-mt-24 flex-col items-center justify-center gap-6 bg-zinc-50 px-4 py-10 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/45 dark:bg-zinc-950 dark:focus-visible:ring-cyan-400/35"
+      >
         <div className="fixed right-4 top-4 z-[200] flex items-center gap-2">
           <AccountMenu compact />
           <ThemeToggle />
@@ -1167,7 +1175,11 @@ export default function PdfEditor({
   }
 
   return (
-    <div className="flex h-svh flex-col bg-zinc-100/95 text-zinc-900 dark:bg-zinc-950/80 dark:text-zinc-100">
+    <div
+      id="site-main"
+      tabIndex={-1}
+      className="flex h-svh scroll-mt-24 flex-col bg-zinc-100/95 text-zinc-900 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500/35 dark:bg-zinc-950/80 dark:text-zinc-100 dark:focus-visible:ring-cyan-400/25"
+    >
       <Toolbar
         activeTool={activeTool}
         onToolChange={onToolbarTool}

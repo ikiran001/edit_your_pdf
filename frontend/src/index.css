@@ -11,6 +11,33 @@
   --fx-plum-glass: rgba(32, 12, 28, 0.78);
 }
 
+/* Native scrollbars / form controls follow page theme. */
+html {
+  color-scheme: light dark;
+  scroll-behavior: smooth;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+html:not(.dark) {
+  color-scheme: light;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body.theme-dark,
+body.theme-light {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
 @keyframes toolkitFade {
   from {
     opacity: 0;
