@@ -44,9 +44,14 @@ export default function ToolkitHomePage() {
         </div>
       </header>
 
-      <HeroSection />
+      <main
+        id="site-main"
+        tabIndex={-1}
+        className="flex flex-1 flex-col scroll-mt-24 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/45 dark:focus-visible:ring-cyan-400/35"
+      >
+        <HeroSection />
 
-      <section className="fx-toolkit-fade relative isolate mx-auto w-full max-w-[min(100%,96rem)] flex-1 px-4 py-6 md:px-8 md:py-10">
+        <section className="fx-toolkit-fade relative isolate mx-auto w-full max-w-[min(100%,96rem)] flex-1 px-4 py-6 md:px-8 md:py-10">
         <h2 className="mb-4 text-center font-mono text-sm font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-cyan-400/85">
           Choose a tool
         </h2>
@@ -109,7 +114,8 @@ export default function ToolkitHomePage() {
           <span className="text-zinc-400 dark:text-zinc-600"> · </span>
           <span className="text-xs text-zinc-500 dark:text-zinc-500">Ratings and comments are shown only after real submissions.</span>
         </p>
-      </section>
+        </section>
+      </main>
 
       <LegalFooter className="py-8" />
     </div>
