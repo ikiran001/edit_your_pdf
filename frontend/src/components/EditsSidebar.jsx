@@ -55,6 +55,10 @@ export default function EditsSidebar({
   listSyncing = false,
   /** Set when the server last accepted a full persist (save, autosave, list sync, etc.). */
   lastSavedAt = null,
+  /** True when local edits are ahead of the last successful server persist (debounced). */
+  unsavedChanges = false,
+  /** `idle` | `armed` (timer running) | `saving` (autosave POST in flight). */
+  autosaveStatus = 'idle',
   /** When true and signed in, show “Save named copy” (server duplicate + library row). */
   namedCopyEnabled = false,
   userSignedIn = false,
@@ -95,6 +99,12 @@ export default function EditsSidebar({
   const busy = saving || downloading || listSyncing || namedCopyBusy
   const downloadBusy = busy || authLoading
   const savedLabel = formatLastSaved(lastSavedAt)
+  const autosaveLabel =
+    autosaveStatus === 'saving'
+      ? 'Auto-saving…'
+      : autosaveStatus === 'armed'
+        ? 'Autosave on (~45s after you stop editing)'
+        : null
 
   return (
     <aside
@@ -107,9 +117,23 @@ export default function EditsSidebar({
           Edits ({count})
         </h2>
         <p className="mt-0.5 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
-          Remove one change with ✕, or clear everything. Use Save PDF then Download PDF when
-          you are done.
+          Draft on the canvas, then <strong>Save PDF</strong> (writes to the server), then{' '}
+          <strong>Download PDF</strong> (exports a file). Remove one change with ✕, or clear
+          everything when you need a clean slate.
         </p>
+        {unsavedChanges ? (
+          <p
+            className="mt-1 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-[10px] font-medium leading-snug text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100"
+            role="status"
+          >
+            Unsaved changes — Save PDF to update the server copy.
+          </p>
+        ) : null}
+        {autosaveLabel ? (
+          <p className="mt-1 text-[10px] leading-snug text-zinc-500 dark:text-zinc-400">
+            {autosaveLabel}
+          </p>
+        ) : null}
         {savedLabel ? (
           <p className="mt-1 text-[10px] leading-snug text-zinc-400 dark:text-zinc-500">
             Last saved to session: <span className="font-medium text-zinc-600 dark:text-zinc-400">{savedLabel}</span>
@@ -123,8 +147,9 @@ export default function EditsSidebar({
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-2 py-2">
         {count === 0 ? (
-          <p className="px-1 py-3 text-center text-xs text-zinc-500 dark:text-zinc-400">
-            No edits yet. Edit a text line or use Add Text / Draw / Highlight / Rectangle.
+          <p className="px-1 py-3 text-center text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+            No edits yet. Change a line with Edit text, or use Add Text / Draw / Highlight /
+            Rectangle. When you are happy with the draft, use Save PDF then Download PDF above.
           </p>
         ) : (
           <ul className="flex flex-col gap-1.5">

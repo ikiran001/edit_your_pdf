@@ -46,6 +46,12 @@ export default function EditPdfShortcutsModal({ open, onClose }) {
           field) to open this panel.
         </div>
 
+        <div className="mb-4 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs leading-relaxed text-zinc-700 dark:border-zinc-600 dark:bg-zinc-900/60 dark:text-zinc-200">
+          <strong className="font-semibold">File flow:</strong> draft on the canvas, then{' '}
+          <strong>Save PDF</strong> (writes to the server), then <strong>Download PDF</strong> (exports a file). Both
+          actions live in the Edits panel.
+        </div>
+
         <section>
           <h3 className="m-0 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
             Text editing
@@ -54,6 +60,16 @@ export default function EditPdfShortcutsModal({ open, onClose }) {
           <Row keys="Ctrl + Enter">Apply your line edit and leave the inline editor.</Row>
           <Row keys="Escape">Cancel inline editing for the current line.</Row>
           <Row keys="Undo / Redo">Toolbar buttons step through markup history (draw, shapes, added text boxes).</Row>
+        </section>
+
+        <section className="mt-4">
+          <h3 className="m-0 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            Placed text &amp; signature
+          </h3>
+          <Row keys="Arrow keys">
+            Nudge the selected text box or signature (not while typing in the inline editor). Hold Shift for a finer
+            step.
+          </Row>
         </section>
 
         <section className="mt-4">
