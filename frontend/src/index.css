@@ -274,6 +274,7 @@ html.dark .pdf-text-layer-editor::-moz-selection {
   min-width: 7ch;
   max-width: 100%;
   field-sizing: content;
+  overflow-x: hidden;
   background-color: transparent !important;
 }
 

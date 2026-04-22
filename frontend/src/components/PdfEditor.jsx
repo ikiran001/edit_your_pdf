@@ -1619,6 +1619,7 @@ export default function PdfEditor({
                       onRevertNativeTextEdit={revertNativeTextEdit}
                       textFormat={textFormat}
                       textFormatRef={textFormatRef}
+                      onTextFormatChange={setTextFormat}
                       editTextMode={editTextMode}
                       onInlineEditorActiveChange={setInlineTextEditorOpen}
                       formatSyncTarget={annotFormatTarget}
