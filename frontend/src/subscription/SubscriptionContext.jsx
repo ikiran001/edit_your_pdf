@@ -29,7 +29,13 @@ export function SubscriptionProvider({ children }) {
       const r = await fetchSubscriptionMe(getFreshIdToken)
       if (!r.ok) {
         setData(null)
-        setError(r.data?.message || r.data?.error || 'Could not load subscription.')
+        if (r.status === 404) {
+          setError(
+            'Subscription API not found (404). Your API host is running an older build: redeploy the backend with the latest code so routes like GET /subscription/me exist. After deploy, GET /health should include a "subscription" object.'
+          )
+        } else {
+          setError(r.data?.message || r.data?.error || 'Could not load subscription.')
+        }
         return null
       }
       setData(r.data)
