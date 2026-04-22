@@ -128,6 +128,13 @@ app.get('/health', (_req, res) => {
     ghostscriptPath: gsBin,
     ghostscriptVersion: gsVersion,
     unlock,
+    /** Present on builds that include Razorpay + Firestore billing routes (404 on /subscription/me = stale deploy). */
+    subscription: {
+      me: '/subscription/me',
+      razorpayOrder: '/subscription/razorpay/order',
+      razorpayVerify: '/subscription/razorpay/verify',
+      webhook: '/subscription/webhooks/razorpay',
+    },
     ...getFirebaseAdminHealthInfo(),
   });
 });
@@ -147,6 +154,9 @@ app.use(documentFlowRouter);
 app.use(userSessionsRouter);
 app.use(feedbackRouter);
 app.use(subscriptionRouter);
+console.log(
+  '[subscription] mounted: GET /subscription/me, POST /subscription/razorpay/order, POST /subscription/razorpay/verify, POST /subscription/webhooks/razorpay'
+);
 
 /** Serve PDF for pdf.js: latest edited file when present, else original upload. */
 app.get('/pdf/:sessionId', (req, res) => {
