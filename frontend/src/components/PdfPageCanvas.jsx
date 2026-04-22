@@ -432,7 +432,12 @@ export default function PdfPageCanvas({
     () => (items || []).filter((it) => it.type === 'signature' && !it.rasterizedInPdf),
     [items]
   )
+  const itemsRef = useRef(items)
+  useLayoutEffect(() => {
+    itemsRef.current = items
+  }, [items])
   const [selectedAnnotId, setSelectedAnnotId] = useState(null)
+  const selectedAnnotIdRef = useRef(null)
   const [editingAnnotId, setEditingAnnotId] = useState(null)
   const [annotDragVisual, setAnnotDragVisual] = useState(null)
   const annotDragRef = useRef(null)
@@ -446,6 +451,10 @@ export default function PdfPageCanvas({
   useLayoutEffect(() => {
     editingAnnotIdRef.current = editingAnnotId
   }, [editingAnnotId])
+
+  useLayoutEffect(() => {
+    selectedAnnotIdRef.current = selectedAnnotId
+  }, [selectedAnnotId])
 
   useLayoutEffect(() => {
     textDraftRef.current = textDraft
@@ -1298,6 +1307,50 @@ export default function PdfPageCanvas({
     commitAnnotEdit,
     commitSigPlacement,
   ])
+
+  useEffect(() => {
+    if (!selectedAnnotId || editingAnnotId != null || textDraft || sigDraft) return
+    const onKey = (e) => {
+      const key = e.key
+      if (key !== 'ArrowLeft' && key !== 'ArrowRight' && key !== 'ArrowUp' && key !== 'ArrowDown') return
+      const id = selectedAnnotIdRef.current
+      if (!id) return
+      const t = e.target
+      if (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || t instanceof HTMLSelectElement)
+        return
+      if (
+        t instanceof HTMLElement &&
+        (t.isContentEditable || t.closest?.('[contenteditable="true"]'))
+      ) {
+        return
+      }
+      if (t instanceof HTMLElement && t.closest?.('[data-pdf-inline-editor-root]')) return
+      const prevSnap = itemsRef.current || []
+      const it0 = prevSnap.find(
+        (x) => x.id === id && (x.type === 'text' || x.type === 'signature') && !x.rasterizedInPdf
+      )
+      if (!it0 || typeof it0.x !== 'number' || typeof it0.y !== 'number') return
+      const step = e.shiftKey ? 0.0025 : 0.01
+      let dx = 0
+      let dy = 0
+      if (key === 'ArrowLeft') dx = -step
+      if (key === 'ArrowRight') dx = step
+      if (key === 'ArrowUp') dy = -step
+      if (key === 'ArrowDown') dy = step
+      e.preventDefault()
+      onUpdateItems((prev) => {
+        const it = prev.find(
+          (x) => x.id === id && (x.type === 'text' || x.type === 'signature') && !x.rasterizedInPdf
+        )
+        if (!it || typeof it.x !== 'number' || typeof it.y !== 'number') return prev
+        return prev.map((x) =>
+          x.id === id ? { ...x, x: clamp01(x.x + dx), y: clamp01(x.y + dy) } : x
+        )
+      })
+    }
+    document.addEventListener('keydown', onKey, true)
+    return () => document.removeEventListener('keydown', onKey, true)
+  }, [selectedAnnotId, editingAnnotId, textDraft, sigDraft, onUpdateItems])
 
   const onDraftDragPointerDown = useCallback((e) => {
     if (!e.isPrimary || e.button !== 0) return

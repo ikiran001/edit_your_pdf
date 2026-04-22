@@ -76,15 +76,19 @@ function rawSaveErrorSuggestsOcr(message) {
   )
 }
 
+/** Repeated in toolbar, sidebar, and errors so the server write vs file export is never ambiguous. */
+const EDIT_PDF_WORKFLOW_HINT =
+  'Draft on the canvas → Save PDF commits your work to the server → Download PDF exports a file.'
+
 function hintForSaveError(message) {
   const m = String(message || '').toLowerCase()
   if (rawSaveErrorSuggestsOcr(message)) {
-    return 'This PDF may be mostly images or scans. Use the toolkit OCR PDF tool to add a searchable text layer, download the result, then upload it here again. Editing works best when text is selectable in another viewer.'
+    return `${EDIT_PDF_WORKFLOW_HINT} This PDF may be mostly images or scans. Open OCR PDF in the toolkit, run OCR, download that PDF, then upload it here again. Editing works best when text is selectable in another viewer.`
   }
   if (m.includes('timeout') || m.includes('network') || m.includes('failed to fetch')) {
-    return 'We could not reach the server. Check your connection and try Save PDF again.'
+    return `${EDIT_PDF_WORKFLOW_HINT} We could not reach the server. Check your connection and try Save PDF again.`
   }
-  return String(message || 'Save failed — check your connection and try again.')
+  return `${EDIT_PDF_WORKFLOW_HINT} ${String(message || 'Save failed — check your connection and try again.')}`
 }
 
 function readEditorOnboardingVisible() {
@@ -170,6 +174,11 @@ export default function PdfEditor({
   const nativeTextEditsRef = useRef([])
   const lastServerSaveAtRef = useRef(0)
   const lastEditAtRef = useRef(0)
+  /** After POST /edit + full PDF reload, skip one bump of `lastEditAtRef` so “unsaved” does not flash. */
+  const skipNextEditBumpRef = useRef(false)
+  const dirtyUiTimerRef = useRef(null)
+  const [sessionDirtyUi, setSessionDirtyUi] = useState(false)
+  const [autosaveStatus, setAutosaveStatus] = useState('idle')
   const [nativeTextEdits, setNativeTextEdits] = useState([])
   const [lastSavedAt, setLastSavedAt] = useState(null)
   const autosaveTimerRef = useRef(null)
@@ -330,6 +339,16 @@ export default function PdfEditor({
   pagesItemsRef.current = pagesItems
   nativeTextEditsRef.current = nativeTextEdits
 
+  const recomputeSessionDirtyUi = useCallback(() => {
+    const hasNative = nativeTextEditsRef.current.length > 0
+    const hasAnnot = Object.values(pagesItemsRef.current).some((arr) => arr && arr.length > 0)
+    if (!hasNative && !hasAnnot) {
+      setSessionDirtyUi(false)
+      return
+    }
+    setSessionDirtyUi(lastEditAtRef.current > lastServerSaveAtRef.current)
+  }, [])
+
   const numPages = pdfDoc?.numPages ?? 0
 
   const signatureImageBase64 = useMemo(() => {
@@ -406,7 +425,7 @@ export default function PdfEditor({
     if (editorHasUnpersistedEdits()) {
       if (
         !window.confirm(
-          'Leave the editor? Unsaved changes may be lost. Use Save PDF first if you want them on the server.'
+          `Leave the editor? You have edits that are not saved to the server yet.\n\n${EDIT_PDF_WORKFLOW_HINT}\n\nUse Save PDF before leaving if you want the server copy updated.`
         )
       ) {
         return
@@ -494,6 +513,7 @@ export default function PdfEditor({
           const now = Date.now()
           lastServerSaveAtRef.current = now
           lastEditAtRef.current = now
+          recomputeSessionDirtyUi()
         }, 0)
       } catch (e) {
         if (!cancelled) setLoadError(e?.message || 'Failed to load PDF')
@@ -502,7 +522,7 @@ export default function PdfEditor({
     return () => {
       cancelled = true
     }
-  }, [sessionId, reset, pdfBust, showErrorHint])
+  }, [sessionId, reset, pdfBust, showErrorHint, recomputeSessionDirtyUi])
 
   const loadErrorTracked = useRef(null)
   useEffect(() => {
@@ -559,6 +579,7 @@ export default function PdfEditor({
       window.clearTimeout(autosaveTimerRef.current)
       autosaveTimerRef.current = null
     }
+    setAutosaveStatus('idle')
   }, [])
 
   /**
@@ -569,16 +590,27 @@ export default function PdfEditor({
   useEffect(() => {
     const hasNative = nativeTextEdits.length > 0
     const hasAnnot = Object.values(pagesItems).some((arr) => arr && arr.length > 0)
-    if (!hasNative && !hasAnnot) return
+    if (!pdfDoc || (!hasNative && !hasAnnot)) {
+      if (autosaveTimerRef.current != null) {
+        window.clearTimeout(autosaveTimerRef.current)
+        autosaveTimerRef.current = null
+      }
+      setAutosaveStatus('idle')
+      return
+    }
     if (autosaveTimerRef.current != null) window.clearTimeout(autosaveTimerRef.current)
+    setAutosaveStatus('armed')
     autosaveTimerRef.current = window.setTimeout(async () => {
       autosaveTimerRef.current = null
+      setAutosaveStatus('saving')
       try {
         await persistPdfToServer()
         setSaveHint('Auto-saved')
         window.setTimeout(() => setSaveHint(null), 4000)
       } catch {
         /* best-effort — do not surface autosave errors to the user */
+      } finally {
+        setAutosaveStatus('idle')
       }
     }, 45_000)
     return () => {
@@ -587,7 +619,7 @@ export default function PdfEditor({
         autosaveTimerRef.current = null
       }
     }
-  }, [nativeTextEdits, pagesItems]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [pdfDoc, nativeTextEdits, pagesItems]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const persistPdfToServer = useCallback(async (opts = {}) => {
     const pagesMap = opts.pagesItemsOverride ?? pagesItemsRef.current
@@ -640,12 +672,37 @@ export default function PdfEditor({
     const syncedAt = Date.now()
     setLastSavedAt(syncedAt)
     lastServerSaveAtRef.current = syncedAt
-  }, [sessionId])
+    lastEditAtRef.current = syncedAt
+    if (dirtyUiTimerRef.current != null) {
+      window.clearTimeout(dirtyUiTimerRef.current)
+      dirtyUiTimerRef.current = null
+    }
+    recomputeSessionDirtyUi()
+  }, [sessionId, recomputeSessionDirtyUi])
 
   useEffect(() => {
     if (!pdfDoc) return
+    if (skipNextEditBumpRef.current) {
+      skipNextEditBumpRef.current = false
+      window.setTimeout(() => recomputeSessionDirtyUi(), 0)
+      return
+    }
     lastEditAtRef.current = Date.now()
-  }, [pdfDoc, nativeTextEdits, pagesItems])
+    if (dirtyUiTimerRef.current != null) {
+      window.clearTimeout(dirtyUiTimerRef.current)
+      dirtyUiTimerRef.current = null
+    }
+    dirtyUiTimerRef.current = window.setTimeout(() => {
+      dirtyUiTimerRef.current = null
+      recomputeSessionDirtyUi()
+    }, 320)
+    return () => {
+      if (dirtyUiTimerRef.current != null) {
+        window.clearTimeout(dirtyUiTimerRef.current)
+        dirtyUiTimerRef.current = null
+      }
+    }
+  }, [pdfDoc, nativeTextEdits, pagesItems, recomputeSessionDirtyUi])
 
   useEffect(() => {
     const onBeforeUnload = (e) => {
@@ -666,6 +723,11 @@ export default function PdfEditor({
     setPdfBust((v) => v + 1)
   }, [])
 
+  const reloadPdfAfterServerSync = useCallback(() => {
+    skipNextEditBumpRef.current = true
+    reloadPdfFromServer()
+  }, [reloadPdfFromServer])
+
   const finalizeDownloadFromBlob = useCallback(
     async (blob, t0, { usedAnonymousToken }) => {
       const href = URL.createObjectURL(blob)
@@ -678,7 +740,7 @@ export default function PdfEditor({
       a.remove()
       URL.revokeObjectURL(href)
 
-      reloadPdfFromServer()
+      reloadPdfAfterServerSync()
       setDownloadCompleteModal({ fileName: 'edited.pdf', fileSizeBytes: blob.size })
       trackToolCompleted(EDIT_TOOL, true)
       trackFileDownloaded({
@@ -694,7 +756,7 @@ export default function PdfEditor({
         onDownloadTokenConsumed()
       }
     },
-    [reloadPdfFromServer, numPages, onDownloadTokenConsumed]
+    [reloadPdfAfterServerSync, numPages, onDownloadTokenConsumed]
   )
 
   const runAuthenticatedDownload = useCallback(
@@ -960,7 +1022,7 @@ export default function PdfEditor({
           new CustomEvent('pdfpilot-remove-native-slot', { detail: { slotId } })
         )
         await persistPdfToServer({ nativeTextEditsOverride: next })
-        reloadPdfFromServer()
+        reloadPdfAfterServerSync()
       } catch (e) {
         console.error(e)
         showErrorHint(
@@ -977,7 +1039,7 @@ export default function PdfEditor({
       cancelScheduledAutosave,
       commitActiveInlineEditor,
       persistPdfToServer,
-      reloadPdfFromServer,
+      reloadPdfAfterServerSync,
       showErrorHint,
     ]
   )
@@ -1001,7 +1063,7 @@ export default function PdfEditor({
           return { ...p, [pageIndex]: f }
         })
         await persistPdfToServer({ pagesItemsOverride: nextPages })
-        reloadPdfFromServer()
+        reloadPdfAfterServerSync()
       } catch (e) {
         console.error(e)
         showErrorHint(
@@ -1019,7 +1081,7 @@ export default function PdfEditor({
       cancelScheduledAutosave,
       commitActiveInlineEditor,
       persistPdfToServer,
-      reloadPdfFromServer,
+      reloadPdfAfterServerSync,
       showErrorHint,
     ]
   )
@@ -1033,7 +1095,7 @@ export default function PdfEditor({
     }
     if (
       !window.confirm(
-        'Remove all edits in this session? This cannot be undone (use Undo before clearing if you change your mind).'
+        `Remove every edit in this session?\n\n${EDIT_PDF_WORKFLOW_HINT}\n\nThe server session will be cleared after you confirm. This cannot be undone — use Undo in the toolbar first if you only want to step back.`
       )
     ) {
       return
@@ -1055,7 +1117,7 @@ export default function PdfEditor({
           nativeTextEditsOverride: [],
           replaceSessionAnnotations: true,
         })
-        reloadPdfFromServer()
+        reloadPdfAfterServerSync()
         showToast('All edits cleared')
       } catch (e) {
         console.error(e)
@@ -1078,7 +1140,7 @@ export default function PdfEditor({
     showToast,
     commitActiveInlineEditor,
     persistPdfToServer,
-    reloadPdfFromServer,
+    reloadPdfAfterServerSync,
     showErrorHint,
   ])
 
@@ -1092,7 +1154,7 @@ export default function PdfEditor({
       await persistPdfToServer()
       clearAnnotFormatUi()
       setTextBoxOverlayActions(null)
-      reloadPdfFromServer()
+      reloadPdfAfterServerSync()
       setSaveHint(MSG.savedSession)
       window.setTimeout(() => setSaveHint(null), 5000)
       trackToolCompleted(EDIT_TOOL, true)
@@ -1322,6 +1384,9 @@ export default function PdfEditor({
           <ThemeToggle />
         </div>
         <p className="text-red-600 dark:text-red-400">{loadError}</p>
+        <p className="max-w-md text-center text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+          {EDIT_PDF_WORKFLOW_HINT} Fix the problem above, then upload your PDF again from the tool home.
+        </p>
         <button
           type="button"
           className="fx-focus-ring rounded-lg bg-zinc-200 px-4 py-2.5 text-sm font-medium transition hover:bg-zinc-300 active:scale-[0.98] dark:bg-zinc-700 dark:hover:bg-zinc-600"
@@ -1356,6 +1421,9 @@ export default function PdfEditor({
         <span className="text-sm text-zinc-600 dark:text-zinc-400" aria-hidden>
           {MSG.loadingPdf}
         </span>
+        <p className="max-w-md text-center text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+          {EDIT_PDF_WORKFLOW_HINT}
+        </p>
       </div>
     )
   }
@@ -1386,6 +1454,13 @@ export default function PdfEditor({
         onFlattenFormsOnSaveChange={setFlattenFormsOnSave}
         textFormatInline={textFormatInline}
       />
+      <div className="border-b border-zinc-200/90 bg-zinc-50/95 px-3 py-1.5 text-center text-[11px] leading-snug text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/80 dark:text-zinc-300">
+        <span className="font-semibold text-zinc-700 dark:text-zinc-200">File flow: </span>
+        {EDIT_PDF_WORKFLOW_HINT}{' '}
+        <span className="text-zinc-500 dark:text-zinc-400">
+          Save PDF is in the Edits panel; Download PDF exports the file.
+        </span>
+      </div>
       {saveHint && (
         <div
           role="status"
@@ -1553,6 +1628,8 @@ export default function PdfEditor({
           authLoading={authLoading}
           listSyncing={editingListSync}
           lastSavedAt={lastSavedAt}
+          unsavedChanges={sessionDirtyUi}
+          autosaveStatus={autosaveStatus}
           namedCopyEnabled={namedCopyUiEnabled}
           userSignedIn={Boolean(user)}
           namedCopyBusy={namedCopyBusy}
