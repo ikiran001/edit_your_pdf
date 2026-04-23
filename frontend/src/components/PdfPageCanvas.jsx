@@ -3149,8 +3149,8 @@ function PdfPageCanvas({
         return (
           <div
             data-pdf-annot-draft
-            title="Drag the padded edge to move — type in the field to add text"
-            className={`absolute z-[50] box-border flex min-h-0 cursor-grab flex-col overflow-visible rounded-md p-1.5 shadow-md ring-2 ring-blue-600 active:cursor-grabbing ${
+            title="Drag the edge to move. Ctrl+Enter to place."
+            className={`absolute z-[50] box-border flex min-h-0 cursor-grab flex-col overflow-visible rounded-sm p-0.5 ring-1 ring-blue-600/90 active:cursor-grabbing dark:ring-blue-500/90 ${
               boxWpx ? '' : 'max-w-[min(22rem,calc(100vw-1.25rem))]'
             }`}
             style={{
@@ -3176,10 +3176,9 @@ function PdfPageCanvas({
                 rows={1}
                 autoFocus
                 title="Enter for a new line. Ctrl+Enter or Command+Enter to place."
-                placeholder="Type…"
                 aria-label="Add text on the page. Press Enter for a new line. Control+Enter or Command+Enter to place text."
                 maxLength={MAX_ANNOT_TEXT_LENGTH}
-                className="pdf-annot-draft-input box-border min-h-0 w-full min-w-0 resize-none cursor-text whitespace-pre break-normal rounded-sm border-0 py-0.5 pl-0 pr-2 pb-1 text-zinc-900 outline-none placeholder:text-zinc-500"
+                className="pdf-annot-draft-input box-border min-h-0 w-full min-w-0 resize-none cursor-text whitespace-pre break-normal rounded-none border-0 py-0 pl-0 pr-0.5 pb-0.5 text-zinc-900 outline-none"
                 style={{
                   fontSize: `${draftPx}px`,
                   lineHeight: ANNOT_UI_LINE_HEIGHT,
