@@ -14,6 +14,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "docx": "^9.6.1",
     "firebase": "^11.10.0",
     "jszip": "^3.10.1",
     "lucide-react": "^1.7.0",

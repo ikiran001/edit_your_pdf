@@ -9,15 +9,21 @@ import { useToolEngagement } from '../../hooks/useToolEngagement.js'
 import {
   pageView,
   trackErrorOccurred,
+  trackEvent,
   trackFileDownloaded,
   trackToolCompleted,
 } from '../../lib/analytics.js'
 import { ANALYTICS_TOOL } from '../../shared/constants/analyticsTools.js'
 import { docTitleForPath } from '../../shared/constants/branding.js'
 import { useClientToolDownloadAuth } from '../../auth/ClientToolDownloadAuthContext.jsx'
+import { extractPdfPlainText, CLIENT_PDF_MAX_BYTES, CLIENT_PDF_MAX_PAGES } from './extractPdfText.js'
+import { buildMinimalDocxBlob } from './buildMinimalDocx.js'
 
 const PDF_TO_WORD_TOOL = ANALYTICS_TOOL.pdf_to_word
 const DOC_TITLE = docTitleForPath('/tools/pdf-to-word')
+
+/** Too little extracted text → prefer server / OCR */
+const CLIENT_MIN_TEXT_CHARS = 14
 
 function triggerDownloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob)
@@ -41,6 +47,7 @@ export default function PdfToWordPage() {
       : null
   )
   const [busy, setBusy] = useState(false)
+  const [busyPhase, setBusyPhase] = useState(null)
   const [actionError, setActionError] = useState(null)
   const [successHint, setSuccessHint] = useState(null)
 
@@ -84,37 +91,83 @@ export default function PdfToWordPage() {
     return () => window.clearTimeout(t)
   }, [successHint])
 
+  const fetchServerDocx = useCallback(async (file) => {
+    const fd = new FormData()
+    fd.append('file', file)
+    const r = await fetch(apiUrl('/document-flow/convert-pdf-to-docx'), {
+      method: 'POST',
+      body: fd,
+      signal: AbortSignal.timeout(600_000),
+    })
+    if (!r.ok) {
+      const ct = r.headers.get('content-type') || ''
+      let detail = r.statusText
+      if (ct.includes('application/json')) {
+        const j = await r.json().catch(() => ({}))
+        detail = j?.message || j?.error || detail
+      } else {
+        const t = await r.text().catch(() => '')
+        if (t && t.length < 500) detail = t
+      }
+      throw new Error(detail || `HTTP ${r.status}`)
+    }
+    const blob = await r.blob()
+    const ct = r.headers.get('content-type') || ''
+    if (ct.includes('application/json')) {
+      throw new Error('Invalid response from server (expected a Word file).')
+    }
+    return blob
+  }, [])
+
   const onPdf = useCallback(
     async (file) => {
       if (!file) return
-      if (import.meta.env.PROD && !isApiBaseConfigured()) {
-        setActionError('Set VITE_API_BASE_URL when building the frontend so uploads reach your API.')
-        return
-      }
+
       setActionError(null)
       setSuccessHint(null)
       setBusy(true)
+      setBusyPhase(null)
+
       try {
-        const fd = new FormData()
-        fd.append('file', file)
-        const r = await fetch(apiUrl('/document-flow/convert-pdf-to-docx'), {
-          method: 'POST',
-          body: fd,
-          signal: AbortSignal.timeout(600_000),
-        })
-        if (!r.ok) {
-          const ct = r.headers.get('content-type') || ''
-          let detail = r.statusText
-          if (ct.includes('application/json')) {
-            const j = await r.json().catch(() => ({}))
-            detail = j?.message || j?.error || detail
-          } else {
-            const t = await r.text().catch(() => '')
-            if (t && t.length < 500) detail = t
+        let blob = null
+        /** @type {'client' | 'server'} */
+        let mode = 'server'
+        let pageCount = 1
+
+        const tryClient = file.size <= CLIENT_PDF_MAX_BYTES
+
+        if (tryClient) {
+          setBusyPhase('client')
+          try {
+            const buf = await file.arrayBuffer()
+            const { text, numPages } = await extractPdfPlainText(buf)
+            pageCount = Math.max(1, numPages)
+            if (numPages <= CLIENT_PDF_MAX_PAGES && text.trim().length >= CLIENT_MIN_TEXT_CHARS) {
+              blob = await buildMinimalDocxBlob(text)
+              mode = 'client'
+            }
+          } catch (e) {
+            console.warn('[pdf-to-word] browser conversion failed, will try server if available:', e)
           }
-          throw new Error(detail || `HTTP ${r.status}`)
         }
-        const blob = await r.blob()
+
+        if (!blob) {
+          if (!caps?.pdfToDocx) {
+            throw new Error(
+              'Could not build a Word file in your browser from this PDF (little or no extractable text — scans need OCR first). Server conversion is also off: set SOFFICE_PATH on the API for LibreOffice export.'
+            )
+          }
+          if (import.meta.env.PROD && !isApiBaseConfigured()) {
+            setActionError(
+              'Set VITE_API_BASE_URL when building the frontend so uploads reach your API.'
+            )
+            return
+          }
+          setBusyPhase('server')
+          blob = await fetchServerDocx(file)
+          mode = 'server'
+        }
+
         const base = (file.name || 'document').replace(/\.pdf$/i, '') || 'document'
         const outName = `${base}.docx`
 
@@ -122,13 +175,16 @@ export default function PdfToWordPage() {
           async () => {
             setActionError(null)
             triggerDownloadBlob(blob, outName)
+            trackEvent('pdf_to_word_path', { path: mode })
             setSuccessHint(
-              `“${outName}” should appear in your downloads. If nothing happens, allow downloads for this site or check the toolbar.`
+              mode === 'client'
+                ? `“${outName}” was built in your browser (draft text; open in Word to review formatting).`
+                : `“${outName}” should appear in your downloads. If nothing happens, allow downloads for this site or check the toolbar.`
             )
             trackFileDownloaded({
               tool: PDF_TO_WORD_TOOL,
               file_size: blob.size / 1024,
-              total_pages: 1,
+              total_pages: pageCount,
             })
             trackToolCompleted(PDF_TO_WORD_TOOL, true)
           },
@@ -162,9 +218,10 @@ export default function PdfToWordPage() {
         setActionError(msg)
       } finally {
         setBusy(false)
+        setBusyPhase(null)
       }
     },
-    [runWithSignInForDownload]
+    [caps?.pdfToDocx, fetchServerDocx, runWithSignInForDownload]
   )
 
   const onPdfFiles = useCallback(
@@ -183,10 +240,12 @@ export default function PdfToWordPage() {
     [onPdf]
   )
 
+  const showMainUi = capsStatus !== 'loading'
+
   return (
     <ToolPageShell
       title="PDF to Word"
-      subtitle="Turn a PDF into an editable Word document — upload here, download a .docx when it’s ready."
+      subtitle="Fast draft in your browser when possible; optional server conversion for tougher PDFs."
     >
       <div className="mx-auto max-w-xl space-y-4">
         {loadError && (
@@ -211,8 +270,17 @@ export default function PdfToWordPage() {
           </div>
         )}
 
-        {capsStatus === 'ready' && caps?.pdfToDocx ? (
+        {showMainUi && (
           <>
+            {capsStatus === 'ready' && caps && !caps.pdfToDocx ? (
+              <p className="m-0 rounded-xl border border-sky-200 bg-sky-50/90 px-4 py-3 text-sm text-sky-950 dark:border-sky-900 dark:bg-sky-950/35 dark:text-sky-100">
+                <span className="font-medium">Browser-first mode.</span> We&apos;ll build a Word file locally when the PDF
+                has selectable text. High-fidelity LibreOffice conversion on the server is off until{' '}
+                <code className="rounded bg-white/80 px-1 font-mono text-xs dark:bg-zinc-900">SOFFICE_PATH</code> is set on
+                the API.
+              </p>
+            ) : null}
+
             <ol className="m-0 flex list-none flex-wrap items-center justify-center gap-2 px-0 text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
               <li className="rounded-full bg-indigo-100 px-2.5 py-1 text-indigo-800 dark:bg-indigo-950/80 dark:text-indigo-200">
                 1 · Upload
@@ -243,7 +311,7 @@ export default function PdfToWordPage() {
               busy={busy}
               onFiles={onPdfFiles}
               label={busy ? 'Converting your PDF…' : 'Drop your PDF here, or click to choose a file'}
-              hint="PDF only — up to about 52 MB. Complex layouts may change when opened in Word; review before sharing."
+              hint={`PDF up to ~52 MB on the server path; browser draft works best under ${Math.round(CLIENT_PDF_MAX_BYTES / (1024 * 1024))} MB and ${CLIENT_PDF_MAX_PAGES} pages. Complex layouts stay closer with server conversion.`}
               hideAcceptTypes
             />
             {busy ? (
@@ -257,33 +325,32 @@ export default function PdfToWordPage() {
                     className="inline-block h-4 w-4 shrink-0 rounded-full border-2 border-sky-600 border-t-transparent motion-safe:animate-spin dark:border-cyan-400 dark:border-t-transparent"
                     aria-hidden
                   />
-                  <span className="font-medium">Working on your Word file…</span>
+                  <span className="font-medium">
+                    {busyPhase === 'client'
+                      ? 'Building Word in your browser…'
+                      : busyPhase === 'server'
+                        ? 'Converting on the server…'
+                        : 'Working…'}
+                  </span>
                 </p>
                 <p className="m-0 text-xs leading-relaxed text-sky-900/85 dark:text-sky-100/85">
-                  Converting with <strong>LibreOffice</strong> on this server. Large PDFs can take a few minutes — please
-                  keep this tab open.
+                  {busyPhase === 'server'
+                    ? 'Uses LibreOffice on the API when configured — keep this tab open.'
+                    : 'Draft .docx may simplify formatting; review in Microsoft Word or LibreOffice.'}
                 </p>
               </div>
             ) : (
               <p className="rounded-xl border border-zinc-200 bg-zinc-50/80 px-4 py-3 text-center text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-400">
-                If you are <strong>not signed in</strong>, we convert your file first, then ask you to <strong>sign in</strong>{' '}
-                before the .docx downloads (same as other download tools when accounts are enabled). Files stay on the line
-                while converting — keep this tab open.
+                If you are <strong>not signed in</strong>, we prepare your file first, then ask you to <strong>sign in</strong>{' '}
+                before download when accounts are enabled.{' '}
+                <Link className="font-medium text-indigo-600 underline-offset-2 hover:underline dark:text-cyan-400" to="/tools/ocr-pdf">
+                  OCR PDF
+                </Link>{' '}
+                helps scanned documents before Word conversion.
               </p>
             )}
           </>
-        ) : capsStatus === 'ready' && !caps?.pdfToDocx ? (
-          <div className="rounded-2xl border border-zinc-200 bg-zinc-50/90 p-6 text-sm text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900/50 dark:text-zinc-300">
-            <p className="m-0 font-medium text-zinc-900 dark:text-zinc-100">PDF → Word not configured</p>
-            <p className="mt-2 mb-0">
-              Your API answered, but PDF → Word needs{' '}
-              <code className="rounded bg-zinc-200 px-1 font-mono text-xs dark:bg-zinc-800">SOFFICE_PATH</code> set to your
-              LibreOffice <code className="font-mono text-xs">soffice</code> binary on <strong>that</strong> server (same as
-              Edit PDF’s PDF → Word export). Gotenberg is not used for this direction. Redeploy the API after setting the
-              variable.
-            </p>
-          </div>
-        ) : null}
+        )}
 
         {successHint && (
           <div
