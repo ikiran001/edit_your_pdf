@@ -16,8 +16,8 @@ import EncryptPdfPage from '../features/encrypt-pdf/EncryptPdfPage.jsx'
 import OrganizePdfPage from '../features/organize-pdf/OrganizePdfPage.jsx'
 import PageNumbersPdfPage from '../features/add-page-numbers/PageNumbersPdfPage.jsx'
 import WatermarkPdfPage from '../features/add-watermark/WatermarkPdfPage.jsx'
-import ComingSoonToolPage from '../features/placeholder/ComingSoonToolPage.jsx'
 import WordToPdfPage from '../features/word-to-pdf/WordToPdfPage.jsx'
+import PdfToWordPage from '../features/pdf-to-word/PdfToWordPage.jsx'
 import GstInvoicePage from '../features/gst-invoice/GstInvoicePage.jsx'
 import MyDocumentsPage from '../features/my-documents/MyDocumentsPage.jsx'
 import SubscriptionBillingPage from '../features/account/SubscriptionBillingPage.jsx'
@@ -85,15 +85,7 @@ export default function AppRoutes() {
         <Route path="/tools/organize-pdf" element={<OrganizePdfPage />} />
         <Route path="/tools/add-page-numbers" element={<PageNumbersPdfPage />} />
         <Route path="/tools/add-watermark" element={<WatermarkPdfPage />} />
-        <Route
-          path="/tools/pdf-to-word"
-          element={
-            <ComingSoonToolPage title="PDF to Word">
-              High-fidelity PDF→DOCX needs a server converter. This repo will add an isolated
-              backend route when ready, without touching the Edit PDF pipeline.
-            </ComingSoonToolPage>
-          }
-        />
+        <Route path="/tools/pdf-to-word" element={<PdfToWordPage />} />
         <Route path="/tools/word-to-pdf" element={<WordToPdfPage />} />
         <Route path="/tools/gst-invoice" element={<GstInvoicePage />} />
           </Routes>

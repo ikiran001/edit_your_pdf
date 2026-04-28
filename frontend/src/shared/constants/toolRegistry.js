@@ -84,7 +84,14 @@ export const TOOL_REGISTRY = [
     implemented: true,
     icon: 'Droplets',
   },
-  { id: 'pdf-to-word', path: '/tools/pdf-to-word', title: 'PDF to Word', description: 'DOC/DOCX export via server (planned).', implemented: false, icon: 'FileType2' },
+  {
+    id: 'pdf-to-word',
+    path: '/tools/pdf-to-word',
+    title: 'PDF to Word',
+    description: 'Upload a PDF; download an editable .docx (LibreOffice on the server).',
+    implemented: true,
+    icon: 'FileType2',
+  },
   {
     id: 'word-to-pdf',
     path: '/tools/word-to-pdf',
