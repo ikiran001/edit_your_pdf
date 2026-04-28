@@ -518,6 +518,8 @@ function PdfPageCanvas({
   const nativeBlurTimerRef = useRef(null)
   /** Debounce parent `onNativeTextEdit` so typing does not re-render the whole page every key. */
   const nativeSyncTimerRef = useRef(null)
+  /** Last payload JSON we pushed from the toolbar-format sync effect — stops feedback loops (#185). */
+  const lastToolbarNativePayloadSigRef = useRef(null)
   /** String shown when the inline editor opened — skip parent updates if unchanged (avoids stacking duplicate drawText on save). */
   const nativeOpenBaselineStrRef = useRef('')
   /** Toolbar snapshot at open — so bold/italic/underline-only edits still persist when text is unchanged. */
@@ -1934,7 +1936,7 @@ function PdfPageCanvas({
       const { pdfW, cssW } = metaRef.current
       const pdfToCssScale = cssW > 0 ? pdfW / cssW : 1
       const layoutHint = Number.isFinite(pdfToCssScale) && pdfToCssScale > 0 ? { pdfToCssScale } : undefined
-      const prevFmt = textFormatRef?.current ?? textFormat ?? defaultTextFormat()
+      const prevFmt = textFormatRef?.current ?? defaultTextFormat()
       let maskFillHex = '#ffffff'
       if (cv?.width && block.width > 0 && block.height > 0) {
         maskFillHex = sampleBackgroundColorHex(cv, block.left, block.top, block.width, block.height)
@@ -1984,9 +1986,10 @@ function PdfPageCanvas({
           _maskColorHexSeed: maskFillHex,
         })
       }
+      lastToolbarNativePayloadSigRef.current = null
       setNativeEdit({ block, maskFillHex })
     },
-    [onBeginNativeTextEdit, pageIndex, sessionNativeTextEdits, textFormat, textFormatRef]
+    [onBeginNativeTextEdit, pageIndex, sessionNativeTextEdits, textFormatRef]
   )
 
   /** Capture format once when edit opens only (`nativeEdit` deps — not `textFormat`, or toggling B/I/U would reset baseline). */
@@ -2041,7 +2044,7 @@ function PdfPageCanvas({
   }, [nativeEdit])
 
   const buildNativePayload = useCallback((block, text) => {
-    const fmt = textFormatRef?.current ?? textFormat ?? defaultTextFormat()
+    const fmt = textFormatRef?.current ?? defaultTextFormat()
     const { pdfW, cssW } = metaRef.current
     const ratio = cssW > 0 ? pdfW / cssW : 1
     const curSnap = snapshotNativeFormat(fmt)
@@ -2117,7 +2120,7 @@ function PdfPageCanvas({
       rotationDeg: fmt.rotationDeg ?? 0,
       maskColor,
     }
-  }, [textFormat, textFormatRef])
+  }, [textFormatRef])
 
   const flushNativeSyncTimer = useCallback(() => {
     if (nativeSyncTimerRef.current != null) {
@@ -2153,9 +2156,16 @@ function PdfPageCanvas({
    * captured in `nativeTextEditsRef` before a Save/Download that might happen within the
    * keystroke-debounce window. The debounced sync is still responsible for keystroke
    * content; this effect handles format-only changes.
+   *
+   * `buildNativePayload` is kept **stable** (reads `textFormatRef` only) so this effect is not
+   * re-entered via dependency churn — that caused React #185 (max update depth) when clicking
+   * into native text edit in production.
    */
   useEffect(() => {
-    if (!nativeEdit) return
+    if (!nativeEdit) {
+      lastToolbarNativePayloadSigRef.current = null
+      return
+    }
     const el = nativeEditorElRef.current
     if (!el) return
     const raw = el.innerText ?? ''
@@ -2170,9 +2180,12 @@ function PdfPageCanvas({
       window.clearTimeout(nativeSyncTimerRef.current)
       nativeSyncTimerRef.current = null
     }
-    onNativeTextEdit?.(buildNativePayload(nativeEdit.block, raw))
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [textFormat]) // intentionally only textFormat — nativeEdit/buildNativePayload are stable refs here
+    const payload = buildNativePayload(nativeEdit.block, raw)
+    const sig = JSON.stringify(payload)
+    if (sig === lastToolbarNativePayloadSigRef.current) return
+    lastToolbarNativePayloadSigRef.current = sig
+    onNativeTextEdit?.(payload)
+  }, [textFormat, nativeEdit, buildNativePayload, onNativeTextEdit])
 
   /** Toolbar “Insert symbol” dispatches this so Unicode (₹, ✓, …) lands in the active editor. */
   useEffect(() => {

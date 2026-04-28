@@ -140,6 +140,8 @@ app.get('/health', (_req, res) => {
 
   res.json({
     ok: true,
+    /** Client tools should POST; GET returns 405 (see route in compressPdf.js). */
+    compressPdf: 'POST /compress-pdf',
     qpdf: Boolean(qpdfBin && qpdfVersion),
     qpdfPath: qpdfBin,
     qpdfVersion,
