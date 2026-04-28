@@ -14,6 +14,7 @@ import UnlockPdfPage from '../features/unlock-pdf/UnlockPdfPage.jsx'
 import OcrPdfPage from '../features/ocr-pdf/OcrPdfPage.jsx'
 import EncryptPdfPage from '../features/encrypt-pdf/EncryptPdfPage.jsx'
 import OrganizePdfPage from '../features/organize-pdf/OrganizePdfPage.jsx'
+import PageNumbersPdfPage from '../features/add-page-numbers/PageNumbersPdfPage.jsx'
 import WatermarkPdfPage from '../features/add-watermark/WatermarkPdfPage.jsx'
 import ComingSoonToolPage from '../features/placeholder/ComingSoonToolPage.jsx'
 import WordToPdfPage from '../features/word-to-pdf/WordToPdfPage.jsx'
@@ -82,6 +83,7 @@ export default function AppRoutes() {
         <Route path="/tools/ocr-pdf" element={<OcrPdfPage />} />
         <Route path="/tools/encrypt-pdf" element={<EncryptPdfPage />} />
         <Route path="/tools/organize-pdf" element={<OrganizePdfPage />} />
+        <Route path="/tools/add-page-numbers" element={<PageNumbersPdfPage />} />
         <Route path="/tools/add-watermark" element={<WatermarkPdfPage />} />
         <Route
           path="/tools/pdf-to-word"

@@ -543,6 +543,54 @@ export const TOOL_SEO_BY_ID = {
     ],
   },
 
+  'add-page-numbers': {
+    featureName: 'Add page numbers',
+    intro: [
+      'Add page numbers to any PDF with clear placement controls — choose a grid position for single-page layouts or facing spreads with outer-margin alternation, then pick formats like plain numbers or Page N of M.',
+      'Processing runs in your browser with pdf-lib: upload the file, set margin and typography, and download a numbered copy without sending the PDF through a separate numbering service.',
+    ],
+    steps: [
+      'Open Add page numbers from the toolkit and upload your PDF.',
+      'Choose Single page or Facing pages (book-style outer left/right alternation).',
+      'Tap the position grid to pick the vertical band and, in single mode, the horizontal alignment.',
+      'Choose margin preset, which pages to number, and the first displayed number.',
+      'Pick a text format and adjust font size, color, and bold if needed.',
+      'Click Add page numbers and save the downloaded PDF.',
+    ],
+    benefits: [
+      {
+        title: 'Readable navigation',
+        body: 'Give reviewers consistent folios instead of guessing page order from thumbnails.',
+      },
+      {
+        title: 'Spread-aware option',
+        body: 'Facing mode mirrors common print layouts with outer-edge numbering.',
+      },
+      {
+        title: 'Flexible ranges',
+        body: 'Number the whole document or only the ranges you specify.',
+      },
+      {
+        title: 'Local-first workflow',
+        body: 'Stamp numbers locally when you want drafts to stay in the browser.',
+      },
+    ],
+    highlights: [
+      {
+        title: 'Grid placement',
+        body: 'Nine-cell layout for corners, edges, and center positions.',
+      },
+      {
+        title: 'Format presets',
+        body: 'Plain numbers, Page N, or Page N of M across the file.',
+      },
+      {
+        title: 'Helvetica typography',
+        body: 'Standard fonts for reliable rendering on every viewer.',
+      },
+    ],
+  },
+
   'scan-to-pdf': {
     featureName: 'Scan to PDF',
     intro: [

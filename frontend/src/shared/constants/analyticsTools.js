@@ -15,6 +15,8 @@ export const ANALYTICS_TOOL = {
   encrypt_pdf: 'encrypt_pdf',
   organize_pdf: 'organize_pdf',
   watermark_pdf: 'watermark_pdf',
+  /** Client-side page number stamping (pdf-lib). */
+  page_numbers_pdf: 'page_numbers_pdf',
   /** Camera / image scan → single PDF (browser-only). */
   scan_to_pdf: 'scan_to_pdf',
   /** DOCX → PDF via server (Gotenberg when configured). */
@@ -37,6 +39,7 @@ export const REGISTRY_ID_TO_FEATURE = {
   'unlock-pdf': ANALYTICS_TOOL.unlock_pdf,
   'encrypt-pdf': ANALYTICS_TOOL.encrypt_pdf,
   'organize-pdf': ANALYTICS_TOOL.organize_pdf,
+  'add-page-numbers': ANALYTICS_TOOL.page_numbers_pdf,
   'add-watermark': ANALYTICS_TOOL.watermark_pdf,
   'scan-to-pdf': ANALYTICS_TOOL.scan_to_pdf,
   'pdf-to-word': 'pdf_to_word',
