@@ -14,7 +14,7 @@ export default function ToolPageShell({ title, subtitle, children, contentMaxWid
   return (
     <div className="flex min-h-svh flex-col bg-transparent text-zinc-900 dark:text-zinc-100">
       <header className="fx-glass-header sticky top-0 z-40 px-4 py-3 md:px-8">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
+        <div className={`mx-auto flex w-full items-center justify-between gap-3 ${maxWidthClass}`}>
           <div className="flex min-w-0 flex-1 items-center gap-3 md:gap-4">
             <BrandLogoLink className="min-w-0" />
             <div className="min-w-0 border-l border-indigo-200/50 pl-3 dark:border-indigo-500/20">

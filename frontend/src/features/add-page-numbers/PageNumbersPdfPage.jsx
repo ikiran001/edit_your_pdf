@@ -278,6 +278,7 @@ export default function PageNumbersPdfPage() {
     <ToolPageShell
       title="Add page numbers"
       subtitle="Pick placement, preview folios on every page, then download — all in your browser."
+      contentMaxWidth="wide"
     >
       {!pdfFile ? (
         <FileDropzone
@@ -304,7 +305,7 @@ export default function PageNumbersPdfPage() {
 
       {pdfFile && numPages > 0 ? (
         <div className="mt-6 flex flex-col items-stretch gap-2 sm:items-center">
-          <div className="flex w-full max-w-3xl flex-wrap items-center justify-center gap-2 rounded-2xl border border-zinc-200 bg-white px-3 py-2.5 shadow-md shadow-zinc-900/5 dark:border-zinc-600 dark:bg-zinc-900/95 dark:shadow-black/40 sm:gap-3 sm:px-4">
+          <div className="flex w-full flex-wrap items-center justify-center gap-2 rounded-2xl border border-zinc-200 bg-white px-3 py-2.5 shadow-md shadow-zinc-900/5 dark:border-zinc-600 dark:bg-zinc-900/95 dark:shadow-black/40 sm:gap-3 sm:px-4">
             <ChevronDown className="hidden h-4 w-4 shrink-0 text-zinc-400 sm:block" aria-hidden />
             <span className="min-w-0 flex-1 truncate text-center text-sm font-medium text-zinc-900 dark:text-zinc-100">
               {pdfFile.name}
@@ -354,8 +355,8 @@ export default function PageNumbersPdfPage() {
       )}
 
       {numPages > 0 && pdfBytes && pdfDoc && (
-        <>
-          <section className="mt-10 space-y-3">
+        <div className="mt-10 flex flex-col gap-10 lg:mt-8 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(300px,460px)] lg:items-start lg:gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(320px,520px)] xl:gap-10 2xl:grid-cols-[minmax(0,1fr)_minmax(340px,580px)]">
+          <section className="min-w-0 space-y-3 lg:sticky lg:top-4 lg:z-[5] lg:self-start">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200 pb-3 dark:border-zinc-700">
               <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Preview</h2>
               <div
@@ -408,7 +409,7 @@ export default function PageNumbersPdfPage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-zinc-200/90 bg-zinc-50/80 p-3 shadow-inner dark:border-zinc-700 dark:bg-zinc-950/40">
+            <div className="rounded-2xl border border-zinc-200/90 bg-zinc-50/80 p-3 shadow-inner dark:border-zinc-700 dark:bg-zinc-950/40 lg:max-h-[min(78vh,880px)] lg:overflow-x-auto lg:overflow-y-auto">
               <div className="overflow-x-auto overflow-y-visible [-webkit-overflow-scrolling:touch] pb-1">
                 <div
                   className="inline-block min-w-full transition-[transform,width] duration-200 ease-out"
@@ -448,7 +449,7 @@ export default function PageNumbersPdfPage() {
             </div>
           </section>
 
-          <div className="mx-auto mt-12 max-w-3xl space-y-6">
+          <div className="mx-auto mt-0 w-full max-w-3xl space-y-6 lg:mx-0 lg:mt-0 lg:max-w-none lg:justify-self-stretch">
             <section className="rounded-2xl border border-zinc-200 bg-white/80 p-4 dark:border-zinc-700 dark:bg-zinc-900/50">
             <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Page layout</h3>
             <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
@@ -668,7 +669,7 @@ export default function PageNumbersPdfPage() {
             )}
           </button>
           </div>
-        </>
+        </div>
       )}
 
       <ToolFeatureSeoSection toolId="add-page-numbers" />
