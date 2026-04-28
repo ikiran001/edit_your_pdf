@@ -3,11 +3,6 @@ import { FileText, Upload } from 'lucide-react'
 import { trackFeatureUsed } from '../../lib/analytics.js'
 import { ANALYTICS_TOOL } from '../../shared/constants/analyticsTools.js'
 import { BRAND_NAME, TAGLINE } from '../../shared/constants/branding.js'
-import {
-  HERO_GLOBAL_USAGE_LINE,
-  HERO_TRUST_STATS,
-  HERO_TRUST_SYNC_HINT,
-} from '../../shared/constants/heroTrustMetrics.js'
 
 function trackEditEntry() {
   trackFeatureUsed(ANALYTICS_TOOL.edit_pdf)
@@ -49,30 +44,6 @@ export default function HeroSection() {
             <FileText className="h-5 w-5 shrink-0 opacity-80" aria-hidden />
             Try sample PDF
           </Link>
-        </div>
-
-        <div className="mx-auto mt-10 max-w-2xl rounded-2xl border border-zinc-200/80 bg-white/70 p-4 shadow-sm backdrop-blur-sm dark:border-zinc-700/80 dark:bg-zinc-900/50">
-          <div className="grid gap-3 sm:grid-cols-3">
-            {HERO_TRUST_STATS.map((row, i) => (
-              <div
-                key={row.label}
-                className="rounded-xl border border-zinc-100 bg-zinc-50/80 px-3 py-3 text-center dark:border-zinc-700 dark:bg-zinc-800/50"
-              >
-                <p className="text-xl font-bold tabular-nums text-indigo-700 dark:text-cyan-300">
-                  {row.value}
-                  {i === 2 ? <span className="ml-0.5">🚀</span> : null}
-                </p>
-                <p className="mt-1 text-[11px] font-medium leading-snug text-zinc-600 dark:text-zinc-400">
-                  {row.label}
-                </p>
-              </div>
-            ))}
-          </div>
-          <p className="mt-3 text-center text-[11px] text-zinc-500 dark:text-zinc-500">
-            Based on a recent 7-day site snapshot ({HERO_TRUST_SYNC_HINT}). Numbers are rounded and updated when usage
-            changes.
-          </p>
-          <p className="mt-2 text-center text-xs font-medium text-zinc-600 dark:text-zinc-400">{HERO_GLOBAL_USAGE_LINE}</p>
         </div>
       </div>
     </section>
