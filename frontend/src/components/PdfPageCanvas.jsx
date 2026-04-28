@@ -388,6 +388,7 @@ function PdfPageCanvas({
   onTextFormatChange = null,
   onBeginNativeTextEdit,
   editTextMode = true,
+  /** `(pageIndex, isOpen) => void` — parent must not treat “closed” from another page as global off. */
   onInlineEditorActiveChange,
   /** When set, Text format sidebar syncs font size + color to this annotation. */
   formatSyncTarget = null,
@@ -410,6 +411,8 @@ function PdfPageCanvas({
   const textDraftDragRef = useRef(null)
   const textDraftSyncRafRef = useRef(null)
   const textDraftImeComposingRef = useRef(false)
+  /** True while the add-text draft textarea has no characters (show subtle “Aa” size preview). */
+  const [textDraftBodyEmpty, setTextDraftBodyEmpty] = useState(true)
   const syncTextDraftBoxFromTextareaRef = useRef(() => {})
   const [sigDraft, setSigDraft] = useState(null)
   const sigDraftRef = useRef(null)
@@ -559,6 +562,18 @@ function PdfPageCanvas({
 
   useLayoutEffect(() => {
     textDraftRef.current = textDraft
+  }, [textDraft])
+
+  useEffect(() => {
+    if (!textDraft) {
+      setTextDraftBodyEmpty(true)
+      return
+    }
+    const id = requestAnimationFrame(() => {
+      const v = draftInputRef.current?.value ?? ''
+      setTextDraftBodyEmpty(v.length === 0)
+    })
+    return () => cancelAnimationFrame(id)
   }, [textDraft])
 
   useLayoutEffect(() => {
@@ -943,8 +958,8 @@ function PdfPageCanvas({
   }, [tool, editTextMode])
 
   useEffect(() => {
-    onInlineEditorActiveChange?.(!!nativeEdit)
-  }, [nativeEdit, onInlineEditorActiveChange])
+    onInlineEditorActiveChange?.(pageIndex, !!nativeEdit)
+  }, [nativeEdit, onInlineEditorActiveChange, pageIndex])
 
   useEffect(() => {
     return () => {
@@ -1358,61 +1373,6 @@ function PdfPageCanvas({
       cancelled = true
     }
   }, [tool, signatureImageBase64, pdfPage, pageIndex])
-
-  useEffect(() => {
-    if (!onTextBoxOverlayActionsChange) return
-    if (textDraft) {
-      onTextBoxOverlayActionsChange(pageIndex, {
-        done: () => commitText(draftInputRef.current?.value ?? ''),
-        reset: () => {
-          if (textDraftSyncRafRef.current != null) {
-            cancelAnimationFrame(textDraftSyncRafRef.current)
-            textDraftSyncRafRef.current = null
-          }
-          textDraftDragRef.current = null
-          textDraftImeComposingRef.current = false
-          textDraftRef.current = null
-          setTextDraft(null)
-        },
-      })
-      return () => onTextBoxOverlayActionsChange(pageIndex, null)
-    }
-    if (sigDraft) {
-      onTextBoxOverlayActionsChange(pageIndex, {
-        done: () => commitSigPlacement(),
-        reset: () => cancelSigDraft(),
-      })
-      return () => onTextBoxOverlayActionsChange(pageIndex, null)
-    }
-    if (editingAnnotId) {
-      onTextBoxOverlayActionsChange(pageIndex, {
-        done: () => {
-          const id = editingAnnotIdRef.current
-          const el = annotEditorRef.current
-          if (id != null && el) commitAnnotEdit(id, el.innerText ?? '')
-        },
-        reset: () => {
-          const el = annotEditorRef.current
-          if (el) el.textContent = annotEditBaselineRef.current
-          editingAnnotIdRef.current = null
-          setEditingAnnotId(null)
-        },
-      })
-      return () => onTextBoxOverlayActionsChange(pageIndex, null)
-    }
-    onTextBoxOverlayActionsChange(pageIndex, null)
-    return undefined
-  }, [
-    textDraft,
-    editingAnnotId,
-    onTextBoxOverlayActionsChange,
-    pageIndex,
-    commitText,
-    commitAnnotEdit,
-    sigDraft,
-    commitSigPlacement,
-    cancelSigDraft,
-  ])
 
   useEffect(() => {
     if (!selectedAnnotId && !editingAnnotId && !textDraft && !sigDraft) return
@@ -2314,6 +2274,93 @@ function PdfPageCanvas({
     nativeEditSlotIdRef.current = null
   }, [onRevertNativeTextEdit, flushNativeSyncTimer])
 
+  /* Toolbar Done/Reset when `textBoxOverlayActions` did not register (fallback dispatches these). */
+  useEffect(() => {
+    if (!nativeEdit) return
+    const onToolbarDone = () => {
+      const el = nativeEditorElRef.current
+      commitNativeEdit(el?.innerText ?? '')
+    }
+    const onToolbarReset = () => {
+      revertNativeEdit()
+    }
+    document.addEventListener('pdfpilot-native-overlay-done', onToolbarDone)
+    document.addEventListener('pdfpilot-native-overlay-reset', onToolbarReset)
+    return () => {
+      document.removeEventListener('pdfpilot-native-overlay-done', onToolbarDone)
+      document.removeEventListener('pdfpilot-native-overlay-reset', onToolbarReset)
+    }
+  }, [nativeEdit, commitNativeEdit, revertNativeEdit])
+
+  /* After `commitNativeEdit` / `revertNativeEdit` so dependency arrays do not hit TDZ. */
+  useLayoutEffect(() => {
+    if (!onTextBoxOverlayActionsChange) return
+    if (textDraft) {
+      onTextBoxOverlayActionsChange(pageIndex, {
+        done: () => commitText(draftInputRef.current?.value ?? ''),
+        reset: () => {
+          if (textDraftSyncRafRef.current != null) {
+            cancelAnimationFrame(textDraftSyncRafRef.current)
+            textDraftSyncRafRef.current = null
+          }
+          textDraftDragRef.current = null
+          textDraftImeComposingRef.current = false
+          textDraftRef.current = null
+          setTextDraft(null)
+        },
+      })
+      return () => onTextBoxOverlayActionsChange(pageIndex, null)
+    }
+    if (sigDraft) {
+      onTextBoxOverlayActionsChange(pageIndex, {
+        done: () => commitSigPlacement(),
+        reset: () => cancelSigDraft(),
+      })
+      return () => onTextBoxOverlayActionsChange(pageIndex, null)
+    }
+    if (editingAnnotId) {
+      onTextBoxOverlayActionsChange(pageIndex, {
+        done: () => {
+          const id = editingAnnotIdRef.current
+          const el = annotEditorRef.current
+          if (id != null && el) commitAnnotEdit(id, el.innerText ?? '')
+        },
+        reset: () => {
+          const el = annotEditorRef.current
+          if (el) el.textContent = annotEditBaselineRef.current
+          editingAnnotIdRef.current = null
+          setEditingAnnotId(null)
+        },
+      })
+      return () => onTextBoxOverlayActionsChange(pageIndex, null)
+    }
+    if (nativeEdit) {
+      onTextBoxOverlayActionsChange(pageIndex, {
+        done: () => {
+          const el = nativeEditorElRef.current
+          commitNativeEdit(el?.innerText ?? '')
+        },
+        reset: () => revertNativeEdit(),
+      })
+      return () => onTextBoxOverlayActionsChange(pageIndex, null)
+    }
+    onTextBoxOverlayActionsChange(pageIndex, null)
+    return undefined
+  }, [
+    textDraft,
+    editingAnnotId,
+    nativeEdit,
+    onTextBoxOverlayActionsChange,
+    pageIndex,
+    commitText,
+    commitAnnotEdit,
+    commitNativeEdit,
+    revertNativeEdit,
+    sigDraft,
+    commitSigPlacement,
+    cancelSigDraft,
+  ])
+
   /** Click outside textarea / format panel commits (canvas is not focusable — blur alone is unreliable). */
   useEffect(() => {
     if (!nativeEdit) return
@@ -3169,6 +3216,24 @@ function PdfPageCanvas({
           >
             <TextAnnotBoxDeleteBtn onDelete={cancelDraft} />
             <div className="relative flex h-full min-h-0 flex-col justify-center px-0 py-0">
+              {textDraftBodyEmpty ? (
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute left-0 top-0 z-0 select-none"
+                  style={{
+                    fontSize: `${draftPx}px`,
+                    lineHeight: ANNOT_UI_LINE_HEIGHT,
+                    fontFamily: draftFont,
+                    fontWeight: draftFmt.bold ? 700 : 400,
+                    fontStyle: draftFmt.italic ? 'italic' : 'normal',
+                    textDecoration: draftFmt.underline ? 'underline' : 'none',
+                    color: normalizeHexForColorInput(draftFmt.color || '#000000'),
+                    opacity: 0.22,
+                  }}
+                >
+                  Aa
+                </span>
+              ) : null}
               <textarea
                 ref={draftInputRef}
                 data-pdf-annot-draft-input
@@ -3178,7 +3243,7 @@ function PdfPageCanvas({
                 title="Enter for a new line. Ctrl+Enter or Command+Enter to place."
                 aria-label="Add text on the page. Press Enter for a new line. Control+Enter or Command+Enter to place text."
                 maxLength={MAX_ANNOT_TEXT_LENGTH}
-                className="pdf-annot-draft-input box-border min-h-0 w-full min-w-0 resize-none cursor-text whitespace-pre break-normal rounded-none border-0 py-0 pl-0 pr-0.5 pb-0.5 text-zinc-900 outline-none"
+                className="pdf-annot-draft-input relative z-[1] box-border min-h-0 w-full min-w-0 resize-none cursor-text whitespace-pre break-normal rounded-none border-0 py-0 pl-0 pr-0.5 pb-0.5 text-zinc-900 outline-none"
                 style={{
                   fontSize: `${draftPx}px`,
                   lineHeight: ANNOT_UI_LINE_HEIGHT,
@@ -3196,6 +3261,7 @@ function PdfPageCanvas({
                   backgroundColor: 'transparent',
                 }}
                 onInput={() => {
+                  setTextDraftBodyEmpty(!(draftInputRef.current?.value ?? '').length)
                   scheduleTextDraftBoxSync()
                 }}
                 onCompositionStart={() => {

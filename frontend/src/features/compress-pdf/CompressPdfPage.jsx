@@ -10,6 +10,7 @@ import {
   compressPdfBytes,
   normalizeCompressionLevel,
 } from '../../lib/pdfCompressCore.js'
+import { getResolvedApiBase } from '../../lib/apiBase.js'
 import { useClientToolDownloadAuth } from '../../auth/ClientToolDownloadAuthContext.jsx'
 
 const TOOL = ANALYTICS_TOOL.compress_pdf
@@ -17,15 +18,15 @@ const TOOL = ANALYTICS_TOOL.compress_pdf
 const LEVEL_INFO = {
   low: {
     label: 'Low',
-    hint: 'Light rewrite; best when you want minimal structural change.',
+    hint: 'qpdf only — lighter rewrite; smallest CPU use.',
   },
   medium: {
     label: 'Medium',
-    hint: 'Balanced: enables object streams (often smaller).',
+    hint: 'qpdf + Ghostscript /ebook — strong shrink on scans & mixed PDFs.',
   },
   high: {
     label: 'High',
-    hint: 'Copies pages into a fresh document; can remove overhead.',
+    hint: 'qpdf + Ghostscript /screen — maximum size reduction (may soften images).',
   },
 }
 
@@ -36,9 +37,21 @@ function formatBytes(n) {
   return `${(n / (1024 * 1024)).toFixed(2)} MB`
 }
 
-function pctSaved(original, compressed) {
+/** @returns {{ text: string, tone: 'good' | 'warn' | 'muted' } | null} */
+function savedPctDisplay(original, compressed) {
   if (!original || original <= 0 || compressed == null) return null
-  return Math.round((1 - compressed / original) * 100)
+  const pct = (1 - compressed / original) * 100
+  if (pct < -0.0001) {
+    const q = Math.abs(pct)
+    return {
+      text: `+${q < 10 ? q.toFixed(1) : Math.round(q)}% larger`,
+      tone: 'warn',
+    }
+  }
+  if (pct <= 0) return { text: '0%', tone: 'muted' }
+  if (pct < 1) return { text: `${pct.toFixed(2)}%`, tone: 'good' }
+  if (pct < 10) return { text: `${pct.toFixed(1)}%`, tone: 'good' }
+  return { text: `${Math.round(pct)}%`, tone: 'good' }
 }
 
 function downloadBlob(blob, name) {
@@ -63,6 +76,10 @@ export default function CompressPdfPage() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
+  /** True when qpdf API was not used (browser-only pdf-lib path — sizes often unchanged). */
+  const [usedFallbackOnly, setUsedFallbackOnly] = useState(false)
+
+  const prodApiMissing = import.meta.env.PROD && !getResolvedApiBase()
 
   useToolEngagement(TOOL, true)
 
@@ -76,6 +93,7 @@ export default function CompressPdfPage() {
     }
     setError(null)
     setSuccess(null)
+    setUsedFallbackOnly(false)
     setItems((prev) => {
       const seen = new Set(prev.map((p) => `${p.file.name}-${p.file.size}`))
       const next = [...prev]
@@ -98,6 +116,7 @@ export default function CompressPdfPage() {
   const remove = (id) => {
     setItems((prev) => prev.filter((x) => x.id !== id))
     setSuccess(null)
+    setUsedFallbackOnly(false)
   }
 
   const runCompress = async () => {
@@ -108,19 +127,29 @@ export default function CompressPdfPage() {
     setBusy(true)
     setError(null)
     setSuccess(null)
+    setUsedFallbackOnly(false)
     try {
       const next = []
       for (const it of items) {
         const buf = new Uint8Array(await it.file.arrayBuffer())
-        const out = await compressPdfBytes(buf, normalizedLevel)
+        const out = await compressPdfBytes(buf, normalizedLevel, { fileName: it.file.name })
         next.push({
           ...it,
-          compressedSize: out.byteLength,
-          compressedBytes: out,
+          compressedSize: out.bytes.byteLength,
+          compressedBytes: out.bytes,
+          compressedVia: out.via,
         })
       }
       setItems(next)
-      setSuccess('Compression finished. Review sizes below, then download.')
+      const anyFallback = next.some((x) => x.compressedVia === 'fallback')
+      setUsedFallbackOnly(anyFallback)
+      if (anyFallback) {
+        setSuccess(
+          'Done — but the server compressor (qpdf) was not used, so sizes may not drop. For real compression: run the backend locally (port 3001) or set VITE_API_BASE_URL on your production build.'
+        )
+      } else {
+        setSuccess('Compression finished. Review sizes below, then download.')
+      }
     } catch (e) {
       console.error(e)
       setError(e?.message || 'Could not compress PDF(s).')
@@ -128,22 +157,6 @@ export default function CompressPdfPage() {
       setBusy(false)
     }
   }
-
-  const downloadOne = useCallback(
-    async (it) => {
-      if (!it.compressedBytes) return
-      try {
-        await runWithSignInForDownload(async () => {
-          const blob = new Blob([it.compressedBytes], { type: 'application/pdf' })
-          downloadBlob(blob, outputName(it.file.name))
-        })
-      } catch (e) {
-        if (e?.code === 'EYP_AUTH_CANCELLED') return
-        if (e?.code !== 'EYP_AUTH_LOADING') console.error(e)
-      }
-    },
-    [runWithSignInForDownload]
-  )
 
   const downloadAll = useCallback(async () => {
     const ready = items.filter((x) => x.compressedBytes)
@@ -191,13 +204,15 @@ export default function CompressPdfPage() {
   const totalCompressed = items.every((x) => x.compressedSize != null)
     ? items.reduce((s, x) => s + (x.compressedSize || 0), 0)
     : null
-  const totalSavedPct =
-    totalCompressed != null ? pctSaved(totalOriginal, totalCompressed) : null
+  const totalSavedDisplay =
+    totalCompressed != null && totalOriginal > 0
+      ? savedPctDisplay(totalOriginal, totalCompressed)
+      : null
 
   return (
     <ToolPageShell
       title="Compress PDF"
-      subtitle="Shrink PDFs in your browser. Pick a level, compare sizes, then download or grab a ZIP for batches."
+      subtitle="Server: qpdf plus Ghostscript on Medium/High for real size cuts. Pick a level, compare sizes, then download."
     >
       <FileDropzone
         accept="application/pdf"
@@ -214,14 +229,33 @@ export default function CompressPdfPage() {
       {success && (
         <div
           role="status"
-          className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-100"
+          className={`mb-4 rounded-xl border px-4 py-3 text-sm ${
+            usedFallbackOnly
+              ? 'border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100'
+              : 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-100'
+          }`}
         >
           {success}
         </div>
       )}
+      {prodApiMissing && (
+        <div
+          role="note"
+          className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-950 dark:border-rose-800 dark:bg-rose-950/45 dark:text-rose-100"
+        >
+          <strong className="font-semibold">Production:</strong> this static build has no API base URL. Compress
+          will use the browser fallback only (often <strong className="font-semibold">no size change</strong>
+          ). Set <code className="rounded bg-rose-100/90 px-1 font-mono text-xs dark:bg-rose-900/80">VITE_API_BASE_URL</code>{' '}
+          to your deployed API (same as Edit PDF / OCR) and redeploy.
+        </div>
+      )}
       <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
-        Uses pdf-lib locally. How much smaller files get depends on the PDF; some may only change
-        slightly.
+        The API runs <strong className="font-semibold text-zinc-800 dark:text-zinc-100">qpdf</strong> first,
+        then <strong className="font-semibold text-zinc-800 dark:text-zinc-100">Ghostscript</strong> on{' '}
+        <strong className="font-semibold">Medium</strong> / <strong className="font-semibold">High</strong> for
+        real downsampling (needs backend + Ghostscript). Low = qpdf only. Without the API (
+        <code className="rounded bg-zinc-200/80 px-1 text-xs dark:bg-zinc-700">VITE_API_BASE_URL</code>
+        ), the browser falls back to pdf-lib — sizes rarely move much.
       </p>
 
       <fieldset className="mb-6 rounded-2xl border border-zinc-200 bg-white/80 p-4 dark:border-zinc-700 dark:bg-zinc-900/50">
@@ -247,9 +281,15 @@ export default function CompressPdfPage() {
                   onChange={() => {
                     setLevel(key)
                     setItems((prev) =>
-                      prev.map((x) => ({ ...x, compressedSize: null, compressedBytes: null }))
+                      prev.map((x) => ({
+                        ...x,
+                        compressedSize: null,
+                        compressedBytes: null,
+                        compressedVia: undefined,
+                      }))
                     )
                     setSuccess(null)
+                    setUsedFallbackOnly(false)
                   }}
                   className="text-indigo-600"
                 />
@@ -286,7 +326,7 @@ export default function CompressPdfPage() {
               </thead>
               <tbody>
                 {items.map((it) => {
-                  const saved = pctSaved(it.originalSize, it.compressedSize)
+                  const saved = savedPctDisplay(it.originalSize, it.compressedSize)
                   return (
                     <tr
                       key={it.id}
@@ -302,14 +342,16 @@ export default function CompressPdfPage() {
                         {it.compressedSize != null ? formatBytes(it.compressedSize) : '—'}
                       </td>
                       <td className="hidden whitespace-nowrap px-4 py-2 sm:table-cell">
-                        {saved == null ? (
+                        {!saved ? (
                           '—'
-                        ) : saved >= 0 ? (
-                          <span className="text-emerald-700 dark:text-emerald-400">{saved}%</span>
-                        ) : (
+                        ) : saved.tone === 'warn' ? (
                           <span className="text-amber-700 dark:text-amber-400" title="Output can be larger after rewrite">
-                            +{Math.abs(saved)}% larger
+                            {saved.text}
                           </span>
+                        ) : saved.tone === 'muted' ? (
+                          <span className="text-zinc-500 dark:text-zinc-400">{saved.text}</span>
+                        ) : (
+                          <span className="text-emerald-700 dark:text-emerald-400">{saved.text}</span>
                         )}
                       </td>
                       <td className="px-2 py-2">
@@ -338,16 +380,14 @@ export default function CompressPdfPage() {
                       {totalCompressed != null ? formatBytes(totalCompressed) : '—'}
                     </td>
                     <td className="hidden px-4 py-3 sm:table-cell">
-                      {totalSavedPct == null ? (
+                      {!totalSavedDisplay ? (
                         '—'
-                      ) : totalSavedPct >= 0 ? (
-                        <span className="text-emerald-700 dark:text-emerald-400">
-                          {totalSavedPct}%
-                        </span>
+                      ) : totalSavedDisplay.tone === 'warn' ? (
+                        <span className="text-amber-700 dark:text-amber-400">{totalSavedDisplay.text}</span>
+                      ) : totalSavedDisplay.tone === 'muted' ? (
+                        <span className="text-zinc-500 dark:text-zinc-400">{totalSavedDisplay.text}</span>
                       ) : (
-                        <span className="text-amber-700 dark:text-amber-400">
-                          +{Math.abs(totalSavedPct)}% larger
-                        </span>
+                        <span className="text-emerald-700 dark:text-emerald-400">{totalSavedDisplay.text}</span>
                       )}
                     </td>
                     <td />
