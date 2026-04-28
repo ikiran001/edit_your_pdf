@@ -1,5 +1,11 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
 import { resolvePageIndices } from './watermarkPdfCore.js'
+import {
+  clampGrid01,
+  formatPageNumberText,
+  xyFacing,
+  xySingle,
+} from './pageNumbersLayout.js'
 
 function hexToRgb01(hex) {
   const s = (hex || '').replace(/^#/, '')
@@ -15,57 +21,6 @@ function hexToRgb01(hex) {
   const b = parseInt(s.slice(4, 6), 16)
   if (![r, g, b].every((n) => Number.isFinite(n))) return rgb(0.12, 0.16, 0.23)
   return rgb(r / 255, g / 255, b / 255)
-}
-
-function clampGrid01(v) {
-  const n = Number(v)
-  if (n === 1) return 1
-  if (n === 2) return 2
-  return 0
-}
-
-/**
- * @param {'plain'|'page-n'|'page-n-of-m'} format
- */
-function formatPageNumberText(format, n, totalPagesInDoc) {
-  if (format === 'plain') return String(n)
-  if (format === 'page-n') return `Page ${n}`
-  return `Page ${n} of ${totalPagesInDoc}`
-}
-
-/**
- * Baseline (pdf-lib) / horizontal anchor for single-page mode — 3×3 grid.
- * @param {0|1|2} gridRow top / middle / bottom
- * @param {0|1|2} gridCol left / center / right
- */
-function xySingle(gridRow, gridCol, pageW, pageH, margin, fontSize, textW) {
-  const halfH = fontSize * 0.4
-  let y
-  if (gridRow === 0) y = pageH - margin - fontSize
-  else if (gridRow === 2) y = margin + halfH
-  else y = pageH / 2 - halfH
-
-  let x
-  if (gridCol === 0) x = margin
-  else if (gridCol === 2) x = pageW - margin - textW
-  else x = (pageW - textW) / 2
-
-  return { x, y }
-}
-
-/**
- * Facing mode: vertical band from row; horizontal alternates outer corners (odd → right, even → left).
- */
-function xyFacing(gridRow, pageW, pageH, margin, fontSize, textW, physicalOneBased) {
-  const halfH = fontSize * 0.4
-  let y
-  if (gridRow === 0) y = pageH - margin - fontSize
-  else if (gridRow === 2) y = margin + halfH
-  else y = pageH / 2 - halfH
-
-  const odd = physicalOneBased % 2 === 1
-  const x = odd ? pageW - margin - textW : margin
-  return { x, y }
 }
 
 /**
