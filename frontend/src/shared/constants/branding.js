@@ -42,6 +42,7 @@ const TOOL_DOC_TITLES = {
   '/tools/ocr-pdf': 'pdfpilot - OCR PDF',
   '/tools/encrypt-pdf': 'pdfpilot - Encrypt PDF',
   '/tools/organize-pdf': 'pdfpilot - Organize PDF Pages',
+  '/tools/add-page-numbers': 'pdfpilot - Add page numbers',
   '/tools/add-watermark': 'pdfpilot - Add Watermark',
   '/tools/pdf-to-word': 'pdfpilot - PDF to Word',
   '/tools/word-to-pdf': 'pdfpilot - Word to PDF',

@@ -34,6 +34,14 @@ export const TOOL_REGISTRY = [
     icon: 'LayoutGrid',
   },
   {
+    id: 'add-page-numbers',
+    path: '/tools/add-page-numbers',
+    title: 'Add page numbers',
+    description: 'Stamp page numbers with placement, ranges, and formats — in your browser.',
+    implemented: true,
+    icon: 'Hash',
+  },
+  {
     id: 'compress-pdf',
     path: '/tools/compress-pdf',
     title: 'Compress PDF',

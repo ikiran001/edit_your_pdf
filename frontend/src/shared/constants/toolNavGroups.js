@@ -10,7 +10,7 @@ export const TOOL_NAV_GROUPS = [
   {
     label: 'Organize PDF',
     tint: 'violet',
-    toolIds: ['merge-pdf', 'split-pdf', 'organize-pdf'],
+    toolIds: ['merge-pdf', 'split-pdf', 'organize-pdf', 'add-page-numbers'],
   },
   {
     label: 'Edit & sign',
