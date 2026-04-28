@@ -216,6 +216,21 @@ export default function PdfEditor({
       return prev
     })
   }, [])
+
+  /** Stable handler — inline functions here recreate PdfPageCanvas callbacks every render and can amplify update loops (#185). */
+  const handleBeginNativeTextEdit = useCallback((block, extras) => {
+    if (extras?.presetFormat && !extras?._maskColorHexSeed) {
+      setTextFormat(extras.presetFormat)
+      return
+    }
+    setTextFormat((prev) => {
+      const next = formatFromTextBlock(block, prev, extras?.sampleColorHex, extras?.layoutHint)
+      if (extras?._maskColorHexSeed && (prev.maskColorMode ?? 'auto') === 'auto') {
+        next.maskColorHex = extras._maskColorHexSeed
+      }
+      return next
+    })
+  }, [])
   /** After placing “Add Text”, keep Text format bar open for styling (in addition to native line edit). */
   const [addedTextFormatOpen, setAddedTextFormatOpen] = useState(false)
   const [annotFormatTarget, setAnnotFormatTarget] = useState(null)
@@ -1063,6 +1078,12 @@ export default function PdfEditor({
     []
   )
 
+  /** Stable per-page callbacks — inline arrows recreate every render and retrigger PdfPageCanvas effects (#185). */
+  const nativeTextEditHandlersByPage = useMemo(() => {
+    if (!Number.isFinite(numPages) || numPages < 1) return []
+    return Array.from({ length: numPages }, (_, i) => (payload) => addNativeTextEdit(i, payload))
+  }, [numPages, addNativeTextEdit])
+
   /** Remove a native text edit by slotId, restoring the block to its original PDF text. */
   const revertNativeTextEdit = useCallback((blockId, slotId) => {
     const prev = nativeTextEditsRef.current
@@ -1698,7 +1719,7 @@ export default function PdfEditor({
                       onUpdateItems={pageItemUpdaters[i]}
                       blockTextOverrides={blockTextOverrides}
                       sessionNativeTextEdits={nativesPerPage[i] ?? EMPTY_NATIVE_EDITS_PAGE}
-                      onNativeTextEdit={(payload) => addNativeTextEdit(i, payload)}
+                      onNativeTextEdit={nativeTextEditHandlersByPage[i]}
                       onRevertNativeTextEdit={revertNativeTextEdit}
                       textFormat={textFormat}
                       textFormatRef={textFormatRef}
@@ -1710,25 +1731,7 @@ export default function PdfEditor({
                       onAddedTextCommitted={handleAddedTextCommitted}
                       onTextBoxOverlayActionsChange={handleTextBoxOverlayActions}
                       signatureImageBase64={signatureImageBase64}
-                      onBeginNativeTextEdit={(block, extras) => {
-                        if (extras?.presetFormat && !extras?._maskColorHexSeed) {
-                          setTextFormat(extras.presetFormat)
-                          return
-                        }
-                        setTextFormat((prev) => {
-                          const next = formatFromTextBlock(
-                            block,
-                            prev,
-                            extras?.sampleColorHex,
-                            extras?.layoutHint
-                          )
-                          /* Seed manual colour picker with auto-sampled bg — user can override immediately. */
-                          if (extras?._maskColorHexSeed && (prev.maskColorMode ?? 'auto') === 'auto') {
-                            next.maskColorHex = extras._maskColorHexSeed
-                          }
-                          return next
-                        })
-                      }}
+                      onBeginNativeTextEdit={handleBeginNativeTextEdit}
                     />
                   )}
                 </LazyPageLoader>

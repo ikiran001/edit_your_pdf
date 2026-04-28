@@ -43,6 +43,7 @@ Open `http://localhost:5173`.
 | `GET` | `/download?sessionId=` | download edited PDF (or original if never edited) |
 | `POST` | `/unlock-pdf` | multipart fields `file` (PDF) and `password` → **decrypted PDF**. Prefers **`qpdf --decrypt`**, falls back to **Ghostscript** when `qpdf` is missing (e.g. Render free Node). Wrong password → `401`. |
 | `POST` | `/ocr-pdf` | multipart field `file` (PDF) → **searchable PDF** via **ocrmypdf** + **Tesseract** (English + Hindi in the Docker image). Password-protected PDFs → unlock first. |
+| `POST` | `/compress-pdf` | multipart field `file` (PDF) and optional `level` (`low` / `medium` / **high**) → **recompressed PDF** via **qpdf**; medium/high add **Ghostscript** when available (Dockerfile installs both). |
 
 Uploads live under `backend/uploads/<sessionId>/` and are removed automatically after about one hour.
 

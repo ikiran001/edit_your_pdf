@@ -84,6 +84,12 @@ export async function compressPdfBytes(bytes, level, opts = {}) {
         return { bytes: buf, via: 'api' }
       }
 
+      if (res.status === 404) {
+        console.warn(
+          '[compress-pdf] API returned 404 — redeploy the Render Docker service with current backend (POST /compress-pdf), or fix VITE_API_BASE_URL so it points at that API (not the static site).'
+        )
+      }
+
       console.warn(
         '[compress-pdf] API not usable (status',
         res.status,

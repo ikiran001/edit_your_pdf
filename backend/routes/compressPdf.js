@@ -94,6 +94,22 @@ function ghostscriptPdfSettings(level) {
 }
 
 /**
+ * GET/HEAD: not supported — only POST runs compression. (Without this, GET returned 404 and looked
+ * like the tool was missing after deploy; 405 + Allow makes it obvious in curl and uptime checks.)
+ */
+router.head('/compress-pdf', (_req, res) => {
+  res.set('Allow', 'POST');
+  res.status(204).end();
+});
+router.get('/compress-pdf', (_req, res) => {
+  res.set('Allow', 'POST');
+  res.status(405).json({
+    error:
+      'Use POST with multipart field "file" (application/pdf) and optional "level" (low|medium|high).',
+  });
+});
+
+/**
  * POST multipart: `file` (PDF), optional `level` (`low`|`medium`|`high`).
  * Returns compressed PDF bytes (application/pdf).
  */
