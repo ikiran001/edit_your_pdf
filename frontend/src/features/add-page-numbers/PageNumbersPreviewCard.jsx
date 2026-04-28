@@ -3,11 +3,12 @@ import LazyPdfPageThumbnail from '../organize-pdf/LazyPdfPageThumbnail.jsx'
 import { estimateTextWidthPx, xyFacing, xySingle } from '../../lib/pageNumbersLayout.js'
 
 /**
- * Read-only organize-style card: thumbnail + live folio overlay (approximate vs export).
+ * Gallery-style thumbnail + placement marker (dot) + optional folio text overlay.
  * @param {import('pdfjs-dist').PDFDocumentProxy | null} props.pdfDoc
- * @param {number} props.pageIndex1Based — physical page in uploaded PDF
- * @param {string | null} props.folioText — null when page is outside numbering range
+ * @param {number} props.pageIndex1Based
+ * @param {string | null} props.folioText
  * @param {'single'|'facing'} props.layoutMode
+ * @param {boolean} [props.markerOnly] — prefer dot marker like reference UI (default true)
  */
 export default function PageNumbersPreviewCard({
   pdfDoc,
@@ -21,6 +22,7 @@ export default function PageNumbersPreviewCard({
   colorHex,
   bold,
   disabled,
+  markerOnly = true,
 }) {
   const wrapRef = useRef(null)
   const [dims, setDims] = useState(null)
@@ -77,23 +79,37 @@ export default function PageNumbersPreviewCard({
 
     overlay = (
       <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden rounded-lg" aria-hidden>
+        {/* Corner marker — matches reference “dot at placement” UX */}
         <span
+          className="absolute h-2.5 w-2.5 rounded-full bg-rose-600 shadow-md ring-2 ring-white/95 dark:bg-rose-500 dark:ring-zinc-900/80"
           style={{
-            position: 'absolute',
             left: `${leftPct}%`,
             bottom: `${bottomPct}%`,
-            fontSize: `${displayPx}px`,
-            fontWeight: bold ? 700 : 400,
-            color: colorHex || '#334155',
-            whiteSpace: 'nowrap',
-            lineHeight: 1,
-            transform: 'translateY(0.2em)',
-            maxWidth: '95%',
-            textShadow: '0 0 2px rgba(255,255,255,0.85), 0 0 4px rgba(255,255,255,0.45)',
+            transform: 'translate(-40%, 35%)',
           }}
-        >
-          {folioText}
-        </span>
+          title={folioText}
+        />
+        {!markerOnly ? (
+          <span
+            style={{
+              position: 'absolute',
+              left: `${leftPct}%`,
+              bottom: `${bottomPct}%`,
+              fontSize: `${displayPx}px`,
+              fontWeight: bold ? 700 : 400,
+              color: colorHex || '#334155',
+              whiteSpace: 'nowrap',
+              lineHeight: 1,
+              transform: 'translateY(0.2em)',
+              maxWidth: '95%',
+              textShadow: '0 0 2px rgba(255,255,255,0.85), 0 0 4px rgba(255,255,255,0.45)',
+            }}
+          >
+            {folioText}
+          </span>
+        ) : (
+          <span className="sr-only">{folioText}</span>
+        )}
       </div>
     )
   }
@@ -102,22 +118,22 @@ export default function PageNumbersPreviewCard({
 
   return (
     <article
-      className={`flex flex-col overflow-hidden rounded-2xl border bg-white/90 shadow-sm transition-opacity dark:bg-zinc-900/85 ${
-        skipped ? 'border-zinc-300/80 opacity-[0.58] dark:border-zinc-600' : 'border-zinc-200 dark:border-zinc-700'
+      className={`flex w-[min(280px,78vw)] shrink-0 snap-start flex-col overflow-hidden rounded-xl border bg-white shadow-md ring-1 ring-zinc-200/80 transition-opacity dark:bg-zinc-900 dark:ring-zinc-700/90 ${
+        skipped ? 'opacity-[0.52]' : ''
       }`}
     >
-      <div className="flex items-center justify-between gap-2 border-b border-zinc-300/90 bg-zinc-100 px-2.5 py-2.5 sm:px-3 dark:border-zinc-600 dark:bg-zinc-800/95">
-        <span className="min-w-0 truncate text-base font-bold tabular-nums tracking-tight text-zinc-950 dark:text-white">
+      <div className="flex items-center justify-between gap-2 border-b border-zinc-200/90 bg-zinc-50/95 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-800/90">
+        <span className="min-w-0 truncate text-sm font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">
           Page {pageIndex1Based}
         </span>
         {skipped ? (
           <span className="shrink-0 text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-            Not numbered
+            Skip
           </span>
         ) : null}
       </div>
 
-      <div ref={wrapRef} className={`relative p-1.5 sm:p-2 ${disabled ? 'opacity-60' : ''}`}>
+      <div ref={wrapRef} className={`relative p-2 ${disabled ? 'opacity-60' : ''}`}>
         <LazyPdfPageThumbnail pdfDoc={pdfDoc} pageIndex1Based={pageIndex1Based} extraRotation={0} />
         {overlay}
       </div>

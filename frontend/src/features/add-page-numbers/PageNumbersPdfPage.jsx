@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import { ZoomIn, ZoomOut } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { ChevronDown, Trash2, ZoomIn, ZoomOut } from 'lucide-react'
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
 import ToolPageShell from '../../shared/components/ToolPageShell.jsx'
 import ToolFeatureSeoSection from '../../shared/components/ToolFeatureSeoSection.jsx'
@@ -88,6 +88,8 @@ export default function PageNumbersPdfPage() {
   const [rangeHint, setRangeHint] = useState(null)
 
   useToolEngagement(TOOL, true)
+
+  const replaceInputRef = useRef(null)
 
   const marginPts = MARGIN_PRESETS.find((m) => m.id === marginPreset)?.pts ?? 36
 
@@ -186,6 +188,14 @@ export default function PageNumbersPdfPage() {
     setSuccessHint(null)
   }
 
+  const removePdf = () => {
+    setPdfFile(null)
+    setError(null)
+    setSuccessHint(null)
+    setGridZoom(1)
+    if (replaceInputRef.current) replaceInputRef.current.value = ''
+  }
+
   const selectGridCell = (row, col) => {
     setGridRow(row)
     setGridCol(col)
@@ -267,20 +277,64 @@ export default function PageNumbersPdfPage() {
   return (
     <ToolPageShell
       title="Add page numbers"
-      subtitle="Stamp page numbers in your browser — single-page layout or facing spreads with outer margins."
+      subtitle="Pick placement, preview folios on every page, then download — all in your browser."
     >
-      <FileDropzone
+      {!pdfFile ? (
+        <FileDropzone
+          accept="application/pdf"
+          disabled={busy}
+          onFiles={onPdfFiles}
+          label={busy ? 'Working…' : 'Drop your PDF here or click to browse'}
+        />
+      ) : null}
+
+      <input
+        ref={replaceInputRef}
+        type="file"
         accept="application/pdf"
-        disabled={busy}
-        onFiles={onPdfFiles}
-        label={busy ? 'Working…' : pdfFile ? pdfFile.name : 'Drop your PDF here or click to browse'}
+        className="sr-only"
+        aria-hidden
+        tabIndex={-1}
+        onChange={(e) => {
+          const f = e.target.files?.[0]
+          if (f) onPdfFiles([f])
+          e.target.value = ''
+        }}
       />
 
-      {numPages > 0 && (
-        <p className="mt-2 text-center text-xs text-zinc-500 dark:text-zinc-400">
-          {numPages} page{numPages === 1 ? '' : 's'} loaded
-        </p>
-      )}
+      {pdfFile && numPages > 0 ? (
+        <div className="mt-6 flex flex-col items-stretch gap-2 sm:items-center">
+          <div className="flex w-full max-w-3xl flex-wrap items-center justify-center gap-2 rounded-2xl border border-zinc-200 bg-white px-3 py-2.5 shadow-md shadow-zinc-900/5 dark:border-zinc-600 dark:bg-zinc-900/95 dark:shadow-black/40 sm:gap-3 sm:px-4">
+            <ChevronDown className="hidden h-4 w-4 shrink-0 text-zinc-400 sm:block" aria-hidden />
+            <span className="min-w-0 flex-1 truncate text-center text-sm font-medium text-zinc-900 dark:text-zinc-100">
+              {pdfFile.name}
+            </span>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => replaceInputRef.current?.click()}
+              className="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-indigo-600 underline-offset-2 hover:underline disabled:opacity-45 dark:text-cyan-400"
+            >
+              Replace
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={removePdf}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-zinc-50 text-zinc-600 transition hover:border-red-300 hover:bg-red-50 hover:text-red-700 disabled:opacity-45 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-red-800 dark:hover:bg-red-950/50 dark:hover:text-red-300"
+              title="Remove PDF"
+              aria-label="Remove PDF"
+            >
+              <Trash2 className="h-4 w-4" strokeWidth={2.25} />
+            </button>
+          </div>
+          <p className="text-center text-xs text-zinc-500 dark:text-zinc-400">
+            {numPages} page{numPages === 1 ? '' : 's'} · Rose dots show where numbers will land (approximate).
+          </p>
+        </div>
+      ) : pdfFile ? (
+        <p className="mt-6 text-center text-sm text-zinc-500 dark:text-zinc-400">Opening PDF…</p>
+      ) : null}
 
       {error && (
         <div
@@ -300,9 +354,102 @@ export default function PageNumbersPdfPage() {
       )}
 
       {numPages > 0 && pdfBytes && pdfDoc && (
-        <div className="mt-8 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(280px,1.08fr)] lg:gap-8 lg:items-start">
-          <div className="space-y-6">
-          <section className="rounded-2xl border border-zinc-200 bg-white/80 p-4 dark:border-zinc-700 dark:bg-zinc-900/50">
+        <>
+          <section className="mt-10 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200 pb-3 dark:border-zinc-700">
+              <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Preview</h2>
+              <div
+                className="flex flex-wrap items-center gap-2"
+                role="group"
+                aria-label="Preview zoom"
+              >
+                <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Zoom</span>
+                <div className="flex items-center gap-1 rounded-xl border border-zinc-200 bg-white p-1 shadow-sm dark:border-zinc-600 dark:bg-zinc-900">
+                  <button
+                    type="button"
+                    disabled={busy || gridZoom <= GRID_ZOOM_MIN + 1e-6}
+                    onClick={() =>
+                      setGridZoom((z) =>
+                        Math.max(GRID_ZOOM_MIN, Math.round((z - GRID_ZOOM_STEP) * 100) / 100)
+                      )
+                    }
+                    className="flex h-9 w-9 items-center justify-center rounded-lg text-zinc-700 transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-35 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                    title="Zoom out"
+                    aria-label="Zoom out preview"
+                  >
+                    <ZoomOut className="h-5 w-5" strokeWidth={2.25} />
+                  </button>
+                  <span className="min-w-[3rem] text-center text-xs font-semibold tabular-nums text-zinc-800 dark:text-zinc-100">
+                    {Math.round(gridZoom * 100)}%
+                  </span>
+                  <button
+                    type="button"
+                    disabled={busy || gridZoom >= GRID_ZOOM_MAX - 1e-6}
+                    onClick={() =>
+                      setGridZoom((z) =>
+                        Math.min(GRID_ZOOM_MAX, Math.round((z + GRID_ZOOM_STEP) * 100) / 100)
+                      )
+                    }
+                    className="flex h-9 w-9 items-center justify-center rounded-lg text-zinc-700 transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-35 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                    title="Zoom in"
+                    aria-label="Zoom in preview"
+                  >
+                    <ZoomIn className="h-5 w-5" strokeWidth={2.25} />
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  disabled={busy || Math.abs(gridZoom - 1) < 1e-4}
+                  onClick={() => setGridZoom(1)}
+                  className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-indigo-600 underline-offset-2 hover:underline disabled:opacity-35 dark:text-cyan-400"
+                >
+                  100%
+                </button>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-zinc-200/90 bg-zinc-50/80 p-3 shadow-inner dark:border-zinc-700 dark:bg-zinc-950/40">
+              <div className="overflow-x-auto overflow-y-visible [-webkit-overflow-scrolling:touch] pb-1">
+                <div
+                  className="inline-block min-w-full transition-[transform,width] duration-200 ease-out"
+                  style={{
+                    transform: `scale(${gridZoom})`,
+                    transformOrigin: 'top left',
+                    width: `${(100 / gridZoom).toFixed(4)}%`,
+                  }}
+                >
+                  <div className="flex flex-nowrap gap-4 px-0.5">
+                    {Array.from({ length: numPages }, (_, i) => {
+                      const p = i + 1
+                      return (
+                        <PageNumbersPreviewCard
+                          key={p}
+                          pdfDoc={pdfDoc}
+                          pageIndex1Based={p}
+                          folioText={folioByPhysicalPage.get(p) ?? null}
+                          layoutMode={layoutMode}
+                          gridRow={gridRow}
+                          gridCol={gridCol}
+                          marginPts={marginPts}
+                          fontSize={fontSize}
+                          colorHex={colorHex}
+                          bold={bold}
+                          disabled={busy}
+                          markerOnly
+                        />
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+              <p className="mt-3 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+                Live preview approximates folio placement; the downloaded PDF is final.
+              </p>
+            </div>
+          </section>
+
+          <div className="mx-auto mt-12 max-w-3xl space-y-6">
+            <section className="rounded-2xl border border-zinc-200 bg-white/80 p-4 dark:border-zinc-700 dark:bg-zinc-900/50">
             <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Page layout</h3>
             <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
               <strong className="font-medium text-zinc-700 dark:text-zinc-300">Facing pages:</strong> odd pages use
@@ -521,90 +668,7 @@ export default function PageNumbersPdfPage() {
             )}
           </button>
           </div>
-
-          <aside className="mt-8 space-y-3 lg:mt-0 lg:sticky lg:top-4">
-            <div className="flex flex-wrap items-center gap-2 border-t border-zinc-200 pt-3 dark:border-zinc-700 lg:border-t-0 lg:pt-0 lg:border-l lg:pl-4">
-              <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Grid zoom</span>
-              <div className="flex items-center gap-1 rounded-xl border border-zinc-200 bg-white p-1 shadow-sm dark:border-zinc-600 dark:bg-zinc-900">
-                <button
-                  type="button"
-                  disabled={busy || gridZoom <= GRID_ZOOM_MIN + 1e-6}
-                  onClick={() =>
-                    setGridZoom((z) =>
-                      Math.max(GRID_ZOOM_MIN, Math.round((z - GRID_ZOOM_STEP) * 100) / 100)
-                    )
-                  }
-                  className="flex h-9 w-9 items-center justify-center rounded-lg text-zinc-700 transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-35 dark:text-zinc-200 dark:hover:bg-zinc-800"
-                  title="Zoom out (see more pages)"
-                  aria-label="Zoom out page grid"
-                >
-                  <ZoomOut className="h-5 w-5" strokeWidth={2.25} />
-                </button>
-                <span className="min-w-[3rem] text-center text-xs font-semibold tabular-nums text-zinc-800 dark:text-zinc-100">
-                  {Math.round(gridZoom * 100)}%
-                </span>
-                <button
-                  type="button"
-                  disabled={busy || gridZoom >= GRID_ZOOM_MAX - 1e-6}
-                  onClick={() =>
-                    setGridZoom((z) =>
-                      Math.min(GRID_ZOOM_MAX, Math.round((z + GRID_ZOOM_STEP) * 100) / 100)
-                    )
-                  }
-                  className="flex h-9 w-9 items-center justify-center rounded-lg text-zinc-700 transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-35 dark:text-zinc-200 dark:hover:bg-zinc-800"
-                  title="Zoom in"
-                  aria-label="Zoom in page grid"
-                >
-                  <ZoomIn className="h-5 w-5" strokeWidth={2.25} />
-                </button>
-              </div>
-              <button
-                type="button"
-                disabled={busy || Math.abs(gridZoom - 1) < 1e-4}
-                onClick={() => setGridZoom(1)}
-                className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-indigo-600 underline-offset-2 hover:underline disabled:opacity-35 dark:text-cyan-400"
-              >
-                100%
-              </button>
-            </div>
-
-            <div className="max-h-[min(88vh,1400px)] w-full overflow-auto rounded-2xl border border-zinc-200/90 bg-zinc-50/50 p-2 dark:border-zinc-700 dark:bg-zinc-950/40 sm:p-3">
-              <div
-                className="inline-block min-w-full transition-[transform,width] duration-200 ease-out"
-                style={{
-                  transform: `scale(${gridZoom})`,
-                  transformOrigin: 'top left',
-                  width: `${(100 / gridZoom).toFixed(4)}%`,
-                }}
-              >
-                <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr))]">
-                  {Array.from({ length: numPages }, (_, i) => {
-                    const p = i + 1
-                    return (
-                      <PageNumbersPreviewCard
-                        key={p}
-                        pdfDoc={pdfDoc}
-                        pageIndex1Based={p}
-                        folioText={folioByPhysicalPage.get(p) ?? null}
-                        layoutMode={layoutMode}
-                        gridRow={gridRow}
-                        gridCol={gridCol}
-                        marginPts={marginPts}
-                        fontSize={fontSize}
-                        colorHex={colorHex}
-                        bold={bold}
-                        disabled={busy}
-                      />
-                    )
-                  })}
-                </div>
-              </div>
-            </div>
-            <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-              Live preview approximates folio placement; the downloaded PDF is final.
-            </p>
-          </aside>
-        </div>
+        </>
       )}
 
       <ToolFeatureSeoSection toolId="add-page-numbers" />
