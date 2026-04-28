@@ -21,6 +21,8 @@ export const ANALYTICS_TOOL = {
   scan_to_pdf: 'scan_to_pdf',
   /** DOCX → PDF via server (Gotenberg when configured). */
   word_to_pdf: 'word_to_pdf',
+  /** PDF → DOCX via LibreOffice on the API server (`SOFFICE_PATH`). */
+  pdf_to_word: 'pdf_to_word',
   /** GST-style tax invoice PDF generated in the browser (pdf-lib). */
   gst_invoice: 'gst_invoice',
   /** Server ocrmypdf + Tesseract → searchable PDF. */
@@ -42,7 +44,7 @@ export const REGISTRY_ID_TO_FEATURE = {
   'add-page-numbers': ANALYTICS_TOOL.page_numbers_pdf,
   'add-watermark': ANALYTICS_TOOL.watermark_pdf,
   'scan-to-pdf': ANALYTICS_TOOL.scan_to_pdf,
-  'pdf-to-word': 'pdf_to_word',
+  'pdf-to-word': ANALYTICS_TOOL.pdf_to_word,
   'word-to-pdf': ANALYTICS_TOOL.word_to_pdf,
   'gst-invoice': ANALYTICS_TOOL.gst_invoice,
   'ocr-pdf': ANALYTICS_TOOL.ocr_pdf,

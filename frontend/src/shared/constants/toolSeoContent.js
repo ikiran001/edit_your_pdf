@@ -639,6 +639,53 @@ export const TOOL_SEO_BY_ID = {
     ],
   },
 
+  'pdf-to-word': {
+    featureName: 'PDF to Word',
+    intro: [
+      'Convert PDF to Word online when you need an editable .docx instead of a fixed layout. Upload your PDF and download a Word-compatible document for edits in Microsoft Word, LibreOffice, or Google Docs.',
+      'Conversion runs on pdfpilot’s API with LibreOffice headless (when your server sets SOFFICE_PATH). Complex PDFs may not match pixel-perfect — review headings, tables, and fonts before sharing.',
+    ],
+    steps: [
+      'Open PDF to Word from the toolkit.',
+      'Upload a PDF (drag-and-drop or browse).',
+      'Wait while the server converts the file to .docx.',
+      'Download the Word file when prompted (sign in first if your site requires accounts for downloads).',
+      'Open the .docx locally and adjust formatting as needed.',
+    ],
+    benefits: [
+      {
+        title: 'Editable output',
+        body: 'Receive a .docx you can revise instead of retyping from a flat PDF.',
+      },
+      {
+        title: 'LibreOffice conversion',
+        body: 'Uses the same headless LibreOffice path as other document-flow exports when SOFFICE_PATH is configured.',
+      },
+      {
+        title: 'Pairs with Word to PDF',
+        body: 'Round-trip drafts when you need PDF for sharing and Word for heavy edits.',
+      },
+      {
+        title: 'Straightforward limits',
+        body: 'Typical documents up to tens of megabytes work; split very large scans if conversion times out.',
+      },
+    ],
+    highlights: [
+      {
+        title: 'Simple upload flow',
+        body: 'One PDF in, one .docx out — parallel to Word to PDF on pdfpilot.',
+      },
+      {
+        title: 'Server-side processing',
+        body: 'No desktop plugin required — keep the tab open until the download starts.',
+      },
+      {
+        title: 'Proof before publishing',
+        body: 'Automated PDF→Word often shifts layout slightly; always review before final use.',
+      },
+    ],
+  },
+
   'gst-invoice': {
     featureName: 'GST invoice PDF',
     intro: [
