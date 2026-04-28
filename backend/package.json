@@ -9,6 +9,7 @@
     "verify:edit": "node scripts/verify-edit-pipeline.mjs",
     "verify:native-mask": "node scripts/verify-native-mask-table.mjs",
     "verify:unlock": "node scripts/verify-unlock-pdf.mjs",
+    "verify:compress": "node scripts/verify-compress-pdf.mjs",
     "fonts:noto": "node scripts/fetch-noto-fonts.mjs"
   },
   "dependencies": {

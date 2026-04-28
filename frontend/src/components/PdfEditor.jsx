@@ -1,4 +1,12 @@
-import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  startTransition,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { Link } from 'react-router-dom'
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
 import { apiUrl } from '../lib/apiBase'
@@ -176,6 +184,10 @@ export default function PdfEditor({
   const [pdfBust, setPdfBust] = useState(0)
   const pageRefs = useRef([])
   const scrollRef = useRef(null)
+  /** After Save PDF + PDF reload, restore scroll (and thumbnail page) from this snapshot. */
+  const scrollRestorePendingRef = useRef(null)
+  /** Prevents overlapping manual Save PDF requests (clicks faster than React state). */
+  const manualSaveInFlightRef = useRef(false)
   const pagesItemsRef = useRef({})
   const nativeTextEditsRef = useRef([])
   const lastServerSaveAtRef = useRef(0)
@@ -194,7 +206,16 @@ export default function PdfEditor({
   const textFormatRef = useRef(textFormat)
   textFormatRef.current = textFormat
   const [editTextMode, setEditTextMode] = useState(true)
-  const [inlineTextEditorOpen, setInlineTextEditorOpen] = useState(false)
+  /** Page index with an open pdf.js line editor, or null. Per-page canvases report (pageIndex, active); only the active page may clear. */
+  const [nativeInlineEditPageIndex, setNativeInlineEditPageIndex] = useState(null)
+  const inlineTextEditorOpen = nativeInlineEditPageIndex !== null
+  const handleNativeInlineEditorChange = useCallback((pageIndex, active) => {
+    setNativeInlineEditPageIndex((prev) => {
+      if (active) return pageIndex
+      if (prev === pageIndex) return null
+      return prev
+    })
+  }, [])
   /** After placing “Add Text”, keep Text format bar open for styling (in addition to native line edit). */
   const [addedTextFormatOpen, setAddedTextFormatOpen] = useState(false)
   const [annotFormatTarget, setAnnotFormatTarget] = useState(null)
@@ -274,7 +295,7 @@ export default function PdfEditor({
   )
 
   useEffect(() => {
-    if (!editTextMode) setInlineTextEditorOpen(false)
+    if (!editTextMode) setNativeInlineEditPageIndex(null)
   }, [editTextMode])
 
   useEffect(() => {
@@ -291,7 +312,7 @@ export default function PdfEditor({
 
   useEffect(() => {
     if (activeTool !== 'text') return
-    setInlineTextEditorOpen(false)
+    setNativeInlineEditPageIndex(null)
     clearAnnotFormatUi()
   }, [activeTool, clearAnnotFormatUi])
 
@@ -304,6 +325,14 @@ export default function PdfEditor({
     })
   }, [])
 
+  /** When `textBoxOverlayActions` misses registration, native line edit still shows Done/Reset (PdfPageCanvas listens). */
+  const dispatchNativeOverlayDone = useCallback(() => {
+    document.dispatchEvent(new CustomEvent('pdfpilot-native-overlay-done', { bubbles: true }))
+  }, [])
+  const dispatchNativeOverlayReset = useCallback(() => {
+    document.dispatchEvent(new CustomEvent('pdfpilot-native-overlay-reset', { bubbles: true }))
+  }, [])
+
   const handleAddedTextCommitted = useCallback(({ pageIndex, itemId, seedFormat }) => {
     setAnnotFormatTarget({ pageIndex, itemId })
     setTextFormat((prev) => ({ ...prev, ...seedFormat }))
@@ -313,25 +342,32 @@ export default function PdfEditor({
   }, [])
 
   const textFormatInline = useMemo(() => {
-    const showStrip =
-      (activeTool === 'editText' && editTextMode) ||
-      activeTool === 'text' ||
-      textBoxOverlayActions != null
+    const docPageCount = pdfDoc?.numPages ?? 0
+    const showStrip = docPageCount > 0
     if (!showStrip) return null
     const activelyEditing =
       Boolean(textBoxOverlayActions) ||
+      activeTool === 'text' ||
       (activeTool === 'editText' &&
         editTextMode &&
         (inlineTextEditorOpen || addedTextFormatOpen || annotFormatTarget != null))
+    const nativeOverlayFallback =
+      !textBoxOverlayActions &&
+      inlineTextEditorOpen &&
+      activeTool === 'editText' &&
+      editTextMode
+        ? { done: dispatchNativeOverlayDone, reset: dispatchNativeOverlayReset }
+        : null
     return {
       format: textFormat,
       onChange: setTextFormat,
       disabled: !activelyEditing,
       overlayActions: textBoxOverlayActions
         ? { done: textBoxOverlayActions.done, reset: textBoxOverlayActions.reset }
-        : null,
+        : nativeOverlayFallback,
     }
   }, [
+    pdfDoc,
     activeTool,
     editTextMode,
     inlineTextEditorOpen,
@@ -339,6 +375,8 @@ export default function PdfEditor({
     annotFormatTarget,
     textBoxOverlayActions,
     textFormat,
+    dispatchNativeOverlayDone,
+    dispatchNativeOverlayReset,
   ])
 
   const { pagesItems, commit, undo, redo, canUndo, canRedo, reset } = usePagesHistory({})
@@ -562,6 +600,21 @@ export default function PdfEditor({
       cancelled = true
     }
   }, [sessionId, reset, pdfBust, showErrorHint, recomputeSessionDirtyUi])
+
+  useLayoutEffect(() => {
+    if (!pdfDoc) return
+    const pending = scrollRestorePendingRef.current
+    if (!pending) return
+    scrollRestorePendingRef.current = null
+    const sc = scrollRef.current
+    if (sc && typeof pending.scrollTop === 'number' && Number.isFinite(pending.scrollTop)) {
+      sc.scrollTop = pending.scrollTop
+    }
+    const p = pending.pageIndex
+    if (typeof p === 'number' && Number.isFinite(p) && p >= 0) {
+      setActivePage(p)
+    }
+  }, [pdfDoc])
 
   const loadErrorTracked = useRef(null)
   useEffect(() => {
@@ -1183,12 +1236,18 @@ export default function PdfEditor({
   ])
 
   const handleSave = async () => {
+    if (manualSaveInFlightRef.current) return
+    manualSaveInFlightRef.current = true
     cancelScheduledAutosave()
     await commitActiveInlineEditor()
     setSaving(true)
-    setSaveHint(null)
+    setSaveHint('Saving PDF to the server…')
     const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
     try {
+      scrollRestorePendingRef.current = {
+        scrollTop: scrollRef.current?.scrollTop ?? 0,
+        pageIndex: activePage,
+      }
       await persistPdfToServer()
       clearAnnotFormatUi()
       setTextBoxOverlayActions(null)
@@ -1210,14 +1269,32 @@ export default function PdfEditor({
       }
     } catch (e) {
       console.error(e)
+      scrollRestorePendingRef.current = null
       trackErrorOccurred(EDIT_TOOL, e?.message || 'save_failed')
+      setSaveHint(null)
       showErrorHint(hintForSaveError(e?.message), { suggestOcr: rawSaveErrorSuggestsOcr(e?.message) })
     } finally {
       setSaving(false)
+      manualSaveInFlightRef.current = false
     }
   }
 
   const namedCopyUiEnabled = Boolean(user) && typeof onSessionFork === 'function'
+
+  const jumpToEditorPage = useCallback(
+    (pageIndex) => {
+      const p = Number(pageIndex)
+      const n = pdfDoc?.numPages ?? 0
+      if (!Number.isFinite(p) || p < 0 || (n > 0 && p >= n)) return
+      setActivePage(p)
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          pageRefs.current[p]?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+        })
+      })
+    },
+    [pdfDoc]
+  )
 
   const handleNamedCopy = useCallback(async () => {
     if (!user || typeof onSessionFork !== 'function') return
@@ -1496,12 +1573,16 @@ export default function PdfEditor({
         <span className="font-semibold text-zinc-700 dark:text-zinc-200">File flow: </span>
         {EDIT_PDF_WORKFLOW_HINT}{' '}
         <span className="text-zinc-500 dark:text-zinc-400">
-          Save PDF is in the Edits panel; Download PDF exports the file.
+          Save PDF is in the Edits panel; Download PDF exports the file. Autosave (~45s after you stop
+          editing) writes the same server copy in the background; use Save PDF when you want an
+          immediate full sync.
         </span>
       </div>
       {saveHint && (
         <div
           role="status"
+          aria-live="polite"
+          aria-atomic="true"
           className="border-b border-emerald-200 bg-emerald-50 px-3 py-1.5 text-center text-xs text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-100"
         >
           {saveHint}
@@ -1510,6 +1591,8 @@ export default function PdfEditor({
       {errorHint && (
         <div
           role="alert"
+          aria-live="assertive"
+          aria-atomic="true"
           className="flex flex-wrap items-center justify-between gap-2 border-b border-red-300 bg-red-50 px-3 py-2 text-xs text-red-900 dark:border-red-700 dark:bg-red-950/60 dark:text-red-200"
         >
           <span className="min-w-0 flex-1 leading-snug">{errorHint}</span>
@@ -1621,7 +1704,7 @@ export default function PdfEditor({
                       textFormatRef={textFormatRef}
                       onTextFormatChange={setTextFormat}
                       editTextMode={editTextMode}
-                      onInlineEditorActiveChange={setInlineTextEditorOpen}
+                      onInlineEditorActiveChange={handleNativeInlineEditorChange}
                       formatSyncTarget={annotFormatTarget}
                       onClearAnnotFormatTarget={clearAnnotFormatUi}
                       onAddedTextCommitted={handleAddedTextCommitted}
@@ -1659,6 +1742,7 @@ export default function PdfEditor({
           numPages={numPages}
           onRemoveNative={removeNativeTextEditBySlot}
           onRemoveAnnot={removeAnnotationItem}
+          onJumpToPage={jumpToEditorPage}
           onClearAll={handleClearAllEdits}
           onSave={handleSave}
           onDownload={handleDownload}

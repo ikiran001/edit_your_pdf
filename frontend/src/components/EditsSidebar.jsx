@@ -45,6 +45,8 @@ export default function EditsSidebar({
   numPages = 0,
   onRemoveNative,
   onRemoveAnnot,
+  /** Scroll the main canvas to a page (e.g. when clicking an edit row). */
+  onJumpToPage,
   onClearAll,
   onSave,
   onDownload,
@@ -72,13 +74,16 @@ export default function EditsSidebar({
     for (const nt of nativesOnPage) {
       const sid = nt.slotId
       if (typeof sid !== 'string' || sid.length < 8) continue
+      const trimmed = String(nt.text ?? '').replace(/\s+/g, ' ').trim()
+      const bid = typeof nt.blockId === 'string' ? nt.blockId : ''
       entries.push({
         key: `native:${sid}`,
         kind: 'native',
         pageIndex: p,
         slotId: sid,
         label: 'Edited text',
-        preview: truncate(nt.text, 64),
+        preview: trimmed ? truncate(nt.text, 64) : '',
+        blockIdHint: bid.length > 12 ? `${bid.slice(0, 12)}…` : bid,
       })
     }
     const items = pagesItems[p] || []
@@ -119,7 +124,11 @@ export default function EditsSidebar({
         <p className="mt-0.5 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
           Draft on the canvas, then <strong>Save PDF</strong> (writes to the server), then{' '}
           <strong>Download PDF</strong> (exports a file). Remove one change with ✕, or clear
-          everything when you need a clean slate.
+          everything when you need a clean slate. Tap an edit row (except ✕) to jump to that page.
+        </p>
+        <p className="mt-1 text-[10px] leading-snug text-zinc-500 dark:text-zinc-400">
+          <strong>Autosave</strong> (~45s after you stop editing) also POSTs to the server; use{' '}
+          <strong>Save PDF</strong> when you want an immediate sync before download or leaving.
         </p>
         {unsavedChanges ? (
           <p
@@ -156,9 +165,19 @@ export default function EditsSidebar({
             {entries.map((e) => (
               <li
                 key={e.key}
-                className="flex items-start gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50/80 px-2 py-1.5 dark:border-zinc-600 dark:bg-zinc-900/60"
+                className="flex items-start gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50/80 dark:border-zinc-600 dark:bg-zinc-900/60"
               >
-                <div className="min-w-0 flex-1">
+                <button
+                  type="button"
+                  disabled={busy || typeof onJumpToPage !== 'function'}
+                  title={
+                    typeof onJumpToPage === 'function'
+                      ? 'Go to this page in the editor'
+                      : undefined
+                  }
+                  onClick={() => onJumpToPage?.(e.pageIndex)}
+                  className="fx-focus-ring min-w-0 flex-1 rounded-l-lg px-2 py-1.5 text-left transition hover:bg-zinc-100/90 disabled:cursor-default disabled:opacity-60 disabled:hover:bg-transparent dark:hover:bg-zinc-800/80 dark:disabled:hover:bg-transparent"
+                >
                   <div className="text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                     Pg {e.pageIndex + 1} · {e.label}
                   </div>
@@ -166,10 +185,19 @@ export default function EditsSidebar({
                     <div className="mt-0.5 break-words text-xs text-zinc-800 dark:text-zinc-200">
                       {e.preview}
                     </div>
+                  ) : e.kind === 'native' ? (
+                    <div className="mt-0.5 text-xs text-amber-900/90 dark:text-amber-100/90">
+                      <span className="font-medium">(empty text)</span>
+                      {e.blockIdHint ? (
+                        <span className="ml-1 font-mono text-[10px] text-zinc-500 dark:text-zinc-400">
+                          {e.blockIdHint}
+                        </span>
+                      ) : null}
+                    </div>
                   ) : (
                     <div className="mt-0.5 text-xs text-zinc-400 dark:text-zinc-500">—</div>
                   )}
-                </div>
+                </button>
                 <button
                   type="button"
                   title="Remove this edit"
@@ -180,7 +208,7 @@ export default function EditsSidebar({
                     if (e.kind === 'native') onRemoveNative?.(e.slotId)
                     else onRemoveAnnot?.(e.pageIndex, e.itemId)
                   }}
-                  className="mt-0.5 shrink-0 rounded-md p-1 text-zinc-500 transition hover:bg-red-100 hover:text-red-700 disabled:opacity-40 dark:hover:bg-red-950/50 dark:hover:text-red-300"
+                  className="mt-0.5 shrink-0 rounded-r-lg p-1.5 text-zinc-500 transition hover:bg-red-100 hover:text-red-700 disabled:opacity-40 dark:hover:bg-red-950/50 dark:hover:text-red-300"
                 >
                   <span className="block text-sm leading-none" aria-hidden>
                     ×

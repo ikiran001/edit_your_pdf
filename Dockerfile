@@ -2,10 +2,11 @@
 # Dashboard: Dockerfile Path = Dockerfile, Docker Context = .
 FROM node:22-bookworm-slim
 
-# qpdf: /unlock-pdf · libreoffice-writer: DOCX↔PDF on the API (SOFFICE_PATH) so Word→PDF does not depend on Gotenberg alone
+# qpdf: unlock + compress · ghostscript: stronger compress tier · libreoffice: DOCX↔PDF
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
     qpdf \
+    ghostscript \
     libreoffice-writer \
     ocrmypdf \
     tesseract-ocr \

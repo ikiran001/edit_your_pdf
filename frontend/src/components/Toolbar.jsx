@@ -102,6 +102,17 @@ export default function Toolbar({
           {t.label}
         </button>
       ))}
+      {onShortcutsClick ? (
+        <button
+          type="button"
+          onClick={onShortcutsClick}
+          title="Keyboard shortcuts (?)"
+          className="fx-focus-ring rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 min-h-9 sm:px-2.5 sm:text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+        >
+          <span className="sm:hidden">?</span>
+          <span className="max-sm:hidden">Shortcuts</span>
+        </button>
+      ) : null}
       {textFormatInline ? (
         <>
           <ToolbarDivider />
@@ -186,30 +197,8 @@ export default function Toolbar({
                 +
               </button>
             </div>
-            {onShortcutsClick && (
-              <button
-                type="button"
-                onClick={onShortcutsClick}
-                title="Tips and keyboard shortcuts (?)"
-                className="fx-focus-ring inline-flex h-9 min-w-9 shrink-0 items-center justify-center rounded-lg border border-zinc-300 bg-white px-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50 sm:px-2.5 sm:text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
-              >
-                <span className="sm:hidden">?</span>
-                <span className="max-sm:hidden">Tips</span>
-              </button>
-            )}
           </div>
         </>
-      )}
-      {!(onZoomIn || onZoomOut) && onShortcutsClick && (
-        <button
-          type="button"
-          onClick={onShortcutsClick}
-          title="Tips and keyboard shortcuts (?)"
-          className="fx-focus-ring rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 min-h-9 min-w-9 sm:px-2.5 sm:text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
-        >
-          <span className="sm:hidden">?</span>
-          <span className="max-sm:hidden">Tips</span>
-        </button>
       )}
       <div className="ml-auto flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:justify-start sm:gap-3">
         <AccountMenu compact />

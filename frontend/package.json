@@ -9,7 +9,7 @@
     "generate-favicons": "node scripts/generate-favicons.mjs",
     "create-hero-sample": "node scripts/create-hero-sample-pdf.mjs",
     "lint": "eslint .",
-    "test": "node --test src/lib/textDraftLayout.test.mjs",
+    "test": "node --test src/lib/textDraftLayout.test.mjs src/lib/nativeTextOverlap.test.mjs",
     "test:e2e-enter": "node scripts/e2e-enter-download.mjs",
     "preview": "vite preview"
   },
