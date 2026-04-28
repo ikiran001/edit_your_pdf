@@ -15,6 +15,7 @@ import {
   trackToolCompleted,
 } from '../../lib/analytics.js'
 import { ANALYTICS_TOOL } from '../../shared/constants/analyticsTools.js'
+import { parsePageRangeInput } from '../../lib/pdfMergeSplitCore.js'
 import { buildOrganizedPdf, exportOrganizedSinglePagePdfs } from '../../lib/organizePdfCore.js'
 import '../../lib/pdfjs.js'
 import { useClientToolDownloadAuth } from '../../auth/ClientToolDownloadAuthContext.jsx'
@@ -51,6 +52,39 @@ function downloadUint8(u8, name) {
   URL.revokeObjectURL(url)
 }
 
+/** Expand parsePageRangeInput groups to unique 1-based page numbers in list order. */
+function orderedUniqueOneBased(groups) {
+  const seen = new Set()
+  const out = []
+  for (const [lo, hi] of groups) {
+    for (let p = lo; p <= hi; p++) {
+      if (!seen.has(p)) {
+        seen.add(p)
+        out.push(p)
+      }
+    }
+  }
+  return out
+}
+
+/**
+ * Match listed original page numbers (1-based) to current grid rows by `sourceIndex`.
+ * @returns {{ orderedRows: typeof pages, missingOneBased: number[] }}
+ */
+function resolveRowsByOriginalPageInput(input, numPages, pages) {
+  const groups = parsePageRangeInput(input.trim(), numPages)
+  const nums = orderedUniqueOneBased(groups)
+  const orderedRows = []
+  const missingOneBased = []
+  for (const num of nums) {
+    const si = num - 1
+    const row = pages.find((p) => p.sourceIndex === si)
+    if (!row) missingOneBased.push(num)
+    else orderedRows.push(row)
+  }
+  return { orderedRows, missingOneBased }
+}
+
 export default function OrganizePdfPage() {
   const { runWithSignInForDownload } = useClientToolDownloadAuth()
   const [file, setFile] = useState(null)
@@ -64,7 +98,11 @@ export default function OrganizePdfPage() {
   const [selectedIds, setSelectedIds] = useState(() => new Set())
   const [multiSelect, setMultiSelect] = useState(false)
   const [gridZoom, setGridZoom] = useState(1)
-  const [exportSelectedOpen, setExportSelectedOpen] = useState(false)
+  /** Rows to export from modal (subset export); null = modal closed */
+  const [exportModalRows, setExportModalRows] = useState(null)
+  /** 'selection' | 'original' — drives modal copy */
+  const [exportModalSource, setExportModalSource] = useState(null)
+  const [originalPagesInput, setOriginalPagesInput] = useState('')
 
   useToolEngagement(TOOL, true)
 
@@ -80,13 +118,16 @@ export default function OrganizePdfPage() {
   }, [pages, selectedIds])
 
   useEffect(() => {
-    if (!exportSelectedOpen) return
+    if (!exportModalRows?.length) return
     const onKey = (e) => {
-      if (e.key === 'Escape') setExportSelectedOpen(false)
+      if (e.key === 'Escape') {
+        setExportModalRows(null)
+        setExportModalSource(null)
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [exportSelectedOpen])
+  }, [exportModalRows])
 
   useEffect(() => {
     if (!file) {
@@ -95,7 +136,9 @@ export default function OrganizePdfPage() {
       setBaselineSig('')
       setGridZoom(1)
       setSelectedIds(new Set())
-      setExportSelectedOpen(false)
+      setExportModalRows(null)
+      setExportModalSource(null)
+      setOriginalPagesInput('')
       setError(null)
       return undefined
     }
@@ -274,50 +317,55 @@ export default function OrganizePdfPage() {
     }
   }
 
-  const runExportSelected = async (mode) => {
-    if (!file || selectedPagesOrdered.length === 0) {
-      setError('Select one or more pages to export.')
-      return
-    }
-    setExportSelectedOpen(false)
+  const runExportModal = async (mode) => {
+    const rowsSnapshot = exportModalRows
+    const sourceSnapshot = exportModalSource
+    if (!file || !rowsSnapshot?.length) return
+    setExportModalRows(null)
+    setExportModalSource(null)
     setBusy(true)
     setError(null)
     setSuccessHint(null)
     const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
-    const ordered = selectedPagesOrdered.map((p) => ({
+    const ordered = rowsSnapshot.map((p) => ({
       sourceIndex: p.sourceIndex,
       rotationDelta: p.rotationDelta || 0,
     }))
     const base = file.name.replace(/\.pdf$/i, '') || 'document'
+    const tag = sourceSnapshot === 'original' ? 'listed' : 'selected'
     try {
       await runWithSignInForDownload(
         async () => {
           let successHintMsg = ''
           if (mode === 'single') {
             const u8 = await buildOrganizedPdf(file, ordered)
-            downloadUint8(u8, `${base}-selected.pdf`)
+            downloadUint8(u8, `${base}-${tag}.pdf`)
             trackToolCompleted(TOOL, true)
             trackFileDownloaded({
               tool: TOOL,
               file_size: u8.byteLength / 1024,
               total_pages: ordered.length,
-              export_mode: 'selected_single_pdf',
+              export_mode:
+                sourceSnapshot === 'original' ? 'original_list_single_pdf' : 'selected_single_pdf',
             })
-            successHintMsg = 'Selected pages downloaded as one PDF.'
+            successHintMsg =
+              sourceSnapshot === 'original'
+                ? 'Listed pages downloaded as one PDF.'
+                : 'Selected pages downloaded as one PDF.'
           } else {
             const parts = await exportOrganizedSinglePagePdfs(file, ordered)
             if (parts.length === 1) {
-              downloadUint8(parts[0], `${base}-selected-page-1.pdf`)
+              downloadUint8(parts[0], `${base}-${tag}-page-1.pdf`)
             } else {
               const zip = new JSZip()
               parts.forEach((u8, i) => {
-                zip.file(`selected-page-${i + 1}.pdf`, u8)
+                zip.file(`${tag}-page-${i + 1}.pdf`, u8)
               })
               const blob = await zip.generateAsync({ type: 'blob' })
               const url = URL.createObjectURL(blob)
               const a = document.createElement('a')
               a.href = url
-              a.download = `${base}-selected-pages.zip`
+              a.download = `${base}-${tag}-pages.zip`
               a.rel = 'noopener'
               a.click()
               URL.revokeObjectURL(url)
@@ -327,12 +375,19 @@ export default function OrganizePdfPage() {
               tool: TOOL,
               file_size: parts.reduce((s, u) => s + u.byteLength, 0) / 1024,
               total_pages: parts.length,
-              export_mode: 'selected_separate_pdfs',
+              export_mode:
+                sourceSnapshot === 'original'
+                  ? 'original_list_separate_pdfs'
+                  : 'selected_separate_pdfs',
             })
             successHintMsg =
               parts.length === 1
-                ? 'Selected page downloaded.'
-                : 'Selected pages downloaded as a ZIP of PDFs.'
+                ? sourceSnapshot === 'original'
+                  ? 'Listed page downloaded.'
+                  : 'Selected page downloaded.'
+                : sourceSnapshot === 'original'
+                  ? 'Listed pages downloaded as a ZIP of PDFs.'
+                  : 'Selected pages downloaded as a ZIP of PDFs.'
           }
           const elapsed = (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0
           trackProcessingTime(TOOL, elapsed)
@@ -348,11 +403,84 @@ export default function OrganizePdfPage() {
         setError(e.message || 'Still checking sign-in.')
       } else {
         console.error(e)
-        trackErrorOccurred(TOOL, e?.message || 'organize_selected_export_failed')
-        setError(e?.message || 'Could not export selected pages. Try again.')
+        trackErrorOccurred(TOOL, e?.message || 'organize_export_failed')
+        setError(e?.message || 'Could not export pages. Try again.')
       }
     } finally {
       setBusy(false)
+    }
+  }
+
+  const openExportModalFromSelection = () => {
+    if (!selectedPagesOrdered.length) {
+      setError('Select one or more pages first.')
+      return
+    }
+    setError(null)
+    setExportModalSource('selection')
+    setExportModalRows([...selectedPagesOrdered])
+  }
+
+  const openExportModalFromOriginalInput = () => {
+    const numPages = pdfDoc?.numPages ?? 0
+    if (!numPages) return
+    setError(null)
+    try {
+      const { orderedRows, missingOneBased } = resolveRowsByOriginalPageInput(
+        originalPagesInput,
+        numPages,
+        pages
+      )
+      if (missingOneBased.length) {
+        setError(
+          `Original page(s) not in layout: ${missingOneBased.join(', ')}. They may have been removed already.`
+        )
+        return
+      }
+      if (!orderedRows.length) {
+        setError('Enter at least one valid page number (e.g. 1-3, 5).')
+        return
+      }
+      setExportModalSource('original')
+      setExportModalRows(orderedRows)
+    } catch (e) {
+      setError(e?.message || 'Invalid page numbers.')
+    }
+  }
+
+  const deleteListedOriginal = () => {
+    const numPages = pdfDoc?.numPages ?? 0
+    if (!numPages) return
+    setError(null)
+    setSuccessHint(null)
+    try {
+      const { orderedRows, missingOneBased } = resolveRowsByOriginalPageInput(
+        originalPagesInput,
+        numPages,
+        pages
+      )
+      if (missingOneBased.length) {
+        setError(
+          `Original page(s) not in layout: ${missingOneBased.join(', ')}. They may have been removed already.`
+        )
+        return
+      }
+      if (!orderedRows.length) {
+        setError('Enter at least one valid page number (e.g. 1-3, 5).')
+        return
+      }
+      const ids = new Set(orderedRows.map((r) => r.id))
+      setPages((prev) => prev.filter((p) => !ids.has(p.id)))
+      setSelectedIds((prev) => {
+        const next = new Set(prev)
+        for (const id of ids) next.delete(id)
+        return next
+      })
+      const n = orderedRows.length
+      setSuccessHint(`Removed ${n} page${n === 1 ? '' : 's'} from the layout.`)
+      window.setTimeout(() => setSuccessHint(null), 5000)
+    } catch (e) {
+      setError(e?.message || 'Invalid page numbers.')
     }
   }
 
@@ -429,7 +557,7 @@ export default function OrganizePdfPage() {
                     <button
                       type="button"
                       disabled={busy}
-                      onClick={() => setExportSelectedOpen(true)}
+                      onClick={openExportModalFromSelection}
                       className="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-sm font-medium text-indigo-900 transition hover:bg-indigo-100 disabled:opacity-50 dark:border-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-100 dark:hover:bg-indigo-950"
                     >
                       Download selected…
@@ -508,6 +636,46 @@ export default function OrganizePdfPage() {
           </div>
 
           {showGrid ? (
+            <div className="rounded-2xl border border-zinc-200 bg-white/90 p-4 shadow-inner dark:border-zinc-700 dark:bg-zinc-900/40">
+              <label htmlFor="organize-original-pages-input" className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                Original PDF page numbers
+              </label>
+              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                Uses the uploaded file&apos;s page order (page 1 = first page of the PDF), not thumbnail position after
+                reordering.
+              </p>
+              <input
+                id="organize-original-pages-input"
+                type="text"
+                value={originalPagesInput}
+                onChange={(e) => setOriginalPagesInput(e.target.value)}
+                disabled={busy}
+                placeholder="e.g. 1-3, 5, 7-8"
+                className="mt-2 w-full max-w-xl rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 shadow-sm placeholder:text-zinc-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+                autoComplete="off"
+              />
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={deleteListedOriginal}
+                  className="rounded-xl border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-800 transition hover:bg-red-100 disabled:opacity-50 dark:border-red-900 dark:bg-red-950/50 dark:text-red-100 dark:hover:bg-red-950/80"
+                >
+                  Delete listed
+                </button>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={openExportModalFromOriginalInput}
+                  className="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-sm font-medium text-indigo-900 transition hover:bg-indigo-100 disabled:opacity-50 dark:border-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-100 dark:hover:bg-indigo-950"
+                >
+                  Download listed…
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          {showGrid ? (
             <div
               className="max-h-[min(88vh,1400px)] w-full overflow-auto rounded-2xl border border-zinc-200/90 bg-zinc-50/50 p-2 dark:border-zinc-700 dark:bg-zinc-950/40 sm:p-3"
             >
@@ -557,36 +725,41 @@ export default function OrganizePdfPage() {
           </div>
         </div>
       )}
-      {exportSelectedOpen ? (
+      {exportModalRows?.length ? (
         <div
           className="fixed inset-0 z-[280] flex items-end justify-center bg-black/45 p-0 sm:items-center sm:p-4"
           role="presentation"
           onMouseDown={(e) => {
-            if (e.target === e.currentTarget) setExportSelectedOpen(false)
+            if (e.target === e.currentTarget) {
+              setExportModalRows(null)
+              setExportModalSource(null)
+            }
           }}
         >
           <div
             role="dialog"
             aria-modal="true"
-            aria-labelledby="organize-export-selected-title"
+            aria-labelledby="organize-export-modal-title"
             className="w-full max-w-md rounded-t-2xl border border-zinc-200 bg-white p-5 shadow-xl dark:border-zinc-700 dark:bg-zinc-900 sm:rounded-2xl"
             onMouseDown={(e) => e.stopPropagation()}
           >
             <h2
-              id="organize-export-selected-title"
+              id="organize-export-modal-title"
               className="m-0 text-base font-semibold text-zinc-900 dark:text-zinc-100"
             >
-              Export selected pages
+              {exportModalSource === 'original' ? 'Export listed pages' : 'Export selected pages'}
             </h2>
             <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-              <strong>{selectedCount}</strong> page{selectedCount === 1 ? '' : 's'} in current grid order (rotations
-              apply).
+              <strong>{exportModalRows.length}</strong> page{exportModalRows.length === 1 ? '' : 's'} —{' '}
+              {exportModalSource === 'original'
+                ? 'export order follows your list; rotations apply.'
+                : 'current grid order (rotations apply).'}
             </p>
             <div className="mt-4 flex flex-col gap-2">
               <button
                 type="button"
                 disabled={busy}
-                onClick={() => void runExportSelected('single')}
+                onClick={() => void runExportModal('single')}
                 className="rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-3 text-sm font-semibold text-white shadow-md transition hover:from-indigo-500 hover:to-violet-500 disabled:cursor-not-allowed disabled:opacity-45"
               >
                 Single PDF
@@ -594,15 +767,18 @@ export default function OrganizePdfPage() {
               <button
                 type="button"
                 disabled={busy}
-                onClick={() => void runExportSelected('separate')}
+                onClick={() => void runExportModal('separate')}
                 className="rounded-xl border border-zinc-300 bg-white px-4 py-3 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-45 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
               >
-                Separate PDFs {selectedCount > 1 ? '(ZIP)' : ''}
+                Separate PDFs {exportModalRows.length > 1 ? '(ZIP)' : ''}
               </button>
               <button
                 type="button"
                 disabled={busy}
-                onClick={() => setExportSelectedOpen(false)}
+                onClick={() => {
+                  setExportModalRows(null)
+                  setExportModalSource(null)
+                }}
                 className="rounded-xl px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
               >
                 Cancel
