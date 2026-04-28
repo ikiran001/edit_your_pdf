@@ -3,8 +3,50 @@ import { promisify } from 'util';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import { pathToFileURL } from 'node:url';
 
 const execFileAsync = promisify(execFile);
+
+/**
+ * @param {string} file
+ * @param {string[]} args
+ * @param {import('child_process').ExecFileOptions} options
+ */
+function execFileWithCapture(file, args, options) {
+  return new Promise((resolve, reject) => {
+    execFile(file, args, { ...options, encoding: 'utf8' }, (err, stdout, stderr) => {
+      if (err) {
+        Object.assign(err, {
+          stdout: stdout ?? '',
+          stderr: stderr ?? '',
+        });
+        reject(err);
+      } else {
+        resolve({ stdout: stdout ?? '', stderr: stderr ?? '' });
+      }
+    });
+  });
+}
+
+/** Pick Writer output .docx after --convert-to docx (prefer source.docx, else sole/multiple matches). */
+function pickDocxOutput(dir) {
+  const preferred = path.join(dir, 'source.docx');
+  if (fs.existsSync(preferred)) return preferred;
+  let entries;
+  try {
+    entries = fs.readdirSync(dir);
+  } catch {
+    return null;
+  }
+  const docx = entries.filter((f) => f.toLowerCase().endsWith('.docx'));
+  if (docx.length === 1) return path.join(dir, docx[0]);
+  if (docx.length > 1) {
+    const stem = docx.find((f) => /^source\b/i.test(path.basename(f, '.docx')));
+    if (stem) return path.join(dir, stem);
+    return path.join(dir, docx[0]);
+  }
+  return null;
+}
 
 /** UUID v4 from `uuid` package (version nibble = 4, variant = 8/9/a/b). */
 const UUID_RE =
@@ -182,27 +224,65 @@ export async function convertPdfFileToDocxBuffer(opts) {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pdfpilot-docflow-'));
   const inputName = 'source.pdf';
   const inputAbs = path.join(tmp, inputName);
+  const profileDir = path.join(tmp, 'lo-profile');
+  fs.mkdirSync(profileDir, { recursive: true });
+  const userInstallUrl = pathToFileURL(profileDir).href;
+
+  /** Headless Docker/Render: writable HOME + SVP plugin avoids silent PDF→DOCX failures. */
+  const loEnv = {
+    ...process.env,
+    HOME: tmp,
+    TMPDIR: tmp,
+    TMP: tmp,
+    TEMP: tmp,
+    SAL_USE_VCLPLUGIN: process.env.SAL_USE_VCLPLUGIN || 'svp',
+  };
+
   try {
     fs.copyFileSync(pdfPath, inputAbs);
-    await execFileAsync(
-      sofficePath,
-      [
-        '--headless',
-        '--nologo',
-        '--nofirststartwizard',
-        '--norestore',
-        '--convert-to',
-        'docx',
-        '--outdir',
-        tmp,
-        inputAbs,
-      ],
-      { timeout: 180_000, maxBuffer: 64 * 1024 * 1024 }
-    );
-    const outDocx = path.join(tmp, 'source.docx');
-    if (!fs.existsSync(outDocx)) {
+    try {
+      await execFileWithCapture(
+        sofficePath,
+        [
+          `-env:UserInstallation=${userInstallUrl}`,
+          '--headless',
+          '--nologo',
+          '--nofirststartwizard',
+          '--norestore',
+          '--convert-to',
+          'docx',
+          '--outdir',
+          tmp,
+          inputAbs,
+        ],
+        {
+          timeout: 180_000,
+          maxBuffer: 64 * 1024 * 1024,
+          env: loEnv,
+        }
+      );
+    } catch (e) {
+      const tail = String(e.stderr || '').trim().slice(-1200);
       const err = new Error(
-        'LibreOffice finished but source.docx was not created (this PDF may not export to Word).'
+        tail
+          ? `LibreOffice failed while converting PDF to Word: ${tail}`
+          : 'LibreOffice failed while converting PDF to Word (no stderr output).'
+      );
+      err.code = 'CONVERT_SOFFICE_FAILED';
+      err.cause = e;
+      throw err;
+    }
+
+    const outDocx = pickDocxOutput(tmp);
+    if (!outDocx) {
+      let listing = '';
+      try {
+        listing = fs.readdirSync(tmp).join(', ');
+      } catch {
+        listing = '(could not read temp dir)';
+      }
+      const err = new Error(
+        `LibreOffice finished but no .docx was produced (some PDFs cannot be exported to Word). Directory listing: ${listing}`
       );
       err.code = 'CONVERT_MISSING_OUTPUT';
       throw err;
