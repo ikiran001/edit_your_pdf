@@ -101,6 +101,17 @@ function cleanLoConversionArtifacts(dir) {
 }
 
 /**
+ * Strip illegal XML 1.0 / WordprocessingML chars (Office otherwise shows “cannot open file”).
+ * @param {string} input
+ */
+function sanitizeDocxText(input) {
+  if (typeof input !== 'string' || !input.length) return '';
+  return input
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '')
+    .replace(/\uFFFE|\uFFFF/g, '');
+}
+
+/**
  * Last resort: extract embedded text with pdftotext and build a minimal DOCX (layout not preserved).
  * Image-only / scanned PDFs typically yield empty text → returns null.
  */
@@ -124,14 +135,15 @@ async function convertPdfToDocxViaPdftotextFallback(pdfPath) {
     let text = fs.readFileSync(txtPath, 'utf8');
     text = text.replace(/\r\n/g, '\n').trim();
     if (!text.length) return null;
+    text = sanitizeDocxText(text);
 
-    const lines = text.split('\n');
-    const children = lines.map(
-      (line) =>
-        new Paragraph({
-          children: [new TextRun(line.length ? line : '\u00a0')],
-        })
-    );
+    const lines = text.split('\n').map((line) => sanitizeDocxText(line));
+    const children = lines.map((line) => {
+      const safe = line.length ? line : '\u00a0';
+      return new Paragraph({
+        children: [new TextRun({ text: safe })],
+      });
+    });
     const doc = new Document({
       sections: [{ properties: {}, children }],
     });
