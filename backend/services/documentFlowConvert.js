@@ -48,6 +48,39 @@ function pickDocxOutput(dir) {
   return null;
 }
 
+/** Pick intermediate .odt after PDF → ODT (prefer source.odt). */
+function pickOdtOutput(dir) {
+  const preferred = path.join(dir, 'source.odt');
+  if (fs.existsSync(preferred)) return preferred;
+  let entries;
+  try {
+    entries = fs.readdirSync(dir);
+  } catch {
+    return null;
+  }
+  const odts = entries.filter((f) => f.toLowerCase().endsWith('.odt'));
+  if (odts.length === 1) return path.join(dir, odts[0]);
+  if (odts.length > 1) {
+    const stem = odts.find((f) => /^source\b/i.test(path.basename(f, '.odt')));
+    if (stem) return path.join(dir, stem);
+    return path.join(dir, odts[0]);
+  }
+  return null;
+}
+
+/**
+ * Run `soffice` under Xvfb when available — headless PDF import often produces no export without a display on Docker.
+ * Disable with `PDF_TO_DOCX_USE_XVFB=0`.
+ */
+async function execSofficeConvert(sofficePath, argv, options) {
+  const disableXvfb = (process.env.PDF_TO_DOCX_USE_XVFB || '').trim() === '0';
+  const xvfbRun = '/usr/bin/xvfb-run';
+  if (!disableXvfb && fs.existsSync(xvfbRun)) {
+    return execFileWithCapture(xvfbRun, ['-a', '--', sofficePath, ...argv], options);
+  }
+  return execFileWithCapture(sofficePath, argv, options);
+}
+
 /** UUID v4 from `uuid` package (version nibble = 4, variant = 8/9/a/b). */
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -238,42 +271,56 @@ export async function convertPdfFileToDocxBuffer(opts) {
     SAL_USE_VCLPLUGIN: process.env.SAL_USE_VCLPLUGIN || 'svp',
   };
 
+  const loPrefix = [
+    `-env:UserInstallation=${userInstallUrl}`,
+    '--headless',
+    '--nologo',
+    '--nofirststartwizard',
+    '--norestore',
+  ];
+
   try {
     fs.copyFileSync(pdfPath, inputAbs);
-    try {
-      await execFileWithCapture(
-        sofficePath,
-        [
-          `-env:UserInstallation=${userInstallUrl}`,
-          '--headless',
-          '--nologo',
-          '--nofirststartwizard',
-          '--norestore',
-          '--convert-to',
-          'docx',
-          '--outdir',
-          tmp,
-          inputAbs,
-        ],
-        {
-          timeout: 180_000,
-          maxBuffer: 64 * 1024 * 1024,
-          env: loEnv,
-        }
-      );
-    } catch (e) {
-      const tail = String(e.stderr || '').trim().slice(-1200);
-      const err = new Error(
-        tail
-          ? `LibreOffice failed while converting PDF to Word: ${tail}`
-          : 'LibreOffice failed while converting PDF to Word (no stderr output).'
-      );
-      err.code = 'CONVERT_SOFFICE_FAILED';
-      err.cause = e;
-      throw err;
+
+    const runConvert = async (convertArg, inputFile) => {
+      try {
+        await execSofficeConvert(
+          sofficePath,
+          [...loPrefix, '--convert-to', convertArg, '--outdir', tmp, inputFile],
+          {
+            timeout: 180_000,
+            maxBuffer: 64 * 1024 * 1024,
+            env: loEnv,
+          }
+        );
+      } catch (e) {
+        const tail = String(e.stderr || '').trim().slice(-1200);
+        const err = new Error(
+          tail
+            ? `LibreOffice failed while converting PDF to Word: ${tail}`
+            : 'LibreOffice failed while converting PDF to Word (no stderr output).'
+        );
+        err.code = 'CONVERT_SOFFICE_FAILED';
+        err.cause = e;
+        throw err;
+      }
+    };
+
+    // 1) PDF → DOCX (direct)
+    await runConvert('docx', inputAbs);
+
+    let outDocx = pickDocxOutput(tmp);
+
+    // 2) Some servers skip DOCX export from PDF; try PDF → ODT → DOCX using the same profile.
+    if (!outDocx) {
+      await runConvert('odt', inputAbs);
+      const odtPath = pickOdtOutput(tmp);
+      if (odtPath && fs.existsSync(odtPath)) {
+        await runConvert('docx', odtPath);
+        outDocx = pickDocxOutput(tmp);
+      }
     }
 
-    const outDocx = pickDocxOutput(tmp);
     if (!outDocx) {
       let listing = '';
       try {
