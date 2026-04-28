@@ -3,18 +3,17 @@
 FROM node:22-bookworm-slim
 
 # qpdf: unlock + compress · ghostscript: stronger compress tier · libreoffice: DOCX↔PDF
-# writer + draw + java-common: PDF→DOCX headless needs Draw-side PDF filters / JVM pieces on slim images
-# xvfb: virtual display — without it, PDF→DOCX often exits cleanly but writes no file in Docker
-# xauth: required by xvfb-run (MIT-MAGIC-COOKIE); slim images do not install it by default
+# Full `libreoffice` metapackage: slim Writer-only installs often omit PDF→Office export filters (silent no-output).
+# poppler-utils: pdftotext fallback when LO still writes nothing
+# xvfb + xauth: virtual display + cookies for xvfb-run (headless PDF pipelines)
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
     qpdf \
     ghostscript \
     xvfb \
     xauth \
-    libreoffice-writer \
-    libreoffice-draw \
-    libreoffice-java-common \
+    poppler-utils \
+    libreoffice \
     ocrmypdf \
     tesseract-ocr \
     tesseract-ocr-eng \

@@ -4,6 +4,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { pathToFileURL } from 'node:url';
+import { Document, Packer, Paragraph, TextRun } from 'docx';
 
 const execFileAsync = promisify(execFile);
 
@@ -79,6 +80,72 @@ async function execSofficeConvert(sofficePath, argv, options) {
     return execFileWithCapture(xvfbRun, ['-a', '--', sofficePath, ...argv], options);
   }
   return execFileWithCapture(sofficePath, argv, options);
+}
+
+/** Remove prior .docx/.odt attempts so filter retries do not pick stale outputs. */
+function cleanLoConversionArtifacts(dir) {
+  let entries;
+  try {
+    entries = fs.readdirSync(dir);
+  } catch {
+    return;
+  }
+  for (const name of entries) {
+    if (!/\.(docx|odt)$/i.test(name)) continue;
+    try {
+      fs.unlinkSync(path.join(dir, name));
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
+/**
+ * Last resort: extract embedded text with pdftotext and build a minimal DOCX (layout not preserved).
+ * Image-only / scanned PDFs typically yield empty text → returns null.
+ */
+async function convertPdfToDocxViaPdftotextFallback(pdfPath) {
+  if ((process.env.PDF_TO_DOCX_TEXT_FALLBACK || '1').trim() === '0') {
+    return null;
+  }
+  const pdftotext = '/usr/bin/pdftotext';
+  if (!fs.existsSync(pdftotext)) {
+    return null;
+  }
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pdfpilot-pdf2txt-'));
+  const txtPath = path.join(tmp, 'extracted.txt');
+  try {
+    await execFileWithCapture(pdftotext, ['-layout', '-enc', 'UTF-8', pdfPath, txtPath], {
+      timeout: 120_000,
+      maxBuffer: 32 * 1024 * 1024,
+      env: process.env,
+    });
+    if (!fs.existsSync(txtPath)) return null;
+    let text = fs.readFileSync(txtPath, 'utf8');
+    text = text.replace(/\r\n/g, '\n').trim();
+    if (!text.length) return null;
+
+    const lines = text.split('\n');
+    const children = lines.map(
+      (line) =>
+        new Paragraph({
+          children: [new TextRun(line.length ? line : '\u00a0')],
+        })
+    );
+    const doc = new Document({
+      sections: [{ properties: {}, children }],
+    });
+    const buf = await Packer.toBuffer(doc);
+    return Buffer.from(buf);
+  } catch {
+    return null;
+  } finally {
+    try {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    } catch {
+      /* ignore */
+    }
+  }
 }
 
 /** UUID v4 from `uuid` package (version nibble = 4, variant = 8/9/a/b). */
@@ -306,18 +373,31 @@ export async function convertPdfFileToDocxBuffer(opts) {
       }
     };
 
-    // 1) PDF → DOCX (direct)
-    await runConvert('docx', inputAbs);
+    const docxAttempts = ['docx', 'docx:Office Open XML Text', 'docx:MS Word 2007 XML'];
+    let outDocx = null;
 
-    let outDocx = pickDocxOutput(tmp);
+    for (const fmt of docxAttempts) {
+      cleanLoConversionArtifacts(tmp);
+      await runConvert(fmt, inputAbs);
+      outDocx = pickDocxOutput(tmp);
+      if (outDocx) break;
+    }
 
-    // 2) Some servers skip DOCX export from PDF; try PDF → ODT → DOCX using the same profile.
+    // PDF → ODT → DOCX (some builds export DOCX only after an ODT round-trip)
     if (!outDocx) {
+      cleanLoConversionArtifacts(tmp);
       await runConvert('odt', inputAbs);
       const odtPath = pickOdtOutput(tmp);
       if (odtPath && fs.existsSync(odtPath)) {
         await runConvert('docx', odtPath);
         outDocx = pickDocxOutput(tmp);
+      }
+    }
+
+    if (!outDocx) {
+      const fallbackBuf = await convertPdfToDocxViaPdftotextFallback(inputAbs);
+      if (fallbackBuf?.length) {
+        return fallbackBuf;
       }
     }
 
@@ -329,7 +409,7 @@ export async function convertPdfFileToDocxBuffer(opts) {
         listing = '(could not read temp dir)';
       }
       const err = new Error(
-        `LibreOffice finished but no .docx was produced (some PDFs cannot be exported to Word). Directory listing: ${listing}`
+        `Could not produce a Word file from this PDF. LibreOffice wrote no export in ${tmp}; text extraction also failed or found no text (scanned PDFs need OCR first). Directory listing: ${listing}`
       );
       err.code = 'CONVERT_MISSING_OUTPUT';
       throw err;
