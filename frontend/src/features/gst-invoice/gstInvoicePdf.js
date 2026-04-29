@@ -71,13 +71,20 @@ export function calculateGstTotals(items, sellerStateCode, buyerStateCode) {
 }
 
 function wrapToWidth(text, maxChars) {
-  const s = String(text || '').trim() || '—'
-  if (s.length <= maxChars) return [s]
+  const raw = String(text || '').trim()
+  if (!raw) return []
+  /** Split logical lines first — granular addresses join with `\n`; slicing the whole string can put `\n` mid-chunk and one drawText then renders multiple baselines while we only reserve one LINE_H. */
   const out = []
-  let i = 0
-  while (i < s.length) {
-    out.push(s.slice(i, i + maxChars))
-    i += maxChars
+  for (const segment of raw.split(/\r?\n/)) {
+    const s = segment.trim()
+    if (!s) continue
+    if (s.length <= maxChars) {
+      out.push(s)
+      continue
+    }
+    for (let i = 0; i < s.length; i += maxChars) {
+      out.push(s.slice(i, i + maxChars))
+    }
   }
   return out
 }
@@ -133,37 +140,36 @@ export async function buildGstInvoicePdfBytes(form) {
 
   const sellerPan = String(form.sellerPan || '').trim()
   const buyerPan = String(form.buyerPan || '').trim()
-  const leftBlock = []
-  if (String(form.sellerTradeName || '').trim()) {
-    leftBlock.push(`Trade / brand: ${String(form.sellerTradeName).trim()}`)
-  }
-  leftBlock.push(`Legal name: ${form.sellerName || '—'}`)
-  leftBlock.push(form.sellerAddress || '')
-  leftBlock.push(
+  /** Fixed row order so left/right columns stay aligned when trade name exists on one side only. */
+  const leftBlock = [
+    String(form.sellerTradeName || '').trim()
+      ? `Trade / brand: ${String(form.sellerTradeName).trim()}`
+      : '',
+    `Legal name: ${form.sellerName || '—'}`,
+    form.sellerAddress || '',
     sellerPan
       ? `GSTIN: ${form.sellerGstin || '—'}    PAN: ${sellerPan}`
-      : `GSTIN: ${form.sellerGstin || '—'}`
-  )
-  leftBlock.push(`State code: ${normState(form.sellerStateCode) || '—'}`)
+      : `GSTIN: ${form.sellerGstin || '—'}`,
+    `State code: ${normState(form.sellerStateCode) || '—'}`,
+  ]
 
-  const rightBlock = []
-  if (String(form.buyerTradeName || '').trim()) {
-    rightBlock.push(`Trade / brand: ${String(form.buyerTradeName).trim()}`)
-  }
-  rightBlock.push(`Legal name: ${form.buyerName || '—'}`)
-  rightBlock.push(form.buyerAddress || '')
-  rightBlock.push(
+  const rightBlock = [
+    String(form.buyerTradeName || '').trim()
+      ? `Trade / brand: ${String(form.buyerTradeName).trim()}`
+      : '',
+    `Legal name: ${form.buyerName || '—'}`,
+    form.buyerAddress || '',
     buyerPan
       ? `GSTIN: ${form.buyerGstin || '—'}    PAN: ${buyerPan}`
-      : `GSTIN: ${form.buyerGstin || '—'}`
-  )
-  rightBlock.push(`State code: ${normState(form.buyerStateCode) || '—'}`)
+      : `GSTIN: ${form.buyerGstin || '—'}`,
+    `State code: ${normState(form.buyerStateCode) || '—'}`,
+  ]
 
-  const maxLines = Math.max(leftBlock.length, rightBlock.length)
-  for (let i = 0; i < maxLines; i += 1) {
+  for (let i = 0; i < leftBlock.length; i += 1) {
     ensureSpace(LINE_H * 2)
     const la = wrapToWidth(leftBlock[i] || '', 48)
     const ra = wrapToWidth(rightBlock[i] || '', 48)
+    if (!la.length && !ra.length) continue
     const h = Math.max(la.length, ra.length) * LINE_H
     let yy = y
     for (const line of la) {
