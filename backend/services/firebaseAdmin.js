@@ -1,5 +1,18 @@
 import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import admin from 'firebase-admin';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+/** Resolve credential paths relative to `backend/` so GOOGLE_APPLICATION_CREDENTIALS=./file.json works even when cwd is the repo root. */
+function resolveCredentialsPath(credPath) {
+  if (!credPath) return '';
+  const trimmed = credPath.trim();
+  if (!trimmed) return '';
+  if (path.isAbsolute(trimmed)) return trimmed;
+  const backendRoot = path.join(__dirname, '..');
+  return path.join(backendRoot, trimmed);
+}
 
 let initAttempted = false;
 let initOk = false;
@@ -76,7 +89,7 @@ export function ensureFirebaseAdmin() {
     }
     lastInitFailure = parsedResult.reason || lastInitFailure;
     console.error('[firebase-admin]', lastInitFailure);
-    const credPath = (process.env.GOOGLE_APPLICATION_CREDENTIALS || '').trim();
+    const credPath = resolveCredentialsPath(process.env.GOOGLE_APPLICATION_CREDENTIALS || '');
     if (credPath && fs.existsSync(credPath)) {
       admin.initializeApp({
         credential: admin.credential.applicationDefault(),

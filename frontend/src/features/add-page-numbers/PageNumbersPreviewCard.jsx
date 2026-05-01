@@ -31,7 +31,9 @@ export default function PageNumbersPreviewCard({
   useEffect(() => {
     let cancelled = false
     if (!pdfDoc || !pageIndex1Based) {
-      setDims(null)
+      queueMicrotask(() => {
+        if (!cancelled) setDims(null)
+      })
       return undefined
     }
     ;(async () => {
@@ -57,7 +59,7 @@ export default function PageNumbersPreviewCard({
       setCw(el.clientWidth || 0)
     })
     ro.observe(el)
-    setCw(el.clientWidth || 0)
+    queueMicrotask(() => setCw(el.clientWidth || 0))
     return () => ro.disconnect()
   }, [pdfDoc, pageIndex1Based])
 

@@ -36,12 +36,13 @@ export async function buildMinimalDocxBlob(rawText) {
   const doc = new Document({
     sections: [{ properties: {}, children }],
   })
-  const buf = await Packer.toBuffer(doc)
-  const u8 = buf instanceof Uint8Array ? buf : new Uint8Array(buf)
-  if (u8.length < 4 || u8[0] !== 0x50 || u8[1] !== 0x4b) {
+  // Browser: Packer.toBuffer uses Node Buffer ("nodebuffer is not supported by this platform").
+  const blob = await Packer.toBlob(doc)
+  const head = new Uint8Array(await blob.slice(0, 4).arrayBuffer())
+  if (head.length < 4 || head[0] !== 0x50 || head[1] !== 0x4b) {
     throw new Error('invalid_docx_zip')
   }
-  return new Blob([u8], {
+  return new Blob([blob], {
     type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   })
 }
