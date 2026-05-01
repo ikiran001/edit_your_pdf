@@ -689,47 +689,46 @@ export const TOOL_SEO_BY_ID = {
   'word-to-pdf': {
     featureName: 'Word to PDF',
     intro: [
-      'Turn a Microsoft Word .docx into a PDF for sharing, printing, or archiving. Upload your document and download a PDF when conversion finishes.',
-      'Layout-faithful .docx → .pdf uses your configured pdfpilot API (LibreOffice on the server and/or a separate Gotenberg service), not this static page alone. pdfpilot does not ship an in-browser engine that matches full Word layout.',
+      'Turn a Microsoft Word .docx into a draft PDF in your browser. JSZip reads the file in this tab; pdf-lib writes a simple, text-first PDF. Your document is not uploaded to a converter service for this step.',
+      'This is a fast draft — not a replacement for Microsoft Word’s own “Save as PDF” or a server with LibreOffice/Gotenberg. Tables, images, headers, and exact fonts are not reproduced; use those tools when you need print-ready fidelity.',
     ],
     steps: [
       'Open Word to PDF from the toolkit.',
-      'Confirm your deployment sets SOFFICE_PATH and/or GOTENBERG_URL on the API so conversion is enabled.',
       'Upload a .docx (drag-and-drop or browse).',
-      'Wait while the API converts the file to PDF.',
+      'Wait a few seconds while the tab extracts text and builds a PDF.',
       'Download the PDF when prompted (sign in first if your site requires accounts for downloads).',
-      'Open the PDF locally and spot-check fonts, tables, and page breaks.',
+      'Open the PDF and compare to your Word file; re-export from Word if layout must match exactly.',
     ],
     benefits: [
       {
-        title: 'Consistent with Word export',
-        body: 'Uses the same document-flow stack as other pdfpilot exports when the API is configured.',
+        title: 'No upload for conversion',
+        body: 'Typical text documents are processed locally in the browser for speed and privacy.',
       },
       {
-        title: 'No random converter site',
-        body: 'Files go to your API origin — pair with HTTPS and access controls you already run.',
+        title: 'Seconds, not minutes',
+        body: 'No cold-start on a remote LibreOffice or Gotenberg container — large cloud converters often sleep until first use.',
       },
       {
-        title: 'Large-document friendly',
-        body: 'Typical business documents up to tens of megabytes work; keep the tab open on slow links.',
+        title: 'Works without API wiring',
+        body: 'Unlike server-only Word→PDF paths, this flow does not require SOFFICE_PATH or GOTENBERG_URL on your backend.',
       },
       {
         title: 'Pairs with PDF to Word',
-        body: 'Round-trip drafts when you need Word for heavy edits and PDF for sharing.',
+        body: 'Round-trip drafts when you move between editable Word and shareable PDF.',
       },
     ],
     highlights: [
       {
-        title: 'Server-side fidelity',
-        body: 'LibreOffice or Gotenberg handles complex styles better than a lightweight browser shim.',
+        title: 'Plain-text–oriented output',
+        body: 'Paragraphs and line breaks from the document body; complex OOXML is not fully modeled.',
       },
       {
         title: 'Simple upload flow',
-        body: 'One .docx in, one PDF out after your API accepts the job.',
+        body: 'One .docx in — adjust expectations for draft fidelity vs Word export.',
       },
       {
-        title: 'Operator-controlled',
-        body: 'Self-hosters enable conversion with environment variables they already document for PDF → Word.',
+        title: 'Operator-friendly hosting',
+        body: 'Static hosting without document-flow env vars still gets a working Word→PDF tool.',
       },
     ],
   },

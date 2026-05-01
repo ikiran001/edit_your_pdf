@@ -68,6 +68,8 @@ export function analyticsEvent(name, params) {
  * **Conversion-path events** (register as GA4 custom events / explorations):
  * - `pdf_to_word_path` — `{ path: 'client' }` (PDF→Word conversion is client-only)
  * - `pdf_to_word_failed` — `{ reason: 'insufficient_text' | 'size_limit' | 'page_limit' | 'client_error' }`
+ * - `word_to_pdf_path` — `{ path: 'client' }` (Word→PDF draft is client-only)
+ * - `word_to_pdf_failed` — `{ reason: 'empty_text' | 'size_limit' | 'parse_error' | 'client_error' }`
  * - `compress_pdf_path` — `{ mode: 'api_only' | 'fallback_only' | 'mixed' }`
  */
 export function trackEvent(name, params = {}) {
