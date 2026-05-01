@@ -133,16 +133,20 @@ export default function PdfToWordPage() {
             setFailure(null)
             setSignInNotice(null)
             triggerDownloadBlob(blob, outName)
-            trackEvent('pdf_to_word_path', { path: 'client' })
-            setSuccessHint(
-              `“${outName}” was built on your device — the PDF was not uploaded for conversion. Open in Word for formatting tweaks.`
-            )
-            trackFileDownloaded({
-              tool: PDF_TO_WORD_TOOL,
-              file_size: blob.size / 1024,
-              total_pages: pageCount,
-            })
-            trackToolCompleted(PDF_TO_WORD_TOOL, true)
+            try {
+              trackEvent('pdf_to_word_path', { path: 'client' })
+              setSuccessHint(
+                `“${outName}” was built on your device — the PDF was not uploaded for conversion. Open in Word for formatting tweaks.`
+              )
+              trackFileDownloaded({
+                tool: PDF_TO_WORD_TOOL,
+                file_size: blob.size / 1024,
+                total_pages: pageCount,
+              })
+              trackToolCompleted(PDF_TO_WORD_TOOL, true)
+            } catch (analyticsErr) {
+              console.warn('[pdf-to-word] analytics:', analyticsErr)
+            }
           },
           {
             onAuthLoading: () => {
