@@ -142,7 +142,16 @@ router.post('/compress-pdf', (req, res) => {
       const args = [...qpdfCompressionArgs(level), inPath, qpdfOut];
       await runProcess(bin, args);
 
-      let finalPath = qpdfOut;
+      const inSize = req.file.buffer.length;
+      /** Never return a “compressed” file larger than the upload when a smaller candidate exists. */
+      let best = { buf: req.file.buffer, size: inSize, label: 'original' };
+
+      const qpdfStat = await fs.promises.stat(qpdfOut);
+      if (qpdfStat.size > 0) {
+        const qbuf = await fs.promises.readFile(qpdfOut);
+        if (qbuf.length < best.size) best = { buf: qbuf, size: qbuf.length, label: 'qpdf' };
+      }
+
       const gsProfile = ghostscriptPdfSettings(level);
       const gsBin = gsProfile ? getGhostscriptBinary() : null;
 
@@ -160,16 +169,28 @@ router.post('/compress-pdf', (req, res) => {
             qpdfOut,
           ]);
           const st = await fs.promises.stat(gsOut);
-          if (st.size > 0) finalPath = gsOut;
+          if (st.size > 0) {
+            const gsBuf = await fs.promises.readFile(gsOut);
+            if (gsBuf.length < best.size) best = { buf: gsBuf, size: gsBuf.length, label: 'ghostscript' };
+          }
         } catch (e) {
           console.warn('[compress-pdf] ghostscript pass skipped:', e?.message || e);
         }
       }
 
-      const outBuf = await fs.promises.readFile(finalPath);
+      if (best.label !== 'qpdf' && best.size === inSize) {
+        console.log(
+          `[compress-pdf] kept original (${inSize} B) — qpdf/GS did not shrink (level=${level})`
+        );
+      } else if (best.label === 'ghostscript' || best.label === 'qpdf') {
+        console.log(
+          `[compress-pdf] ${best.label} · ${inSize} → ${best.size} B (${((1 - best.size / inSize) * 100).toFixed(1)}% smaller)`
+        );
+      }
+
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Cache-Control', 'no-store');
-      res.send(Buffer.from(outBuf));
+      res.send(Buffer.from(best.buf));
     } catch (e) {
       console.error('[compress-pdf]', e?.stderr || e?.message || e);
       const msg = String(e?.message || e || 'Compression failed');

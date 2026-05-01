@@ -821,4 +821,188 @@ export const TOOL_SEO_BY_ID = {
       },
     ],
   },
+  'pdf-to-png': {
+    featureName: 'PDF to PNG',
+    intro: [
+      'Export every PDF page as a PNG image when you need lossless screenshots for design tools, crisp slides, or archives that keep sharp edges.',
+      'Conversion runs entirely in your browser on pdfpilot, so your document does not pass through an extra upload pipeline before you download the ZIP.',
+    ],
+    steps: [
+      'Open PDF to PNG from the toolkit.',
+      'Upload your PDF and pick a render scale if the tool offers one.',
+      'Start conversion and wait for the ZIP to build.',
+      'Download the archive and unzip on your computer.',
+      'Use individual PNGs wherever images work better than PDF pages.',
+    ],
+    benefits: [
+      {
+        title: 'Lossless page shots',
+        body: 'PNG avoids JPEG artifacts that can show up on text or thin lines.',
+      },
+      {
+        title: 'ZIP keeps order',
+        body: 'Page-named files stay aligned with the original document sequence.',
+      },
+      {
+        title: 'Privacy-friendly',
+        body: 'Rendering happens locally in the browser session you already trust.',
+      },
+      {
+        title: 'Works offline-capable',
+        body: 'Once the app is loaded, processing does not depend on a conversion API.',
+      },
+    ],
+    highlights: [
+      {
+        title: 'Whole-document export',
+        body: 'Every page is processed in one pass.',
+      },
+      {
+        title: 'Scale control',
+        body: 'Higher scale improves sharpness at the cost of larger files.',
+      },
+      {
+        title: 'Share images easily',
+        body: 'PNG previews open everywhere without a PDF reader.',
+      },
+    ],
+  },
+  'pdf-to-text': {
+    featureName: 'PDF to text',
+    intro: [
+      'Pull plain text out of digital PDFs for notes, scripts, or quick edits. pdfpilot reads the embedded text layer in your browser—ideal when you just need words, not layout.',
+      'Scanned PDFs that are only pictures do not contain selectable text until OCR adds a layer; use OCR PDF first on pdfpilot when the server is configured, then try text export again.',
+    ],
+    steps: [
+      'Open PDF to text from the toolkit.',
+      'Upload a PDF that already has selectable text.',
+      'Run extraction and download the .txt file.',
+      'Open the text file in your editor or paste it where you need it.',
+      'If the output is empty, treat the file as image-based and OCR it first.',
+    ],
+    benefits: [
+      {
+        title: 'Fast quotes and citations',
+        body: 'Grab paragraphs without retyping from a viewer.',
+      },
+      {
+        title: 'Lightweight output',
+        body: 'A .txt file is easy to email or diff in version control.',
+      },
+      {
+        title: 'Local extraction',
+        body: 'The browser reads your PDF without uploading it for conversion.',
+      },
+      {
+        title: 'Pairs with OCR',
+        body: 'Searchable scans become fair game after OCR adds real text.',
+      },
+    ],
+    highlights: [
+      {
+        title: 'Plain UTF-8 text',
+        body: 'Download a simple text file you can open anywhere.',
+      },
+      {
+        title: 'Honest limits',
+        body: 'Very long documents follow the same client page caps as other tools.',
+      },
+      {
+        title: 'No layout promises',
+        body: 'This is text extraction, not a guarantee of perfect reading order on complex layouts.',
+      },
+    ],
+  },
+  'flatten-pdf': {
+    featureName: 'Flatten PDF',
+    intro: [
+      'Flattening turns interactive elements into static appearance—either by flattening AcroForm fields or by rasterizing entire pages to images when you need the strongest guarantee that nothing stays editable.',
+      'pdfpilot offers both paths in the browser: form flattening via pdf-lib, or full-page rasterization that trades file size for a printed-like snapshot.',
+    ],
+    steps: [
+      'Open Flatten PDF and upload your document.',
+      'Choose flatten forms for fillable fields, or rasterize for image-only pages.',
+      'Adjust raster scale if you pick image mode—higher looks sharper but grows the file.',
+      'Download the flattened PDF and verify in your usual reader.',
+      'Keep an unfrozen copy if you might need to edit fields again.',
+    ],
+    benefits: [
+      {
+        title: 'Submission-ready forms',
+        body: 'Flattened fields often match what regulators expect for “flat” uploads.',
+      },
+      {
+        title: 'Raster option',
+        body: 'Burn everything into pixels when you must eliminate hidden layers.',
+      },
+      {
+        title: 'Clear trade-offs',
+        body: 'Form flatten keeps vectors; raster mode prioritizes visual fidelity over size.',
+      },
+      {
+        title: 'Runs locally',
+        body: 'No separate flatten service is required once the app is open.',
+      },
+    ],
+    highlights: [
+      {
+        title: 'Two flatten modes',
+        body: 'Pick the approach that matches compliance or size needs.',
+      },
+      {
+        title: 'Preview before sharing',
+        body: 'Always open the download to confirm nothing important was lost.',
+      },
+      {
+        title: 'Pairs with Fill PDF',
+        body: 'Fill fields first, then flatten if you need a non-interactive export.',
+      },
+    ],
+  },
+  'fill-pdf': {
+    featureName: 'Fill PDF form',
+    intro: [
+      'Complete standard AcroForm PDFs without printing and scanning. pdfpilot lists fields it can edit in the browser so you can type, tick boxes, and choose dropdown values before downloading.',
+      'Complex government PDFs sometimes include widgets pdf-lib cannot edit—when that happens, download still works for simpler forms or after editing elsewhere.',
+    ],
+    steps: [
+      'Open Fill PDF form and upload your PDF.',
+      'Review the detected fields and enter values.',
+      'Use download to save a filled copy.',
+      'Open the result in your viewer to confirm layout and signatures.',
+      'If fields are missing, try the desktop reader that issued the form.',
+    ],
+    benefits: [
+      {
+        title: 'Keyboard-first workflow',
+        body: 'Type instead of handwriting small boxes.',
+      },
+      {
+        title: 'Checkbox and choice support',
+        body: 'Many toggles and dropdowns map cleanly to browser controls.',
+      },
+      {
+        title: 'Privacy',
+        body: 'The upload stays in your browser memory until you save.',
+      },
+      {
+        title: 'Pairs with Flatten',
+        body: 'Flatten after filling when a static file is required.',
+      },
+    ],
+    highlights: [
+      {
+        title: 'Field listing',
+        body: 'See what the tool recognized before you download.',
+      },
+      {
+        title: 'Honest coverage',
+        body: 'Unsupported widgets surface as unknown rather than silently failing.',
+      },
+      {
+        title: 'Fast iteration',
+        body: 'Adjust answers and download again without mailing drafts.',
+      },
+    ],
+  },
 }
