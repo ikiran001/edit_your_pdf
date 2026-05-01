@@ -4,7 +4,9 @@
 
 **Goal:** Make the **hybrid** “client when good enough, server when needed” story **explicit, consistent, and measurable** across tools A–E (DOCX→PDF, PDF→DOCX, compress, OCR, and other PDF utilities), without breaking existing working paths.
 
-**Architecture:** Keep **pdf-lib / pdf.js** for in-browser PDF work; keep **LibreOffice, Gotenberg, qpdf, Ghostscript, ocrmypdf** for fidelity-heavy or CPU-heavy server work. **Do not** promise browser parity with LibreOffice for Word↔PDF. **Document** the matrix in-repo and align **copy, analytics, and empty states** to the same story.
+**Architecture:** Keep **pdf-lib / pdf.js** for in-browser PDF work; keep **LibreOffice, qpdf, Ghostscript, ocrmypdf** for server paths that need them. **Word → PDF** in the shipped SPA is a **client-only draft** (plain text → PDF); the server **`POST /document-flow/convert-docx-to-pdf` route was removed** — do not document Gotenberg as required for that tool. **Document** the matrix in-repo and align **copy, analytics, and empty states** to the same story.
+
+**Supersession (read first):** The table in `docs/superpowers/specs/2026-04-22-browser-server-conversion-matrix.md` is **authoritative**. Portions of this plan (notably **Task 2** and the old embedded matrix block in **Task 1**) predate client-only Word→PDF + route removal; treat them as **historical**, not as current implementation steps.
 
 **Tech stack:** Vite + React frontend (`frontend/`), Express backend (`backend/`), existing `POST /document-flow/*`, `POST /compress-pdf`, `POST /ocr-pdf`. Reference spec: `docs/superpowers/specs/2026-04-22-pdf-to-word-hybrid-client-design.md`.
 
@@ -12,7 +14,7 @@
 
 | Area | Client today | Server today |
 |------|----------------|--------------|
-| **A — Word → PDF** | None (not viable for LO-class layout in small JS) | `POST /document-flow/convert-docx-to-pdf` |
+| **A — Word → PDF** | `word-to-pdf`: draft PDF from extracted plain text (no upload) | **`POST /document-flow/convert-docx-to-pdf` removed** (404) — no server DOCX→PDF in this API |
 | **B — PDF → Word** | `PdfToWordPage` + `extractPdfText.js` + `buildMinimalDocx.js` | `POST /document-flow/convert-pdf-to-docx` |
 | **C — Compress** | `pdfCompressCore.js` `via: 'fallback'` (pdf-lib) | `POST /compress-pdf` (qpdf + optional GS) |
 | **D — OCR** | None | `POST /ocr-pdf` (ocrmypdf) |
@@ -27,27 +29,9 @@
 - Create: `docs/superpowers/specs/2026-04-22-browser-server-conversion-matrix.md`
 - Reference: this plan (no code)
 
-- [ ] **Step 1: Create the matrix document**
+- [ ] **Step 1: Create or refresh the matrix document**
 
-Create `docs/superpowers/specs/2026-04-22-browser-server-conversion-matrix.md` with the following content (adjust dates only if you must):
-
-```markdown
-# Browser vs. server — conversion matrix
-
-**Date:** 2026-04-22  
-**Status:** Reference (ops + product)
-
-| Flow | In-browser (today) | Server (today) | Product stance |
-|------|--------------------|----------------|----------------|
-| Word → PDF | Not supported (no small, maintained path matches LibreOffice layout) | LibreOffice and/or Gotenberg | **Server-primary**; static sites need `VITE_API_BASE_URL` + configured API |
-| PDF → Word | pdf.js text extract → minimal `.docx` | LibreOffice `convert-pdf-to-docx` | **Hybrid** (client first for text PDFs, then server) — see `2026-04-22-pdf-to-word-hybrid-client-design.md` |
-| Compress | pdf-lib re-save | qpdf + optional Ghostscript | **Hybrid**; browser fallback = structure rewrite, often little size change |
-| OCR | None in production | ocrmypdf + Tesseract | **Server-primary**; optional future: Tesseract.js in browser (size/CPU trade-offs) |
-| Other PDF tools | Many (merge, stamp, etc.) | Where qpdf/GS or LO required | **Per-tool** — check `toolRegistry` + page implementation |
-
-**Rule of thumb:** If the tool needs a **system binary** (LibreOffice, qpdf, ocrmypdf), treat **server (or self-hosted API)** as the **source of truth** for fidelity; use the browser to **avoid upload** only when the implementation already exists and quality is acceptable.
-```
-
+Authoritative content lives in `docs/superpowers/specs/2026-04-22-browser-server-conversion-matrix.md`. Edit **that file** (not any stale template): **Word → PDF = client draft in SPA; server route removed**.
 - [ ] **Step 2: Commit**
 
 ```bash
@@ -57,7 +41,11 @@ git commit -m "docs: add browser vs server conversion matrix (A–E)"
 
 ---
 
-### Task 2: (A) Word → PDF — clarify “no in-browser” in SEO + tool copy
+### Task 2 (obsolete): (A) Word → PDF — planned “server-primary” copy — **superseded**
+
+The shipped product moved to **client-only draft Word→PDF** and removed the API route. Do **not** implement the steps below unless you are deliberately restoring a server converter.
+
+**Original intent (historical):** clarify “no in-browser” in SEO + tool copy when server handled DOCX→PDF.
 
 **Files:**
 

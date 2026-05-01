@@ -1,17 +1,10 @@
 # Render Blueprint — https://render.com/docs/blueprint-spec
 #
-# - Word → PDF: the API image installs LibreOffice (`SOFFICE_PATH=/usr/bin/soffice`) and converts on-box first;
-#   `GOTENBERG_URL` remains an optional fallback if the Gotenberg service is healthy.
-# - `pdfpilot-gotenberg`: optional Gotenberg service. Uses `8-libreoffice` (not the full `8` image) so the
-#   container fits Render starter RAM — full Chromium+LO often OOMs → HTTP 502 on /health.
-#   Render injects `PORT`; override CMD so Gotenberg listens on `$PORT`.
+# - Word → PDF: handled **in the browser** in the pdfpilot web app (no API upload). No Gotenberg service is defined here.
+# - PDF → Word (API): install LibreOffice (`SOFFICE_PATH=/usr/bin/soffice`) for POST /document-flow/convert-pdf-to-docx
+#   and session export-docx when you need server-side PDF→DOCX.
 # - API web service (`name` below): MUST match your Render service name exactly (same as the
-#   `https://<name>.onrender.com` host). If names differ, Blueprint `fromService` env never applies—set
-#   `GOTENBERG_URL` manually on the API, or fix `name` here and sync the Blueprint.
-#   Receives `GOTENBERG_URL` from the Gotenberg service’s `RENDER_EXTERNAL_URL`. Optional `GOTENBERG_HOSTPORT`.
-#
-# If you deploy the API only (no Blueprint sync), set GOTENBERG_URL manually on the API service
-# to any reachable Gotenberg base URL (e.g. https://your-gotenberg.onrender.com).
+#   `https://<name>.onrender.com` host).
 #
 # OCR: the API Dockerfile installs ocrmypdf + Tesseract (POST /ocr-pdf). Rebuild the web service after pulling.
 #
@@ -19,14 +12,6 @@
 # Environment) to your Firebase service account JSON (one line). Same project must have Firestore enabled.
 # Do not commit secrets into this file; use sync: false below or paste only in the Render UI.
 services:
-  - type: web
-    name: pdfpilot-gotenberg
-    runtime: image
-    image:
-      url: docker.io/gotenberg/gotenberg:8-libreoffice
-    healthCheckPath: /health
-    dockerCommand: gotenberg --api-port-from-env=PORT
-
   - type: web
     name: edit-your-pdf-chew
     runtime: docker
@@ -37,16 +22,6 @@ services:
         value: production
       - key: SOFFICE_PATH
         value: /usr/bin/soffice
-      - key: GOTENBERG_URL
-        fromService:
-          name: pdfpilot-gotenberg
-          type: web
-          envVarKey: RENDER_EXTERNAL_URL
-      - key: GOTENBERG_HOSTPORT
-        fromService:
-          name: pdfpilot-gotenberg
-          type: web
-          property: hostport
       # Paste value in Render Dashboard (secret). Required for My Documents + optional download auth.
       - key: FIREBASE_SERVICE_ACCOUNT_JSON
         sync: false
