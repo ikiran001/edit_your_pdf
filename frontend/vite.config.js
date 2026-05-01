@@ -3,6 +3,7 @@ import { fileURLToPath } from 'url'
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { visualizer } from 'rollup-plugin-visualizer'
 
 // Directory containing this config file (= `frontend/`). Used so `.env*` load correctly even when
 // the shell cwd is the monorepo root (e.g. some IDE tasks). Do not rely on `process.cwd()` alone.
@@ -26,7 +27,17 @@ export default defineConfig(({ mode }) => {
     /** Pin env files to `frontend/` so `VITE_*` from `.env.development` are never skipped. */
     envDir: __dirname,
     base,
-    plugins: [react(), tailwindcss()],
+    plugins: [
+      react(),
+      tailwindcss(),
+      process.env.ANALYZE === '1' &&
+        visualizer({
+          filename: path.join(__dirname, 'dist/stats.html'),
+          gzipSize: true,
+          brotliSize: true,
+          open: false,
+        }),
+    ].filter(Boolean),
     server: {
       proxy: {
         '/upload': { target: 'http://localhost:3001', changeOrigin: true },
