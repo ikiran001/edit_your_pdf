@@ -88,7 +88,7 @@ export const TOOL_REGISTRY = [
     id: 'pdf-to-word',
     path: '/tools/pdf-to-word',
     title: 'PDF to Word',
-    description: 'Draft .docx in your browser when text extracts; optional LibreOffice conversion on your API.',
+    description: 'Draft .docx in your browser — PDF is not uploaded for conversion (use OCR PDF for scans first).',
     implemented: true,
     icon: 'FileType2',
   },

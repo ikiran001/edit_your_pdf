@@ -66,8 +66,8 @@ export function analyticsEvent(name, params) {
 /** Queue on microtask so clicks / saves are never blocked.
  *
  * **Conversion-path events** (register as GA4 custom events / explorations):
- * - `pdf_to_word_path` — `{ path: 'client' | 'server' }`
- * - `pdf_to_word_client_skipped` — `{ reason: 'page_limit' | 'insufficient_text' | 'client_error' }`
+ * - `pdf_to_word_path` — `{ path: 'client' }` (PDF→Word conversion is client-only)
+ * - `pdf_to_word_failed` — `{ reason: 'insufficient_text' | 'size_limit' | 'page_limit' | 'client_error' }`
  * - `compress_pdf_path` — `{ mode: 'api_only' | 'fallback_only' | 'mixed' }`
  */
 export function trackEvent(name, params = {}) {

@@ -642,13 +642,13 @@ export const TOOL_SEO_BY_ID = {
   'pdf-to-word': {
     featureName: 'PDF to Word',
     intro: [
-      'Convert PDF to Word online when you need an editable .docx instead of a fixed layout. Upload your PDF and download a Word-compatible document for edits in Microsoft Word, LibreOffice, or Google Docs.',
-      'Conversion runs on pdfpilot’s API with LibreOffice headless (when your server sets SOFFICE_PATH). Complex PDFs may not match pixel-perfect — review headings, tables, and fonts before sharing.',
+      'Convert PDF to Word in your browser when you need an editable .docx from a text-based PDF. pdf.js reads the file in your tab and pdfpilot builds a draft Word document locally — your PDF is not uploaded for conversion.',
+      'Output is best-effort draft text and paragraphs; complex layouts, tables, and fonts may simplify. Scanned PDFs need OCR first — use pdfpilot’s OCR PDF tool, then try again.',
     ],
     steps: [
       'Open PDF to Word from the toolkit.',
       'Upload a PDF (drag-and-drop or browse).',
-      'Wait while the server converts the file to .docx.',
+      'Wait while your browser extracts text and builds the .docx.',
       'Download the Word file when prompted (sign in first if your site requires accounts for downloads).',
       'Open the .docx locally and adjust formatting as needed.',
     ],
@@ -658,30 +658,30 @@ export const TOOL_SEO_BY_ID = {
         body: 'Receive a .docx you can revise instead of retyping from a flat PDF.',
       },
       {
-        title: 'LibreOffice conversion',
-        body: 'Uses the same headless LibreOffice path as other document-flow exports when SOFFICE_PATH is configured.',
+        title: 'Conversion stays on your device',
+        body: 'No server upload for PDF→Word conversion — ideal when you want drafts without sending the PDF to a converter API.',
       },
       {
-        title: 'Pairs with Word to PDF',
-        body: 'Round-trip drafts when you need PDF for sharing and Word for heavy edits.',
+        title: 'Pairs with OCR PDF',
+        body: 'Run OCR on scanned documents first so extractable text exists before Word conversion.',
       },
       {
         title: 'Straightforward limits',
-        body: 'Typical documents up to tens of megabytes work; split very large scans if conversion times out.',
+        body: 'Large PDFs are capped for browser stability; split very large files if needed.',
       },
     ],
     highlights: [
       {
         title: 'Simple upload flow',
-        body: 'One PDF in, one .docx out — parallel to Word to PDF on pdfpilot.',
+        body: 'One PDF in, one .docx out after local processing.',
       },
       {
-        title: 'Server-side processing',
-        body: 'No desktop plugin required — keep the tab open until the download starts.',
+        title: 'Browser-side extraction',
+        body: 'Uses PDF.js in your tab — keep the page open until the download starts.',
       },
       {
         title: 'Proof before publishing',
-        body: 'Automated PDF→Word often shifts layout slightly; always review before final use.',
+        body: 'Draft conversion may shift layout; always review before final use.',
       },
     ],
   },

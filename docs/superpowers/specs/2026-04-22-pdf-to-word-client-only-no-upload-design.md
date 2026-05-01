@@ -1,6 +1,6 @@
 # PDF to Word — client-only conversion (no server upload)
 
-**Status:** Design (approved direction: option **B** — no upload for conversion)  
+**Status:** Design — **implemented** in app (PDF→Word client-only, no `convert-pdf-to-docx` from SPA)  
 **Date:** 2026-04-22  
 **Supersedes for this tool:** Server fallback sections in `2026-04-22-pdf-to-word-hybrid-client-design.md` — that document stays valid for historical context; **this spec** is the source of truth for PDF→Word routing policy going forward.
 
