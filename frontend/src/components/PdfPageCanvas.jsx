@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, memo } from 'react'
 import { flushSync } from 'react-dom'
-import { buildTextRuns } from '../lib/pdfTextRuns'
 import { hexLuminance, sampleBackgroundColorHex, sampleInkColorHex } from '../lib/sampleCanvasInkColor'
 import {
   buildPageTextItemBlocks,
@@ -22,349 +21,39 @@ import { sessionNativeMetaForBlock } from '../lib/sessionNativeTextMatch.js'
 import { defaultPlacementForPng } from '../features/sign-pdf/signPdfGeometry.js'
 import { trackSignaturePlaced } from '../lib/analytics.js'
 import { resolveTextDraftNormSize } from '../lib/textDraftLayout.js'
-
-const RENDER_SCALE = 1.35
-const MAX_DRAW_POINTS = 1000
-const MAX_ANNOT_TEXT_PER_PAGE = 50
-const MAX_ANNOT_TEXT_LENGTH = 2000
-const MAX_SIGN_PER_PAGE = 10
-
-const ANNOT_SCOPE_EVENT = 'pdf-editor-annot-scope'
-
-/** Raw or data-URL base64 → PNG bytes for placement sizing. */
-function rawBase64ToUint8(b64) {
-  const s = String(b64 || '')
-    .replace(/^data:image\/png;base64,/i, '')
-    .trim()
-  if (!s) return null
-  try {
-    const bin = atob(s)
-    const u8 = new Uint8Array(bin.length)
-    for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i)
-    return u8
-  } catch {
-    return null
-  }
-}
-
-function clamp01(v) {
-  return Math.min(1, Math.max(0, v))
-}
-
-const DEFAULT_SNAP_PDF_H = 792
-
-/**
- * Snap placed markup to native PDF text grid (line tops + baselines in normalized viewport space).
- * `item.x` / `item.y` follow the editor convention: top-left of the box in page-normalized coords.
- */
-function snapPlacedAnnotToNativeGrid(textBlocks, item, nx, ny, pdfH) {
-  const blocks = textBlocks || []
-  const ph = Number.isFinite(pdfH) && pdfH > 72 ? pdfH : DEFAULT_SNAP_PDF_H
-  if (item?.type === 'signature') {
-    const epsY = 0.012
-    const epsX = 0.01
-    let xo = nx
-    let yo = ny
-    let bestY = epsY
-    let bestX = epsX
-    for (const b of blocks) {
-      const tn = b.norm?.ny
-      if (Number.isFinite(tn)) {
-        const d = Math.abs(ny - tn)
-        if (d < bestY) {
-          bestY = d
-          yo = tn
-        }
-      }
-      const tx = b.norm?.nx
-      if (Number.isFinite(tx)) {
-        const d = Math.abs(nx - tx)
-        if (d < bestX) {
-          bestX = d
-          xo = tx
-        }
-      }
-    }
-    return { x: clamp01(xo), y: clamp01(yo) }
-  }
-  if (item?.type !== 'text') return { x: clamp01(nx), y: clamp01(ny) }
-  const fs = Math.max(4, Number(item.fontSize) || 12)
-  const deltaN = Math.min(0.09, Math.max(0.002, (fs / ph) * 0.76))
-  const curBl = ny + deltaN
-  const eps = 0.014
-  let yOut = ny
-  let best = eps
-  for (const b of blocks) {
-    const bn = b.norm?.baselineN
-    if (!Number.isFinite(bn)) continue
-    const d = Math.abs(curBl - bn)
-    if (d < best) {
-      best = d
-      yOut = bn - deltaN
-    }
-  }
-  for (const b of blocks) {
-    const tn = b.norm?.ny
-    if (!Number.isFinite(tn)) continue
-    const d = Math.abs(ny - tn)
-    if (d < best) {
-      best = d
-      yOut = tn
-    }
-  }
-  let xOut = nx
-  best = 0.012
-  for (const b of blocks) {
-    const tx = b.norm?.nx
-    if (!Number.isFinite(tx)) continue
-    const d = Math.abs(nx - tx)
-    if (d < best) {
-      best = d
-      xOut = tx
-    }
-  }
-  return { x: clamp01(xOut), y: clamp01(yOut) }
-}
-
-function normalizePlacedAnnotDraftText(raw) {
-  const s = String(raw ?? '').replace(/\r\n/g, '\n')
-  return s.replace(/^\s+|\s+$/g, '').slice(0, MAX_ANNOT_TEXT_LENGTH)
-}
-
-/**
- * Native PDF text inline editor: map bitmap/viewport metrics to CSS px using the same scale as
- * `left`/`top` (`sx`/`sy`), then scale when the user changes the toolbar font size relative to open.
- * `toolbarFontAtOpen` must be the toolbar `fontSizeCss` captured when the editor opened (bitmap-based).
- */
-function nativeInlineEditorMetrics(block, fmt, toolbarFontAtOpen, sx, sy) {
-  const s = sx > 0 && sy > 0 ? Math.min(sx, sy) : sx || sy || 1
-  const syEff = sy > 0 ? sy : s
-  const bmpFs = Math.max(6, Math.min(200, Number(block.fontSizePx) || 12))
-  const geomFontCss = bmpFs * s
-  const denom = Math.max(1, Number(toolbarFontAtOpen) || bmpFs)
-  const cur = Math.max(1, Number(fmt?.fontSizeCss) || denom)
-  const rel = denom > 0 ? cur / denom : 1
-  const editorFontCssPx = Math.max(6, Math.min(240, geomFontCss * rel))
-  const bmpH = Math.max(bmpFs * 0.92, Number(block.height) || bmpFs)
-  const geomLineCss = bmpH * syEff
-  const lineHeightPx = Math.max(
-    Math.round(editorFontCssPx * 1.06),
-    Math.round(geomLineCss * rel)
-  )
-  return { editorFontCssPx, lineHeightPx, rel }
-}
-
-/** Added text is drawn with no fill in the viewer and on export — PDF shows through. */
-const ANNOT_TEXT_DISPLAY_BG = 'transparent'
-/** Must match backend `ANNOT_UI_LINE_HEIGHT` in applyEdits.js. */
-const ANNOT_UI_LINE_HEIGHT = 1.35
-
-/** Initial empty add-text width ≈ this many average-width glyphs at 14px (matches tight placed-text look). */
-const TEXT_DRAFT_INITIAL_CHAR_COLUMNS = 4
-/** Typical Latin sans advance width / em (between ~0.48–0.58 for UI fonts). */
-const TEXT_DRAFT_CHAR_ADVANCE_EM = 0.54
-/** Horizontal padding inside the draft ring (caret, border). */
-const TEXT_DRAFT_H_PADDING_PX = 6
-/** New Add Text drafts always start at this CSS px size; initial `nw`/`nh` derive from it so the box matches the line. */
-const ADD_TEXT_DRAFT_DEFAULT_FONT_CSS = 14
-
-function normalizeHexForColorInput(c) {
-  const s = String(c || '#000000').trim()
-  if (/^#[0-9a-fA-F]{6}$/.test(s)) return s
-  if (/^#[0-9a-fA-F]{3}$/.test(s)) {
-    const a = s.slice(1)
-    return `#${a[0]}${a[0]}${a[1]}${a[1]}${a[2]}${a[2]}`
-  }
-  return '#000000'
-}
-
-function seedFormatFromAnnotTextItem(it) {
-  const base = defaultTextFormat()
-  if (!it || it.type !== 'text') return base
-  const cssN = Math.max(6, Math.min(144, Number(it.fontSizeCss) || 14))
-  return {
-    ...base,
-    fontSizeCss: cssN,
-    color: normalizeHexForColorInput(it.color),
-    bold: !!it.bold,
-    italic: !!it.italic,
-    underline: !!it.underline,
-    fontFamily:
-      typeof it.fontFamily === 'string' && it.fontFamily.trim() ? it.fontFamily.trim() : base.fontFamily,
-    align: typeof it.align === 'string' && it.align ? it.align : base.align,
-  }
-}
-
-/** Hex #RGB / #RRGGBB → rgba() for translucent highlights (no solid blocks). */
-function hexToRgba(hex, opacity) {
-  const h = String(hex || '#facc15').replace('#', '')
-  const full =
-    h.length === 3
-      ? h
-          .split('')
-          .map((c) => c + c)
-          .join('')
-      : h
-  const n = parseInt(full, 16)
-  if (!Number.isFinite(n)) return `rgba(250, 204, 21, ${opacity})`
-  const r = (n >> 16) & 255
-  const g = (n >> 8) & 255
-  const b = n & 255
-  let a = Number(opacity)
-  if (!Number.isFinite(a)) a = 0.35
-  a = Math.min(1, Math.max(0.05, a))
-  return `rgba(${r},${g},${b},${a})`
-}
-
-/** Inline editor “paper” fill — slightly translucent unless the user picked a manual mask colour. */
-function nativeEditorFillCss(maskHex, fmt) {
-  const manual =
-    fmt?.maskColorMode === 'manual' && /^#[0-9a-fA-F]{6}$/.test(fmt?.maskColorHex || '')
-  const hex = manual ? fmt.maskColorHex : maskHex || '#ffffff'
-  /* Slightly translucent auto-mask so 1px vector rules can show through the overlay. */
-  return hexToRgba(hex, manual ? 1 : 0.92)
-}
-
-/** Normalize for comparing contenteditable value vs baseline (opening string). */
-function normalizeNativeCompare(s) {
-  return String(s ?? '')
-    .replace(/\u00a0/g, ' ')
-    .replace(/\r\n/g, '\n')
-    .trim()
-}
-
-function snapshotNativeFormat(f) {
-  const fmt = f ?? defaultTextFormat()
-  return {
-    bold: !!fmt.bold,
-    italic: !!fmt.italic,
-    underline: !!fmt.underline,
-    align: String(fmt.align || 'left'),
-    color: String(fmt.color || '#000000')
-      .trim()
-      .toLowerCase(),
-    opacity: Number(fmt.opacity ?? 1),
-    rotationDeg: Number(fmt.rotationDeg ?? 0),
-    fontFamily: String(fmt.fontFamily || 'Helvetica'),
-    fontSizeCss: Number(fmt.fontSizeCss) || 14,
-  }
-}
-
-function nativeFormatSnapshotsEqual(a, b) {
-  if (!a || !b) return false
-  return (
-    a.bold === b.bold &&
-    a.italic === b.italic &&
-    a.underline === b.underline &&
-    a.align === b.align &&
-    a.color === b.color &&
-    a.opacity === b.opacity &&
-    a.rotationDeg === b.rotationDeg &&
-    a.fontFamily === b.fontFamily &&
-    a.fontSizeCss === b.fontSizeCss
-  )
-}
-
-/**
- * contentEditable must not use `{item.text}` as React children: any parent re-render
- * (e.g. Text format syncing font size/color via patchAnnotItem) resets the DOM and
- * wipes in-progress typing or stacks visual state. Seed text once per open instead.
- */
-/** iLovePDF-style: red circle X, overlaps top-right of the blue text frame */
-function TextAnnotBoxDeleteBtn({ onDelete }) {
-  return (
-    <button
-      type="button"
-      data-pdf-annot-delete-skip-blur
-      aria-label="Delete text"
-      className="absolute -right-2 -top-2 z-[6] flex h-6 w-6 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-red-500 text-[17px] font-light leading-none text-white shadow-md hover:bg-red-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
-      onPointerDown={(e) => {
-        e.preventDefault()
-        e.stopPropagation()
-      }}
-      onClick={(e) => {
-        e.preventDefault()
-        e.stopPropagation()
-        onDelete()
-      }}
-    >
-      ×
-    </button>
-  )
-}
-
-function AnnotTextContentEditable({
-  item,
-  fontSizePx,
-  color,
-  bold,
-  italic,
-  underline,
-  fontFamily,
-  align,
-  editorRef,
-  onCommit,
-}) {
-  /* Seed DOM once per mount. Omitting item.text from deps avoids resetting when Text format sync patches font/color. */
-  useLayoutEffect(() => {
-    const el = editorRef.current
-    if (!el) return
-    el.textContent = item.text ?? ''
-  }, [item.id]) // eslint-disable-line react-hooks/exhaustive-deps -- see comment above
-
-  const fontStack = cssAnnotPreviewFontStack(fontFamily || 'Helvetica')
-
-  return (
-    <div
-      ref={(el) => {
-        editorRef.current = el
-      }}
-      contentEditable
-      suppressContentEditableWarning
-      data-pdf-annot-editor
-      className="pdf-annot-inline-editor inline-block min-h-[1.5rem] w-max max-w-[min(18rem,calc(100vw-2rem))] cursor-text select-text rounded-sm border-0 py-0 pl-0 pr-2 font-sans outline-none"
-      style={{
-        fontSize: `${fontSizePx}px`,
-        /* Keep in sync with ANNOT_UI_LINE_HEIGHT in backend applyEdits.js */
-        lineHeight: 1.35,
-        color,
-        background: 'transparent',
-        backgroundColor: ANNOT_TEXT_DISPLAY_BG,
-        caretColor: '#2563eb',
-        minWidth: '2ch',
-        fontWeight: bold ? 700 : 400,
-        fontStyle: italic ? 'italic' : 'normal',
-        textDecoration: underline ? 'underline' : 'none',
-        textDecorationLine: underline ? 'underline' : 'none',
-        fontFamily: fontStack,
-        textAlign: align || 'left',
-      }}
-      onPointerDown={(e) => e.stopPropagation()}
-      onInput={(e) => {
-        const el = e.currentTarget
-        if ((el.innerText ?? '').length > MAX_ANNOT_TEXT_LENGTH) {
-          const sel = window.getSelection()
-          const range = sel?.getRangeAt(0)
-          el.innerText = (el.innerText ?? '').slice(0, MAX_ANNOT_TEXT_LENGTH)
-          if (range) {
-            try {
-              sel.removeAllRanges()
-              range.collapse(false)
-              sel.addRange(range)
-            } catch { /* ignore */ }
-          }
-        }
-      }}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') {
-          e.preventDefault()
-          const el = editorRef.current
-          onCommit(item.id, el?.innerText ?? '')
-        }
-      }}
-    />
-  )
-}
+import {
+  ADD_TEXT_DRAFT_DEFAULT_FONT_CSS,
+  ANNOT_SCOPE_EVENT,
+  ANNOT_TEXT_DISPLAY_BG,
+  ANNOT_UI_LINE_HEIGHT,
+  MAX_ANNOT_TEXT_LENGTH,
+  MAX_ANNOT_TEXT_PER_PAGE,
+  MAX_DRAW_POINTS,
+  MAX_SIGN_PER_PAGE,
+  TEXT_DRAFT_CHAR_ADVANCE_EM,
+  TEXT_DRAFT_H_PADDING_PX,
+  TEXT_DRAFT_INITIAL_CHAR_COLUMNS,
+} from './pdfPageCanvas/constants.js'
+import {
+  AnnotTextContentEditable,
+  TextAnnotBoxDeleteBtn,
+} from './pdfPageCanvas/PdfPageCanvasInlineEditors.jsx'
+import { paintAnnotationItemsOnContext } from './pdfPageCanvas/paintAnnotationOverlay.js'
+import {
+  clamp01,
+  nativeEditorFillCss,
+  nativeFormatSnapshotsEqual,
+  nativeInlineEditorMetrics,
+  normalizeHexForColorInput,
+  normalizeNativeCompare,
+  normalizePlacedAnnotDraftText,
+  rawBase64ToUint8,
+  seedFormatFromAnnotTextItem,
+  snapPlacedAnnotToNativeGrid,
+  snapshotNativeFormat,
+} from './pdfPageCanvas/helpers.js'
+import { usePdfOverlayLayoutSync } from './pdfPageCanvas/usePdfOverlayLayoutSync.js'
+import { usePdfPageRenderPipeline } from './pdfPageCanvas/usePdfPageRenderPipeline.js'
 
 /**
  * Renders one PDF page with pdf.js and an interaction overlay.
@@ -467,6 +156,8 @@ function PdfPageCanvas({
       if (Math.abs(dt) > 0.75) return dt
       return a.left - b.left
     })
+    /** pdf.js viewport top per block — do not move idle hit boxes too far below real glyph tops. */
+    const origTopById = new Map(list.map((b) => [b.id, b.top]))
     /** @type {Map<string, { top: number, bottom: number }>} */
     const m = new Map()
     for (const b of list) {
@@ -492,7 +183,16 @@ function PdfPageCanvas({
 
         const ySplit = (ca.bottom + cb.top) * 0.5
         const newABottom = Math.max(ca.top + 2, Math.min(ca.bottom, ySplit))
-        const newBTop = Math.min(cb.bottom - 2, Math.max(cb.top, ySplit))
+        const newBTopUncapped = Math.min(cb.bottom - 2, Math.max(cb.top, ySplit))
+        /*
+         * Uncapped, ySplit can sit well inside the lower line’s pdf bbox when the upper line’s box
+         * is tall — idle “Tap to edit” chrome then starts below cap height and looks misaligned.
+         * Allow only a modest downward shift from the original pdf top; overlap passes then shrink
+         * the upper line’s bottom further instead.
+         */
+        const bPdfTop = origTopById.get(b.id) ?? cb.top
+        const maxLowerShift = Math.min(12, Math.max(2.5, bh * 0.32))
+        const newBTop = Math.max(cb.top, Math.min(newBTopUncapped, bPdfTop + maxLowerShift))
         if (newABottom < ca.bottom - 0.05) {
           ca.bottom = newABottom
           changed = true
@@ -795,6 +495,15 @@ function PdfPageCanvas({
 
   const [textDiag, setTextDiag] = useState(null)
 
+  usePdfPageRenderPipeline({
+    pdfPage,
+    pdfCanvasRef,
+    metaRef,
+    setTextRuns,
+    setTextDiag,
+    setReady,
+  })
+
   const paintOverlay = useCallback((draftBox, draftLinePts) => {
     const overlay = overlayRef.current
     const pdfCv = pdfCanvasRef.current
@@ -805,152 +514,8 @@ function PdfPageCanvas({
     if (!ctx) return
     const w = overlay.width
     const h = overlay.height
-    ctx.clearRect(0, 0, w, h)
-
-    const drawItem = (it) => {
-      switch (it.type) {
-        case 'draw': {
-          const pts = it.points || []
-          if (pts.length < 2) break
-          ctx.strokeStyle = it.color || '#111827'
-          ctx.lineWidth = Math.max(1, it.lineWidthCss ?? 2)
-          ctx.lineJoin = 'round'
-          ctx.lineCap = 'round'
-          ctx.beginPath()
-          ctx.moveTo(pts[0].nx * w, pts[0].ny * h)
-          for (let i = 1; i < pts.length; i++) {
-            ctx.lineTo(pts[i].nx * w, pts[i].ny * h)
-          }
-          ctx.stroke()
-          break
-        }
-        case 'highlight': {
-          const hiOp = Number(it.opacity)
-          const op = Number.isFinite(hiOp) ? Math.min(1, Math.max(0.05, hiOp)) : 0.35
-          ctx.fillStyle = hexToRgba(it.color, op)
-          ctx.fillRect(it.x * w, it.y * h, it.w * w, it.h * h)
-          break
-        }
-        case 'rect': {
-          ctx.strokeStyle = it.strokeColor || '#2563eb'
-          ctx.lineWidth = Math.max(1, it.lineWidthCss ?? 2)
-          ctx.strokeRect(it.x * w, it.y * h, it.w * w, it.h * h)
-          break
-        }
-        case 'text': {
-          ctx.fillStyle = it.color || '#111827'
-          const fs = Math.max(10, it.fontSizeCss ?? 14)
-          ctx.font = `${fs}px system-ui, sans-serif`
-          ctx.textBaseline = 'top'
-          ctx.fillText(it.text || '', it.x * w, it.y * h)
-          break
-        }
-        default:
-          break
-      }
-    }
-
-    for (const it of items) {
-      if (it.type === 'text') continue
-      if (it.rasterizedInPdf) continue
-      drawItem(it)
-    }
-
-    if (draftLinePts && draftLinePts.length >= 2) {
-      ctx.strokeStyle = '#111827'
-      ctx.lineWidth = 2
-      ctx.lineJoin = 'round'
-      ctx.lineCap = 'round'
-      ctx.beginPath()
-      ctx.moveTo(draftLinePts[0].nx * w, draftLinePts[0].ny * h)
-      for (let i = 1; i < draftLinePts.length; i++) {
-        ctx.lineTo(draftLinePts[i].nx * w, draftLinePts[i].ny * h)
-      }
-      ctx.stroke()
-    }
-
-    if (draftBox) {
-      const x = Math.min(draftBox.x0, draftBox.x1) * w
-      const y = Math.min(draftBox.y0, draftBox.y1) * h
-      const rw = Math.abs(draftBox.x1 - draftBox.x0) * w
-      const rh = Math.abs(draftBox.y1 - draftBox.y0) * h
-      if (draftBox.mode === 'highlight') {
-        ctx.fillStyle = hexToRgba('#facc15', 0.35)
-        ctx.fillRect(x, y, rw, rh)
-      } else {
-        ctx.strokeStyle = '#2563eb'
-        ctx.lineWidth = 2
-        ctx.strokeRect(x, y, rw, rh)
-      }
-    }
+    paintAnnotationItemsOnContext(ctx, w, h, items, draftLinePts, draftBox)
   }, [items])
-
-  /* Single pipeline: render page → then extract text. Avoids ready flicker and races where a
-   * cancelled render leaves a partial canvas (torn underlines) while getTextContent runs again. */
-  useEffect(() => {
-    if (!pdfPage) return
-    let cancelled = false
-    const canvas = pdfCanvasRef.current
-    if (!canvas) return
-    const scale = RENDER_SCALE
-    const viewport = pdfPage.getViewport({ scale })
-    const base = pdfPage.getViewport({ scale: 1 })
-    /* pdfW/pdfH = page size in PDF points. cssW/cssH must match on-screen canvas (set in layout sync), not bitmap px. */
-    metaRef.current = {
-      ...metaRef.current,
-      pdfW: base.width,
-      pdfH: base.height,
-    }
-    canvas.width = viewport.width
-    canvas.height = viewport.height
-    const ctx = canvas.getContext('2d', { alpha: false })
-    if (!ctx) {
-      setTextDiag({ count: 0, scanned: true, error: true })
-      setReady(true)
-      return () => {}
-    }
-    const task = pdfPage.render({ canvasContext: ctx, viewport })
-
-    task.promise
-      .then(() => {
-        if (cancelled) return null
-        return pdfPage.getTextContent()
-      })
-      .then((tc) => {
-        if (cancelled || tc == null) return
-        const runs = buildTextRuns(viewport, tc)
-        setTextRuns(runs)
-        setTextDiag({ count: runs.length, scanned: true })
-        setReady(true)
-      })
-      .catch((e) => {
-        if (cancelled) return
-        if (e?.name === 'RenderingCancelledException') return
-        console.error(e)
-        setTextRuns([])
-        setTextDiag({ count: 0, scanned: true, error: true })
-        setReady(true)
-      })
-
-    return () => {
-      cancelled = true
-      try {
-        task.cancel()
-      } catch {
-        /* ignore */
-      }
-      const c = pdfCanvasRef.current
-      const cx = c?.getContext?.('2d')
-      if (c && cx && c.width > 0 && c.height > 0) {
-        cx.setTransform(1, 0, 0, 1, 0, 0)
-        cx.fillStyle = '#ffffff'
-        cx.fillRect(0, 0, c.width, c.height)
-      }
-      setReady(false)
-      setTextRuns([])
-      setTextDiag(null)
-    }
-  }, [pdfPage])
 
   useEffect(() => {
     if (tool !== 'editText' || !editTextMode) {
@@ -975,60 +540,16 @@ function PdfPageCanvas({
     paintOverlay()
   }, [ready, items, paintOverlay])
 
-  /**
-   * Keep the overlay’s CSS box and bitmap size locked to the PDF canvas.
-   * Without this, `w-full` / `h-full` on the overlay can diverge from the scaled
-   * PDF canvas so pointer events miss the overlay and tools feel “broken”.
-   */
-  useLayoutEffect(() => {
-    const pdf = pdfCanvasRef.current
-    const overlay = overlayRef.current
-    if (!pdf || !overlay || !ready) return
-
-    let cancelled = false
-    const sync = () => {
-      if (cancelled) return
-      const cw = pdf.clientWidth
-      const ch = pdf.clientHeight
-      if (cw < 2 || ch < 2) return
-      metaRef.current = {
-        ...metaRef.current,
-        cssW: cw,
-        cssH: ch,
-        bmpW: pdf.width || 1,
-        bmpH: pdf.height || 1,
-      }
-      setCanvasLayout({
-        cssW: cw,
-        cssH: ch,
-        bmpW: pdf.width || 1,
-        bmpH: pdf.height || 1,
-      })
-      overlay.style.width = `${cw}px`
-      overlay.style.height = `${ch}px`
-      overlay.width = pdf.width
-      overlay.height = pdf.height
-      paintOverlay()
-    }
-
-    sync()
-    // Flex/grid layout often settles after the first frame; retry so the overlay matches the PDF canvas.
-    const id1 = requestAnimationFrame(() => sync())
-    let idInner = 0
-    const id2 = requestAnimationFrame(() => {
-      idInner = requestAnimationFrame(() => sync())
-    })
-    const ro = new ResizeObserver(() => sync())
-    ro.observe(pdf)
-    return () => {
-      cancelled = true
-      cancelAnimationFrame(id1)
-      cancelAnimationFrame(id2)
-      cancelAnimationFrame(idInner)
-      ro.disconnect()
-    }
-    /* Re-sync when inline edit opens/closes — toolbar reflow / overflow can change CSS vs bitmap mapping for one frame. */
-  }, [pdfPage, ready, paintOverlay, nativeEdit])
+  usePdfOverlayLayoutSync({
+    pdfPage,
+    ready,
+    nativeEdit,
+    pdfCanvasRef,
+    overlayRef,
+    metaRef,
+    setCanvasLayout,
+    paintOverlay,
+  })
 
   const normPoint = (e) => {
     const overlay = overlayRef.current
@@ -1805,8 +1326,21 @@ function PdfPageCanvas({
   }, [tool])
 
   const { cssW: cw, cssH: ch, bmpW, bmpH } = canvasLayout
-  const sx = bmpW > 0 ? cw / bmpW : 1
-  const sy = bmpH > 0 ? ch / bmpH : 1
+  const sxRaw = bmpW > 0 ? cw / bmpW : 1
+  const syRaw = bmpH > 0 ? ch / bmpH : 1
+  /*
+   * When the canvas CSS box matches the bitmap aspect (normal case), sx and sy should match.
+   * Rounding on clientHeight vs width-derived height can differ by a subpixel ratio; using one
+   * scale for both axes keeps the text layer aligned with the rasterized page.
+   */
+  let sx = sxRaw
+  let sy = syRaw
+  if (bmpW > 0 && bmpH > 0 && cw > 0 && ch > 0) {
+    const rel = Math.abs(sxRaw - syRaw) / Math.max(sxRaw, syRaw)
+    if (rel < 0.012) {
+      sx = sy = (sxRaw + syRaw) / 2
+    }
+  }
 
   useLayoutEffect(() => {
     if (!textDraft) return

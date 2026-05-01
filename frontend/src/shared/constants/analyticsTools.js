@@ -27,6 +27,14 @@ export const ANALYTICS_TOOL = {
   gst_invoice: 'gst_invoice',
   /** Server ocrmypdf + Tesseract → searchable PDF. */
   ocr_pdf: 'ocr_pdf',
+  /** PDF → PNG pages in browser. */
+  pdf_to_png: 'pdf_to_png',
+  /** PDF → .txt (pdf.js text layer). */
+  pdf_to_text: 'pdf_to_text',
+  /** Flatten forms or rasterize pages. */
+  flatten_pdf: 'flatten_pdf',
+  /** Fill AcroForm fields. */
+  fill_pdf: 'fill_pdf',
 }
 
 /** Toolkit registry `id` → analytics feature key for `feature_used` */
@@ -48,4 +56,8 @@ export const REGISTRY_ID_TO_FEATURE = {
   'word-to-pdf': ANALYTICS_TOOL.word_to_pdf,
   'gst-invoice': ANALYTICS_TOOL.gst_invoice,
   'ocr-pdf': ANALYTICS_TOOL.ocr_pdf,
+  'pdf-to-png': ANALYTICS_TOOL.pdf_to_png,
+  'pdf-to-text': ANALYTICS_TOOL.pdf_to_text,
+  'flatten-pdf': ANALYTICS_TOOL.flatten_pdf,
+  'fill-pdf': ANALYTICS_TOOL.fill_pdf,
 }

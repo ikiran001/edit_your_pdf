@@ -13,9 +13,13 @@ const MergePdfPage = lazy(() => import('../features/merge-pdf/MergePdfPage.jsx')
 const SplitPdfPage = lazy(() => import('../features/split-pdf/SplitPdfPage.jsx'))
 const CompressPdfPage = lazy(() => import('../features/compress-pdf/CompressPdfPage.jsx'))
 const PdfToJpgPage = lazy(() => import('../features/pdf-to-jpg/PdfToJpgPage.jsx'))
+const PdfToPngPage = lazy(() => import('../features/pdf-to-png/PdfToPngPage.jsx'))
+const PdfToTextPage = lazy(() => import('../features/pdf-to-text/PdfToTextPage.jsx'))
 const JpgToPdfPage = lazy(() => import('../features/jpg-to-pdf/JpgToPdfPage.jsx'))
 const ScanToPdfPage = lazy(() => import('../features/scan-to-pdf/ScanToPdfPage.jsx'))
 const SignPdfPage = lazy(() => import('../features/sign-pdf/SignPdfPage.jsx'))
+const FillPdfPage = lazy(() => import('../features/fill-pdf/FillPdfPage.jsx'))
+const FlattenPdfPage = lazy(() => import('../features/flatten-pdf/FlattenPdfPage.jsx'))
 const UnlockPdfPage = lazy(() => import('../features/unlock-pdf/UnlockPdfPage.jsx'))
 const OcrPdfPage = lazy(() => import('../features/ocr-pdf/OcrPdfPage.jsx'))
 const EncryptPdfPage = lazy(() => import('../features/encrypt-pdf/EncryptPdfPage.jsx'))
@@ -87,9 +91,13 @@ export default function AppRoutes() {
               <Route path="/tools/split-pdf" element={<SplitPdfPage />} />
               <Route path="/tools/compress-pdf" element={<CompressPdfPage />} />
               <Route path="/tools/pdf-to-jpg" element={<PdfToJpgPage />} />
+              <Route path="/tools/pdf-to-png" element={<PdfToPngPage />} />
+              <Route path="/tools/pdf-to-text" element={<PdfToTextPage />} />
               <Route path="/tools/jpg-to-pdf" element={<JpgToPdfPage />} />
               <Route path="/tools/scan-to-pdf" element={<ScanToPdfPage />} />
               <Route path="/tools/sign-pdf" element={<SignPdfPage />} />
+              <Route path="/tools/fill-pdf" element={<FillPdfPage />} />
+              <Route path="/tools/flatten-pdf" element={<FlattenPdfPage />} />
               <Route path="/tools/unlock-pdf" element={<UnlockPdfPage />} />
               <Route path="/tools/ocr-pdf" element={<OcrPdfPage />} />
               <Route path="/tools/encrypt-pdf" element={<EncryptPdfPage />} />

@@ -15,7 +15,7 @@ export const TOOL_NAV_GROUPS = [
   {
     label: 'Edit & sign',
     tint: 'rose',
-    toolIds: ['edit-pdf', 'sign-pdf', 'add-watermark'],
+    toolIds: ['edit-pdf', 'sign-pdf', 'fill-pdf', 'flatten-pdf', 'add-watermark'],
   },
   {
     label: 'Convert & export',
@@ -23,6 +23,8 @@ export const TOOL_NAV_GROUPS = [
     toolIds: [
       'compress-pdf',
       'pdf-to-jpg',
+      'pdf-to-png',
+      'pdf-to-text',
       'jpg-to-pdf',
       'scan-to-pdf',
       'ocr-pdf',

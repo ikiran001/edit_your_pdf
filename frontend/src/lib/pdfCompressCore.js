@@ -81,7 +81,13 @@ export async function compressPdfBytes(bytes, level, opts = {}) {
       const buf = new Uint8Array(await res.arrayBuffer())
 
       if (res.ok && buf.byteLength > 0 && isPdfMagic(buf)) {
-        return { bytes: buf, via: 'api' }
+        if (buf.byteLength < bytes.byteLength) {
+          return { bytes: buf, via: 'api' }
+        }
+        console.warn(
+          '[compress-pdf] API returned larger file than input — keeping original bytes (server should avoid this; check deploy).'
+        )
+        return { bytes: bytes.byteLength ? bytes.slice() : bytes, via: 'api' }
       }
 
       if (res.status === 404) {
@@ -107,5 +113,8 @@ export async function compressPdfBytes(bytes, level, opts = {}) {
   }
 
   const out = await compressPdfBytesPdfLib(bytes, level)
-  return { bytes: out, via: 'fallback' }
+  if (out.byteLength < bytes.byteLength) {
+    return { bytes: out, via: 'fallback' }
+  }
+  return { bytes: bytes.byteLength ? bytes.slice() : bytes, via: 'fallback' }
 }
