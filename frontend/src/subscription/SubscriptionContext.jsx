@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- context module: provider + hook */
 import {
   createContext,
   useCallback,
@@ -33,6 +34,10 @@ export function SubscriptionProvider({ children }) {
           setError(
             'Subscription API not found (404). Your API host is running an older build: redeploy the backend with the latest code so routes like GET /subscription/me exist. After deploy, GET /health should include a "subscription" object.'
           )
+        } else if (r.status === 503 && r.data?.error === 'auth_unavailable') {
+          /* Firebase Admin not configured on the API — billing/subscription cannot be verified server-side.
+             Tools that only use the browser (e.g. PDF→Word) still work; configure FIREBASE_SERVICE_ACCOUNT_JSON on the API for subscription UI. */
+          setError(null)
         } else {
           setError(r.data?.message || r.data?.error || 'Could not load subscription.')
         }

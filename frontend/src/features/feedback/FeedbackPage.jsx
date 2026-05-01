@@ -67,7 +67,7 @@ export default function FeedbackPage() {
 
   useEffect(() => {
     if (consumeFeedbackPrompt()) {
-      setSubmitSource('post_download')
+      queueMicrotask(() => setSubmitSource('post_download'))
     }
   }, [])
 
@@ -91,7 +91,9 @@ export default function FeedbackPage() {
   }, [feedbackReachable])
 
   useEffect(() => {
-    void load()
+    queueMicrotask(() => {
+      void load()
+    })
   }, [load])
 
   const onSubmit = async (e) => {

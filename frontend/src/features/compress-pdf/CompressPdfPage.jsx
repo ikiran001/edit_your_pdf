@@ -5,6 +5,7 @@ import ToolPageShell from '../../shared/components/ToolPageShell.jsx'
 import ToolFeatureSeoSection from '../../shared/components/ToolFeatureSeoSection.jsx'
 import FileDropzone from '../../shared/components/FileDropzone.jsx'
 import { useToolEngagement } from '../../hooks/useToolEngagement.js'
+import { trackEvent } from '../../lib/analytics.js'
 import { ANALYTICS_TOOL } from '../../shared/constants/analyticsTools.js'
 import {
   compressPdfBytes,
@@ -143,6 +144,14 @@ export default function CompressPdfPage() {
       setItems(next)
       const anyFallback = next.some((x) => x.compressedVia === 'fallback')
       setUsedFallbackOnly(anyFallback)
+      const paths = next.map((x) => x.compressedVia || 'fallback')
+      const mode =
+        paths.every((p) => p === 'api')
+          ? 'api_only'
+          : paths.every((p) => p === 'fallback')
+            ? 'fallback_only'
+            : 'mixed'
+      trackEvent('compress_pdf_path', { mode })
       if (anyFallback) {
         setSuccess(
           'Done — but the server compressor (qpdf) was not used, so sizes may not drop. For real compression: run the backend locally (port 3001) or set VITE_API_BASE_URL on your production build.'

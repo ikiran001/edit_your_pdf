@@ -40,11 +40,12 @@ function formatIso(value) {
   }
 }
 
-function DetailRow({ icon: Icon, label, children }) {
+function DetailRow({ icon, label, children }) {
+  const IconGlyph = icon
   return (
     <li className="flex gap-3 rounded-lg py-2.5 pl-1 sm:items-start">
       <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
-        <Icon className="h-4 w-4" strokeWidth={2} aria-hidden />
+        <IconGlyph className="h-4 w-4" strokeWidth={2} aria-hidden />
       </span>
       <div className="min-w-0 flex-1">
         <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
