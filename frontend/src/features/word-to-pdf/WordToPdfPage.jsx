@@ -311,6 +311,14 @@ export default function WordToPdfPage() {
         ) : capsStatus === 'ready' && !caps?.docxToPdf ? (
           <div className="rounded-2xl border border-zinc-200 bg-zinc-50/90 p-6 text-sm text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900/50 dark:text-zinc-300">
             <p className="m-0 font-medium text-zinc-900 dark:text-zinc-100">Converter not configured</p>
+            <p className="mt-2 mb-0 leading-relaxed">
+              pdfpilot does <strong className="font-semibold">not</strong> offer layout-faithful Word → PDF entirely in
+              the browser — there is no lightweight client engine that matches Word/LibreOffice output. Full-fidelity
+              conversion requires your API to run <strong className="font-semibold">LibreOffice</strong> (
+              <code className="rounded bg-zinc-200 px-1 font-mono text-xs dark:bg-zinc-800">SOFFICE_PATH</code>) and/or a
+              separate <strong className="font-semibold">Gotenberg</strong> URL (
+              <code className="rounded bg-zinc-200 px-1 font-mono text-xs dark:bg-zinc-800">GOTENBERG_URL</code>).
+            </p>
             {caps?.gotenbergSameHostAsApi ? (
               <p className="mt-2 mb-0 rounded-lg border border-amber-200 bg-amber-50/90 px-3 py-2 text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
                 <strong className="font-medium">GOTENBERG_URL must not be this API’s URL.</strong> It has to be

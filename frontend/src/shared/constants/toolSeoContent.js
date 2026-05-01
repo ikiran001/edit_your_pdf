@@ -164,7 +164,7 @@ export const TOOL_SEO_BY_ID = {
     featureName: 'Compress PDF',
     intro: [
       'Compress PDF files to shrink size for email limits, cloud folders, and phones. Pick a level that balances smaller files against how sharp you need the document to look.',
-      'Compression runs entirely in your browser—your PDF never has to sit on a stranger’s server just to lose a few megabytes.',
+      'When your site points at a pdfpilot API with qpdf (and Ghostscript for Medium/High), compression runs there for real stream downsampling. If the API is missing, pdfpilot falls back to an in-browser pdf-lib rewrite — sizes may barely change.',
     ],
     steps: [
       'Open Compress PDF and add one or more PDFs.',
@@ -188,8 +188,8 @@ export const TOOL_SEO_BY_ID = {
         body: 'Lighten travel folders without deleting photos.',
       },
       {
-        title: 'Browser-side processing',
-        body: 'Keep contracts and payroll PDFs in a local-first workflow when possible.',
+        title: 'Flexible deployment',
+        body: 'Strongest shrink when your API runs qpdf/Ghostscript; pdf-lib fallback keeps the tool usable on static hosting.',
       },
     ],
     highlights: [
@@ -682,6 +682,54 @@ export const TOOL_SEO_BY_ID = {
       {
         title: 'Proof before publishing',
         body: 'Automated PDF→Word often shifts layout slightly; always review before final use.',
+      },
+    ],
+  },
+
+  'word-to-pdf': {
+    featureName: 'Word to PDF',
+    intro: [
+      'Turn a Microsoft Word .docx into a PDF for sharing, printing, or archiving. Upload your document and download a PDF when conversion finishes.',
+      'Layout-faithful .docx → .pdf uses your configured pdfpilot API (LibreOffice on the server and/or a separate Gotenberg service), not this static page alone. pdfpilot does not ship an in-browser engine that matches full Word layout.',
+    ],
+    steps: [
+      'Open Word to PDF from the toolkit.',
+      'Confirm your deployment sets SOFFICE_PATH and/or GOTENBERG_URL on the API so conversion is enabled.',
+      'Upload a .docx (drag-and-drop or browse).',
+      'Wait while the API converts the file to PDF.',
+      'Download the PDF when prompted (sign in first if your site requires accounts for downloads).',
+      'Open the PDF locally and spot-check fonts, tables, and page breaks.',
+    ],
+    benefits: [
+      {
+        title: 'Consistent with Word export',
+        body: 'Uses the same document-flow stack as other pdfpilot exports when the API is configured.',
+      },
+      {
+        title: 'No random converter site',
+        body: 'Files go to your API origin — pair with HTTPS and access controls you already run.',
+      },
+      {
+        title: 'Large-document friendly',
+        body: 'Typical business documents up to tens of megabytes work; keep the tab open on slow links.',
+      },
+      {
+        title: 'Pairs with PDF to Word',
+        body: 'Round-trip drafts when you need Word for heavy edits and PDF for sharing.',
+      },
+    ],
+    highlights: [
+      {
+        title: 'Server-side fidelity',
+        body: 'LibreOffice or Gotenberg handles complex styles better than a lightweight browser shim.',
+      },
+      {
+        title: 'Simple upload flow',
+        body: 'One .docx in, one PDF out after your API accepts the job.',
+      },
+      {
+        title: 'Operator-controlled',
+        body: 'Self-hosters enable conversion with environment variables they already document for PDF → Word.',
       },
     ],
   },

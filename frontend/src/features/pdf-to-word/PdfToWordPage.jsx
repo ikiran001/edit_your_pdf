@@ -133,6 +133,8 @@ export default function PdfToWordPage() {
         /** @type {'client' | 'server'} */
         let mode = 'server'
         let pageCount = 1
+        /** @type {{ text: string, numPages: number } | null} */
+        let extracted = null
 
         const tryClient = file.size <= CLIENT_PDF_MAX_BYTES
 
@@ -140,7 +142,8 @@ export default function PdfToWordPage() {
           setBusyPhase('client')
           try {
             const buf = await file.arrayBuffer()
-            const { text, numPages } = await extractPdfPlainText(buf)
+            extracted = await extractPdfPlainText(buf)
+            const { text, numPages } = extracted
             pageCount = Math.max(1, numPages)
             if (numPages <= CLIENT_PDF_MAX_PAGES && text.trim().length >= CLIENT_MIN_TEXT_CHARS) {
               blob = await buildMinimalDocxBlob(text)
@@ -149,6 +152,18 @@ export default function PdfToWordPage() {
           } catch (e) {
             console.warn('[pdf-to-word] browser conversion failed, will try server if available:', e)
           }
+        }
+
+        if (tryClient && !blob) {
+          const reason =
+            extracted == null
+              ? 'client_error'
+              : extracted.numPages > CLIENT_PDF_MAX_PAGES
+                ? 'page_limit'
+                : extracted.text.trim().length < CLIENT_MIN_TEXT_CHARS
+                  ? 'insufficient_text'
+                  : 'client_error'
+          trackEvent('pdf_to_word_client_skipped', { reason })
         }
 
         if (!blob) {
