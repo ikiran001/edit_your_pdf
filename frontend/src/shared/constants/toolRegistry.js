@@ -96,7 +96,7 @@ export const TOOL_REGISTRY = [
     id: 'word-to-pdf',
     path: '/tools/word-to-pdf',
     title: 'Word to PDF',
-    description: 'Needs configured API (LibreOffice and/or Gotenberg) — full layout fidelity is not done in-browser.',
+    description: 'Draft PDF in your browser — .docx is not uploaded for conversion.',
     implemented: true,
     icon: 'FileText',
   },

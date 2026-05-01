@@ -338,7 +338,7 @@ export default function PdfToWordPage() {
           >
             Word to PDF
           </Link>{' '}
-          (requires your configured API). Edit text in place?{' '}
+          (draft .pdf in your browser). Edit text in place?{' '}
           <Link
             to="/tools/edit-pdf"
             className="font-medium text-indigo-600 underline-offset-2 hover:underline dark:text-cyan-400"
