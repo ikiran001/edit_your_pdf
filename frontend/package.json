@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:analyze": "ANALYZE=1 vite build",
     "generate-favicons": "node scripts/generate-favicons.mjs",
     "create-hero-sample": "node scripts/create-hero-sample-pdf.mjs",
     "lint": "eslint .",
@@ -37,6 +38,7 @@
     "pdfjs-dist": "^5.5.207",
     "playwright": "^1.49.1",
     "png-to-ico": "^3.0.1",
+    "rollup-plugin-visualizer": "^7.0.1",
     "sharp": "^0.34.5",
     "tailwindcss": "^4.2.2",
     "vite": "^8.0.1"

@@ -1,34 +1,44 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import ErrorBoundary from '../shared/components/ErrorBoundary.jsx'
-import ToolkitHomePage from '../features/toolkit-home/ToolkitHomePage.jsx'
-import EditPdfPage from '../features/edit-pdf/EditPdfPage.jsx'
-import MergePdfPage from '../features/merge-pdf/MergePdfPage.jsx'
-import SplitPdfPage from '../features/split-pdf/SplitPdfPage.jsx'
-import CompressPdfPage from '../features/compress-pdf/CompressPdfPage.jsx'
-import PdfToJpgPage from '../features/pdf-to-jpg/PdfToJpgPage.jsx'
-import JpgToPdfPage from '../features/jpg-to-pdf/JpgToPdfPage.jsx'
-import ScanToPdfPage from '../features/scan-to-pdf/ScanToPdfPage.jsx'
-import SignPdfPage from '../features/sign-pdf/SignPdfPage.jsx'
-import UnlockPdfPage from '../features/unlock-pdf/UnlockPdfPage.jsx'
-import OcrPdfPage from '../features/ocr-pdf/OcrPdfPage.jsx'
-import EncryptPdfPage from '../features/encrypt-pdf/EncryptPdfPage.jsx'
-import OrganizePdfPage from '../features/organize-pdf/OrganizePdfPage.jsx'
-import PageNumbersPdfPage from '../features/add-page-numbers/PageNumbersPdfPage.jsx'
-import WatermarkPdfPage from '../features/add-watermark/WatermarkPdfPage.jsx'
-import WordToPdfPage from '../features/word-to-pdf/WordToPdfPage.jsx'
-import PdfToWordPage from '../features/pdf-to-word/PdfToWordPage.jsx'
-import GstInvoicePage from '../features/gst-invoice/GstInvoicePage.jsx'
-import MyDocumentsPage from '../features/my-documents/MyDocumentsPage.jsx'
-import SubscriptionBillingPage from '../features/account/SubscriptionBillingPage.jsx'
-import TermsOfServicePage from '../features/legal/TermsOfServicePage.jsx'
-import FeedbackPage from '../features/feedback/FeedbackPage.jsx'
-import AdminFeedbackPage from '../features/feedback/AdminFeedbackPage.jsx'
 import PrivateRoute from '../auth/PrivateRoute.jsx'
 import { pageView } from '../lib/analytics.js'
 import { docTitleForPath } from '../shared/constants/branding.js'
 import { ClientToolDownloadAuthProvider } from '../auth/ClientToolDownloadAuthContext.jsx'
 import SkipToContent from '../shared/components/SkipToContent.jsx'
+
+const ToolkitHomePage = lazy(() => import('../features/toolkit-home/ToolkitHomePage.jsx'))
+const EditPdfPage = lazy(() => import('../features/edit-pdf/EditPdfPage.jsx'))
+const MergePdfPage = lazy(() => import('../features/merge-pdf/MergePdfPage.jsx'))
+const SplitPdfPage = lazy(() => import('../features/split-pdf/SplitPdfPage.jsx'))
+const CompressPdfPage = lazy(() => import('../features/compress-pdf/CompressPdfPage.jsx'))
+const PdfToJpgPage = lazy(() => import('../features/pdf-to-jpg/PdfToJpgPage.jsx'))
+const JpgToPdfPage = lazy(() => import('../features/jpg-to-pdf/JpgToPdfPage.jsx'))
+const ScanToPdfPage = lazy(() => import('../features/scan-to-pdf/ScanToPdfPage.jsx'))
+const SignPdfPage = lazy(() => import('../features/sign-pdf/SignPdfPage.jsx'))
+const UnlockPdfPage = lazy(() => import('../features/unlock-pdf/UnlockPdfPage.jsx'))
+const OcrPdfPage = lazy(() => import('../features/ocr-pdf/OcrPdfPage.jsx'))
+const EncryptPdfPage = lazy(() => import('../features/encrypt-pdf/EncryptPdfPage.jsx'))
+const OrganizePdfPage = lazy(() => import('../features/organize-pdf/OrganizePdfPage.jsx'))
+const PageNumbersPdfPage = lazy(() => import('../features/add-page-numbers/PageNumbersPdfPage.jsx'))
+const WatermarkPdfPage = lazy(() => import('../features/add-watermark/WatermarkPdfPage.jsx'))
+const WordToPdfPage = lazy(() => import('../features/word-to-pdf/WordToPdfPage.jsx'))
+const PdfToWordPage = lazy(() => import('../features/pdf-to-word/PdfToWordPage.jsx'))
+const GstInvoicePage = lazy(() => import('../features/gst-invoice/GstInvoicePage.jsx'))
+const MyDocumentsPage = lazy(() => import('../features/my-documents/MyDocumentsPage.jsx'))
+const SubscriptionBillingPage = lazy(() => import('../features/account/SubscriptionBillingPage.jsx'))
+const TermsOfServicePage = lazy(() => import('../features/legal/TermsOfServicePage.jsx'))
+const FeedbackPage = lazy(() => import('../features/feedback/FeedbackPage.jsx'))
+const AdminFeedbackPage = lazy(() => import('../features/feedback/AdminFeedbackPage.jsx'))
+
+function RouteFallback() {
+  return (
+    <div className="flex min-h-[40vh] flex-col items-center justify-center gap-2 text-slate-500">
+      <span className="inline-block size-6 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600" aria-hidden />
+      <p className="text-sm">Loading…</p>
+    </div>
+  )
+}
 
 function RouteAnalytics() {
   const loc = useLocation()
@@ -49,46 +59,48 @@ export default function AppRoutes() {
       <ClientToolDownloadAuthProvider>
         <ErrorBoundary>
           <RouteAnalytics />
-          <Routes>
-        <Route path="/" element={<ToolkitHomePage />} />
-        <Route path="/terms" element={<TermsOfServicePage />} />
-        <Route path="/feedback" element={<FeedbackPage />} />
-        <Route path="/admin/feedback" element={<AdminFeedbackPage />} />
-        <Route
-          path="/my-documents"
-          element={
-            <PrivateRoute>
-              <MyDocumentsPage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/account/subscription"
-          element={
-            <PrivateRoute>
-              <SubscriptionBillingPage />
-            </PrivateRoute>
-          }
-        />
-        <Route path="/tools/edit-pdf/editor" element={<EditPdfPage />} />
-        <Route path="/tools/edit-pdf" element={<EditPdfPage />} />
-        <Route path="/tools/merge-pdf" element={<MergePdfPage />} />
-        <Route path="/tools/split-pdf" element={<SplitPdfPage />} />
-        <Route path="/tools/compress-pdf" element={<CompressPdfPage />} />
-        <Route path="/tools/pdf-to-jpg" element={<PdfToJpgPage />} />
-        <Route path="/tools/jpg-to-pdf" element={<JpgToPdfPage />} />
-        <Route path="/tools/scan-to-pdf" element={<ScanToPdfPage />} />
-        <Route path="/tools/sign-pdf" element={<SignPdfPage />} />
-        <Route path="/tools/unlock-pdf" element={<UnlockPdfPage />} />
-        <Route path="/tools/ocr-pdf" element={<OcrPdfPage />} />
-        <Route path="/tools/encrypt-pdf" element={<EncryptPdfPage />} />
-        <Route path="/tools/organize-pdf" element={<OrganizePdfPage />} />
-        <Route path="/tools/add-page-numbers" element={<PageNumbersPdfPage />} />
-        <Route path="/tools/add-watermark" element={<WatermarkPdfPage />} />
-        <Route path="/tools/pdf-to-word" element={<PdfToWordPage />} />
-        <Route path="/tools/word-to-pdf" element={<WordToPdfPage />} />
-        <Route path="/tools/gst-invoice" element={<GstInvoicePage />} />
-          </Routes>
+          <Suspense fallback={<RouteFallback />}>
+            <Routes>
+              <Route path="/" element={<ToolkitHomePage />} />
+              <Route path="/terms" element={<TermsOfServicePage />} />
+              <Route path="/feedback" element={<FeedbackPage />} />
+              <Route path="/admin/feedback" element={<AdminFeedbackPage />} />
+              <Route
+                path="/my-documents"
+                element={
+                  <PrivateRoute>
+                    <MyDocumentsPage />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/account/subscription"
+                element={
+                  <PrivateRoute>
+                    <SubscriptionBillingPage />
+                  </PrivateRoute>
+                }
+              />
+              <Route path="/tools/edit-pdf/editor" element={<EditPdfPage />} />
+              <Route path="/tools/edit-pdf" element={<EditPdfPage />} />
+              <Route path="/tools/merge-pdf" element={<MergePdfPage />} />
+              <Route path="/tools/split-pdf" element={<SplitPdfPage />} />
+              <Route path="/tools/compress-pdf" element={<CompressPdfPage />} />
+              <Route path="/tools/pdf-to-jpg" element={<PdfToJpgPage />} />
+              <Route path="/tools/jpg-to-pdf" element={<JpgToPdfPage />} />
+              <Route path="/tools/scan-to-pdf" element={<ScanToPdfPage />} />
+              <Route path="/tools/sign-pdf" element={<SignPdfPage />} />
+              <Route path="/tools/unlock-pdf" element={<UnlockPdfPage />} />
+              <Route path="/tools/ocr-pdf" element={<OcrPdfPage />} />
+              <Route path="/tools/encrypt-pdf" element={<EncryptPdfPage />} />
+              <Route path="/tools/organize-pdf" element={<OrganizePdfPage />} />
+              <Route path="/tools/add-page-numbers" element={<PageNumbersPdfPage />} />
+              <Route path="/tools/add-watermark" element={<WatermarkPdfPage />} />
+              <Route path="/tools/pdf-to-word" element={<PdfToWordPage />} />
+              <Route path="/tools/word-to-pdf" element={<WordToPdfPage />} />
+              <Route path="/tools/gst-invoice" element={<GstInvoicePage />} />
+            </Routes>
+          </Suspense>
         </ErrorBoundary>
       </ClientToolDownloadAuthProvider>
     </BrowserRouter>

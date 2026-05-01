@@ -1,5 +1,4 @@
 import express from 'express';
-import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import { execFileSync } from 'child_process';
@@ -23,6 +22,13 @@ import { getQpdfBinary } from './utils/resolveQpdf.js';
 import { getGhostscriptBinary } from './utils/resolveGhostscript.js';
 import { getOcrmypdfBinary } from './utils/resolveOcrmypdf.js';
 import { ensureNotoFontsReady } from './services/pdfUnicodeFonts.js';
+import {
+  cpuHeavyLimiter,
+  editLimiter,
+  securityCors,
+  securityHelmet,
+  uploadLimiter,
+} from './middleware/httpSecurity.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -60,13 +66,14 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 const app = express();
-app.use(
-  cors({
-    origin: true,
-    credentials: true,
-    exposedHeaders: ['X-OCR-Page-Count', 'X-OCR-Truncated', 'X-OCR-Original-Pages'],
-  })
-);
+app.set('trust proxy', process.env.TRUST_PROXY_HOPS === '0' ? false : Number(process.env.TRUST_PROXY_HOPS || 1));
+app.use(securityHelmet());
+app.use(securityCors());
+
+const healthVerbose =
+  process.env.HEALTH_VERBOSE === '1' ||
+  process.env.HEALTH_VERBOSE === 'true' ||
+  process.env.NODE_ENV !== 'production';
 
 /** Root URL — browsers and uptime checks often hit `/` first (Docker/Render default). */
 app.get('/', (req, res) => {
@@ -88,8 +95,12 @@ app.get('/', (req, res) => {
   });
 });
 
-/** Production check: GET https://your-api.onrender.com/health */
+/** Production check: GET https://your-api.onrender.com/health — minimal JSON unless `HEALTH_VERBOSE=1` or non-production. */
 app.get('/health', (_req, res) => {
+  if (!healthVerbose) {
+    return res.json({ ok: true, service: 'pdfpilot-api' });
+  }
+
   const qpdfBin = getQpdfBinary();
   let qpdfVersion = null;
   if (qpdfBin) {
@@ -168,6 +179,14 @@ app.post(
   express.raw({ type: 'application/json' }),
   handleRazorpayWebhook
 );
+
+app.use('/ocr-pdf', cpuHeavyLimiter);
+app.use('/compress-pdf', cpuHeavyLimiter);
+app.use('/document-flow', cpuHeavyLimiter);
+app.use('/unlock-pdf', cpuHeavyLimiter);
+app.use('/encrypt-pdf', cpuHeavyLimiter);
+app.use('/upload', uploadLimiter);
+app.use('/edit', editLimiter);
 
 app.use(uploadRouter);
 app.use(editRouter);

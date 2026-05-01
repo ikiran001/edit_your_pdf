@@ -27,11 +27,14 @@ RUN npm ci --omit=dev
 
 COPY backend/ ./
 
-RUN npm run fonts:noto
+RUN npm run fonts:noto \
+  && chown -R node:node /app
 
 ENV NODE_ENV=production
 ENV SOFFICE_PATH=/usr/bin/soffice
 ENV OCR_LANGS=eng+hin
 EXPOSE 3001
+
+USER node
 
 CMD ["node", "server.js"]

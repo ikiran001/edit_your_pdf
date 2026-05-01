@@ -11,6 +11,9 @@
 # My Documents + secured download: set FIREBASE_SERVICE_ACCOUNT_JSON on the API service (Dashboard →
 # Environment) to your Firebase service account JSON (one line). Same project must have Firestore enabled.
 # Do not commit secrets into this file; use sync: false below or paste only in the Render UI.
+#
+# Recommended for production CORS: set `ALLOWED_ORIGINS` on the API (Dashboard → Environment) to your SPA
+# origins (comma-separated), e.g. `https://pdfpilot.pro`. Optional: `HEALTH_VERBOSE=1` for detailed GET /health.
 services:
   - type: web
     name: edit-your-pdf-chew
@@ -22,6 +25,12 @@ services:
         value: production
       - key: SOFFICE_PATH
         value: /usr/bin/soffice
+      # Comma-separated SPA origins (e.g. https://pdfpilot.pro). Improves CORS vs leaving unset.
+      - key: ALLOWED_ORIGINS
+        sync: false
+      # Set to `true` for full GET /health (binary paths, versions). Default: minimal JSON in production.
+      - key: HEALTH_VERBOSE
+        sync: false
       # Paste value in Render Dashboard (secret). Required for My Documents + optional download auth.
       - key: FIREBASE_SERVICE_ACCOUNT_JSON
         sync: false
