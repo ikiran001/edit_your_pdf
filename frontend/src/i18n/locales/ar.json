@@ -1,219 +1,219 @@
 {
   "common": {
-    "loading": "Loading…",
+    "loading": "تحميل…",
     "brandName": "pdfpilot",
-    "soon": "Soon",
-    "comingSoon": "Coming soon",
-    "close": "Close",
-    "cancel": "Cancel",
-    "openTool": "Open tool →",
-    "brandTagline": "Navigate your PDFs effortlessly",
-    "brandHeroLine": "Edit, compress, merge and manage PDFs instantly — PurPDF-grade clarity, speed, and trustworthy exports from pdfpilot."
+    "soon": "قريباً",
+    "comingSoon": "قريباً",
+    "close": "يغلق",
+    "cancel": "يلغي",
+    "openTool": "أداة مفتوحة →",
+    "brandTagline": "تصفح ملفات PDF الخاصة بك دون عناء",
+    "brandHeroLine": "قم بتحرير ملفات PDF وضغطها ودمجها وإدارتها على الفور - وضوح وسرعة وتصدير جدير بالثقة من درجة PurPDF من pdfpilot."
   },
   "header": {
-    "login": "Log in",
-    "signUp": "Sign up",
-    "accountAriaGuest": "Log in or sign up",
-    "accountAriaUser": "Account menu — saved PDFs from Edit PDF and other tools, sign out",
-    "signedInPrefix": "Signed in ·",
-    "allTools": "All tools",
-    "allToolsMenu": "All PDF tools",
-    "closeToolsMenu": "Close tools menu"
+    "login": "تسجيل الدخول",
+    "signUp": "اشتراك",
+    "accountAriaGuest": "تسجيل الدخول أو الاشتراك",
+    "accountAriaUser": "قائمة الحساب - ملفات PDF المحفوظة من تحرير PDF والأدوات الأخرى، قم بتسجيل الخروج",
+    "signedInPrefix": "تم تسجيل الدخول ·",
+    "allTools": "جميع الأدوات",
+    "allToolsMenu": "جميع أدوات PDF",
+    "closeToolsMenu": "إغلاق قائمة الأدوات"
   },
   "appsMenu": {
-    "ariaLabel": "Site menu",
-    "pricing": "Pricing & plans",
-    "security": "Security & terms",
-    "features": "Features",
-    "about": "About",
-    "help": "Help & feedback",
-    "language": "Language",
-    "terms": "Terms of Service",
-    "back": "Back",
-    "chooseLanguage": "Choose language"
+    "ariaLabel": "قائمة الموقع",
+    "pricing": "التسعير والخطط",
+    "security": "الأمن والشروط",
+    "features": "سمات",
+    "about": "عن",
+    "help": "المساعدة والتعليقات",
+    "language": "لغة",
+    "terms": "شروط الخدمة",
+    "back": "خلف",
+    "chooseLanguage": "اختر اللغة"
   },
   "home": {
-    "chooseTool": "Choose a tool",
-    "searchPlaceholder": "Search tools (e.g. merge, scan, watermark)…",
-    "searchNoResults": "No tools match “{{query}}”. Try another word or clear the search.",
-    "searchShowing": "Showing {{n}} of {{total}} tools",
-    "footerProcessing": "Files are processed in your session. Need the raw API? See the project README for self-hosting on GitHub Pages.",
-    "ratingsNote": "Ratings and comments are shown only after real submissions."
+    "chooseTool": "اختر أداة",
+    "searchPlaceholder": "أدوات البحث (مثل الدمج والمسح الضوئي والعلامة المائية)...",
+    "searchNoResults": "لا توجد أدوات تطابق \"{{query}}\". حاول كلمة أخرى أو امسح البحث.",
+    "searchShowing": "عرض {{n}} من {{total}} من الأدوات",
+    "footerProcessing": "تتم معالجة الملفات في جلستك. هل تحتاج إلى واجهة برمجة التطبيقات الأولية؟ راجع مشروع README للاستضافة الذاتية على صفحات GitHub.",
+    "ratingsNote": "يتم عرض التقييمات والتعليقات فقط بعد التقديمات الحقيقية."
   },
   "hero": {
-    "title": "Edit and download PDFs instantly",
-    "subtitle": "Fast, simple, and secure PDF editing directly in your browser. No installs. No hassle.",
-    "ctaEdit": "Edit your PDF now",
-    "ctaSample": "Try sample PDF",
-    "signInBlurb": "Sign in or create an account to continue."
+    "title": "تحرير وتنزيل ملفات PDF على الفور",
+    "subtitle": "تحرير ملفات PDF سريع وبسيط وآمن مباشرة في متصفحك. لا توجد عمليات تثبيت. لا متاعب.",
+    "ctaEdit": "قم بتحرير ملف PDF الخاص بك الآن",
+    "ctaSample": "حاول عينة PDF",
+    "signInBlurb": "قم بتسجيل الدخول أو إنشاء حساب للمتابعة."
   },
   "footer": {
-    "copyright": "© {{year}} pdfpilot",
-    "privacySoon": "Privacy",
-    "shareFeedback": "Share feedback",
-    "terms": "Terms of Service"
+    "copyright": "© {{السنة}} pdfpilot",
+    "privacySoon": "خصوصية",
+    "shareFeedback": "مشاركة التعليقات",
+    "terms": "شروط الخدمة"
   },
   "account": {
-    "signedInLabel": "Signed in",
-    "savedPdfsTitle": "Saved PDFs and edits",
-    "savedPdfsHint": "PDFs you changed in Edit PDF (and other tools) while signed in — open, download, or delete anytime.",
-    "subscriptionTitle": "Subscription & billing",
-    "subscriptionHint": "Plan, usage, Razorpay receipts",
-    "signOut": "Sign out",
-    "signingOut": "Signing out…"
+    "signedInLabel": "تم تسجيل الدخول",
+    "savedPdfsTitle": "ملفات PDF والتحريرات المحفوظة",
+    "savedPdfsHint": "ملفات PDF التي قمت بتغييرها في تحرير PDF (والأدوات الأخرى) أثناء تسجيل الدخول - يمكنك فتحها أو تنزيلها أو حذفها في أي وقت.",
+    "subscriptionTitle": "الاشتراك والفوترة",
+    "subscriptionHint": "الخطة والاستخدام وإيصالات Razorpay",
+    "signOut": "تسجيل الخروج",
+    "signingOut": "تسجيل الخروج..."
   },
   "auth": {
-    "signInTitle": "Sign in",
-    "signUpTitle": "Create an account",
-    "newUser": "New user?",
-    "createAccount": "Create an account",
-    "haveAccount": "Already have an account?",
-    "signInLink": "Sign in",
-    "continueGoogle": "Continue with Google",
-    "or": "Or",
-    "downloadBadge": "Download",
-    "downloadBlurb": "Sign in or create an account, then your file downloads automatically. You stay signed in on this device.",
-    "notNow": "Not now",
-    "closeAria": "Close",
-    "createAccountTab": "Create account",
-    "pleaseWait": "Please wait…",
-    "continue": "Continue",
-    "signInWithEmailButton": "Sign in with email",
-    "createAccountButton": "Create account",
-    "forgotPassword": "Forgot password?",
+    "signInTitle": "تسجيل الدخول",
+    "signUpTitle": "إنشاء حساب",
+    "newUser": "مستخدم جديد؟",
+    "createAccount": "إنشاء حساب",
+    "haveAccount": "هل لديك حساب بالفعل؟",
+    "signInLink": "تسجيل الدخول",
+    "continueGoogle": "تواصل مع جوجل",
+    "or": "أو",
+    "downloadBadge": "تحميل",
+    "downloadBlurb": "قم بتسجيل الدخول أو إنشاء حساب، ثم يتم تنزيل ملفك تلقائيًا. ستظل مسجلاً الدخول على هذا الجهاز.",
+    "notNow": "ليس الآن",
+    "closeAria": "يغلق",
+    "createAccountTab": "إنشاء حساب",
+    "pleaseWait": "انتظر من فضلك…",
+    "continue": "يكمل",
+    "signInWithEmailButton": "قم بتسجيل الدخول باستخدام البريد الإلكتروني",
+    "createAccountButton": "إنشاء حساب",
+    "forgotPassword": "هل نسيت كلمة السر؟",
     "emailSection": {
-      "signUpWithEmail": "Sign up with email",
-      "signInWithEmail": "Sign in with email",
-      "emailPassword": "Email & password",
-      "pickTabHint": "Pick a tab, then complete the fields and tap Continue."
+      "signUpWithEmail": "قم بالتسجيل باستخدام البريد الإلكتروني",
+      "signInWithEmail": "قم بتسجيل الدخول باستخدام البريد الإلكتروني",
+      "emailPassword": "البريد الإلكتروني وكلمة المرور",
+      "pickTabHint": "اختر علامة تبويب، ثم أكمل الحقول، ثم اضغط على \"متابعة\"."
     },
     "field": {
-      "firstName": "First name",
-      "lastName": "Last name",
-      "dob": "Date of birth",
-      "dobInfo": "Used for your account profile",
-      "birthMonth": "Birth month",
-      "year": "Year",
-      "birthYear": "Birth year",
-      "country": "Country/Region",
-      "email": "Email",
-      "password": "Password"
+      "firstName": "الاسم الأول",
+      "lastName": "اسم العائلة",
+      "dob": "تاريخ الميلاد",
+      "dobInfo": "تستخدم لملف تعريف حسابك",
+      "birthMonth": "شهر الميلاد",
+      "year": "سنة",
+      "birthYear": "سنة الميلاد",
+      "country": "البلد/المنطقة",
+      "email": "بريد إلكتروني",
+      "password": "كلمة المرور"
     },
     "reset": {
-      "blurb": "We will email you a link to choose a new password. After you reset it, return here and sign in with your new password.",
-      "sendLink": "Send reset link",
-      "backToSignIn": "Back to sign in"
+      "blurb": "سنرسل إليك رابطًا عبر البريد الإلكتروني لاختيار كلمة مرور جديدة. بعد إعادة تعيينها، ارجع إلى هنا وقم بتسجيل الدخول باستخدام كلمة المرور الجديدة.",
+      "sendLink": "إرسال رابط إعادة التعيين",
+      "backToSignIn": "العودة لتسجيل الدخول"
     },
     "errors": {
-      "emailPasswordRequired": "Enter email and password.",
-      "passwordMin": "Password must be at least 6 characters.",
-      "firstLastRequired": "Enter first and last name.",
-      "birthMonthRequired": "Select your month of birth.",
-      "birthYearInvalid": "Enter a valid 4-digit birth year.",
-      "birthYearRange": "Birth year must be between 1900 and {{max}}.",
-      "countryRequired": "Select your country or region.",
-      "resetEmailRequired": "Enter the email for your account.",
-      "emailInvalid": "That email address does not look valid."
+      "emailPasswordRequired": "أدخل البريد الإلكتروني وكلمة المرور.",
+      "passwordMin": "يجب أن تتكون كلمة المرور من 6 أحرف على الأقل.",
+      "firstLastRequired": "أدخل الاسم الأول والأخير.",
+      "birthMonthRequired": "اختر شهر ميلادك.",
+      "birthYearInvalid": "أدخل سنة ميلاد صالحة مكونة من 4 أرقام.",
+      "birthYearRange": "سنة الميلاد يجب أن تكون بين 1900 و {{كحد أقصى}}.",
+      "countryRequired": "اختر بلدك أو منطقتك.",
+      "resetEmailRequired": "أدخل البريد الإلكتروني الخاص بحسابك.",
+      "emailInvalid": "لا يبدو عنوان البريد الإلكتروني هذا صالحًا."
     }
   },
   "nav": {
-    "groupOrganize": "Organize PDF",
-    "groupEdit": "Edit & sign",
-    "groupConvert": "Convert & export",
-    "groupSecurity": "Security"
+    "groupOrganize": "تنظيم قوات الدفاع الشعبي",
+    "groupEdit": "تحرير وتوقيع",
+    "groupConvert": "تحويل وتصدير",
+    "groupSecurity": "حماية"
   },
   "megaFooter": {
-    "privacy": "Privacy-focused",
-    "easy": "Easy to use",
-    "fast": "Fast in your browser",
-    "termsAgree": "By using our tools you agree to the",
-    "termsLink": "Terms of Service",
-    "termsTail": ". Files are processed for your session; see the site footer for contact details."
+    "privacy": "تركز على الخصوصية",
+    "easy": "سهل الاستخدام",
+    "fast": "سريع في متصفحك",
+    "termsAgree": "باستخدام أدواتنا فإنك توافق على",
+    "termsLink": "شروط الخدمة",
+    "termsTail": ". تتم معالجة الملفات لجلستك؛ انظر تذييل الموقع للحصول على تفاصيل الاتصال."
   },
   "tool": {
     "edit-pdf": {
-      "title": "Edit PDF",
-      "description": "Change text, annotate, highlight, draw."
+      "title": "تحرير قوات الدفاع الشعبي",
+      "description": "تغيير النص، والتعليق، وتسليط الضوء، والرسم."
     },
     "ocr-pdf": {
-      "title": "OCR PDF",
-      "description": "Make scans searchable — needs your API (ocrmypdf + Tesseract on the server)."
+      "title": "التعرف الضوئي على الحروف PDF",
+      "description": "جعل عمليات الفحص قابلة للبحث - تحتاج إلى واجهة برمجة التطبيقات الخاصة بك (ocrmypdf + Tesseract على الخادم)."
     },
     "merge-pdf": {
-      "title": "Merge PDF",
-      "description": "Combine multiple PDFs into one file."
+      "title": "دمج قوات الدفاع الشعبي",
+      "description": "دمج ملفات PDF متعددة في ملف واحد."
     },
     "split-pdf": {
-      "title": "Split PDF",
-      "description": "Split by page ranges or extract every page."
+      "title": "تقسيم قوات الدفاع الشعبي",
+      "description": "التقسيم حسب نطاقات الصفحات أو استخراج كل صفحة."
     },
     "organize-pdf": {
-      "title": "Organize Pages",
-      "description": "Reorder, rotate, or delete pages, then download."
+      "title": "تنظيم الصفحات",
+      "description": "أعد ترتيب الصفحات أو تدويرها أو حذفها، ثم قم بالتنزيل."
     },
     "add-page-numbers": {
-      "title": "Add page numbers",
-      "description": "Stamp page numbers with placement, ranges, and formats — in your browser."
+      "title": "إضافة أرقام الصفحات",
+      "description": "قم بختم أرقام الصفحات بالمواضع والنطاقات والتنسيقات - في متصفحك."
     },
     "compress-pdf": {
-      "title": "Compress PDF",
-      "description": "Tries your API (qpdf / Ghostscript); falls back to in-browser pdf-lib when the API is missing."
+      "title": "ضغط قوات الدفاع الشعبي",
+      "description": "يحاول واجهة برمجة التطبيقات الخاصة بك (qpdf / Ghostscript)؛ يعود إلى pdf-lib الموجود في المتصفح عندما تكون واجهة برمجة التطبيقات مفقودة."
     },
     "pdf-to-jpg": {
-      "title": "PDF to JPG",
-      "description": "Export pages as JPEG. ZIP or single files."
+      "title": "قوات الدفاع الشعبي إلى JPG",
+      "description": "تصدير الصفحات بصيغة JPEG. ZIP أو ملفات مفردة."
     },
     "pdf-to-png": {
-      "title": "PDF to PNG",
-      "description": "Export pages as lossless PNG in a ZIP — all in your browser."
+      "title": "قوات الدفاع الشعبي إلى PNG",
+      "description": "قم بتصدير الصفحات بتنسيق PNG بدون فقدان البيانات في ملف ZIP، كل ذلك في متصفحك."
     },
     "pdf-to-text": {
-      "title": "PDF to text",
-      "description": "Download plain .txt from selectable text (not for raw scans)."
+      "title": "قوات الدفاع الشعبي إلى النص",
+      "description": "قم بتنزيل .txt عادي من النص القابل للتحديد (وليس لعمليات المسح الأولية)."
     },
     "jpg-to-pdf": {
-      "title": "JPG to PDF",
-      "description": "Combine images. Drag to reorder."
+      "title": "JPG إلى PDF",
+      "description": "الجمع بين الصور. اسحب لإعادة الترتيب."
     },
     "scan-to-pdf": {
-      "title": "Scan to PDF",
-      "description": "Camera or photos: trim, enhance, multi-page PDF."
+      "title": "المسح الضوئي إلى PDF",
+      "description": "الكاميرا أو الصور: القطع والتحسين وملف PDF متعدد الصفحات."
     },
     "sign-pdf": {
-      "title": "Sign PDF",
-      "description": "Sign any page, duplicate or copy/paste placements, then download."
+      "title": "التوقيع على قوات الدفاع الشعبي",
+      "description": "قم بتوقيع أي صفحة، وقم بتكرار المواضع أو نسخها/لصقها، ثم قم بتنزيلها."
     },
     "fill-pdf": {
-      "title": "Fill PDF form",
-      "description": "Fill AcroForm fields and download — processing stays in the browser."
+      "title": "ملء نموذج PDF",
+      "description": "املأ حقول AcroForm وقم بالتنزيل - تظل المعالجة في المتصفح."
     },
     "flatten-pdf": {
-      "title": "Flatten PDF",
-      "description": "Flatten fillable forms or rasterize pages to images — client-side."
+      "title": "تتسطح قوات الدفاع الشعبي",
+      "description": "تسوية النماذج القابلة للتعبئة أو تحويل الصفحات إلى صور نقطية - من جانب العميل."
     },
     "unlock-pdf": {
-      "title": "Unlock PDF",
-      "description": "Remove password via your API (qpdf / Ghostscript when configured)."
+      "title": "فتح ملف PDF",
+      "description": "قم بإزالة كلمة المرور عبر واجهة برمجة التطبيقات الخاصة بك (qpdf / Ghostscript عند تكوينها)."
     },
     "encrypt-pdf": {
-      "title": "Encrypt PDF",
-      "description": "Password-protect with AES-256 (qpdf on the server)."
+      "title": "تشفير قوات الدفاع الشعبي",
+      "description": "حماية بكلمة مرور باستخدام AES-256 (qpdf على الخادم)."
     },
     "add-watermark": {
-      "title": "Add Watermark",
-      "description": "Text or image watermark, page ranges, preview, then download."
+      "title": "أضف علامة مائية",
+      "description": "العلامة المائية النصية أو المصورة، ونطاقات الصفحات، والمعاينة، ثم التنزيل."
     },
     "pdf-to-word": {
-      "title": "PDF to Word",
-      "description": "Draft .docx in your browser — PDF is not uploaded for conversion (use OCR PDF for scans first)."
+      "title": "قوات الدفاع الشعبي إلى كلمة",
+      "description": "مسودة .docx في متصفحك - لا يتم تحميل ملف PDF للتحويل (استخدم OCR PDF لإجراء عمليات المسح الضوئي أولاً)."
     },
     "word-to-pdf": {
-      "title": "Word to PDF",
-      "description": "Draft PDF in your browser — .docx is not uploaded for conversion."
+      "title": "كلمة إلى PDF",
+      "description": "مسودة PDF في متصفحك - لا يتم تحميل .docx للتحويل."
     },
     "gst-invoice": {
-      "title": "GST invoice PDF",
-      "description": "Supplier, buyer, HSN lines — download a tax invoice PDF in the browser."
+      "title": "فاتورة ضريبة السلع والخدمات PDF",
+      "description": "المورد والمشتري وخطوط HSN - قم بتنزيل الفاتورة الضريبية بصيغة PDF في المتصفح."
     }
   }
 }

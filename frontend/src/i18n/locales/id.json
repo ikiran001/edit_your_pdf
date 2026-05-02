@@ -1,219 +1,219 @@
 {
   "common": {
-    "loading": "Loading…",
+    "loading": "Memuat…",
     "brandName": "pdfpilot",
-    "soon": "Soon",
-    "comingSoon": "Coming soon",
-    "close": "Close",
-    "cancel": "Cancel",
-    "openTool": "Open tool →",
-    "brandTagline": "Navigate your PDFs effortlessly",
-    "brandHeroLine": "Edit, compress, merge and manage PDFs instantly — PurPDF-grade clarity, speed, and trustworthy exports from pdfpilot."
+    "soon": "Segera",
+    "comingSoon": "Segera hadir",
+    "close": "Menutup",
+    "cancel": "Membatalkan",
+    "openTool": "Buka alat →",
+    "brandTagline": "Navigasikan PDF Anda dengan mudah",
+    "brandHeroLine": "Edit, kompres, gabungkan, dan kelola PDF secara instan — Kejelasan, kecepatan, dan ekspor tepercaya tingkat PDF dari pdfpilot."
   },
   "header": {
-    "login": "Log in",
-    "signUp": "Sign up",
-    "accountAriaGuest": "Log in or sign up",
-    "accountAriaUser": "Account menu — saved PDFs from Edit PDF and other tools, sign out",
-    "signedInPrefix": "Signed in ·",
-    "allTools": "All tools",
-    "allToolsMenu": "All PDF tools",
-    "closeToolsMenu": "Close tools menu"
+    "login": "Masuk",
+    "signUp": "Mendaftar",
+    "accountAriaGuest": "Masuk atau daftar",
+    "accountAriaUser": "Menu akun — menyimpan PDF dari Edit PDF dan alat lainnya, keluar",
+    "signedInPrefix": "Masuk ·",
+    "allTools": "Semua alat",
+    "allToolsMenu": "Semua alat PDF",
+    "closeToolsMenu": "Tutup menu alat"
   },
   "appsMenu": {
-    "ariaLabel": "Site menu",
-    "pricing": "Pricing & plans",
-    "security": "Security & terms",
-    "features": "Features",
-    "about": "About",
-    "help": "Help & feedback",
-    "language": "Language",
-    "terms": "Terms of Service",
-    "back": "Back",
-    "chooseLanguage": "Choose language"
+    "ariaLabel": "Menu situs",
+    "pricing": "Harga & paket",
+    "security": "Keamanan & ketentuan",
+    "features": "Fitur",
+    "about": "Tentang",
+    "help": "Bantuan & umpan balik",
+    "language": "Bahasa",
+    "terms": "Ketentuan Layanan",
+    "back": "Kembali",
+    "chooseLanguage": "Pilih bahasa"
   },
   "home": {
-    "chooseTool": "Choose a tool",
-    "searchPlaceholder": "Search tools (e.g. merge, scan, watermark)…",
-    "searchNoResults": "No tools match “{{query}}”. Try another word or clear the search.",
-    "searchShowing": "Showing {{n}} of {{total}} tools",
-    "footerProcessing": "Files are processed in your session. Need the raw API? See the project README for self-hosting on GitHub Pages.",
-    "ratingsNote": "Ratings and comments are shown only after real submissions."
+    "chooseTool": "Pilih alat",
+    "searchPlaceholder": "Alat pencarian (misalnya penggabungan, pemindaian, tanda air)…",
+    "searchNoResults": "Tidak ada alat yang cocok dengan “{{query}}”. Coba kata lain atau hapus pencarian.",
+    "searchShowing": "Menampilkan {{n}} dari {{total}} alat",
+    "footerProcessing": "File diproses di sesi Anda. Butuh API mentah? Lihat proyek README untuk hosting mandiri di Halaman GitHub.",
+    "ratingsNote": "Peringkat dan komentar hanya ditampilkan setelah pengiriman nyata."
   },
   "hero": {
-    "title": "Edit and download PDFs instantly",
-    "subtitle": "Fast, simple, and secure PDF editing directly in your browser. No installs. No hassle.",
-    "ctaEdit": "Edit your PDF now",
-    "ctaSample": "Try sample PDF",
-    "signInBlurb": "Sign in or create an account to continue."
+    "title": "Edit dan unduh PDF secara instan",
+    "subtitle": "Pengeditan PDF yang cepat, sederhana, dan aman langsung di browser Anda. Tidak ada instalasi. Tidak ada kerumitan.",
+    "ctaEdit": "Edit PDF Anda sekarang",
+    "ctaSample": "Coba contoh PDF",
+    "signInBlurb": "Masuk atau buat akun untuk melanjutkan."
   },
   "footer": {
-    "copyright": "© {{year}} pdfpilot",
-    "privacySoon": "Privacy",
-    "shareFeedback": "Share feedback",
-    "terms": "Terms of Service"
+    "copyright": "© {{tahun}} pdfpilot",
+    "privacySoon": "Pribadi",
+    "shareFeedback": "Bagikan masukan",
+    "terms": "Ketentuan Layanan"
   },
   "account": {
-    "signedInLabel": "Signed in",
-    "savedPdfsTitle": "Saved PDFs and edits",
-    "savedPdfsHint": "PDFs you changed in Edit PDF (and other tools) while signed in — open, download, or delete anytime.",
-    "subscriptionTitle": "Subscription & billing",
-    "subscriptionHint": "Plan, usage, Razorpay receipts",
-    "signOut": "Sign out",
-    "signingOut": "Signing out…"
+    "signedInLabel": "Masuk",
+    "savedPdfsTitle": "PDF yang disimpan dan diedit",
+    "savedPdfsHint": "PDF yang Anda ubah di Edit PDF (dan alat lainnya) saat masuk — buka, unduh, atau hapus kapan saja.",
+    "subscriptionTitle": "Berlangganan & penagihan",
+    "subscriptionHint": "Paket, penggunaan, tanda terima Razorpay",
+    "signOut": "Keluar",
+    "signingOut": "Keluar…"
   },
   "auth": {
-    "signInTitle": "Sign in",
-    "signUpTitle": "Create an account",
-    "newUser": "New user?",
-    "createAccount": "Create an account",
-    "haveAccount": "Already have an account?",
-    "signInLink": "Sign in",
-    "continueGoogle": "Continue with Google",
-    "or": "Or",
-    "downloadBadge": "Download",
-    "downloadBlurb": "Sign in or create an account, then your file downloads automatically. You stay signed in on this device.",
-    "notNow": "Not now",
-    "closeAria": "Close",
-    "createAccountTab": "Create account",
-    "pleaseWait": "Please wait…",
-    "continue": "Continue",
-    "signInWithEmailButton": "Sign in with email",
-    "createAccountButton": "Create account",
-    "forgotPassword": "Forgot password?",
+    "signInTitle": "Masuk",
+    "signUpTitle": "Buat akun",
+    "newUser": "Pengguna baru?",
+    "createAccount": "Buat akun",
+    "haveAccount": "Sudah punya akun?",
+    "signInLink": "Masuk",
+    "continueGoogle": "Lanjutkan dengan Google",
+    "or": "Atau",
+    "downloadBadge": "Unduh",
+    "downloadBlurb": "Masuk atau buat akun, lalu file Anda diunduh secara otomatis. Anda tetap login di perangkat ini.",
+    "notNow": "Tidak sekarang",
+    "closeAria": "Menutup",
+    "createAccountTab": "Buat akun",
+    "pleaseWait": "Harap tunggu…",
+    "continue": "Melanjutkan",
+    "signInWithEmailButton": "Masuk dengan email",
+    "createAccountButton": "Buat akun",
+    "forgotPassword": "Lupa kata sandi?",
     "emailSection": {
-      "signUpWithEmail": "Sign up with email",
-      "signInWithEmail": "Sign in with email",
-      "emailPassword": "Email & password",
-      "pickTabHint": "Pick a tab, then complete the fields and tap Continue."
+      "signUpWithEmail": "Daftar dengan email",
+      "signInWithEmail": "Masuk dengan email",
+      "emailPassword": "Email & kata sandi",
+      "pickTabHint": "Pilih tab, lalu lengkapi bidangnya dan ketuk Lanjutkan."
     },
     "field": {
-      "firstName": "First name",
-      "lastName": "Last name",
-      "dob": "Date of birth",
-      "dobInfo": "Used for your account profile",
-      "birthMonth": "Birth month",
-      "year": "Year",
-      "birthYear": "Birth year",
-      "country": "Country/Region",
-      "email": "Email",
-      "password": "Password"
+      "firstName": "Nama depan",
+      "lastName": "Nama belakang",
+      "dob": "Tanggal lahir",
+      "dobInfo": "Digunakan untuk profil akun Anda",
+      "birthMonth": "Bulan lahir",
+      "year": "Tahun",
+      "birthYear": "Tahun lahir",
+      "country": "Negara/Wilayah",
+      "email": "E-mail",
+      "password": "Kata sandi"
     },
     "reset": {
-      "blurb": "We will email you a link to choose a new password. After you reset it, return here and sign in with your new password.",
-      "sendLink": "Send reset link",
-      "backToSignIn": "Back to sign in"
+      "blurb": "Kami akan mengirimi Anda email berisi tautan untuk memilih kata sandi baru. Setelah Anda menyetel ulang, kembali ke sini dan masuk dengan kata sandi baru Anda.",
+      "sendLink": "Kirim tautan setel ulang",
+      "backToSignIn": "Kembali untuk masuk"
     },
     "errors": {
-      "emailPasswordRequired": "Enter email and password.",
-      "passwordMin": "Password must be at least 6 characters.",
-      "firstLastRequired": "Enter first and last name.",
-      "birthMonthRequired": "Select your month of birth.",
-      "birthYearInvalid": "Enter a valid 4-digit birth year.",
-      "birthYearRange": "Birth year must be between 1900 and {{max}}.",
-      "countryRequired": "Select your country or region.",
-      "resetEmailRequired": "Enter the email for your account.",
-      "emailInvalid": "That email address does not look valid."
+      "emailPasswordRequired": "Masukkan email dan kata sandi.",
+      "passwordMin": "Kata sandi minimal harus 6 karakter.",
+      "firstLastRequired": "Masukkan nama depan dan belakang.",
+      "birthMonthRequired": "Pilih bulan lahir Anda.",
+      "birthYearInvalid": "Masukkan 4 digit tahun lahir yang valid.",
+      "birthYearRange": "Tahun lahir harus antara tahun 1900 dan {{max}}.",
+      "countryRequired": "Pilih negara atau wilayah Anda.",
+      "resetEmailRequired": "Masukkan email untuk akun Anda.",
+      "emailInvalid": "Alamat email tersebut sepertinya tidak valid."
     }
   },
   "nav": {
-    "groupOrganize": "Organize PDF",
-    "groupEdit": "Edit & sign",
-    "groupConvert": "Convert & export",
-    "groupSecurity": "Security"
+    "groupOrganize": "Atur PDF",
+    "groupEdit": "Sunting & tandatangani",
+    "groupConvert": "Konversi & ekspor",
+    "groupSecurity": "Keamanan"
   },
   "megaFooter": {
-    "privacy": "Privacy-focused",
-    "easy": "Easy to use",
-    "fast": "Fast in your browser",
-    "termsAgree": "By using our tools you agree to the",
-    "termsLink": "Terms of Service",
-    "termsTail": ". Files are processed for your session; see the site footer for contact details."
+    "privacy": "Berfokus pada privasi",
+    "easy": "Mudah digunakan",
+    "fast": "Cepat di browser Anda",
+    "termsAgree": "Dengan menggunakan alat kami, Anda menyetujui",
+    "termsLink": "Ketentuan Layanan",
+    "termsTail": ". File diproses untuk sesi Anda; lihat footer situs untuk rincian kontak."
   },
   "tool": {
     "edit-pdf": {
-      "title": "Edit PDF",
-      "description": "Change text, annotate, highlight, draw."
+      "title": "Sunting PDF",
+      "description": "Ubah teks, beri anotasi, sorot, gambar."
     },
     "ocr-pdf": {
-      "title": "OCR PDF",
-      "description": "Make scans searchable — needs your API (ocrmypdf + Tesseract on the server)."
+      "title": "PDF OCR",
+      "description": "Jadikan pindaian dapat dicari — memerlukan API Anda (ocrmypdf + Tesseract di server)."
     },
     "merge-pdf": {
-      "title": "Merge PDF",
-      "description": "Combine multiple PDFs into one file."
+      "title": "Gabungkan PDF",
+      "description": "Gabungkan beberapa PDF menjadi satu file."
     },
     "split-pdf": {
-      "title": "Split PDF",
-      "description": "Split by page ranges or extract every page."
+      "title": "Pisahkan PDF",
+      "description": "Pisahkan berdasarkan rentang halaman atau ekstrak setiap halaman."
     },
     "organize-pdf": {
-      "title": "Organize Pages",
-      "description": "Reorder, rotate, or delete pages, then download."
+      "title": "Atur Halaman",
+      "description": "Susun ulang, putar, atau hapus halaman, lalu unduh."
     },
     "add-page-numbers": {
-      "title": "Add page numbers",
-      "description": "Stamp page numbers with placement, ranges, and formats — in your browser."
+      "title": "Tambahkan nomor halaman",
+      "description": "Stempel nomor halaman dengan penempatan, rentang, dan format — di browser Anda."
     },
     "compress-pdf": {
-      "title": "Compress PDF",
-      "description": "Tries your API (qpdf / Ghostscript); falls back to in-browser pdf-lib when the API is missing."
+      "title": "Kompres PDF",
+      "description": "Mencoba API Anda (qpdf/Ghostscript); kembali ke pdf-lib dalam browser ketika API tidak ada."
     },
     "pdf-to-jpg": {
-      "title": "PDF to JPG",
-      "description": "Export pages as JPEG. ZIP or single files."
+      "title": "PDF ke JPG",
+      "description": "Ekspor halaman sebagai JPEG. ZIP atau file tunggal."
     },
     "pdf-to-png": {
-      "title": "PDF to PNG",
-      "description": "Export pages as lossless PNG in a ZIP — all in your browser."
+      "title": "PDF ke PNG",
+      "description": "Ekspor halaman sebagai PNG lossless dalam ZIP — semuanya di browser Anda."
     },
     "pdf-to-text": {
-      "title": "PDF to text",
-      "description": "Download plain .txt from selectable text (not for raw scans)."
+      "title": "PDF ke teks",
+      "description": "Unduh .txt biasa dari teks yang dapat dipilih (bukan untuk pindaian mentah)."
     },
     "jpg-to-pdf": {
-      "title": "JPG to PDF",
-      "description": "Combine images. Drag to reorder."
+      "title": "JPG ke PDF",
+      "description": "Gabungkan gambar. Tarik untuk menyusun ulang."
     },
     "scan-to-pdf": {
-      "title": "Scan to PDF",
-      "description": "Camera or photos: trim, enhance, multi-page PDF."
+      "title": "Pindai ke PDF",
+      "description": "Kamera atau foto: potong, tingkatkan, PDF multi-halaman."
     },
     "sign-pdf": {
-      "title": "Sign PDF",
-      "description": "Sign any page, duplicate or copy/paste placements, then download."
+      "title": "Tanda tangani PDF",
+      "description": "Tanda tangani halaman mana pun, duplikat atau salin/tempel penempatan, lalu unduh."
     },
     "fill-pdf": {
-      "title": "Fill PDF form",
-      "description": "Fill AcroForm fields and download — processing stays in the browser."
+      "title": "Isi formulir PDF",
+      "description": "Isi kolom AcroForm dan unduh — pemrosesan tetap berada di browser."
     },
     "flatten-pdf": {
-      "title": "Flatten PDF",
-      "description": "Flatten fillable forms or rasterize pages to images — client-side."
+      "title": "Ratakan PDF",
+      "description": "Ratakan formulir yang dapat diisi atau rasterisasi halaman menjadi gambar — di sisi klien."
     },
     "unlock-pdf": {
-      "title": "Unlock PDF",
-      "description": "Remove password via your API (qpdf / Ghostscript when configured)."
+      "title": "Buka kunci PDF",
+      "description": "Hapus kata sandi melalui API Anda (qpdf/Ghostscript saat dikonfigurasi)."
     },
     "encrypt-pdf": {
-      "title": "Encrypt PDF",
-      "description": "Password-protect with AES-256 (qpdf on the server)."
+      "title": "Enkripsi PDF",
+      "description": "Lindungi kata sandi dengan AES-256 (qpdf di server)."
     },
     "add-watermark": {
-      "title": "Add Watermark",
-      "description": "Text or image watermark, page ranges, preview, then download."
+      "title": "Tambahkan Tanda Air",
+      "description": "Tanda air teks atau gambar, rentang halaman, pratinjau, lalu unduh."
     },
     "pdf-to-word": {
-      "title": "PDF to Word",
-      "description": "Draft .docx in your browser — PDF is not uploaded for conversion (use OCR PDF for scans first)."
+      "title": "PDF ke Word",
+      "description": "Draf .docx di browser Anda — PDF tidak diunggah untuk konversi (gunakan OCR PDF untuk pemindaian terlebih dahulu)."
     },
     "word-to-pdf": {
-      "title": "Word to PDF",
-      "description": "Draft PDF in your browser — .docx is not uploaded for conversion."
+      "title": "Kata ke PDF",
+      "description": "Draf PDF di browser Anda — .docx tidak diunggah untuk konversi."
     },
     "gst-invoice": {
-      "title": "GST invoice PDF",
-      "description": "Supplier, buyer, HSN lines — download a tax invoice PDF in the browser."
+      "title": "PDF faktur GST",
+      "description": "Pemasok, pembeli, jalur HSN — unduh PDF faktur pajak di browser."
     }
   }
 }

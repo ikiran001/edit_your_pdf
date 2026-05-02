@@ -1,219 +1,219 @@
 {
   "common": {
-    "loading": "Loading…",
+    "loading": "S'està carregant…",
     "brandName": "pdfpilot",
-    "soon": "Soon",
-    "comingSoon": "Coming soon",
-    "close": "Close",
-    "cancel": "Cancel",
-    "openTool": "Open tool →",
-    "brandTagline": "Navigate your PDFs effortlessly",
-    "brandHeroLine": "Edit, compress, merge and manage PDFs instantly — PurPDF-grade clarity, speed, and trustworthy exports from pdfpilot."
+    "soon": "Aviat",
+    "comingSoon": "Aviat",
+    "close": "Tancar",
+    "cancel": "Cancel·la",
+    "openTool": "Obre l'eina →",
+    "brandTagline": "Navegueu pels vostres PDF sense esforç",
+    "brandHeroLine": "Editeu, comprimiu, fusioneu i gestioneu PDF a l'instant: claredat, velocitat i exportacions fiables de PurPDF des de pdfpilot."
   },
   "header": {
-    "login": "Log in",
-    "signUp": "Sign up",
-    "accountAriaGuest": "Log in or sign up",
-    "accountAriaUser": "Account menu — saved PDFs from Edit PDF and other tools, sign out",
-    "signedInPrefix": "Signed in ·",
-    "allTools": "All tools",
-    "allToolsMenu": "All PDF tools",
-    "closeToolsMenu": "Close tools menu"
+    "login": "Inicieu sessió",
+    "signUp": "Registra't",
+    "accountAriaGuest": "Inicieu sessió o registreu-vos",
+    "accountAriaUser": "Menú del compte: PDF desats des d'Edita PDF i altres eines, tanqueu la sessió",
+    "signedInPrefix": "Iniciat la sessió ·",
+    "allTools": "Totes les eines",
+    "allToolsMenu": "Totes les eines PDF",
+    "closeToolsMenu": "Tanca el menú d'eines"
   },
   "appsMenu": {
-    "ariaLabel": "Site menu",
-    "pricing": "Pricing & plans",
-    "security": "Security & terms",
-    "features": "Features",
-    "about": "About",
-    "help": "Help & feedback",
-    "language": "Language",
-    "terms": "Terms of Service",
-    "back": "Back",
-    "chooseLanguage": "Choose language"
+    "ariaLabel": "Menú del lloc",
+    "pricing": "Preus i plans",
+    "security": "Seguretat i condicions",
+    "features": "Característiques",
+    "about": "Sobre",
+    "help": "Ajuda i comentaris",
+    "language": "Llengua",
+    "terms": "Condicions del servei",
+    "back": "Enrere",
+    "chooseLanguage": "Trieu l'idioma"
   },
   "home": {
-    "chooseTool": "Choose a tool",
-    "searchPlaceholder": "Search tools (e.g. merge, scan, watermark)…",
-    "searchNoResults": "No tools match “{{query}}”. Try another word or clear the search.",
-    "searchShowing": "Showing {{n}} of {{total}} tools",
-    "footerProcessing": "Files are processed in your session. Need the raw API? See the project README for self-hosting on GitHub Pages.",
-    "ratingsNote": "Ratings and comments are shown only after real submissions."
+    "chooseTool": "Trieu una eina",
+    "searchPlaceholder": "Eines de cerca (per exemple, combinar, escanejar, filigrana)...",
+    "searchNoResults": "Cap eina coincideix amb \"{{query}}\". Prova una altra paraula o esborra la cerca.",
+    "searchShowing": "Es mostren {{n}} d'{{total}} eines",
+    "footerProcessing": "Els fitxers es processen a la vostra sessió. Necessites l'API en brut? Consulteu el projecte README per a l'autoallotjament a les pàgines de GitHub.",
+    "ratingsNote": "Les puntuacions i els comentaris només es mostren després de les enviaments reals."
   },
   "hero": {
-    "title": "Edit and download PDFs instantly",
-    "subtitle": "Fast, simple, and secure PDF editing directly in your browser. No installs. No hassle.",
-    "ctaEdit": "Edit your PDF now",
-    "ctaSample": "Try sample PDF",
-    "signInBlurb": "Sign in or create an account to continue."
+    "title": "Editeu i descarregueu PDF a l'instant",
+    "subtitle": "Edició de PDF ràpida, senzilla i segura directament al vostre navegador. No hi ha instal·lacions. Sense molèsties.",
+    "ctaEdit": "Editeu el vostre PDF ara",
+    "ctaSample": "Proveu un PDF de mostra",
+    "signInBlurb": "Inicia sessió o crea un compte per continuar."
   },
   "footer": {
-    "copyright": "© {{year}} pdfpilot",
-    "privacySoon": "Privacy",
-    "shareFeedback": "Share feedback",
-    "terms": "Terms of Service"
+    "copyright": "© {{any}} pdfpilot",
+    "privacySoon": "Privadesa",
+    "shareFeedback": "Comparteix comentaris",
+    "terms": "Condicions del servei"
   },
   "account": {
-    "signedInLabel": "Signed in",
-    "savedPdfsTitle": "Saved PDFs and edits",
-    "savedPdfsHint": "PDFs you changed in Edit PDF (and other tools) while signed in — open, download, or delete anytime.",
-    "subscriptionTitle": "Subscription & billing",
-    "subscriptionHint": "Plan, usage, Razorpay receipts",
-    "signOut": "Sign out",
-    "signingOut": "Signing out…"
+    "signedInLabel": "S'ha iniciat la sessió",
+    "savedPdfsTitle": "PDF desats i edicions",
+    "savedPdfsHint": "PDF que heu canviat a Edita PDF (i altres eines) mentre teníeu la sessió iniciada: obriu, baixeu o suprimiu-lo en qualsevol moment.",
+    "subscriptionTitle": "Subscripció i facturació",
+    "subscriptionHint": "Pla, ús, rebuts de Razorpay",
+    "signOut": "Tanca la sessió",
+    "signingOut": "Tancant la sessió..."
   },
   "auth": {
-    "signInTitle": "Sign in",
-    "signUpTitle": "Create an account",
-    "newUser": "New user?",
-    "createAccount": "Create an account",
-    "haveAccount": "Already have an account?",
-    "signInLink": "Sign in",
-    "continueGoogle": "Continue with Google",
-    "or": "Or",
-    "downloadBadge": "Download",
-    "downloadBlurb": "Sign in or create an account, then your file downloads automatically. You stay signed in on this device.",
-    "notNow": "Not now",
-    "closeAria": "Close",
-    "createAccountTab": "Create account",
-    "pleaseWait": "Please wait…",
-    "continue": "Continue",
-    "signInWithEmailButton": "Sign in with email",
-    "createAccountButton": "Create account",
-    "forgotPassword": "Forgot password?",
+    "signInTitle": "Inicieu la sessió",
+    "signUpTitle": "Creeu un compte",
+    "newUser": "Usuari nou?",
+    "createAccount": "Creeu un compte",
+    "haveAccount": "Ja tens un compte?",
+    "signInLink": "Inicieu la sessió",
+    "continueGoogle": "Continueu amb Google",
+    "or": "O",
+    "downloadBadge": "Descarregar",
+    "downloadBlurb": "Inicieu la sessió o creeu un compte i, a continuació, el vostre fitxer es baixarà automàticament. Continueu la sessió iniciada en aquest dispositiu.",
+    "notNow": "Ara no",
+    "closeAria": "Tancar",
+    "createAccountTab": "Crea un compte",
+    "pleaseWait": "Si us plau, espereu...",
+    "continue": "Continua",
+    "signInWithEmailButton": "Inicieu la sessió amb el correu electrònic",
+    "createAccountButton": "Crea un compte",
+    "forgotPassword": "Heu oblidat la contrasenya?",
     "emailSection": {
-      "signUpWithEmail": "Sign up with email",
-      "signInWithEmail": "Sign in with email",
-      "emailPassword": "Email & password",
-      "pickTabHint": "Pick a tab, then complete the fields and tap Continue."
+      "signUpWithEmail": "Registra't amb correu electrònic",
+      "signInWithEmail": "Inicieu la sessió amb el correu electrònic",
+      "emailPassword": "Correu electrònic i contrasenya",
+      "pickTabHint": "Tria una pestanya, completa els camps i toca Continuar."
     },
     "field": {
-      "firstName": "First name",
-      "lastName": "Last name",
-      "dob": "Date of birth",
-      "dobInfo": "Used for your account profile",
-      "birthMonth": "Birth month",
-      "year": "Year",
-      "birthYear": "Birth year",
-      "country": "Country/Region",
-      "email": "Email",
-      "password": "Password"
+      "firstName": "Nom de pila",
+      "lastName": "Cognom",
+      "dob": "Data de naixement",
+      "dobInfo": "S'utilitza per al perfil del vostre compte",
+      "birthMonth": "Mes de naixement",
+      "year": "Any",
+      "birthYear": "Any de naixement",
+      "country": "País/Regió",
+      "email": "Correu electrònic",
+      "password": "Contrasenya"
     },
     "reset": {
-      "blurb": "We will email you a link to choose a new password. After you reset it, return here and sign in with your new password.",
-      "sendLink": "Send reset link",
-      "backToSignIn": "Back to sign in"
+      "blurb": "Us enviarem un enllaç per correu electrònic per triar una nova contrasenya. Després de restablir-lo, torneu aquí i inicieu la sessió amb la vostra nova contrasenya.",
+      "sendLink": "Envia l'enllaç de restabliment",
+      "backToSignIn": "Torna per iniciar la sessió"
     },
     "errors": {
-      "emailPasswordRequired": "Enter email and password.",
-      "passwordMin": "Password must be at least 6 characters.",
-      "firstLastRequired": "Enter first and last name.",
-      "birthMonthRequired": "Select your month of birth.",
-      "birthYearInvalid": "Enter a valid 4-digit birth year.",
-      "birthYearRange": "Birth year must be between 1900 and {{max}}.",
-      "countryRequired": "Select your country or region.",
-      "resetEmailRequired": "Enter the email for your account.",
-      "emailInvalid": "That email address does not look valid."
+      "emailPasswordRequired": "Introduïu el correu electrònic i la contrasenya.",
+      "passwordMin": "La contrasenya ha de tenir almenys 6 caràcters.",
+      "firstLastRequired": "Introduïu el nom i cognoms.",
+      "birthMonthRequired": "Seleccioneu el vostre mes de naixement.",
+      "birthYearInvalid": "Introduïu un any de naixement vàlid de 4 dígits.",
+      "birthYearRange": "L'any de naixement ha d'estar entre 1900 i {{max}}.",
+      "countryRequired": "Seleccioneu el vostre país o regió.",
+      "resetEmailRequired": "Introduïu el correu electrònic del vostre compte.",
+      "emailInvalid": "Aquesta adreça electrònica no sembla vàlida."
     }
   },
   "nav": {
-    "groupOrganize": "Organize PDF",
-    "groupEdit": "Edit & sign",
-    "groupConvert": "Convert & export",
-    "groupSecurity": "Security"
+    "groupOrganize": "Organitzar PDF",
+    "groupEdit": "Edita i signa",
+    "groupConvert": "Convertir i exportar",
+    "groupSecurity": "Seguretat"
   },
   "megaFooter": {
-    "privacy": "Privacy-focused",
-    "easy": "Easy to use",
-    "fast": "Fast in your browser",
-    "termsAgree": "By using our tools you agree to the",
-    "termsLink": "Terms of Service",
-    "termsTail": ". Files are processed for your session; see the site footer for contact details."
+    "privacy": "Centrat en la privadesa",
+    "easy": "Fàcil d'utilitzar",
+    "fast": "Ràpid al vostre navegador",
+    "termsAgree": "En utilitzar les nostres eines, accepteu el",
+    "termsLink": "Condicions del servei",
+    "termsTail": ". Els fitxers es processen per a la vostra sessió; consulteu el peu de pàgina per obtenir informació de contacte."
   },
   "tool": {
     "edit-pdf": {
-      "title": "Edit PDF",
-      "description": "Change text, annotate, highlight, draw."
+      "title": "Edita PDF",
+      "description": "Canviar el text, anotar, ressaltar, dibuixar."
     },
     "ocr-pdf": {
       "title": "OCR PDF",
-      "description": "Make scans searchable — needs your API (ocrmypdf + Tesseract on the server)."
+      "description": "Feu que les exploracions es puguin cercar: necessita la vostra API (ocrmypdf + Tesseract al servidor)."
     },
     "merge-pdf": {
-      "title": "Merge PDF",
-      "description": "Combine multiple PDFs into one file."
+      "title": "Combina PDF",
+      "description": "Combina diversos PDF en un sol fitxer."
     },
     "split-pdf": {
-      "title": "Split PDF",
-      "description": "Split by page ranges or extract every page."
+      "title": "PDF dividit",
+      "description": "Dividiu per rangs de pàgines o extreu cada pàgina."
     },
     "organize-pdf": {
-      "title": "Organize Pages",
-      "description": "Reorder, rotate, or delete pages, then download."
+      "title": "Organitzar pàgines",
+      "description": "Reordena, gira o suprimeix pàgines i, a continuació, baixa."
     },
     "add-page-numbers": {
-      "title": "Add page numbers",
-      "description": "Stamp page numbers with placement, ranges, and formats — in your browser."
+      "title": "Afegeix números de pàgina",
+      "description": "Etiqueteu els números de pàgina amb la ubicació, els intervals i els formats al vostre navegador."
     },
     "compress-pdf": {
-      "title": "Compress PDF",
-      "description": "Tries your API (qpdf / Ghostscript); falls back to in-browser pdf-lib when the API is missing."
+      "title": "Comprimir PDF",
+      "description": "Prova la teva API (qpdf / Ghostscript); torna a pdf-lib dins del navegador quan falta l'API."
     },
     "pdf-to-jpg": {
-      "title": "PDF to JPG",
-      "description": "Export pages as JPEG. ZIP or single files."
+      "title": "PDF a JPG",
+      "description": "Exporta pàgines com a JPEG. ZIP o fitxers únics."
     },
     "pdf-to-png": {
-      "title": "PDF to PNG",
-      "description": "Export pages as lossless PNG in a ZIP — all in your browser."
+      "title": "PDF a PNG",
+      "description": "Exporteu pàgines com a PNG sense pèrdues en un ZIP, tot al vostre navegador."
     },
     "pdf-to-text": {
-      "title": "PDF to text",
-      "description": "Download plain .txt from selectable text (not for raw scans)."
+      "title": "PDF a text",
+      "description": "Baixeu .txt senzill del text seleccionable (no per a escanejos en brut)."
     },
     "jpg-to-pdf": {
-      "title": "JPG to PDF",
-      "description": "Combine images. Drag to reorder."
+      "title": "JPG a PDF",
+      "description": "Combina imatges. Arrossegueu per reordenar."
     },
     "scan-to-pdf": {
-      "title": "Scan to PDF",
-      "description": "Camera or photos: trim, enhance, multi-page PDF."
+      "title": "Escaneja a PDF",
+      "description": "Càmera o fotos: retallar, millorar, PDF de diverses pàgines."
     },
     "sign-pdf": {
-      "title": "Sign PDF",
-      "description": "Sign any page, duplicate or copy/paste placements, then download."
+      "title": "Signar PDF",
+      "description": "Signeu qualsevol pàgina, dupliqueu o copieu/enganxeu ubicacions i, a continuació, baixeu-les."
     },
     "fill-pdf": {
-      "title": "Fill PDF form",
-      "description": "Fill AcroForm fields and download — processing stays in the browser."
+      "title": "Ompliu el formulari PDF",
+      "description": "Ompliu els camps d'AcroForm i descarregueu-los; el processament es queda al navegador."
     },
     "flatten-pdf": {
-      "title": "Flatten PDF",
-      "description": "Flatten fillable forms or rasterize pages to images — client-side."
+      "title": "Aplanar PDF",
+      "description": "Aplaneu els formularis que es poden omplir o rasteritza les pàgines a imatges, del costat del client."
     },
     "unlock-pdf": {
-      "title": "Unlock PDF",
-      "description": "Remove password via your API (qpdf / Ghostscript when configured)."
+      "title": "Desbloqueja PDF",
+      "description": "Elimineu la contrasenya mitjançant la vostra API (qpdf / Ghostscript quan estigui configurat)."
     },
     "encrypt-pdf": {
-      "title": "Encrypt PDF",
-      "description": "Password-protect with AES-256 (qpdf on the server)."
+      "title": "Xifra PDF",
+      "description": "Protecció amb contrasenya amb AES-256 (qpdf al servidor)."
     },
     "add-watermark": {
-      "title": "Add Watermark",
-      "description": "Text or image watermark, page ranges, preview, then download."
+      "title": "Afegeix una marca d'aigua",
+      "description": "Filigrana de text o imatge, rangs de pàgines, previsualització i, a continuació, baixada."
     },
     "pdf-to-word": {
-      "title": "PDF to Word",
-      "description": "Draft .docx in your browser — PDF is not uploaded for conversion (use OCR PDF for scans first)."
+      "title": "PDF a Word",
+      "description": "Esborrany .docx al vostre navegador: el PDF no es penja per a la conversió (feu servir primer el PDF OCR per escanejar)."
     },
     "word-to-pdf": {
-      "title": "Word to PDF",
-      "description": "Draft PDF in your browser — .docx is not uploaded for conversion."
+      "title": "Word a PDF",
+      "description": "Esborrany de PDF al vostre navegador: .docx no es penja per a la conversió."
     },
     "gst-invoice": {
-      "title": "GST invoice PDF",
-      "description": "Supplier, buyer, HSN lines — download a tax invoice PDF in the browser."
+      "title": "Factura GST PDF",
+      "description": "Proveïdor, comprador, línies HSN: descarregueu una factura fiscal en PDF al navegador."
     }
   }
 }

@@ -1,219 +1,219 @@
 {
   "common": {
-    "loading": "Loading…",
+    "loading": "Caricamento…",
     "brandName": "pdfpilot",
-    "soon": "Soon",
-    "comingSoon": "Coming soon",
-    "close": "Close",
-    "cancel": "Cancel",
-    "openTool": "Open tool →",
-    "brandTagline": "Navigate your PDFs effortlessly",
-    "brandHeroLine": "Edit, compress, merge and manage PDFs instantly — PurPDF-grade clarity, speed, and trustworthy exports from pdfpilot."
+    "soon": "Presto",
+    "comingSoon": "Prossimamente",
+    "close": "Vicino",
+    "cancel": "Cancellare",
+    "openTool": "Apri strumento →",
+    "brandTagline": "Naviga tra i tuoi PDF senza sforzo",
+    "brandHeroLine": "Modifica, comprimi, unisci e gestisci i PDF istantaneamente: chiarezza, velocità ed esportazioni affidabili di livello PurPDF da pdfpilot."
   },
   "header": {
-    "login": "Log in",
-    "signUp": "Sign up",
-    "accountAriaGuest": "Log in or sign up",
-    "accountAriaUser": "Account menu — saved PDFs from Edit PDF and other tools, sign out",
-    "signedInPrefix": "Signed in ·",
-    "allTools": "All tools",
-    "allToolsMenu": "All PDF tools",
-    "closeToolsMenu": "Close tools menu"
+    "login": "Login",
+    "signUp": "Iscrizione",
+    "accountAriaGuest": "Accedi o registrati",
+    "accountAriaUser": "Menu Account: PDF salvati da Modifica PDF e altri strumenti, esci",
+    "signedInPrefix": "Effettuato l'accesso ·",
+    "allTools": "Tutti gli strumenti",
+    "allToolsMenu": "Tutti gli strumenti PDF",
+    "closeToolsMenu": "Chiudi il menu Strumenti"
   },
   "appsMenu": {
-    "ariaLabel": "Site menu",
-    "pricing": "Pricing & plans",
-    "security": "Security & terms",
-    "features": "Features",
-    "about": "About",
-    "help": "Help & feedback",
-    "language": "Language",
-    "terms": "Terms of Service",
-    "back": "Back",
-    "chooseLanguage": "Choose language"
+    "ariaLabel": "Menù del sito",
+    "pricing": "Prezzi e piani",
+    "security": "Sicurezza e termini",
+    "features": "Caratteristiche",
+    "about": "Di",
+    "help": "Aiuto e feedback",
+    "language": "Lingua",
+    "terms": "Termini di servizio",
+    "back": "Indietro",
+    "chooseLanguage": "Scegli la lingua"
   },
   "home": {
-    "chooseTool": "Choose a tool",
-    "searchPlaceholder": "Search tools (e.g. merge, scan, watermark)…",
-    "searchNoResults": "No tools match “{{query}}”. Try another word or clear the search.",
-    "searchShowing": "Showing {{n}} of {{total}} tools",
-    "footerProcessing": "Files are processed in your session. Need the raw API? See the project README for self-hosting on GitHub Pages.",
-    "ratingsNote": "Ratings and comments are shown only after real submissions."
+    "chooseTool": "Scegli uno strumento",
+    "searchPlaceholder": "Strumenti di ricerca (ad esempio unione, scansione, filigrana)...",
+    "searchNoResults": "Nessuno strumento corrisponde a \"{{query}}\". Prova un'altra parola o cancella la ricerca.",
+    "searchShowing": "Visualizzazione di {{n}} di {{total}} strumenti",
+    "footerProcessing": "I file vengono elaborati nella sessione. Hai bisogno dell'API grezza? Vedi il README del progetto per il self-hosting su GitHub Pages.",
+    "ratingsNote": "Valutazioni e commenti vengono visualizzati solo dopo invii reali."
   },
   "hero": {
-    "title": "Edit and download PDFs instantly",
-    "subtitle": "Fast, simple, and secure PDF editing directly in your browser. No installs. No hassle.",
-    "ctaEdit": "Edit your PDF now",
-    "ctaSample": "Try sample PDF",
-    "signInBlurb": "Sign in or create an account to continue."
+    "title": "Modifica e scarica i PDF istantaneamente",
+    "subtitle": "Modifica PDF veloce, semplice e sicura direttamente nel tuo browser. Nessuna installazione. Nessun problema.",
+    "ctaEdit": "Modifica il tuo PDF adesso",
+    "ctaSample": "Prova il PDF di esempio",
+    "signInBlurb": "Accedi o crea un account per continuare."
   },
   "footer": {
-    "copyright": "© {{year}} pdfpilot",
+    "copyright": "© {{anno}} pdfpilot",
     "privacySoon": "Privacy",
-    "shareFeedback": "Share feedback",
-    "terms": "Terms of Service"
+    "shareFeedback": "Condividi feedback",
+    "terms": "Termini di servizio"
   },
   "account": {
-    "signedInLabel": "Signed in",
-    "savedPdfsTitle": "Saved PDFs and edits",
-    "savedPdfsHint": "PDFs you changed in Edit PDF (and other tools) while signed in — open, download, or delete anytime.",
-    "subscriptionTitle": "Subscription & billing",
-    "subscriptionHint": "Plan, usage, Razorpay receipts",
-    "signOut": "Sign out",
-    "signingOut": "Signing out…"
+    "signedInLabel": "Effettuato l'accesso",
+    "savedPdfsTitle": "PDF salvati e modifiche",
+    "savedPdfsHint": "PDF modificati in Modifica PDF (e altri strumenti) dopo l'accesso: apri, scarica o elimina in qualsiasi momento.",
+    "subscriptionTitle": "Abbonamento e fatturazione",
+    "subscriptionHint": "Piano, utilizzo, ricevute Razorpay",
+    "signOut": "disconnessione",
+    "signingOut": "Uscita…"
   },
   "auth": {
-    "signInTitle": "Sign in",
-    "signUpTitle": "Create an account",
-    "newUser": "New user?",
-    "createAccount": "Create an account",
-    "haveAccount": "Already have an account?",
-    "signInLink": "Sign in",
-    "continueGoogle": "Continue with Google",
-    "or": "Or",
-    "downloadBadge": "Download",
-    "downloadBlurb": "Sign in or create an account, then your file downloads automatically. You stay signed in on this device.",
-    "notNow": "Not now",
-    "closeAria": "Close",
-    "createAccountTab": "Create account",
-    "pleaseWait": "Please wait…",
-    "continue": "Continue",
-    "signInWithEmailButton": "Sign in with email",
-    "createAccountButton": "Create account",
-    "forgotPassword": "Forgot password?",
+    "signInTitle": "Registrazione",
+    "signUpTitle": "Creare un account",
+    "newUser": "Nuovo utente?",
+    "createAccount": "Creare un account",
+    "haveAccount": "Hai già un account?",
+    "signInLink": "Registrazione",
+    "continueGoogle": "Continua con Google",
+    "or": "O",
+    "downloadBadge": "Scaricamento",
+    "downloadBlurb": "Accedi o crea un account, quindi il file verrà scaricato automaticamente. Rimani connesso su questo dispositivo.",
+    "notNow": "Non adesso",
+    "closeAria": "Vicino",
+    "createAccountTab": "Creare un account",
+    "pleaseWait": "Attendere prego…",
+    "continue": "Continuare",
+    "signInWithEmailButton": "Accedi con l'e-mail",
+    "createAccountButton": "Creare un account",
+    "forgotPassword": "Ha dimenticato la password?",
     "emailSection": {
-      "signUpWithEmail": "Sign up with email",
-      "signInWithEmail": "Sign in with email",
-      "emailPassword": "Email & password",
-      "pickTabHint": "Pick a tab, then complete the fields and tap Continue."
+      "signUpWithEmail": "Iscriviti con l'e-mail",
+      "signInWithEmail": "Accedi con l'e-mail",
+      "emailPassword": "E-mail e password",
+      "pickTabHint": "Scegli una scheda, quindi completa i campi e tocca Continua."
     },
     "field": {
-      "firstName": "First name",
-      "lastName": "Last name",
-      "dob": "Date of birth",
-      "dobInfo": "Used for your account profile",
-      "birthMonth": "Birth month",
-      "year": "Year",
-      "birthYear": "Birth year",
-      "country": "Country/Region",
-      "email": "Email",
+      "firstName": "Nome di battesimo",
+      "lastName": "Cognome",
+      "dob": "Data di nascita",
+      "dobInfo": "Utilizzato per il profilo del tuo account",
+      "birthMonth": "Mese di nascita",
+      "year": "Anno",
+      "birthYear": "Anno di nascita",
+      "country": "Paese/regione",
+      "email": "E-mail",
       "password": "Password"
     },
     "reset": {
-      "blurb": "We will email you a link to choose a new password. After you reset it, return here and sign in with your new password.",
-      "sendLink": "Send reset link",
-      "backToSignIn": "Back to sign in"
+      "blurb": "Ti invieremo via email un link per scegliere una nuova password. Dopo averlo reimpostato, torna qui e accedi con la nuova password.",
+      "sendLink": "Invia collegamento di reimpostazione",
+      "backToSignIn": "Torna per accedere"
     },
     "errors": {
-      "emailPasswordRequired": "Enter email and password.",
-      "passwordMin": "Password must be at least 6 characters.",
-      "firstLastRequired": "Enter first and last name.",
-      "birthMonthRequired": "Select your month of birth.",
-      "birthYearInvalid": "Enter a valid 4-digit birth year.",
-      "birthYearRange": "Birth year must be between 1900 and {{max}}.",
-      "countryRequired": "Select your country or region.",
-      "resetEmailRequired": "Enter the email for your account.",
-      "emailInvalid": "That email address does not look valid."
+      "emailPasswordRequired": "Inserisci email e password.",
+      "passwordMin": "La password deve contenere almeno 6 caratteri.",
+      "firstLastRequired": "Inserisci nome e cognome.",
+      "birthMonthRequired": "Seleziona il tuo mese di nascita.",
+      "birthYearInvalid": "Inserisci un anno di nascita valido di 4 cifre.",
+      "birthYearRange": "L'anno di nascita deve essere compreso tra le 19:00 e il {{max}}.",
+      "countryRequired": "Seleziona il tuo paese o regione.",
+      "resetEmailRequired": "Inserisci l'e-mail per il tuo account.",
+      "emailInvalid": "L'indirizzo email non sembra valido."
     }
   },
   "nav": {
-    "groupOrganize": "Organize PDF",
-    "groupEdit": "Edit & sign",
-    "groupConvert": "Convert & export",
-    "groupSecurity": "Security"
+    "groupOrganize": "Organizza PDF",
+    "groupEdit": "Modifica e firma",
+    "groupConvert": "Converti ed esporta",
+    "groupSecurity": "Sicurezza"
   },
   "megaFooter": {
-    "privacy": "Privacy-focused",
-    "easy": "Easy to use",
-    "fast": "Fast in your browser",
-    "termsAgree": "By using our tools you agree to the",
-    "termsLink": "Terms of Service",
-    "termsTail": ". Files are processed for your session; see the site footer for contact details."
+    "privacy": "Incentrato sulla privacy",
+    "easy": "Facile da usare",
+    "fast": "Veloce nel tuo browser",
+    "termsAgree": "Utilizzando i nostri strumenti accetti i",
+    "termsLink": "Termini di servizio",
+    "termsTail": ". I file vengono elaborati per la tua sessione; vedere il footer del sito per i dettagli di contatto."
   },
   "tool": {
     "edit-pdf": {
-      "title": "Edit PDF",
-      "description": "Change text, annotate, highlight, draw."
+      "title": "Modifica PDF",
+      "description": "Cambia testo, annota, evidenzia, disegna."
     },
     "ocr-pdf": {
-      "title": "OCR PDF",
-      "description": "Make scans searchable — needs your API (ocrmypdf + Tesseract on the server)."
+      "title": "PDF OCR",
+      "description": "Rendi le scansioni ricercabili: necessita della tua API (ocrmypdf + Tesseract sul server)."
     },
     "merge-pdf": {
-      "title": "Merge PDF",
-      "description": "Combine multiple PDFs into one file."
+      "title": "Unisci PDF",
+      "description": "Combina più PDF in un unico file."
     },
     "split-pdf": {
-      "title": "Split PDF",
-      "description": "Split by page ranges or extract every page."
+      "title": "PDF diviso",
+      "description": "Dividi per intervalli di pagine o estrai ogni pagina."
     },
     "organize-pdf": {
-      "title": "Organize Pages",
-      "description": "Reorder, rotate, or delete pages, then download."
+      "title": "Organizza le pagine",
+      "description": "Riordina, ruota o elimina le pagine, quindi scarica."
     },
     "add-page-numbers": {
-      "title": "Add page numbers",
-      "description": "Stamp page numbers with placement, ranges, and formats — in your browser."
+      "title": "Aggiungi i numeri di pagina",
+      "description": "Timbro i numeri di pagina con posizionamento, intervalli e formati nel tuo browser."
     },
     "compress-pdf": {
-      "title": "Compress PDF",
-      "description": "Tries your API (qpdf / Ghostscript); falls back to in-browser pdf-lib when the API is missing."
+      "title": "Comprimi PDF",
+      "description": "Prova la tua API (qpdf / Ghostscript); ritorna al pdf-lib nel browser quando manca l'API."
     },
     "pdf-to-jpg": {
-      "title": "PDF to JPG",
-      "description": "Export pages as JPEG. ZIP or single files."
+      "title": "Da PDF a JPG",
+      "description": "Esporta le pagine come JPEG. ZIP o singoli file."
     },
     "pdf-to-png": {
-      "title": "PDF to PNG",
-      "description": "Export pages as lossless PNG in a ZIP — all in your browser."
+      "title": "Da PDF a PNG",
+      "description": "Esporta le pagine come PNG senza perdita di dati in uno ZIP, tutto nel tuo browser."
     },
     "pdf-to-text": {
-      "title": "PDF to text",
-      "description": "Download plain .txt from selectable text (not for raw scans)."
+      "title": "PDF in testo",
+      "description": "Scarica un semplice file .txt dal testo selezionabile (non per scansioni non elaborate)."
     },
     "jpg-to-pdf": {
-      "title": "JPG to PDF",
-      "description": "Combine images. Drag to reorder."
+      "title": "JPG in PDF",
+      "description": "Combina immagini. Trascina per riordinare."
     },
     "scan-to-pdf": {
-      "title": "Scan to PDF",
-      "description": "Camera or photos: trim, enhance, multi-page PDF."
+      "title": "Scansione in PDF",
+      "description": "Fotocamera o foto: ritaglia, migliora, PDF multipagina."
     },
     "sign-pdf": {
-      "title": "Sign PDF",
-      "description": "Sign any page, duplicate or copy/paste placements, then download."
+      "title": "Firma PDF",
+      "description": "Firma qualsiasi pagina, duplica o copia/incolla i posizionamenti, quindi scarica."
     },
     "fill-pdf": {
-      "title": "Fill PDF form",
-      "description": "Fill AcroForm fields and download — processing stays in the browser."
+      "title": "Compila il modulo PDF",
+      "description": "Compila i campi AcroForm e scarica: l'elaborazione rimane nel browser."
     },
     "flatten-pdf": {
-      "title": "Flatten PDF",
-      "description": "Flatten fillable forms or rasterize pages to images — client-side."
+      "title": "Appiattisci PDF",
+      "description": "Appiattisci moduli compilabili o rasterizza le pagine in immagini, lato client."
     },
     "unlock-pdf": {
-      "title": "Unlock PDF",
-      "description": "Remove password via your API (qpdf / Ghostscript when configured)."
+      "title": "Sblocca PDF",
+      "description": "Rimuovi la password tramite la tua API (qpdf / Ghostscript quando configurato)."
     },
     "encrypt-pdf": {
-      "title": "Encrypt PDF",
-      "description": "Password-protect with AES-256 (qpdf on the server)."
+      "title": "Crittografa PDF",
+      "description": "Proteggi tramite password con AES-256 (qpdf sul server)."
     },
     "add-watermark": {
-      "title": "Add Watermark",
-      "description": "Text or image watermark, page ranges, preview, then download."
+      "title": "Aggiungi filigrana",
+      "description": "Filigrana di testo o immagine, intervalli di pagine, anteprima, quindi download."
     },
     "pdf-to-word": {
-      "title": "PDF to Word",
-      "description": "Draft .docx in your browser — PDF is not uploaded for conversion (use OCR PDF for scans first)."
+      "title": "Da PDF a Word",
+      "description": "Bozza .docx nel browser: il PDF non viene caricato per la conversione (usa prima il PDF OCR per le scansioni)."
     },
     "word-to-pdf": {
-      "title": "Word to PDF",
-      "description": "Draft PDF in your browser — .docx is not uploaded for conversion."
+      "title": "Da Word a PDF",
+      "description": "Bozza PDF nel tuo browser: il file .docx non viene caricato per la conversione."
     },
     "gst-invoice": {
-      "title": "GST invoice PDF",
-      "description": "Supplier, buyer, HSN lines — download a tax invoice PDF in the browser."
+      "title": "PDF della fattura GST",
+      "description": "Linee fornitore, acquirente, HSN: scarica una fattura fiscale in PDF nel browser."
     }
   }
 }

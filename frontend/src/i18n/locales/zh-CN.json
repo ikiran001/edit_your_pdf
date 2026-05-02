@@ -1,219 +1,219 @@
 {
   "common": {
-    "loading": "Loading…",
+    "loading": "加载中…",
     "brandName": "pdfpilot",
-    "soon": "Soon",
-    "comingSoon": "Coming soon",
-    "close": "Close",
-    "cancel": "Cancel",
-    "openTool": "Open tool →",
-    "brandTagline": "Navigate your PDFs effortlessly",
-    "brandHeroLine": "Edit, compress, merge and manage PDFs instantly — PurPDF-grade clarity, speed, and trustworthy exports from pdfpilot."
+    "soon": "很快",
+    "comingSoon": "即将推出",
+    "close": "关闭",
+    "cancel": "取消",
+    "openTool": "打开工具 →",
+    "brandTagline": "轻松浏览您的 PDF",
+    "brandHeroLine": "立即编辑、压缩、合并和管理 PDF — PurPDF 级的清晰度、速度和来自 pdfpilot 的值得信赖的导出。"
   },
   "header": {
-    "login": "Log in",
-    "signUp": "Sign up",
-    "accountAriaGuest": "Log in or sign up",
-    "accountAriaUser": "Account menu — saved PDFs from Edit PDF and other tools, sign out",
-    "signedInPrefix": "Signed in ·",
-    "allTools": "All tools",
-    "allToolsMenu": "All PDF tools",
-    "closeToolsMenu": "Close tools menu"
+    "login": "登录",
+    "signUp": "报名",
+    "accountAriaGuest": "登录或注册",
+    "accountAriaUser": "帐户菜单 — 通过“编辑 PDF”和其他工具保存的 PDF、注销",
+    "signedInPrefix": "已登录·",
+    "allTools": "所有工具",
+    "allToolsMenu": "所有 PDF 工具",
+    "closeToolsMenu": "关闭工具菜单"
   },
   "appsMenu": {
-    "ariaLabel": "Site menu",
-    "pricing": "Pricing & plans",
-    "security": "Security & terms",
-    "features": "Features",
-    "about": "About",
-    "help": "Help & feedback",
-    "language": "Language",
-    "terms": "Terms of Service",
-    "back": "Back",
-    "chooseLanguage": "Choose language"
+    "ariaLabel": "站点菜单",
+    "pricing": "定价和计划",
+    "security": "安全和条款",
+    "features": "特征",
+    "about": "关于",
+    "help": "帮助和反馈",
+    "language": "语言",
+    "terms": "服务条款",
+    "back": "后退",
+    "chooseLanguage": "选择语言"
   },
   "home": {
-    "chooseTool": "Choose a tool",
-    "searchPlaceholder": "Search tools (e.g. merge, scan, watermark)…",
-    "searchNoResults": "No tools match “{{query}}”. Try another word or clear the search.",
-    "searchShowing": "Showing {{n}} of {{total}} tools",
-    "footerProcessing": "Files are processed in your session. Need the raw API? See the project README for self-hosting on GitHub Pages.",
-    "ratingsNote": "Ratings and comments are shown only after real submissions."
+    "chooseTool": "选择一个工具",
+    "searchPlaceholder": "搜索工具（例如合并、扫描、水印）...",
+    "searchNoResults": "没有工具匹配“{{query}}”。尝试其他单词或清除搜索。",
+    "searchShowing": "显示 {{n}} 个工具（共 {{total}} 个）",
+    "footerProcessing": "文件在您的会话中进行处理。需要原始 API 吗？请参阅 GitHub Pages 上的自托管项目自述文件。",
+    "ratingsNote": "评分和评论仅在真实提交后才会显示。"
   },
   "hero": {
-    "title": "Edit and download PDFs instantly",
-    "subtitle": "Fast, simple, and secure PDF editing directly in your browser. No installs. No hassle.",
-    "ctaEdit": "Edit your PDF now",
-    "ctaSample": "Try sample PDF",
-    "signInBlurb": "Sign in or create an account to continue."
+    "title": "立即编辑和下载 PDF",
+    "subtitle": "直接在浏览器中快速、简单且安全地编辑 PDF。没有安装。没有麻烦。",
+    "ctaEdit": "立即编辑您的 PDF",
+    "ctaSample": "尝试 PDF 示例",
+    "signInBlurb": "登录或创建帐户以继续。"
   },
   "footer": {
     "copyright": "© {{year}} pdfpilot",
-    "privacySoon": "Privacy",
-    "shareFeedback": "Share feedback",
-    "terms": "Terms of Service"
+    "privacySoon": "隐私",
+    "shareFeedback": "分享反馈",
+    "terms": "服务条款"
   },
   "account": {
-    "signedInLabel": "Signed in",
-    "savedPdfsTitle": "Saved PDFs and edits",
-    "savedPdfsHint": "PDFs you changed in Edit PDF (and other tools) while signed in — open, download, or delete anytime.",
-    "subscriptionTitle": "Subscription & billing",
-    "subscriptionHint": "Plan, usage, Razorpay receipts",
-    "signOut": "Sign out",
-    "signingOut": "Signing out…"
+    "signedInLabel": "已登录",
+    "savedPdfsTitle": "保存的 PDF 和编辑",
+    "savedPdfsHint": "您在登录时在“编辑 PDF”（和其他工具）中更改的 PDF — 可以随时打开、下载或删除。",
+    "subscriptionTitle": "订阅和计费",
+    "subscriptionHint": "计划、使用情况、Razorpay 收据",
+    "signOut": "登出",
+    "signingOut": "正在退出…"
   },
   "auth": {
-    "signInTitle": "Sign in",
-    "signUpTitle": "Create an account",
-    "newUser": "New user?",
-    "createAccount": "Create an account",
-    "haveAccount": "Already have an account?",
-    "signInLink": "Sign in",
-    "continueGoogle": "Continue with Google",
-    "or": "Or",
-    "downloadBadge": "Download",
-    "downloadBlurb": "Sign in or create an account, then your file downloads automatically. You stay signed in on this device.",
-    "notNow": "Not now",
-    "closeAria": "Close",
-    "createAccountTab": "Create account",
-    "pleaseWait": "Please wait…",
-    "continue": "Continue",
-    "signInWithEmailButton": "Sign in with email",
-    "createAccountButton": "Create account",
-    "forgotPassword": "Forgot password?",
+    "signInTitle": "登入",
+    "signUpTitle": "创建一个帐户",
+    "newUser": "新用户？",
+    "createAccount": "创建一个帐户",
+    "haveAccount": "已经有帐户？",
+    "signInLink": "登入",
+    "continueGoogle": "继续使用谷歌",
+    "or": "或者",
+    "downloadBadge": "下载",
+    "downloadBlurb": "登录或创建帐户，然后您的文件会自动下载。您在此设备上保持登录状态。",
+    "notNow": "现在不要",
+    "closeAria": "关闭",
+    "createAccountTab": "创建账户",
+    "pleaseWait": "请稍等…",
+    "continue": "继续",
+    "signInWithEmailButton": "使用电子邮件登录",
+    "createAccountButton": "创建账户",
+    "forgotPassword": "忘记密码？",
     "emailSection": {
-      "signUpWithEmail": "Sign up with email",
-      "signInWithEmail": "Sign in with email",
-      "emailPassword": "Email & password",
-      "pickTabHint": "Pick a tab, then complete the fields and tap Continue."
+      "signUpWithEmail": "使用电子邮件注册",
+      "signInWithEmail": "使用电子邮件登录",
+      "emailPassword": "电子邮件和密码",
+      "pickTabHint": "选择一个选项卡，然后填写字段并点击继续。"
     },
     "field": {
-      "firstName": "First name",
-      "lastName": "Last name",
-      "dob": "Date of birth",
-      "dobInfo": "Used for your account profile",
-      "birthMonth": "Birth month",
-      "year": "Year",
-      "birthYear": "Birth year",
-      "country": "Country/Region",
-      "email": "Email",
-      "password": "Password"
+      "firstName": "名",
+      "lastName": "姓",
+      "dob": "出生日期",
+      "dobInfo": "用于您的帐户资料",
+      "birthMonth": "出生月份",
+      "year": "年",
+      "birthYear": "出生年份",
+      "country": "国家/地区",
+      "email": "电子邮件",
+      "password": "密码"
     },
     "reset": {
-      "blurb": "We will email you a link to choose a new password. After you reset it, return here and sign in with your new password.",
-      "sendLink": "Send reset link",
-      "backToSignIn": "Back to sign in"
+      "blurb": "我们将通过电子邮件向您发送一个用于选择新密码的链接。重置后，返回此处并使用新密码登录。",
+      "sendLink": "发送重置链接",
+      "backToSignIn": "返回登录"
     },
     "errors": {
-      "emailPasswordRequired": "Enter email and password.",
-      "passwordMin": "Password must be at least 6 characters.",
-      "firstLastRequired": "Enter first and last name.",
-      "birthMonthRequired": "Select your month of birth.",
-      "birthYearInvalid": "Enter a valid 4-digit birth year.",
-      "birthYearRange": "Birth year must be between 1900 and {{max}}.",
-      "countryRequired": "Select your country or region.",
-      "resetEmailRequired": "Enter the email for your account.",
-      "emailInvalid": "That email address does not look valid."
+      "emailPasswordRequired": "输入电子邮件和密码。",
+      "passwordMin": "密码必须至少包含 6 个字符。",
+      "firstLastRequired": "输入名字和姓氏。",
+      "birthMonthRequired": "选择您的出生月份。",
+      "birthYearInvalid": "输入有效的 4 位数出生年份。",
+      "birthYearRange": "出生年份必须介于 1900 年和 {{max}} 之间。",
+      "countryRequired": "选择您所在的国家或地区。",
+      "resetEmailRequired": "输入您帐户的电子邮件。",
+      "emailInvalid": "该电子邮件地址看起来无效。"
     }
   },
   "nav": {
-    "groupOrganize": "Organize PDF",
-    "groupEdit": "Edit & sign",
-    "groupConvert": "Convert & export",
-    "groupSecurity": "Security"
+    "groupOrganize": "整理 PDF",
+    "groupEdit": "编辑并签名",
+    "groupConvert": "转换和导出",
+    "groupSecurity": "安全"
   },
   "megaFooter": {
-    "privacy": "Privacy-focused",
-    "easy": "Easy to use",
-    "fast": "Fast in your browser",
-    "termsAgree": "By using our tools you agree to the",
-    "termsLink": "Terms of Service",
-    "termsTail": ". Files are processed for your session; see the site footer for contact details."
+    "privacy": "注重隐私",
+    "easy": "便于使用",
+    "fast": "在浏览器中快速运行",
+    "termsAgree": "使用我们的工具即表示您同意",
+    "termsLink": "服务条款",
+    "termsTail": "。为您的会话处理文件；有关联系方式，请参阅网站页脚。"
   },
   "tool": {
     "edit-pdf": {
-      "title": "Edit PDF",
-      "description": "Change text, annotate, highlight, draw."
+      "title": "编辑PDF",
+      "description": "更改文本、注释、突出显示、绘制。"
     },
     "ocr-pdf": {
-      "title": "OCR PDF",
-      "description": "Make scans searchable — needs your API (ocrmypdf + Tesseract on the server)."
+      "title": "文字识别 PDF",
+      "description": "使扫描件可搜索 - 需要您的 API（服务器上的 ocrmypdf + Tesseract）。"
     },
     "merge-pdf": {
-      "title": "Merge PDF",
-      "description": "Combine multiple PDFs into one file."
+      "title": "合并PDF",
+      "description": "将多个 PDF 合并为一个文件。"
     },
     "split-pdf": {
-      "title": "Split PDF",
-      "description": "Split by page ranges or extract every page."
+      "title": "分割PDF",
+      "description": "按页面范围拆分或提取每个页面。"
     },
     "organize-pdf": {
-      "title": "Organize Pages",
-      "description": "Reorder, rotate, or delete pages, then download."
+      "title": "组织页面",
+      "description": "重新排序、旋转或删除页面，然后下载。"
     },
     "add-page-numbers": {
-      "title": "Add page numbers",
-      "description": "Stamp page numbers with placement, ranges, and formats — in your browser."
+      "title": "添加页码",
+      "description": "在浏览器中用位置、范围和格式标记页码。"
     },
     "compress-pdf": {
-      "title": "Compress PDF",
-      "description": "Tries your API (qpdf / Ghostscript); falls back to in-browser pdf-lib when the API is missing."
+      "title": "压缩PDF",
+      "description": "尝试你的 API (qpdf / Ghostscript)；当 API 丢失时，会回退到浏览器内的 pdf-lib。"
     },
     "pdf-to-jpg": {
-      "title": "PDF to JPG",
-      "description": "Export pages as JPEG. ZIP or single files."
+      "title": "PDF 转 JPG",
+      "description": "将页面导出为 JPEG。 ZIP 或单个文件。"
     },
     "pdf-to-png": {
-      "title": "PDF to PNG",
-      "description": "Export pages as lossless PNG in a ZIP — all in your browser."
+      "title": "PDF 转 PNG",
+      "description": "将页面导出为 ZIP 中的无损 PNG — 全部在您的浏览器中完成。"
     },
     "pdf-to-text": {
-      "title": "PDF to text",
-      "description": "Download plain .txt from selectable text (not for raw scans)."
+      "title": "PDF 转文本",
+      "description": "从可选文本中下载纯文本 .txt（不适用于原始扫描）。"
     },
     "jpg-to-pdf": {
-      "title": "JPG to PDF",
-      "description": "Combine images. Drag to reorder."
+      "title": "JPG 转 PDF",
+      "description": "合并图像。拖动以重新排序。"
     },
     "scan-to-pdf": {
-      "title": "Scan to PDF",
-      "description": "Camera or photos: trim, enhance, multi-page PDF."
+      "title": "扫描为 PDF",
+      "description": "相机或照片：修剪、增强、多页 PDF。"
     },
     "sign-pdf": {
-      "title": "Sign PDF",
-      "description": "Sign any page, duplicate or copy/paste placements, then download."
+      "title": "签署 PDF",
+      "description": "签署任何页面，复制或复制/粘贴展示位置，然后下载。"
     },
     "fill-pdf": {
-      "title": "Fill PDF form",
-      "description": "Fill AcroForm fields and download — processing stays in the browser."
+      "title": "填写 PDF 表格",
+      "description": "填写 AcroForm 字段并下载 — 处理保留在浏览器中。"
     },
     "flatten-pdf": {
-      "title": "Flatten PDF",
-      "description": "Flatten fillable forms or rasterize pages to images — client-side."
+      "title": "拼合PDF",
+      "description": "在客户端压平可填写的表单或将页面光栅化为图像。"
     },
     "unlock-pdf": {
-      "title": "Unlock PDF",
-      "description": "Remove password via your API (qpdf / Ghostscript when configured)."
+      "title": "解锁 PDF",
+      "description": "通过 API 删除密码（配置后为 qpdf / Ghostscript）。"
     },
     "encrypt-pdf": {
-      "title": "Encrypt PDF",
-      "description": "Password-protect with AES-256 (qpdf on the server)."
+      "title": "加密 PDF",
+      "description": "使用 AES-256 进行密码保护（服务器上为 qpdf）。"
     },
     "add-watermark": {
-      "title": "Add Watermark",
-      "description": "Text or image watermark, page ranges, preview, then download."
+      "title": "添加水印",
+      "description": "文本或图像水印、页面范围、预览，然后下载。"
     },
     "pdf-to-word": {
-      "title": "PDF to Word",
-      "description": "Draft .docx in your browser — PDF is not uploaded for conversion (use OCR PDF for scans first)."
+      "title": "PDF 到 Word",
+      "description": "浏览器中的草稿 .docx — 不会上传 PDF 进行转换（首先使用 OCR PDF 进行扫描）。"
     },
     "word-to-pdf": {
-      "title": "Word to PDF",
-      "description": "Draft PDF in your browser — .docx is not uploaded for conversion."
+      "title": "文字转PDF",
+      "description": "浏览器中的草稿 PDF — 不会上传 .docx 进行转换。"
     },
     "gst-invoice": {
-      "title": "GST invoice PDF",
-      "description": "Supplier, buyer, HSN lines — download a tax invoice PDF in the browser."
+      "title": "消费税发票 PDF",
+      "description": "供应商、买家、HSN 行 — 在浏览器中下载税务发票 PDF。"
     }
   }
 }

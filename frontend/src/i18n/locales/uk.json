@@ -1,219 +1,219 @@
 {
   "common": {
-    "loading": "Loading…",
+    "loading": "Завантаження…",
     "brandName": "pdfpilot",
-    "soon": "Soon",
-    "comingSoon": "Coming soon",
-    "close": "Close",
-    "cancel": "Cancel",
-    "openTool": "Open tool →",
-    "brandTagline": "Navigate your PDFs effortlessly",
-    "brandHeroLine": "Edit, compress, merge and manage PDFs instantly — PurPDF-grade clarity, speed, and trustworthy exports from pdfpilot."
+    "soon": "скоро",
+    "comingSoon": "Скоро буде",
+    "close": "Закрити",
+    "cancel": "Скасувати",
+    "openTool": "Відкрити інструмент →",
+    "brandTagline": "Легко переміщуйтесь у PDF-файлах",
+    "brandHeroLine": "Миттєво редагуйте, стискайте, об’єднуйте та керуйте PDF-файлами — чіткість, швидкість і надійний експорт із pdfpilot рівня PurPDF."
   },
   "header": {
-    "login": "Log in",
-    "signUp": "Sign up",
-    "accountAriaGuest": "Log in or sign up",
-    "accountAriaUser": "Account menu — saved PDFs from Edit PDF and other tools, sign out",
-    "signedInPrefix": "Signed in ·",
-    "allTools": "All tools",
-    "allToolsMenu": "All PDF tools",
-    "closeToolsMenu": "Close tools menu"
+    "login": "авторизуватися",
+    "signUp": "Зареєструватися",
+    "accountAriaGuest": "Увійдіть або зареєструйтеся",
+    "accountAriaUser": "Меню облікового запису — збережені PDF-файли з Редагування PDF та інших інструментів, вийдіть",
+    "signedInPrefix": "Ви ввійшли ·",
+    "allTools": "Всі інструменти",
+    "allToolsMenu": "Усі інструменти PDF",
+    "closeToolsMenu": "Закрити меню інструментів"
   },
   "appsMenu": {
-    "ariaLabel": "Site menu",
-    "pricing": "Pricing & plans",
-    "security": "Security & terms",
-    "features": "Features",
-    "about": "About",
-    "help": "Help & feedback",
-    "language": "Language",
-    "terms": "Terms of Service",
-    "back": "Back",
-    "chooseLanguage": "Choose language"
+    "ariaLabel": "Меню сайту",
+    "pricing": "Ціни та плани",
+    "security": "Безпека та умови",
+    "features": "Особливості",
+    "about": "про",
+    "help": "Довідка та відгук",
+    "language": "Мова",
+    "terms": "Умови обслуговування",
+    "back": "Назад",
+    "chooseLanguage": "Виберіть мову"
   },
   "home": {
-    "chooseTool": "Choose a tool",
-    "searchPlaceholder": "Search tools (e.g. merge, scan, watermark)…",
-    "searchNoResults": "No tools match “{{query}}”. Try another word or clear the search.",
-    "searchShowing": "Showing {{n}} of {{total}} tools",
-    "footerProcessing": "Files are processed in your session. Need the raw API? See the project README for self-hosting on GitHub Pages.",
-    "ratingsNote": "Ratings and comments are shown only after real submissions."
+    "chooseTool": "Виберіть інструмент",
+    "searchPlaceholder": "Інструменти пошуку (наприклад, об’єднання, сканування, водяний знак)…",
+    "searchNoResults": "Жоден інструмент не відповідає запиту \"{{query}}\". Спробуйте інше слово або очистіть пошук.",
+    "searchShowing": "Показано {{n}} із {{total}} інструментів",
+    "footerProcessing": "Файли обробляються у вашому сеансі. Потрібен необроблений API? Перегляньте проект README для самостійного розміщення на сторінках GitHub.",
+    "ratingsNote": "Оцінки та коментарі відображаються лише після реальних повідомлень."
   },
   "hero": {
-    "title": "Edit and download PDFs instantly",
-    "subtitle": "Fast, simple, and secure PDF editing directly in your browser. No installs. No hassle.",
-    "ctaEdit": "Edit your PDF now",
-    "ctaSample": "Try sample PDF",
-    "signInBlurb": "Sign in or create an account to continue."
+    "title": "Миттєво редагуйте та завантажуйте PDF-файли",
+    "subtitle": "Швидке, просте та безпечне редагування PDF-файлів безпосередньо у вашому браузері. Немає установок. Без клопоту.",
+    "ctaEdit": "Відредагуйте PDF зараз",
+    "ctaSample": "Спробуйте зразок PDF",
+    "signInBlurb": "Увійдіть або створіть обліковий запис, щоб продовжити."
   },
   "footer": {
-    "copyright": "© {{year}} pdfpilot",
-    "privacySoon": "Privacy",
-    "shareFeedback": "Share feedback",
-    "terms": "Terms of Service"
+    "copyright": "© {{рік}} pdfpilot",
+    "privacySoon": "Конфіденційність",
+    "shareFeedback": "Поділіться відгуком",
+    "terms": "Умови обслуговування"
   },
   "account": {
-    "signedInLabel": "Signed in",
-    "savedPdfsTitle": "Saved PDFs and edits",
-    "savedPdfsHint": "PDFs you changed in Edit PDF (and other tools) while signed in — open, download, or delete anytime.",
-    "subscriptionTitle": "Subscription & billing",
-    "subscriptionHint": "Plan, usage, Razorpay receipts",
-    "signOut": "Sign out",
-    "signingOut": "Signing out…"
+    "signedInLabel": "Ви ввійшли",
+    "savedPdfsTitle": "Збережені PDF-файли та зміни",
+    "savedPdfsHint": "PDF-файли, які ви змінили в Редагувати PDF (та в інших інструментах) під час входу — відкривайте, завантажуйте чи видаляйте будь-коли.",
+    "subscriptionTitle": "Підписка та виставлення рахунків",
+    "subscriptionHint": "План, використання, квитанції Razorpay",
+    "signOut": "Вийти",
+    "signingOut": "Вихід…"
   },
   "auth": {
-    "signInTitle": "Sign in",
-    "signUpTitle": "Create an account",
-    "newUser": "New user?",
-    "createAccount": "Create an account",
-    "haveAccount": "Already have an account?",
-    "signInLink": "Sign in",
-    "continueGoogle": "Continue with Google",
-    "or": "Or",
-    "downloadBadge": "Download",
-    "downloadBlurb": "Sign in or create an account, then your file downloads automatically. You stay signed in on this device.",
-    "notNow": "Not now",
-    "closeAria": "Close",
-    "createAccountTab": "Create account",
-    "pleaseWait": "Please wait…",
-    "continue": "Continue",
-    "signInWithEmailButton": "Sign in with email",
-    "createAccountButton": "Create account",
-    "forgotPassword": "Forgot password?",
+    "signInTitle": "Увійдіть",
+    "signUpTitle": "Створіть обліковий запис",
+    "newUser": "Новий користувач?",
+    "createAccount": "Створіть обліковий запис",
+    "haveAccount": "Вже маєте обліковий запис?",
+    "signInLink": "Увійдіть",
+    "continueGoogle": "Продовжуйте з Google",
+    "or": "Або",
+    "downloadBadge": "Завантажити",
+    "downloadBlurb": "Увійдіть або створіть обліковий запис, після чого ваш файл завантажиться автоматично. Ви залишаєтеся в системі на цьому пристрої.",
+    "notNow": "Не зараз",
+    "closeAria": "Закрити",
+    "createAccountTab": "Створити акаунт",
+    "pleaseWait": "Зачекайте...",
+    "continue": "Продовжити",
+    "signInWithEmailButton": "Увійдіть за допомогою електронної пошти",
+    "createAccountButton": "Створити акаунт",
+    "forgotPassword": "Забули пароль?",
     "emailSection": {
-      "signUpWithEmail": "Sign up with email",
-      "signInWithEmail": "Sign in with email",
-      "emailPassword": "Email & password",
-      "pickTabHint": "Pick a tab, then complete the fields and tap Continue."
+      "signUpWithEmail": "Зареєструйтеся електронною поштою",
+      "signInWithEmail": "Увійдіть за допомогою електронної пошти",
+      "emailPassword": "Електронна пошта та пароль",
+      "pickTabHint": "Виберіть вкладку, заповніть поля та натисніть «Продовжити»."
     },
     "field": {
-      "firstName": "First name",
-      "lastName": "Last name",
-      "dob": "Date of birth",
-      "dobInfo": "Used for your account profile",
-      "birthMonth": "Birth month",
-      "year": "Year",
-      "birthYear": "Birth year",
-      "country": "Country/Region",
-      "email": "Email",
-      "password": "Password"
+      "firstName": "ім'я",
+      "lastName": "Прізвище",
+      "dob": "Дата народження",
+      "dobInfo": "Використовується для профілю вашого облікового запису",
+      "birthMonth": "Місяць народження",
+      "year": "рік",
+      "birthYear": "Рік народження",
+      "country": "Країна/регіон",
+      "email": "Електронна пошта",
+      "password": "Пароль"
     },
     "reset": {
-      "blurb": "We will email you a link to choose a new password. After you reset it, return here and sign in with your new password.",
-      "sendLink": "Send reset link",
-      "backToSignIn": "Back to sign in"
+      "blurb": "Ми надішлемо вам електронною поштою посилання для вибору нового пароля. Після скидання поверніться сюди та ввійдіть, використовуючи новий пароль.",
+      "sendLink": "Надіслати посилання для скидання",
+      "backToSignIn": "Назад до входу"
     },
     "errors": {
-      "emailPasswordRequired": "Enter email and password.",
-      "passwordMin": "Password must be at least 6 characters.",
-      "firstLastRequired": "Enter first and last name.",
-      "birthMonthRequired": "Select your month of birth.",
-      "birthYearInvalid": "Enter a valid 4-digit birth year.",
-      "birthYearRange": "Birth year must be between 1900 and {{max}}.",
-      "countryRequired": "Select your country or region.",
-      "resetEmailRequired": "Enter the email for your account.",
-      "emailInvalid": "That email address does not look valid."
+      "emailPasswordRequired": "Введіть адресу електронної пошти та пароль.",
+      "passwordMin": "Пароль має бути не менше 6 символів.",
+      "firstLastRequired": "Введіть ім'я та прізвище.",
+      "birthMonthRequired": "Виберіть свій місяць народження.",
+      "birthYearInvalid": "Введіть дійсний 4-значний рік народження.",
+      "birthYearRange": "Рік народження має бути між 1900 і {{max}}.",
+      "countryRequired": "Виберіть свою країну або регіон.",
+      "resetEmailRequired": "Введіть адресу електронної пошти для свого облікового запису.",
+      "emailInvalid": "Ця електронна адреса виглядає недійсною."
     }
   },
   "nav": {
-    "groupOrganize": "Organize PDF",
-    "groupEdit": "Edit & sign",
-    "groupConvert": "Convert & export",
-    "groupSecurity": "Security"
+    "groupOrganize": "Упорядкуйте PDF",
+    "groupEdit": "Редагувати та підписати",
+    "groupConvert": "Конвертувати та експортувати",
+    "groupSecurity": "Безпека"
   },
   "megaFooter": {
-    "privacy": "Privacy-focused",
-    "easy": "Easy to use",
-    "fast": "Fast in your browser",
-    "termsAgree": "By using our tools you agree to the",
-    "termsLink": "Terms of Service",
-    "termsTail": ". Files are processed for your session; see the site footer for contact details."
+    "privacy": "Конфіденційність",
+    "easy": "Простий у використанні",
+    "fast": "Швидко у вашому браузері",
+    "termsAgree": "Використовуючи наші інструменти, ви погоджуєтеся з",
+    "termsLink": "Умови обслуговування",
+    "termsTail": ". Файли обробляються для вашого сеансу; контактні дані див. у нижньому колонтитулі сайту."
   },
   "tool": {
     "edit-pdf": {
-      "title": "Edit PDF",
-      "description": "Change text, annotate, highlight, draw."
+      "title": "Редагувати PDF",
+      "description": "Змінюйте текст, коментуйте, виділіть, малюйте."
     },
     "ocr-pdf": {
       "title": "OCR PDF",
-      "description": "Make scans searchable — needs your API (ocrmypdf + Tesseract on the server)."
+      "description": "Зробіть скани доступними для пошуку — потрібен ваш API (ocrmypdf + Tesseract на сервері)."
     },
     "merge-pdf": {
-      "title": "Merge PDF",
-      "description": "Combine multiple PDFs into one file."
+      "title": "Об’єднати PDF",
+      "description": "Об’єднайте кілька PDF-файлів в один файл."
     },
     "split-pdf": {
-      "title": "Split PDF",
-      "description": "Split by page ranges or extract every page."
+      "title": "Розділити PDF",
+      "description": "Розділіть за діапазонами сторінок або витягніть кожну сторінку."
     },
     "organize-pdf": {
-      "title": "Organize Pages",
-      "description": "Reorder, rotate, or delete pages, then download."
+      "title": "Упорядкувати сторінки",
+      "description": "Змініть порядок, поверніть або видаліть сторінки, а потім завантажте."
     },
     "add-page-numbers": {
-      "title": "Add page numbers",
-      "description": "Stamp page numbers with placement, ranges, and formats — in your browser."
+      "title": "Додайте номери сторінок",
+      "description": "Позначайте номери сторінок розташуванням, діапазонами та форматами — у вашому браузері."
     },
     "compress-pdf": {
-      "title": "Compress PDF",
-      "description": "Tries your API (qpdf / Ghostscript); falls back to in-browser pdf-lib when the API is missing."
+      "title": "Стиснути PDF",
+      "description": "Випробовує ваш API (qpdf / Ghostscript); повертається до pdf-lib у браузері, якщо відсутній API."
     },
     "pdf-to-jpg": {
-      "title": "PDF to JPG",
-      "description": "Export pages as JPEG. ZIP or single files."
+      "title": "PDF в JPG",
+      "description": "Експорт сторінок як JPEG. ZIP або окремі файли."
     },
     "pdf-to-png": {
-      "title": "PDF to PNG",
-      "description": "Export pages as lossless PNG in a ZIP — all in your browser."
+      "title": "PDF в PNG",
+      "description": "Експортуйте сторінки як PNG без втрат у ZIP — усе у вашому браузері."
     },
     "pdf-to-text": {
-      "title": "PDF to text",
-      "description": "Download plain .txt from selectable text (not for raw scans)."
+      "title": "PDF в текст",
+      "description": "Завантажте звичайний .txt із доступного для вибору тексту (не для сканування у форматі raw)."
     },
     "jpg-to-pdf": {
-      "title": "JPG to PDF",
-      "description": "Combine images. Drag to reorder."
+      "title": "JPG в PDF",
+      "description": "Комбінуйте зображення. Перетягніть, щоб змінити порядок."
     },
     "scan-to-pdf": {
-      "title": "Scan to PDF",
-      "description": "Camera or photos: trim, enhance, multi-page PDF."
+      "title": "Сканувати в PDF",
+      "description": "Камера або фотографії: обрізання, покращення, багатосторінковий PDF."
     },
     "sign-pdf": {
-      "title": "Sign PDF",
-      "description": "Sign any page, duplicate or copy/paste placements, then download."
+      "title": "Підписати PDF",
+      "description": "Підпишіть будь-яку сторінку, скопіюйте або вставте місця розташування, а потім завантажте."
     },
     "fill-pdf": {
-      "title": "Fill PDF form",
-      "description": "Fill AcroForm fields and download — processing stays in the browser."
+      "title": "Заповнити форму PDF",
+      "description": "Заповнити поля AcroForm і завантажити — обробка залишається в браузері."
     },
     "flatten-pdf": {
-      "title": "Flatten PDF",
-      "description": "Flatten fillable forms or rasterize pages to images — client-side."
+      "title": "Звести PDF",
+      "description": "Вирівнюйте заповнювані форми або растеризуйте сторінки до зображень — на стороні клієнта."
     },
     "unlock-pdf": {
-      "title": "Unlock PDF",
-      "description": "Remove password via your API (qpdf / Ghostscript when configured)."
+      "title": "Розблокувати PDF",
+      "description": "Видаліть пароль через свій API (qpdf / Ghostscript, якщо налаштовано)."
     },
     "encrypt-pdf": {
-      "title": "Encrypt PDF",
-      "description": "Password-protect with AES-256 (qpdf on the server)."
+      "title": "Зашифрувати PDF",
+      "description": "Захист паролем за допомогою AES-256 (qpdf на сервері)."
     },
     "add-watermark": {
-      "title": "Add Watermark",
-      "description": "Text or image watermark, page ranges, preview, then download."
+      "title": "Додати водяний знак",
+      "description": "Текстовий або графічний водяний знак, діапазони сторінок, попередній перегляд і завантаження."
     },
     "pdf-to-word": {
-      "title": "PDF to Word",
-      "description": "Draft .docx in your browser — PDF is not uploaded for conversion (use OCR PDF for scans first)."
+      "title": "PDF в Word",
+      "description": "Чернетка .docx у вашому браузері — PDF не завантажується для конвертації (спочатку використовуйте OCR PDF для сканування)."
     },
     "word-to-pdf": {
-      "title": "Word to PDF",
-      "description": "Draft PDF in your browser — .docx is not uploaded for conversion."
+      "title": "Word в PDF",
+      "description": "Чернетка PDF у вашому браузері — .docx не завантажується для конвертації."
     },
     "gst-invoice": {
-      "title": "GST invoice PDF",
-      "description": "Supplier, buyer, HSN lines — download a tax invoice PDF in the browser."
+      "title": "Рахунок GST PDF",
+      "description": "Постачальник, покупець, рядки HSN — завантажити податкову накладну PDF у браузері."
     }
   }
 }

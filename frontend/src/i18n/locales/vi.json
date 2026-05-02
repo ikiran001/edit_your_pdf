@@ -1,219 +1,219 @@
 {
   "common": {
-    "loading": "Loading…",
-    "brandName": "pdfpilot",
-    "soon": "Soon",
-    "comingSoon": "Coming soon",
-    "close": "Close",
-    "cancel": "Cancel",
-    "openTool": "Open tool →",
-    "brandTagline": "Navigate your PDFs effortlessly",
-    "brandHeroLine": "Edit, compress, merge and manage PDFs instantly — PurPDF-grade clarity, speed, and trustworthy exports from pdfpilot."
+    "loading": "Đang tải…",
+    "brandName": "phi công pdf",
+    "soon": "Sớm",
+    "comingSoon": "Sắp ra mắt",
+    "close": "Đóng",
+    "cancel": "Hủy bỏ",
+    "openTool": "Mở công cụ →",
+    "brandTagline": "Điều hướng các tệp PDF của bạn một cách dễ dàng",
+    "brandHeroLine": "Chỉnh sửa, nén, hợp nhất và quản lý các tệp PDF ngay lập tức — Độ rõ nét, tốc độ và khả năng xuất đáng tin cậy ở cấp độ PurPDF từ pdfpilot."
   },
   "header": {
-    "login": "Log in",
-    "signUp": "Sign up",
-    "accountAriaGuest": "Log in or sign up",
-    "accountAriaUser": "Account menu — saved PDFs from Edit PDF and other tools, sign out",
-    "signedInPrefix": "Signed in ·",
-    "allTools": "All tools",
-    "allToolsMenu": "All PDF tools",
-    "closeToolsMenu": "Close tools menu"
+    "login": "Đăng nhập",
+    "signUp": "Đăng ký",
+    "accountAriaGuest": "Đăng nhập hoặc đăng ký",
+    "accountAriaUser": "Menu tài khoản — các tệp PDF đã lưu từ Chỉnh sửa PDF và các công cụ khác, hãy đăng xuất",
+    "signedInPrefix": "Đã đăng nhập ·",
+    "allTools": "Tất cả các công cụ",
+    "allToolsMenu": "Tất cả các công cụ PDF",
+    "closeToolsMenu": "Đóng menu công cụ"
   },
   "appsMenu": {
-    "ariaLabel": "Site menu",
-    "pricing": "Pricing & plans",
-    "security": "Security & terms",
-    "features": "Features",
-    "about": "About",
-    "help": "Help & feedback",
-    "language": "Language",
-    "terms": "Terms of Service",
-    "back": "Back",
-    "chooseLanguage": "Choose language"
+    "ariaLabel": "Trình đơn trang web",
+    "pricing": "Giá cả và kế hoạch",
+    "security": "Bảo mật & điều khoản",
+    "features": "Đặc trưng",
+    "about": "Về",
+    "help": "Trợ giúp và phản hồi",
+    "language": "Ngôn ngữ",
+    "terms": "Điều khoản dịch vụ",
+    "back": "Mặt sau",
+    "chooseLanguage": "Chọn ngôn ngữ"
   },
   "home": {
-    "chooseTool": "Choose a tool",
-    "searchPlaceholder": "Search tools (e.g. merge, scan, watermark)…",
-    "searchNoResults": "No tools match “{{query}}”. Try another word or clear the search.",
-    "searchShowing": "Showing {{n}} of {{total}} tools",
-    "footerProcessing": "Files are processed in your session. Need the raw API? See the project README for self-hosting on GitHub Pages.",
-    "ratingsNote": "Ratings and comments are shown only after real submissions."
+    "chooseTool": "Chọn một công cụ",
+    "searchPlaceholder": "Các công cụ tìm kiếm (ví dụ: hợp nhất, quét, hình mờ)…",
+    "searchNoResults": "Không có công cụ nào khớp với “{{query}}”. Hãy thử một từ khác hoặc xóa tìm kiếm.",
+    "searchShowing": "Đang hiển thị {{n}} trong số {{total}} công cụ",
+    "footerProcessing": "Các tập tin được xử lý trong phiên của bạn. Cần API thô? Xem dự án README để tự lưu trữ trên Trang GitHub.",
+    "ratingsNote": "Xếp hạng và nhận xét chỉ được hiển thị sau khi gửi thực sự."
   },
   "hero": {
-    "title": "Edit and download PDFs instantly",
-    "subtitle": "Fast, simple, and secure PDF editing directly in your browser. No installs. No hassle.",
-    "ctaEdit": "Edit your PDF now",
-    "ctaSample": "Try sample PDF",
-    "signInBlurb": "Sign in or create an account to continue."
+    "title": "Chỉnh sửa và tải xuống tệp PDF ngay lập tức",
+    "subtitle": "Chỉnh sửa PDF nhanh chóng, đơn giản và an toàn trực tiếp trong trình duyệt của bạn. Không có lượt cài đặt. Không có rắc rối.",
+    "ctaEdit": "Chỉnh sửa tệp PDF của bạn ngay bây giờ",
+    "ctaSample": "Hãy thử mẫu PDF",
+    "signInBlurb": "Đăng nhập hoặc tạo tài khoản để tiếp tục."
   },
   "footer": {
     "copyright": "© {{year}} pdfpilot",
-    "privacySoon": "Privacy",
-    "shareFeedback": "Share feedback",
-    "terms": "Terms of Service"
+    "privacySoon": "Sự riêng tư",
+    "shareFeedback": "Chia sẻ phản hồi",
+    "terms": "Điều khoản dịch vụ"
   },
   "account": {
-    "signedInLabel": "Signed in",
-    "savedPdfsTitle": "Saved PDFs and edits",
-    "savedPdfsHint": "PDFs you changed in Edit PDF (and other tools) while signed in — open, download, or delete anytime.",
-    "subscriptionTitle": "Subscription & billing",
-    "subscriptionHint": "Plan, usage, Razorpay receipts",
-    "signOut": "Sign out",
-    "signingOut": "Signing out…"
+    "signedInLabel": "Đã đăng nhập",
+    "savedPdfsTitle": "Các tệp PDF và chỉnh sửa đã lưu",
+    "savedPdfsHint": "Các tệp PDF bạn đã thay đổi trong Chỉnh sửa PDF (và các công cụ khác) khi đăng nhập — mở, tải xuống hoặc xóa bất kỳ lúc nào.",
+    "subscriptionTitle": "Đăng ký và thanh toán",
+    "subscriptionHint": "Gói, cách sử dụng, biên lai Razorpay",
+    "signOut": "Đăng xuất",
+    "signingOut": "Đang đăng xuất…"
   },
   "auth": {
-    "signInTitle": "Sign in",
-    "signUpTitle": "Create an account",
-    "newUser": "New user?",
-    "createAccount": "Create an account",
-    "haveAccount": "Already have an account?",
-    "signInLink": "Sign in",
-    "continueGoogle": "Continue with Google",
-    "or": "Or",
-    "downloadBadge": "Download",
-    "downloadBlurb": "Sign in or create an account, then your file downloads automatically. You stay signed in on this device.",
-    "notNow": "Not now",
-    "closeAria": "Close",
-    "createAccountTab": "Create account",
-    "pleaseWait": "Please wait…",
-    "continue": "Continue",
-    "signInWithEmailButton": "Sign in with email",
-    "createAccountButton": "Create account",
-    "forgotPassword": "Forgot password?",
+    "signInTitle": "Đăng nhập",
+    "signUpTitle": "Tạo một tài khoản",
+    "newUser": "Người dùng mới?",
+    "createAccount": "Tạo một tài khoản",
+    "haveAccount": "Đã có tài khoản?",
+    "signInLink": "Đăng nhập",
+    "continueGoogle": "Tiếp tục với Google",
+    "or": "Hoặc",
+    "downloadBadge": "Tải xuống",
+    "downloadBlurb": "Đăng nhập hoặc tạo tài khoản, sau đó tệp của bạn sẽ tự động tải xuống. Bạn vẫn đăng nhập trên thiết bị này.",
+    "notNow": "Không phải bây giờ",
+    "closeAria": "Đóng",
+    "createAccountTab": "Tạo tài khoản",
+    "pleaseWait": "Vui lòng chờ…",
+    "continue": "Tiếp tục",
+    "signInWithEmailButton": "Đăng nhập bằng email",
+    "createAccountButton": "Tạo tài khoản",
+    "forgotPassword": "Quên mật khẩu?",
     "emailSection": {
-      "signUpWithEmail": "Sign up with email",
-      "signInWithEmail": "Sign in with email",
-      "emailPassword": "Email & password",
-      "pickTabHint": "Pick a tab, then complete the fields and tap Continue."
+      "signUpWithEmail": "Đăng ký bằng email",
+      "signInWithEmail": "Đăng nhập bằng email",
+      "emailPassword": "Email và mật khẩu",
+      "pickTabHint": "Chọn một tab, sau đó hoàn thành các trường và nhấn vào Tiếp tục."
     },
     "field": {
-      "firstName": "First name",
-      "lastName": "Last name",
-      "dob": "Date of birth",
-      "dobInfo": "Used for your account profile",
-      "birthMonth": "Birth month",
-      "year": "Year",
-      "birthYear": "Birth year",
-      "country": "Country/Region",
-      "email": "Email",
-      "password": "Password"
+      "firstName": "Tên",
+      "lastName": "Họ",
+      "dob": "Ngày sinh",
+      "dobInfo": "Được sử dụng cho hồ sơ tài khoản của bạn",
+      "birthMonth": "tháng sinh",
+      "year": "Năm",
+      "birthYear": "Năm sinh",
+      "country": "Quốc gia/Khu vực",
+      "email": "E-mail",
+      "password": "Mật khẩu"
     },
     "reset": {
-      "blurb": "We will email you a link to choose a new password. After you reset it, return here and sign in with your new password.",
-      "sendLink": "Send reset link",
-      "backToSignIn": "Back to sign in"
+      "blurb": "Chúng tôi sẽ gửi cho bạn một liên kết qua email để chọn mật khẩu mới. Sau khi bạn đặt lại mật khẩu, hãy quay lại đây và đăng nhập bằng mật khẩu mới của bạn.",
+      "sendLink": "Gửi liên kết đặt lại",
+      "backToSignIn": "Quay lại để đăng nhập"
     },
     "errors": {
-      "emailPasswordRequired": "Enter email and password.",
-      "passwordMin": "Password must be at least 6 characters.",
-      "firstLastRequired": "Enter first and last name.",
-      "birthMonthRequired": "Select your month of birth.",
-      "birthYearInvalid": "Enter a valid 4-digit birth year.",
-      "birthYearRange": "Birth year must be between 1900 and {{max}}.",
-      "countryRequired": "Select your country or region.",
-      "resetEmailRequired": "Enter the email for your account.",
-      "emailInvalid": "That email address does not look valid."
+      "emailPasswordRequired": "Nhập email và mật khẩu.",
+      "passwordMin": "Mật khẩu phải có ít nhất 6 ký tự.",
+      "firstLastRequired": "Nhập họ và tên.",
+      "birthMonthRequired": "Chọn tháng sinh của bạn.",
+      "birthYearInvalid": "Nhập năm sinh hợp lệ có 4 chữ số.",
+      "birthYearRange": "Năm sinh phải nằm trong khoảng từ 1900 đến {{max}}.",
+      "countryRequired": "Chọn quốc gia hoặc khu vực của bạn.",
+      "resetEmailRequired": "Nhập email cho tài khoản của bạn.",
+      "emailInvalid": "Địa chỉ email đó có vẻ không hợp lệ."
     }
   },
   "nav": {
-    "groupOrganize": "Organize PDF",
-    "groupEdit": "Edit & sign",
-    "groupConvert": "Convert & export",
-    "groupSecurity": "Security"
+    "groupOrganize": "Sắp xếp PDF",
+    "groupEdit": "Chỉnh sửa và ký",
+    "groupConvert": "Chuyển đổi và xuất",
+    "groupSecurity": "Bảo vệ"
   },
   "megaFooter": {
-    "privacy": "Privacy-focused",
-    "easy": "Easy to use",
-    "fast": "Fast in your browser",
-    "termsAgree": "By using our tools you agree to the",
-    "termsLink": "Terms of Service",
-    "termsTail": ". Files are processed for your session; see the site footer for contact details."
+    "privacy": "Tập trung vào quyền riêng tư",
+    "easy": "Dễ dàng sử dụng",
+    "fast": "Nhanh chóng trong trình duyệt của bạn",
+    "termsAgree": "Bằng cách sử dụng các công cụ của chúng tôi, bạn đồng ý với",
+    "termsLink": "Điều khoản dịch vụ",
+    "termsTail": ". Các tập tin được xử lý cho phiên của bạn; xem chân trang của trang web để biết chi tiết liên lạc."
   },
   "tool": {
     "edit-pdf": {
-      "title": "Edit PDF",
-      "description": "Change text, annotate, highlight, draw."
+      "title": "Chỉnh sửa PDF",
+      "description": "Thay đổi văn bản, chú thích, đánh dấu, vẽ."
     },
     "ocr-pdf": {
-      "title": "OCR PDF",
-      "description": "Make scans searchable — needs your API (ocrmypdf + Tesseract on the server)."
+      "title": "PDF OCR",
+      "description": "Làm cho bản quét có thể tìm kiếm được - cần API của bạn (ocrmypdf + Tesseract trên máy chủ)."
     },
     "merge-pdf": {
-      "title": "Merge PDF",
-      "description": "Combine multiple PDFs into one file."
+      "title": "Hợp nhất PDF",
+      "description": "Kết hợp nhiều tệp PDF thành một tệp."
     },
     "split-pdf": {
-      "title": "Split PDF",
-      "description": "Split by page ranges or extract every page."
+      "title": "Tách PDF",
+      "description": "Chia theo phạm vi trang hoặc trích xuất từng trang."
     },
     "organize-pdf": {
-      "title": "Organize Pages",
-      "description": "Reorder, rotate, or delete pages, then download."
+      "title": "Tổ chức trang",
+      "description": "Sắp xếp lại, xoay hoặc xóa trang rồi tải xuống."
     },
     "add-page-numbers": {
-      "title": "Add page numbers",
-      "description": "Stamp page numbers with placement, ranges, and formats — in your browser."
+      "title": "Thêm số trang",
+      "description": "Đánh dấu số trang với vị trí, phạm vi và định dạng — trong trình duyệt của bạn."
     },
     "compress-pdf": {
-      "title": "Compress PDF",
-      "description": "Tries your API (qpdf / Ghostscript); falls back to in-browser pdf-lib when the API is missing."
+      "title": "Nén PDF",
+      "description": "Thử API của bạn (qpdf / Ghostscript); quay trở lại pdf-lib trong trình duyệt khi thiếu API."
     },
     "pdf-to-jpg": {
-      "title": "PDF to JPG",
-      "description": "Export pages as JPEG. ZIP or single files."
+      "title": "PDF sang JPG",
+      "description": "Xuất trang dưới dạng JPEG. ZIP hoặc các tập tin đơn lẻ."
     },
     "pdf-to-png": {
-      "title": "PDF to PNG",
-      "description": "Export pages as lossless PNG in a ZIP — all in your browser."
+      "title": "PDF sang PNG",
+      "description": "Xuất các trang dưới dạng PNG không mất dữ liệu ở dạng ZIP — tất cả đều có trong trình duyệt của bạn."
     },
     "pdf-to-text": {
-      "title": "PDF to text",
-      "description": "Download plain .txt from selectable text (not for raw scans)."
+      "title": "PDF thành văn bản",
+      "description": "Tải xuống .txt đơn giản từ văn bản có thể chọn (không dành cho bản quét thô)."
     },
     "jpg-to-pdf": {
-      "title": "JPG to PDF",
-      "description": "Combine images. Drag to reorder."
+      "title": "JPG sang PDF",
+      "description": "Kết hợp hình ảnh. Kéo để sắp xếp lại."
     },
     "scan-to-pdf": {
-      "title": "Scan to PDF",
-      "description": "Camera or photos: trim, enhance, multi-page PDF."
+      "title": "Quét sang PDF",
+      "description": "Máy ảnh hoặc ảnh: cắt, nâng cao, PDF nhiều trang."
     },
     "sign-pdf": {
-      "title": "Sign PDF",
-      "description": "Sign any page, duplicate or copy/paste placements, then download."
+      "title": "Ký PDF",
+      "description": "Ký bất kỳ trang nào, sao chép hoặc sao chép/dán các vị trí, sau đó tải xuống."
     },
     "fill-pdf": {
-      "title": "Fill PDF form",
-      "description": "Fill AcroForm fields and download — processing stays in the browser."
+      "title": "Điền vào mẫu PDF",
+      "description": "Điền vào các trường AcroForm và tải xuống - quá trình xử lý vẫn ở trong trình duyệt."
     },
     "flatten-pdf": {
-      "title": "Flatten PDF",
-      "description": "Flatten fillable forms or rasterize pages to images — client-side."
+      "title": "Làm phẳng PDF",
+      "description": "Làm phẳng các biểu mẫu có thể điền hoặc phân loại các trang thành hình ảnh - phía máy khách."
     },
     "unlock-pdf": {
-      "title": "Unlock PDF",
-      "description": "Remove password via your API (qpdf / Ghostscript when configured)."
+      "title": "Mở khóa PDF",
+      "description": "Xóa mật khẩu qua API của bạn (qpdf / Ghostscript khi được định cấu hình)."
     },
     "encrypt-pdf": {
-      "title": "Encrypt PDF",
-      "description": "Password-protect with AES-256 (qpdf on the server)."
+      "title": "Mã hóa PDF",
+      "description": "Bảo vệ bằng mật khẩu với AES-256 (qpdf trên máy chủ)."
     },
     "add-watermark": {
-      "title": "Add Watermark",
-      "description": "Text or image watermark, page ranges, preview, then download."
+      "title": "Thêm hình mờ",
+      "description": "Hình mờ văn bản hoặc hình ảnh, phạm vi trang, xem trước, sau đó tải xuống."
     },
     "pdf-to-word": {
-      "title": "PDF to Word",
-      "description": "Draft .docx in your browser — PDF is not uploaded for conversion (use OCR PDF for scans first)."
+      "title": "PDF sang Word",
+      "description": "Bản nháp .docx trong trình duyệt của bạn — PDF không được tải lên để chuyển đổi (trước tiên hãy sử dụng OCR PDF để quét)."
     },
     "word-to-pdf": {
-      "title": "Word to PDF",
-      "description": "Draft PDF in your browser — .docx is not uploaded for conversion."
+      "title": "Từ sang PDF",
+      "description": "Bản PDF nháp trong trình duyệt của bạn — .docx không được tải lên để chuyển đổi."
     },
     "gst-invoice": {
-      "title": "GST invoice PDF",
-      "description": "Supplier, buyer, HSN lines — download a tax invoice PDF in the browser."
+      "title": "Hóa đơn GST PDF",
+      "description": "Nhà cung cấp, người mua, đường HSN — tải xuống bản PDF hóa đơn thuế trong trình duyệt."
     }
   }
 }
