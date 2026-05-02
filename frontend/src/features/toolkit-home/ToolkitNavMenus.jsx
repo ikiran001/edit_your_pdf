@@ -1,6 +1,7 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import * as Icons from 'lucide-react'
 import { ChevronDown, Lock, Sparkles, Zap } from 'lucide-react'
 import { trackFeatureUsed } from '../../lib/analytics.js'
@@ -43,6 +44,7 @@ const MEGA_COLUMN_THEME = {
 }
 
 export default function ToolkitNavMenus() {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [layoutTop, setLayoutTop] = useState(64)
   const triggerRef = useRef(null)
@@ -106,7 +108,7 @@ export default function ToolkitNavMenus() {
           <>
             <button
               type="button"
-              aria-label="Close tools menu"
+              aria-label={t('header.closeToolsMenu')}
               className="fixed inset-0 z-[55] cursor-default bg-zinc-950/35 backdrop-blur-[1px]"
               style={{ top: layoutTop }}
               onClick={close}
@@ -114,7 +116,7 @@ export default function ToolkitNavMenus() {
             <div
               id={panelId}
               role="dialog"
-              aria-label="All PDF tools"
+              aria-label={t('header.allToolsMenu')}
               className="fixed z-[60] w-[min(96rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-zinc-200/90 bg-white/98 shadow-2xl shadow-zinc-900/20 ring-1 ring-black/[0.04] dark:border-zinc-600/50 dark:bg-zinc-950/98 dark:shadow-[0_24px_80px_-20px_rgba(0,0,0,0.65)] dark:ring-white/[0.06]"
               style={{
                 top: layoutTop + 6,
@@ -126,7 +128,7 @@ export default function ToolkitNavMenus() {
               <div className="max-h-[inherit] overflow-y-auto overscroll-contain px-4 py-5 sm:px-7 sm:py-7">
                 <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
                   {TOOL_NAV_GROUPS.map((group) => (
-                    <MegaColumn key={group.label} group={group} onNavigate={close} />
+                    <MegaColumn key={group.labelKey || group.label} group={group} onNavigate={close} />
                   ))}
                 </div>
                 <MegaMenuFooter />
@@ -149,7 +151,7 @@ export default function ToolkitNavMenus() {
           aria-controls={open ? panelId : undefined}
           onClick={() => setOpen((v) => !v)}
         >
-          All tools
+          {t('header.allTools')}
           <ChevronDown
             className={`h-4 w-4 shrink-0 text-zinc-500 transition dark:text-zinc-400 ${open ? 'rotate-180' : ''}`}
             aria-hidden
@@ -162,15 +164,17 @@ export default function ToolkitNavMenus() {
 }
 
 function MegaColumn({ group, onNavigate }) {
+  const { t } = useTranslation()
   const tools = toolsInNavGroup(group)
   const theme = MEGA_COLUMN_THEME[group.tint] || MEGA_COLUMN_THEME.violet
+  const heading = group.labelKey ? t(group.labelKey) : group.label
 
   return (
     <div className="min-w-0 border-b border-zinc-100 pb-8 last:border-b-0 last:pb-0 sm:border-b-0 sm:pb-0 lg:border-b-0 dark:border-zinc-800/90">
       <h3
         className={`mb-4 pl-3 text-left text-[12px] font-bold uppercase tracking-[0.12em] text-zinc-800 dark:text-zinc-100 ${theme.headingAccent}`}
       >
-        {group.label}
+        {heading}
       </h3>
       <div className="flex flex-col gap-0.5">
         {tools.map((tool) => (
@@ -182,8 +186,10 @@ function MegaColumn({ group, onNavigate }) {
 }
 
 function MegaToolCell({ tool, theme, onPick }) {
+  const { t } = useTranslation()
   const Icon = Icons[tool.icon] || Icons.FileQuestion
   const featureName = REGISTRY_ID_TO_FEATURE[tool.id]
+  const title = t(`tool.${tool.id}.title`, { defaultValue: tool.title })
 
   const iconBox = (
     <span
@@ -201,8 +207,8 @@ function MegaToolCell({ tool, theme, onPick }) {
       >
         {iconBox}
         <span className="min-w-0 text-left text-[13px] font-medium leading-snug text-zinc-500 dark:text-zinc-400">
-          {tool.title}
-          <span className="ml-1 text-[11px] text-amber-700 dark:text-amber-400">Soon</span>
+          {title}
+          <span className="ml-1 text-[11px] text-amber-700 dark:text-amber-400">{t('common.soon')}</span>
         </span>
       </div>
     )
@@ -219,13 +225,14 @@ function MegaToolCell({ tool, theme, onPick }) {
     >
       {iconBox}
       <span className="min-w-0 flex-1 text-left text-[13px] font-semibold leading-snug text-zinc-900 dark:text-zinc-50">
-        {tool.title}
+        {title}
       </span>
     </Link>
   )
 }
 
 function MegaMenuFooter() {
+  const { t } = useTranslation()
   return (
     <div className="mt-8 rounded-2xl border border-zinc-200/80 bg-gradient-to-b from-zinc-50/98 to-white px-4 py-5 dark:border-zinc-700/70 dark:from-zinc-900/85 dark:to-zinc-950/90">
       <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-xs font-semibold text-zinc-700 dark:text-zinc-200 sm:gap-x-10">
@@ -233,27 +240,27 @@ function MegaMenuFooter() {
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-600/25">
             <Lock className="h-4 w-4" strokeWidth={2} aria-hidden />
           </span>
-          Privacy-focused
+          {t('megaFooter.privacy')}
         </span>
         <span className="inline-flex items-center gap-2">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-600 text-white shadow-md shadow-violet-600/25">
             <Sparkles className="h-4 w-4" strokeWidth={2} aria-hidden />
           </span>
-          Easy to use
+          {t('megaFooter.easy')}
         </span>
         <span className="inline-flex items-center gap-2">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-md shadow-amber-600/25">
             <Zap className="h-4 w-4" strokeWidth={2} aria-hidden />
           </span>
-          Fast in your browser
+          {t('megaFooter.fast')}
         </span>
       </div>
       <p className="mt-3 text-center text-[10px] leading-relaxed text-zinc-500 dark:text-zinc-500">
-        By using our tools you agree to the{' '}
+        {t('megaFooter.termsAgree')}{' '}
         <Link to="/terms" className="font-medium text-indigo-600 underline-offset-2 hover:underline dark:text-cyan-400">
-          Terms of Service
+          {t('megaFooter.termsLink')}
         </Link>
-        . Files are processed for your session; see the site footer for contact details.
+        {t('megaFooter.termsTail')}
       </p>
     </div>
   )

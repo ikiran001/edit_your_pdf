@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import ErrorBoundary from '../shared/components/ErrorBoundary.jsx'
 import PrivateRoute from '../auth/PrivateRoute.jsx'
@@ -36,10 +37,11 @@ const FeedbackPage = lazy(() => import('../features/feedback/FeedbackPage.jsx'))
 const AdminFeedbackPage = lazy(() => import('../features/feedback/AdminFeedbackPage.jsx'))
 
 function RouteFallback() {
+  const { t } = useTranslation()
   return (
     <div className="flex min-h-[40vh] flex-col items-center justify-center gap-2 text-slate-500">
       <span className="inline-block size-6 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600" aria-hidden />
-      <p className="text-sm">Loading…</p>
+      <p className="text-sm">{t('common.loading')}</p>
     </div>
   )
 }

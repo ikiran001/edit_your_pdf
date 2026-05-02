@@ -1,0 +1,219 @@
+{
+  "common": {
+    "loading": "Loading…",
+    "brandName": "pdfpilot",
+    "soon": "Soon",
+    "comingSoon": "Coming soon",
+    "close": "Close",
+    "cancel": "Cancel",
+    "openTool": "Open tool →",
+    "brandTagline": "Navigate your PDFs effortlessly",
+    "brandHeroLine": "Edit, compress, merge and manage PDFs instantly — PurPDF-grade clarity, speed, and trustworthy exports from pdfpilot."
+  },
+  "header": {
+    "login": "Log in",
+    "signUp": "Sign up",
+    "accountAriaGuest": "Log in or sign up",
+    "accountAriaUser": "Account menu — saved PDFs from Edit PDF and other tools, sign out",
+    "signedInPrefix": "Signed in ·",
+    "allTools": "All tools",
+    "allToolsMenu": "All PDF tools",
+    "closeToolsMenu": "Close tools menu"
+  },
+  "appsMenu": {
+    "ariaLabel": "Site menu",
+    "pricing": "Pricing & plans",
+    "security": "Security & terms",
+    "features": "Features",
+    "about": "About",
+    "help": "Help & feedback",
+    "language": "Language",
+    "terms": "Terms of Service",
+    "back": "Back",
+    "chooseLanguage": "Choose language"
+  },
+  "home": {
+    "chooseTool": "Choose a tool",
+    "searchPlaceholder": "Search tools (e.g. merge, scan, watermark)…",
+    "searchNoResults": "No tools match “{{query}}”. Try another word or clear the search.",
+    "searchShowing": "Showing {{n}} of {{total}} tools",
+    "footerProcessing": "Files are processed in your session. Need the raw API? See the project README for self-hosting on GitHub Pages.",
+    "ratingsNote": "Ratings and comments are shown only after real submissions."
+  },
+  "hero": {
+    "title": "Edit and download PDFs instantly",
+    "subtitle": "Fast, simple, and secure PDF editing directly in your browser. No installs. No hassle.",
+    "ctaEdit": "Edit your PDF now",
+    "ctaSample": "Try sample PDF",
+    "signInBlurb": "Sign in or create an account to continue."
+  },
+  "footer": {
+    "copyright": "© {{year}} pdfpilot",
+    "privacySoon": "Privacy",
+    "shareFeedback": "Share feedback",
+    "terms": "Terms of Service"
+  },
+  "account": {
+    "signedInLabel": "Signed in",
+    "savedPdfsTitle": "Saved PDFs and edits",
+    "savedPdfsHint": "PDFs you changed in Edit PDF (and other tools) while signed in — open, download, or delete anytime.",
+    "subscriptionTitle": "Subscription & billing",
+    "subscriptionHint": "Plan, usage, Razorpay receipts",
+    "signOut": "Sign out",
+    "signingOut": "Signing out…"
+  },
+  "auth": {
+    "signInTitle": "Sign in",
+    "signUpTitle": "Create an account",
+    "newUser": "New user?",
+    "createAccount": "Create an account",
+    "haveAccount": "Already have an account?",
+    "signInLink": "Sign in",
+    "continueGoogle": "Continue with Google",
+    "or": "Or",
+    "downloadBadge": "Download",
+    "downloadBlurb": "Sign in or create an account, then your file downloads automatically. You stay signed in on this device.",
+    "notNow": "Not now",
+    "closeAria": "Close",
+    "createAccountTab": "Create account",
+    "pleaseWait": "Please wait…",
+    "continue": "Continue",
+    "signInWithEmailButton": "Sign in with email",
+    "createAccountButton": "Create account",
+    "forgotPassword": "Forgot password?",
+    "emailSection": {
+      "signUpWithEmail": "Sign up with email",
+      "signInWithEmail": "Sign in with email",
+      "emailPassword": "Email & password",
+      "pickTabHint": "Pick a tab, then complete the fields and tap Continue."
+    },
+    "field": {
+      "firstName": "First name",
+      "lastName": "Last name",
+      "dob": "Date of birth",
+      "dobInfo": "Used for your account profile",
+      "birthMonth": "Birth month",
+      "year": "Year",
+      "birthYear": "Birth year",
+      "country": "Country/Region",
+      "email": "Email",
+      "password": "Password"
+    },
+    "reset": {
+      "blurb": "We will email you a link to choose a new password. After you reset it, return here and sign in with your new password.",
+      "sendLink": "Send reset link",
+      "backToSignIn": "Back to sign in"
+    },
+    "errors": {
+      "emailPasswordRequired": "Enter email and password.",
+      "passwordMin": "Password must be at least 6 characters.",
+      "firstLastRequired": "Enter first and last name.",
+      "birthMonthRequired": "Select your month of birth.",
+      "birthYearInvalid": "Enter a valid 4-digit birth year.",
+      "birthYearRange": "Birth year must be between 1900 and {{max}}.",
+      "countryRequired": "Select your country or region.",
+      "resetEmailRequired": "Enter the email for your account.",
+      "emailInvalid": "That email address does not look valid."
+    }
+  },
+  "nav": {
+    "groupOrganize": "Organize PDF",
+    "groupEdit": "Edit & sign",
+    "groupConvert": "Convert & export",
+    "groupSecurity": "Security"
+  },
+  "megaFooter": {
+    "privacy": "Privacy-focused",
+    "easy": "Easy to use",
+    "fast": "Fast in your browser",
+    "termsAgree": "By using our tools you agree to the",
+    "termsLink": "Terms of Service",
+    "termsTail": ". Files are processed for your session; see the site footer for contact details."
+  },
+  "tool": {
+    "edit-pdf": {
+      "title": "Edit PDF",
+      "description": "Change text, annotate, highlight, draw."
+    },
+    "ocr-pdf": {
+      "title": "OCR PDF",
+      "description": "Make scans searchable — needs your API (ocrmypdf + Tesseract on the server)."
+    },
+    "merge-pdf": {
+      "title": "Merge PDF",
+      "description": "Combine multiple PDFs into one file."
+    },
+    "split-pdf": {
+      "title": "Split PDF",
+      "description": "Split by page ranges or extract every page."
+    },
+    "organize-pdf": {
+      "title": "Organize Pages",
+      "description": "Reorder, rotate, or delete pages, then download."
+    },
+    "add-page-numbers": {
+      "title": "Add page numbers",
+      "description": "Stamp page numbers with placement, ranges, and formats — in your browser."
+    },
+    "compress-pdf": {
+      "title": "Compress PDF",
+      "description": "Tries your API (qpdf / Ghostscript); falls back to in-browser pdf-lib when the API is missing."
+    },
+    "pdf-to-jpg": {
+      "title": "PDF to JPG",
+      "description": "Export pages as JPEG. ZIP or single files."
+    },
+    "pdf-to-png": {
+      "title": "PDF to PNG",
+      "description": "Export pages as lossless PNG in a ZIP — all in your browser."
+    },
+    "pdf-to-text": {
+      "title": "PDF to text",
+      "description": "Download plain .txt from selectable text (not for raw scans)."
+    },
+    "jpg-to-pdf": {
+      "title": "JPG to PDF",
+      "description": "Combine images. Drag to reorder."
+    },
+    "scan-to-pdf": {
+      "title": "Scan to PDF",
+      "description": "Camera or photos: trim, enhance, multi-page PDF."
+    },
+    "sign-pdf": {
+      "title": "Sign PDF",
+      "description": "Sign any page, duplicate or copy/paste placements, then download."
+    },
+    "fill-pdf": {
+      "title": "Fill PDF form",
+      "description": "Fill AcroForm fields and download — processing stays in the browser."
+    },
+    "flatten-pdf": {
+      "title": "Flatten PDF",
+      "description": "Flatten fillable forms or rasterize pages to images — client-side."
+    },
+    "unlock-pdf": {
+      "title": "Unlock PDF",
+      "description": "Remove password via your API (qpdf / Ghostscript when configured)."
+    },
+    "encrypt-pdf": {
+      "title": "Encrypt PDF",
+      "description": "Password-protect with AES-256 (qpdf on the server)."
+    },
+    "add-watermark": {
+      "title": "Add Watermark",
+      "description": "Text or image watermark, page ranges, preview, then download."
+    },
+    "pdf-to-word": {
+      "title": "PDF to Word",
+      "description": "Draft .docx in your browser — PDF is not uploaded for conversion (use OCR PDF for scans first)."
+    },
+    "word-to-pdf": {
+      "title": "Word to PDF",
+      "description": "Draft PDF in your browser — .docx is not uploaded for conversion."
+    },
+    "gst-invoice": {
+      "title": "GST invoice PDF",
+      "description": "Supplier, buyer, HSN lines — download a tax invoice PDF in the browser."
+    }
+  }
+}

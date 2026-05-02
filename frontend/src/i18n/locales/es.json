@@ -1,0 +1,219 @@
+{
+  "common": {
+    "loading": "Cargando…",
+    "brandName": "pdfpilot",
+    "soon": "Pronto",
+    "comingSoon": "Próximamente",
+    "close": "Cerrar",
+    "cancel": "Cancelar",
+    "openTool": "Abrir herramienta →",
+    "brandTagline": "Gestiona tus PDF sin esfuerzo",
+    "brandHeroLine": "Edita, comprime, fusiona y administra PDF al instante: claridad al estilo PurPDF, rapidez y exportaciones fiables con pdfpilot."
+  },
+  "header": {
+    "login": "Iniciar sesión",
+    "signUp": "Registrarse",
+    "accountAriaGuest": "Iniciar sesión o registrarse",
+    "accountAriaUser": "Menú de la cuenta: PDF guardados de Editar PDF y otras herramientas, cerrar sesión",
+    "signedInPrefix": "Sesión iniciada ·",
+    "allTools": "Todas las herramientas",
+    "allToolsMenu": "Todas las herramientas PDF",
+    "closeToolsMenu": "Cerrar menú de herramientas"
+  },
+  "appsMenu": {
+    "ariaLabel": "Menú del sitio",
+    "pricing": "Precios y planes",
+    "security": "Seguridad y términos",
+    "features": "Funciones",
+    "about": "Acerca de",
+    "help": "Ayuda y comentarios",
+    "language": "Idioma",
+    "terms": "Términos del servicio",
+    "back": "Atrás",
+    "chooseLanguage": "Elegir idioma"
+  },
+  "home": {
+    "chooseTool": "Elige una herramienta",
+    "searchPlaceholder": "Buscar herramientas (p. ej. fusionar, escanear, marca de agua)…",
+    "searchNoResults": "Ninguna herramienta coincide con «{{query}}». Prueba otra palabra o borra la búsqueda.",
+    "searchShowing": "Mostrando {{n}} de {{total}} herramientas",
+    "footerProcessing": "Los archivos se procesan en tu sesión. ¿Necesitas la API en bruto? Consulta el README del proyecto para autoalojar en GitHub Pages.",
+    "ratingsNote": "Las valoraciones y comentarios solo se muestran tras envíos reales."
+  },
+  "hero": {
+    "title": "Edita y descarga PDF al instante",
+    "subtitle": "Edición de PDF rápida, sencilla y segura directamente en el navegador. Sin instalaciones. Sin complicaciones.",
+    "ctaEdit": "Edita tu PDF ahora",
+    "ctaSample": "Probar PDF de ejemplo",
+    "signInBlurb": "Inicia sesión o crea una cuenta para continuar."
+  },
+  "footer": {
+    "copyright": "© {{year}} pdfpilot",
+    "privacySoon": "Privacidad",
+    "shareFeedback": "Enviar comentarios",
+    "terms": "Términos del servicio"
+  },
+  "account": {
+    "signedInLabel": "Sesión iniciada",
+    "savedPdfsTitle": "PDF guardados y ediciones",
+    "savedPdfsHint": "PDF que modificaste en Editar PDF (y otras herramientas) con sesión iniciada: abre, descarga o elimina cuando quieras.",
+    "subscriptionTitle": "Suscripción y facturación",
+    "subscriptionHint": "Plan, uso, recibos de Razorpay",
+    "signOut": "Cerrar sesión",
+    "signingOut": "Cerrando sesión…"
+  },
+  "auth": {
+    "signInTitle": "Iniciar sesión",
+    "signUpTitle": "Crear una cuenta",
+    "newUser": "¿Usuario nuevo?",
+    "createAccount": "Crear una cuenta",
+    "haveAccount": "¿Ya tienes una cuenta?",
+    "signInLink": "Iniciar sesión",
+    "continueGoogle": "Continuar con Google",
+    "or": "O",
+    "downloadBadge": "Descargar",
+    "downloadBlurb": "Inicia sesión o crea una cuenta; luego tu archivo se descarga automáticamente. Permaneces conectado en este dispositivo.",
+    "notNow": "Ahora no",
+    "closeAria": "Cerrar",
+    "createAccountTab": "Crear cuenta",
+    "pleaseWait": "Espera…",
+    "continue": "Continuar",
+    "signInWithEmailButton": "Iniciar sesión con correo",
+    "createAccountButton": "Crear cuenta",
+    "forgotPassword": "¿Olvidaste la contraseña?",
+    "emailSection": {
+      "signUpWithEmail": "Registrarse con correo",
+      "signInWithEmail": "Iniciar sesión con correo",
+      "emailPassword": "Correo y contraseña",
+      "pickTabHint": "Elige una pestaña, completa los campos y pulsa Continuar."
+    },
+    "field": {
+      "firstName": "Nombre",
+      "lastName": "Apellidos",
+      "dob": "Fecha de nacimiento",
+      "dobInfo": "Se usa en el perfil de tu cuenta",
+      "birthMonth": "Mes de nacimiento",
+      "year": "Año",
+      "birthYear": "Año de nacimiento",
+      "country": "País o región",
+      "email": "Correo electrónico",
+      "password": "Contraseña"
+    },
+    "reset": {
+      "blurb": "Te enviaremos un enlace por correo para elegir una nueva contraseña. Después de restablecerla, vuelve aquí e inicia sesión con la nueva contraseña.",
+      "sendLink": "Enviar enlace de restablecimiento",
+      "backToSignIn": "Volver a iniciar sesión"
+    },
+    "errors": {
+      "emailPasswordRequired": "Introduce correo y contraseña.",
+      "passwordMin": "La contraseña debe tener al menos 6 caracteres.",
+      "firstLastRequired": "Introduce nombre y apellidos.",
+      "birthMonthRequired": "Selecciona el mes de nacimiento.",
+      "birthYearInvalid": "Introduce un año de nacimiento válido de 4 dígitos.",
+      "birthYearRange": "El año de nacimiento debe estar entre 1900 y {{max}}.",
+      "countryRequired": "Selecciona tu país o región.",
+      "resetEmailRequired": "Introduce el correo de tu cuenta.",
+      "emailInvalid": "Ese correo no parece válido."
+    }
+  },
+  "nav": {
+    "groupOrganize": "Organizar PDF",
+    "groupEdit": "Editar y firmar",
+    "groupConvert": "Convertir y exportar",
+    "groupSecurity": "Seguridad"
+  },
+  "megaFooter": {
+    "privacy": "Enfocado en la privacidad",
+    "easy": "Fácil de usar",
+    "fast": "Rápido en tu navegador",
+    "termsAgree": "Al usar nuestras herramientas aceptas los",
+    "termsLink": "Términos del servicio",
+    "termsTail": ". Los archivos se procesan para tu sesión; consulta el pie del sitio para datos de contacto."
+  },
+  "tool": {
+    "edit-pdf": {
+      "title": "Editar PDF",
+      "description": "Cambia texto, anota, resalta y dibuja."
+    },
+    "ocr-pdf": {
+      "title": "OCR en PDF",
+      "description": "Haz que los escaneos sean buscables: requiere tu API (ocrmypdf + Tesseract en el servidor)."
+    },
+    "merge-pdf": {
+      "title": "Fusionar PDF",
+      "description": "Combina varios PDF en un solo archivo."
+    },
+    "split-pdf": {
+      "title": "Dividir PDF",
+      "description": "Divide por rangos de páginas o extrae cada página."
+    },
+    "organize-pdf": {
+      "title": "Organizar páginas",
+      "description": "Reordena, rota o elimina páginas y descarga."
+    },
+    "add-page-numbers": {
+      "title": "Añadir números de página",
+      "description": "Marca números de página con posición, rangos y formatos, en tu navegador."
+    },
+    "compress-pdf": {
+      "title": "Comprimir PDF",
+      "description": "Intenta tu API (qpdf / Ghostscript); si falta, usa pdf-lib en el navegador."
+    },
+    "pdf-to-jpg": {
+      "title": "PDF a JPG",
+      "description": "Exporta páginas como JPEG. ZIP o archivos sueltos."
+    },
+    "pdf-to-png": {
+      "title": "PDF a PNG",
+      "description": "Exporta páginas como PNG sin pérdida en un ZIP, en el navegador."
+    },
+    "pdf-to-text": {
+      "title": "PDF a texto",
+      "description": "Descarga .txt de texto seleccionable (no para escaneos sin OCR)."
+    },
+    "jpg-to-pdf": {
+      "title": "JPG a PDF",
+      "description": "Combina imágenes. Arrastra para reordenar."
+    },
+    "scan-to-pdf": {
+      "title": "Escanear a PDF",
+      "description": "Cámara o fotos: recorta, mejora, PDF multipágina."
+    },
+    "sign-pdf": {
+      "title": "Firmar PDF",
+      "description": "Firma en cualquier página, duplica o copia y pega colocaciones, luego descarga."
+    },
+    "fill-pdf": {
+      "title": "Rellenar formulario PDF",
+      "description": "Rellena campos AcroForm y descarga: el procesamiento queda en el navegador."
+    },
+    "flatten-pdf": {
+      "title": "Aplanar PDF",
+      "description": "Aplana formularios o rasteriza páginas a imágenes, en el cliente."
+    },
+    "unlock-pdf": {
+      "title": "Desbloquear PDF",
+      "description": "Quita la contraseña con tu API (qpdf / Ghostscript si está configurado)."
+    },
+    "encrypt-pdf": {
+      "title": "Cifrar PDF",
+      "description": "Protege con contraseña AES-256 (qpdf en el servidor)."
+    },
+    "add-watermark": {
+      "title": "Añadir marca de agua",
+      "description": "Marca de agua de texto o imagen, rangos de página, vista previa y descarga."
+    },
+    "pdf-to-word": {
+      "title": "PDF a Word",
+      "description": "Borrador .docx en tu navegador: el PDF no se sube para la conversión (usa OCR en PDF antes para escaneos)."
+    },
+    "word-to-pdf": {
+      "title": "Word a PDF",
+      "description": "Borrador PDF en tu navegador: el .docx no se sube para la conversión."
+    },
+    "gst-invoice": {
+      "title": "Factura GST PDF",
+      "description": "Proveedor, comprador, líneas HSN: descarga una factura fiscal PDF en el navegador."
+    }
+  }
+}

@@ -1,5 +1,5 @@
 import ThemeToggle from './ThemeToggle.jsx'
-import AccountMenu from './AccountMenu.jsx'
+import SiteHeaderActions from './SiteHeaderActions.jsx'
 import BrandLogoLink from './BrandLogoLink.jsx'
 import LegalFooter from './LegalFooter.jsx'
 import { toolOnBrand } from '../constants/branding.js'
@@ -32,8 +32,7 @@ export default function ToolPageShell({ title, subtitle, children, contentMaxWid
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <AccountMenu />
-            <ThemeToggle />
+            <SiteHeaderActions />
           </div>
         </div>
       </header>

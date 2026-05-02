@@ -1,17 +1,17 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from './AuthContext.jsx'
 import AuthEmailForms from './AuthEmailForms.jsx'
-import { BRAND_NAME, TAGLINE } from '../shared/constants/branding.js'
 
 const PANEL_Z = 10060
 
-function OrDivider() {
+function OrDivider({ orLabel }) {
   return (
     <div className="my-6 flex items-center gap-3">
       <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-600" />
-      <span className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Or</span>
+      <span className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{orLabel}</span>
       <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-600" />
     </div>
   )
@@ -38,6 +38,7 @@ export default function SignInExperienceModal({
   /** When true, show setup message only (no Google / email). */
   authDisabled = false,
 }) {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const [panelMode, setPanelMode] = useState(initialMode)
 
@@ -95,12 +96,14 @@ export default function SignInExperienceModal({
             <div className="absolute bottom-0 right-0 h-2/3 w-2/3 rounded-full bg-gradient-to-tl from-cyan-500/20 to-transparent blur-3xl" />
           </div>
           <div className="relative z-[1] font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-white/70">
-            {BRAND_NAME}
+            {t('common.brandName')}
           </div>
           <div className="relative z-[1] mt-auto">
-            <p className="text-2xl font-semibold leading-tight tracking-tight text-white/95">{BRAND_NAME}</p>
-            <p className="mt-2 max-w-[16rem] text-sm leading-relaxed text-white/75">{TAGLINE}</p>
-            <p className="mt-6 text-xs text-white/50">Sign in or create an account to continue.</p>
+            <p className="text-2xl font-semibold leading-tight tracking-tight text-white/95">
+              {t('common.brandName')}
+            </p>
+            <p className="mt-2 max-w-[16rem] text-sm leading-relaxed text-white/75">{t('common.brandTagline')}</p>
+            <p className="mt-6 text-xs text-white/50">{t('hero.signInBlurb')}</p>
           </div>
         </div>
 
@@ -113,7 +116,7 @@ export default function SignInExperienceModal({
             onClick={() => {
               if (!busy) onClose()
             }}
-            aria-label="Close"
+            aria-label={t('auth.closeAria')}
           >
             <X className="h-5 w-5" strokeWidth={1.75} />
           </button>
@@ -121,21 +124,21 @@ export default function SignInExperienceModal({
           <div className="flex flex-1 flex-col px-6 pb-8 pt-10 sm:px-10 sm:pt-12">
             {isDownload ? (
               <p className="mb-1 text-xs font-medium uppercase tracking-wide text-indigo-600 dark:text-cyan-400">
-                Download
+                {t('auth.downloadBadge')}
               </p>
             ) : null}
 
             {authDisabled ? (
               <h1 id="eyp-auth-panel-title" className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-3xl">
-                Sign in
+                {t('auth.signInTitle')}
               </h1>
             ) : panelMode === 'signin' ? (
               <>
                 <h1 id="eyp-auth-panel-title" className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-3xl">
-                  Sign in
+                  {t('auth.signInTitle')}
                 </h1>
                 <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                  New user?{' '}
+                  {t('auth.newUser')}{' '}
                   <button
                     type="button"
                     disabled={busy}
@@ -145,17 +148,17 @@ export default function SignInExperienceModal({
                       setPanelMode('signup')
                     }}
                   >
-                    Create an account
+                    {t('auth.createAccount')}
                   </button>
                 </p>
               </>
             ) : (
               <>
                 <h1 id="eyp-auth-panel-title" className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-3xl">
-                  Create an account
+                  {t('auth.signUpTitle')}
                 </h1>
                 <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                  Already have an account?{' '}
+                  {t('auth.haveAccount')}{' '}
                   <button
                     type="button"
                     disabled={busy}
@@ -165,16 +168,14 @@ export default function SignInExperienceModal({
                       setPanelMode('signin')
                     }}
                   >
-                    Sign in
+                    {t('auth.signInLink')}
                   </button>
                 </p>
               </>
             )}
 
             {isDownload ? (
-              <p className="mt-4 text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">
-                Sign in or create an account, then your file downloads automatically. You stay signed in on this device.
-              </p>
+              <p className="mt-4 text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">{t('auth.downloadBlurb')}</p>
             ) : null}
 
             {errorHint ? (
@@ -221,11 +222,11 @@ export default function SignInExperienceModal({
                         d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                       />
                     </svg>
-                    Continue with Google
+                    {t('auth.continueGoogle')}
                   </button>
                 </div>
 
-                <OrDivider />
+                <OrDivider orLabel={t('auth.or')} />
 
                 <AuthEmailForms
                   key={panelMode}
@@ -250,7 +251,7 @@ export default function SignInExperienceModal({
                   if (!busy) onClose()
                 }}
               >
-                Cancel
+                {t('common.cancel')}
               </button>
             ) : (
               <button
@@ -261,7 +262,7 @@ export default function SignInExperienceModal({
                   if (!busy) onClose()
                 }}
               >
-                Not now
+                {t('auth.notNow')}
               </button>
             )}
           </div>

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Info } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { SIGNUP_COUNTRIES, SIGNUP_MONTHS } from './authSignupOptions.js'
 
 /**
@@ -31,6 +32,7 @@ export default function AuthEmailForms({
   onEmailSignUp,
   onSendPasswordReset,
 }) {
+  const { t } = useTranslation()
   const [internalEmailMode, setInternalEmailMode] = useState('signin')
   const emailMode = controlledEmailMode ?? internalEmailMode
   const [firstName, setFirstName] = useState('')
@@ -58,11 +60,11 @@ export default function AuthEmailForms({
     const e = email.trim()
     const p = password
     if (!e || !p) {
-      onAuthMessage?.('Enter email and password.')
+      onAuthMessage?.(t('auth.errors.emailPasswordRequired'))
       return
     }
     if (p.length < 6) {
-      onAuthMessage?.('Password must be at least 6 characters.')
+      onAuthMessage?.(t('auth.errors.passwordMin'))
       return
     }
     onAuthMessage?.(null)
@@ -75,33 +77,33 @@ export default function AuthEmailForms({
     const e = email.trim()
     const p = password
     if (!fn || !ln) {
-      onAuthMessage?.('Enter first and last name.')
+      onAuthMessage?.(t('auth.errors.firstLastRequired'))
       return
     }
     if (!birthMonth) {
-      onAuthMessage?.('Select your month of birth.')
+      onAuthMessage?.(t('auth.errors.birthMonthRequired'))
       return
     }
     const y = String(birthYear).trim()
     if (!y || !/^\d{4}$/.test(y)) {
-      onAuthMessage?.('Enter a valid 4-digit birth year.')
+      onAuthMessage?.(t('auth.errors.birthYearInvalid'))
       return
     }
     const yi = Number(y)
     if (yi < 1900 || yi > maxBirthYear) {
-      onAuthMessage?.(`Birth year must be between 1900 and ${maxBirthYear}.`)
+      onAuthMessage?.(t('auth.errors.birthYearRange', { max: maxBirthYear }))
       return
     }
     if (!country) {
-      onAuthMessage?.('Select your country or region.')
+      onAuthMessage?.(t('auth.errors.countryRequired'))
       return
     }
     if (!e || !p) {
-      onAuthMessage?.('Enter email and password.')
+      onAuthMessage?.(t('auth.errors.emailPasswordRequired'))
       return
     }
     if (p.length < 6) {
-      onAuthMessage?.('Password must be at least 6 characters.')
+      onAuthMessage?.(t('auth.errors.passwordMin'))
       return
     }
     onAuthMessage?.(null)
@@ -122,11 +124,11 @@ export default function AuthEmailForms({
     if (!onSendPasswordReset) return
     const e = email.trim()
     if (!e) {
-      onAuthMessage?.('Enter the email for your account.')
+      onAuthMessage?.(t('auth.errors.resetEmailRequired'))
       return
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) {
-      onAuthMessage?.('That email address does not look valid.')
+      onAuthMessage?.(t('auth.errors.emailInvalid'))
       return
     }
     onAuthMessage?.(null)
@@ -137,10 +139,10 @@ export default function AuthEmailForms({
 
   const emailSectionTitle =
     controlledEmailMode === 'signup'
-      ? 'Sign up with email'
+      ? t('auth.emailSection.signUpWithEmail')
       : controlledEmailMode === 'signin'
-        ? 'Sign in with email'
-        : 'Email & password'
+        ? t('auth.emailSection.signInWithEmail')
+        : t('auth.emailSection.emailPassword')
 
   const rootClass = omitTopBorder
     ? `${gap} flex flex-col`
@@ -169,7 +171,7 @@ export default function AuthEmailForms({
                 onAuthMessage?.(null)
               }}
             >
-              Sign in
+              {t('auth.signInTitle')}
             </button>
             <button
               type="button"
@@ -184,11 +186,11 @@ export default function AuthEmailForms({
                 onAuthMessage?.(null)
               }}
             >
-              Create account
+              {t('auth.createAccountTab')}
             </button>
           </div>
           <p className="text-[10px] leading-snug text-zinc-500 dark:text-zinc-400">
-            Pick a tab, then complete the fields and tap Continue.
+            {t('auth.emailSection.pickTabHint')}
           </p>
         </>
       ) : null}
@@ -197,7 +199,7 @@ export default function AuthEmailForms({
         <>
           <div className={`grid grid-cols-1 gap-3 sm:grid-cols-2 ${compact ? '' : ''}`}>
             <label className={labelCls}>
-              First name
+              {t('auth.field.firstName')}
               <input
                 className={`${inputCls} mt-0.5`}
                 type="text"
@@ -209,7 +211,7 @@ export default function AuthEmailForms({
               />
             </label>
             <label className={labelCls}>
-              Last name
+              {t('auth.field.lastName')}
               <input
                 className={`${inputCls} mt-0.5`}
                 type="text"
@@ -223,8 +225,12 @@ export default function AuthEmailForms({
           </div>
           <div>
             <span className={`inline-flex items-center gap-1 ${labelCls}`}>
-              Date of birth
-              <Info className="h-3.5 w-3.5 text-indigo-500 dark:text-cyan-400" aria-hidden title="Used for your account profile" />
+              {t('auth.field.dob')}
+              <Info
+                className="h-3.5 w-3.5 text-indigo-500 dark:text-cyan-400"
+                aria-hidden
+                title={t('auth.field.dobInfo')}
+              />
             </span>
             <div className="mt-0.5 grid grid-cols-1 gap-2 sm:grid-cols-2">
               <select
@@ -232,7 +238,7 @@ export default function AuthEmailForms({
                 value={birthMonth}
                 disabled={busy}
                 onChange={(ev) => setBirthMonth(ev.target.value)}
-                aria-label="Birth month"
+                aria-label={t('auth.field.birthMonth')}
               >
                 {SIGNUP_MONTHS.map((m) => (
                   <option key={m.value || 'placeholder'} value={m.value}>
@@ -245,18 +251,18 @@ export default function AuthEmailForms({
                 type="text"
                 inputMode="numeric"
                 name="eyp-auth-birth-year"
-                placeholder="Year"
+                placeholder={t('auth.field.year')}
                 autoComplete="bday-year"
                 maxLength={4}
                 value={birthYear}
                 disabled={busy}
                 onChange={(ev) => setBirthYear(ev.target.value.replace(/\D/g, '').slice(0, 4))}
-                aria-label="Birth year"
+                aria-label={t('auth.field.birthYear')}
               />
             </div>
           </div>
           <label className={labelCls}>
-            Country/Region
+            {t('auth.field.country')}
             <select
               className={`${selectCls} mt-0.5`}
               value={country}
@@ -274,7 +280,7 @@ export default function AuthEmailForms({
       ) : null}
 
       <label className={labelCls}>
-        Email
+        {t('auth.field.email')}
         <input
           className={`${inputCls} mt-0.5`}
           type="email"
@@ -288,8 +294,7 @@ export default function AuthEmailForms({
       {inForgotPasswordFlow ? (
         <>
           <p className="text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
-            We will email you a link to choose a new password. After you reset it, return here and sign in with your new
-            password.
+            {t('auth.reset.blurb')}
           </p>
           <button
             type="button"
@@ -297,7 +302,7 @@ export default function AuthEmailForms({
             className={`w-full rounded-lg bg-zinc-800 px-3 py-2 text-xs font-medium text-white hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-200 dark:text-zinc-900 dark:hover:bg-zinc-300 ${compact ? '' : 'text-sm'}`}
             onClick={() => void submitPasswordReset()}
           >
-            {busy ? 'Please wait…' : 'Send reset link'}
+            {busy ? t('auth.pleaseWait') : t('auth.reset.sendLink')}
           </button>
           <button
             type="button"
@@ -308,13 +313,13 @@ export default function AuthEmailForms({
               onAuthMessage?.(null)
             }}
           >
-            Back to sign in
+            {t('auth.reset.backToSignIn')}
           </button>
         </>
       ) : (
         <>
           <label className={labelCls}>
-            Password
+            {t('auth.field.password')}
             <input
               className={`${inputCls} mt-0.5`}
               type="password"
@@ -335,7 +340,7 @@ export default function AuthEmailForms({
                 onAuthMessage?.(null)
               }}
             >
-              Forgot password?
+              {t('auth.forgotPassword')}
             </button>
           ) : null}
           <button
@@ -345,12 +350,12 @@ export default function AuthEmailForms({
             onClick={() => void emailSubmit()}
           >
             {busy
-              ? 'Please wait…'
+              ? t('auth.pleaseWait')
               : controlledEmailMode != null
-                ? 'Continue'
+                ? t('auth.continue')
                 : emailMode === 'signin'
-                  ? 'Sign in with email'
-                  : 'Create account'}
+                  ? t('auth.signInWithEmailButton')
+                  : t('auth.createAccountButton')}
           </button>
         </>
       )}

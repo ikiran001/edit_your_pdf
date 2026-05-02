@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { FileText, Upload } from 'lucide-react'
 import { trackFeatureUsed } from '../../lib/analytics.js'
 import { ANALYTICS_TOOL } from '../../shared/constants/analyticsTools.js'
@@ -9,6 +10,7 @@ function trackEditEntry() {
 }
 
 export default function HeroSection() {
+  const { t } = useTranslation()
   return (
     <section className="relative overflow-hidden border-b border-indigo-200/30 bg-gradient-to-b from-indigo-50/90 via-white to-violet-50/40 px-4 pb-10 pt-6 dark:border-indigo-500/15 dark:from-indigo-950/35 dark:via-zinc-950 dark:to-fuchsia-950/25 md:px-8 md:pb-14 md:pt-10">
       <div
@@ -20,10 +22,10 @@ export default function HeroSection() {
           {BRAND_NAME}
         </p>
         <h1 className="text-balance text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl md:text-5xl dark:text-white">
-          Edit and download PDFs instantly
+          {t('hero.title')}
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-pretty text-base leading-relaxed text-zinc-600 sm:text-lg dark:text-zinc-300">
-          Fast, simple, and secure PDF editing directly in your browser. No installs. No hassle.
+          {t('hero.subtitle')}
         </p>
         <p className="mx-auto mt-2 max-w-md text-sm text-zinc-500 dark:text-zinc-400">{TAGLINE}</p>
 
@@ -34,7 +36,7 @@ export default function HeroSection() {
             className="fx-focus-ring inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-8 py-4 text-base font-semibold text-white shadow-lg shadow-indigo-600/25 transition hover:bg-indigo-500 active:scale-[0.99] dark:bg-cyan-600 dark:shadow-cyan-900/30 dark:hover:bg-cyan-500"
           >
             <Upload className="h-5 w-5 shrink-0 opacity-95" aria-hidden />
-            Edit your PDF now
+            {t('hero.ctaEdit')}
           </Link>
           <Link
             to="/tools/edit-pdf?sample=1"
@@ -42,7 +44,7 @@ export default function HeroSection() {
             className="fx-focus-ring inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-zinc-300 bg-white/90 px-6 py-4 text-base font-semibold text-zinc-800 shadow-sm transition hover:border-indigo-400 hover:bg-indigo-50/80 dark:border-zinc-600 dark:bg-zinc-900/80 dark:text-zinc-100 dark:hover:border-cyan-500/50 dark:hover:bg-zinc-800"
           >
             <FileText className="h-5 w-5 shrink-0 opacity-80" aria-hidden />
-            Try sample PDF
+            {t('hero.ctaSample')}
           </Link>
         </div>
       </div>
