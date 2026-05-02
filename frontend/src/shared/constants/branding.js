@@ -64,7 +64,6 @@ const TOOL_DOC_TITLES = {
   '/tools/crop-pdf': 'pdfpilot - Crop PDF',
   '/tools/redact-pdf': 'pdfpilot - Redact PDF',
   '/tools/compare-pdf': 'pdfpilot - Compare PDF',
-  '/tools/ai-pdf-summarizer': 'pdfpilot - AI summarizer',
   '/tools/translate-pdf': 'pdfpilot - Translate PDF',
   '/terms': 'pdfpilot - Terms of Service',
   '/feedback': 'pdfpilot - Share feedback',

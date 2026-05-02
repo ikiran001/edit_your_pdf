@@ -105,12 +105,20 @@ function normalizeTranslatorOutput(raw) {
 
 async function getTranslator() {
   if (!translatorPromise) {
-    translatorPromise = import('@xenova/transformers').then(({ pipeline }) =>
-      pipeline('translation', NLLB_MODEL, {
+    const p = import('@xenova/transformers').then(async (transformers) => {
+      // Default allowLocalModels hits same-origin /models/... — Vite serves index.html → JSON.parse fails.
+      transformers.env.allowLocalModels = false
+      transformers.env.allowRemoteModels = true
+      const { pipeline } = transformers
+      return pipeline('translation', NLLB_MODEL, {
         quantized: true,
         progress_callback: (data) => progressSink?.(data),
       })
-    )
+    })
+    translatorPromise = p.catch((err) => {
+      translatorPromise = null
+      throw err
+    })
   }
   return translatorPromise
 }
@@ -138,7 +146,12 @@ function formatProgressMessage(data) {
  * @param {(msg: string) => void} [opts.onStatus] - loading / chunk progress
  * @returns {Promise<string>}
  */
-export async function translatePlainTextOnDevice({ text, targetUiCode, onStatus }) {
+function looksLikeHtmlInsteadOfJsonError(err) {
+  const msg = String(err?.message || '')
+  return /Unexpected token|not valid JSON|<!doctype/i.test(msg)
+}
+
+async function translatePlainTextOnDeviceOnce({ text, targetUiCode, onStatus }) {
   const tgtLang = TARGET_UI_TO_NLLB[targetUiCode]
   if (!tgtLang) {
     throw new Error(`Unsupported target language: ${targetUiCode}`)
@@ -176,5 +189,22 @@ export async function translatePlainTextOnDevice({ text, targetUiCode, onStatus 
     return parts.join('\n\n').trim()
   } finally {
     progressSink = null
+  }
+}
+
+export async function translatePlainTextOnDevice(opts) {
+  try {
+    return await translatePlainTextOnDeviceOnce(opts)
+  } catch (e) {
+    if (looksLikeHtmlInsteadOfJsonError(e) && typeof caches !== 'undefined') {
+      try {
+        await caches.delete('transformers-cache')
+      } catch (_) {
+        /* ignore */
+      }
+      translatorPromise = null
+      return translatePlainTextOnDeviceOnce(opts)
+    }
+    throw e
   }
 }

@@ -10,6 +10,7 @@ import unlockRouter from './routes/unlock.js';
 import ocrPdfRouter from './routes/ocrPdf.js';
 import encryptRouter from './routes/encrypt.js';
 import compressPdfRouter from './routes/compressPdf.js';
+import repairPdfRouter from './routes/repairPdf.js';
 import documentFlowRouter from './routes/documentFlow.js';
 import userSessionsRouter from './routes/userSessions.js';
 import feedbackRouter from './routes/feedback.js';
@@ -156,6 +157,7 @@ app.get('/health', (_req, res) => {
     ok: true,
     /** Client tools should POST; GET returns 405 (see route in compressPdf.js). */
     compressPdf: 'POST /compress-pdf',
+    repairPdf: 'POST /repair-pdf',
     qpdf: Boolean(qpdfBin && qpdfVersion),
     qpdfPath: qpdfBin,
     qpdfVersion,
@@ -188,6 +190,7 @@ app.use('/compress-pdf', cpuHeavyLimiter);
 app.use('/document-flow', cpuHeavyLimiter);
 app.use('/unlock-pdf', cpuHeavyLimiter);
 app.use('/encrypt-pdf', cpuHeavyLimiter);
+app.use('/repair-pdf', cpuHeavyLimiter);
 app.use('/upload', uploadLimiter);
 app.use('/edit', editLimiter);
 
@@ -198,6 +201,7 @@ app.use(unlockRouter);
 app.use(ocrPdfRouter);
 app.use(encryptRouter);
 app.use(compressPdfRouter);
+app.use(repairPdfRouter);
 app.use(documentFlowRouter);
 app.use(userSessionsRouter);
 app.use(feedbackRouter);

@@ -37,7 +37,6 @@ export const TOOL_ACCENT_KEY_BY_ID = {
   'crop-pdf': 'violet',
   'redact-pdf': 'indigo',
   'compare-pdf': 'indigo',
-  'ai-pdf-summarizer': 'fuchsia',
   'translate-pdf': 'fuchsia',
 }
 

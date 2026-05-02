@@ -145,7 +145,6 @@
     "protectPdf": "Protect PDF",
     "redactPdf": "Redact PDF",
     "comparePdf": "Compare PDF",
-    "aiSummarizer": "AI summarizer",
     "translatePdf": "Translate PDF"
   },
   "megaFooter": {
@@ -257,7 +256,7 @@
     },
     "repair-pdf": {
       "title": "Repair PDF",
-      "description": "Recover damaged or malformed PDFs — needs server tooling (qpdf / mutool); we will ship this next.",
+      "description": "Recover many damaged PDFs — your API runs qpdf to rewrite structure (optional password if encrypted).",
       "plannedBody": "Repair needs trusted binaries on the API. We plan to expose this behind your self-hosted backend when qpdf or similar is configured."
     },
     "powerpoint-to-pdf": {
@@ -307,11 +306,6 @@
     "compare-pdf": {
       "title": "Compare PDF",
       "description": "Compare selectable text between two PDFs line-by-line (run OCR on scans first)."
-    },
-    "ai-pdf-summarizer": {
-      "title": "AI summarizer",
-      "description": "Summarize long PDFs with AI — planned with clear privacy controls.",
-      "plannedBody": "We plan an optional AI path with explicit consent and clear data handling so summaries never surprise you on privacy."
     },
     "translate-pdf": {
       "title": "Translate PDF",

@@ -36,6 +36,17 @@ function triggerDownloadBlob(blob, name) {
   URL.revokeObjectURL(url)
 }
 
+function friendlyOnnxMessage(raw) {
+  const m = String(raw || '')
+  if (/registerBackend|onnxruntime|WebAssembly|wasm/i.test(m)) {
+    return (
+      'On-device translation could not start (browser ML runtime). Try: restart the dev server after pulling latest, use Chrome or Edge, ' +
+      'allow WebAssembly, and disable extensions that block scripts or cross-site requests. First run needs network to download the model from Hugging Face.'
+    )
+  }
+  return m || 'Translation failed. Try a smaller PDF or a different browser.'
+}
+
 export default function TranslatePdfPage() {
   const { runWithSignInForDownload } = useClientToolDownloadAuth()
   const [target, setTarget] = useState('es')
@@ -98,10 +109,7 @@ export default function TranslatePdfPage() {
         } else {
           console.error(e)
           trackErrorOccurred(TOOL, e?.message || 'translate_failed')
-          setError(
-            e?.message ||
-              'Translation failed. Try a smaller PDF, ensure WebAssembly is allowed, or use a stable network for the first model download.'
-          )
+          setError(friendlyOnnxMessage(e?.message))
         }
       } finally {
         setBusy(false)
@@ -114,7 +122,7 @@ export default function TranslatePdfPage() {
   return (
     <ToolPageShell
       title="Translate PDF"
-      subtitle="Extract text in your browser, translate with an on-device model (Transformers.js / NLLB), then download a simple text PDF (layout is not preserved)."
+      subtitle="Extract text in your browser and translate with a free on-device model (Transformers.js / NLLB). No server translation quota — downloads once from Hugging Face, then runs locally."
     >
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Translate to</label>
@@ -152,9 +160,8 @@ export default function TranslatePdfPage() {
       )}
 
       <p className="mt-6 text-xs text-zinc-500 dark:text-zinc-400">
-        First run downloads the quantized NLLB model from Hugging Face (cached in your browser). Source language is guessed
-        from the text; quality varies by language pair and PDF noise. Long documents are translated in sections and may take
-        several minutes on slower devices.
+        Translation stays in your browser (no third-party translation API). Source language is guessed from the text; quality
+        varies by language pair. Long PDFs run in sections and may take time on slower devices.
       </p>
     </ToolPageShell>
   )

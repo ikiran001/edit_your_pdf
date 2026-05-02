@@ -119,7 +119,13 @@ export default function RedactPdfPage() {
       {file ? (
         <div className="flex flex-col gap-4">
           <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-50/80 dark:border-zinc-700 dark:bg-zinc-900/40">
-            <RedactWorkspace file={file} marks={marks} setMarks={setMarks} busy={busy} />
+            <RedactWorkspace
+              key={`${file.name}-${file.size}-${file.lastModified}`}
+              file={file}
+              marks={marks}
+              setMarks={setMarks}
+              busy={busy}
+            />
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-700 dark:bg-zinc-900/80">

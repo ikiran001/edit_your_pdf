@@ -519,7 +519,6 @@ function PdfPageCanvas({
 
   useEffect(() => {
     if (tool !== 'editText' || !editTextMode) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- exit inline editor when tool/mode off
       setNativeEdit(null)
     }
   }, [tool, editTextMode])

@@ -160,7 +160,8 @@ export const TOOL_REGISTRY = [
     id: 'repair-pdf',
     path: '/tools/repair-pdf',
     title: 'Repair PDF',
-    description: 'Recover damaged or malformed PDFs — needs server tooling (qpdf / mutool); we will ship this next.',
+    description:
+      'Recover many damaged PDFs — rewrites through qpdf on your API (optional password for encrypted files).',
     implemented: true,
     icon: 'Wrench',
   },
@@ -243,14 +244,6 @@ export const TOOL_REGISTRY = [
     description: 'Compare selectable text between two PDFs line-by-line (run OCR on scans first).',
     implemented: true,
     icon: 'GitCompare',
-  },
-  {
-    id: 'ai-pdf-summarizer',
-    path: '/tools/ai-pdf-summarizer',
-    title: 'AI summarizer',
-    description: 'Summarize long PDFs with AI — planned with clear privacy controls.',
-    implemented: true,
-    icon: 'Sparkles',
   },
   {
     id: 'translate-pdf',

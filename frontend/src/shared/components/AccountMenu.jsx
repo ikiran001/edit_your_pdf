@@ -75,10 +75,6 @@ export default function AccountMenu({ compact = false }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [accountMenuOpen])
 
-  useEffect(() => {
-    if (accountMenuOpen) setSignOutError(null)
-  }, [accountMenuOpen])
-
   const name = user?.displayName?.trim() || ''
   const email = user?.email?.trim() || ''
   const triggerLabel = name || email || t('header.accountAriaGuest')
@@ -201,7 +197,12 @@ export default function AccountMenu({ compact = false }) {
       <button
         ref={triggerRef}
         type="button"
-        onClick={() => setAccountMenuOpen((o) => !o)}
+        onClick={() =>
+          setAccountMenuOpen((o) => {
+            if (!o) setSignOutError(null)
+            return !o
+          })
+        }
         aria-expanded={accountMenuOpen}
         aria-haspopup="menu"
         id="eyp-account-menu-trigger"

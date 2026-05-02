@@ -158,6 +158,8 @@ export function AuthModalProvider({ children }) {
   )
 }
 
+/** Colocated hook for this provider; Fast Refresh expects component-only files. */
+// eslint-disable-next-line react-refresh/only-export-components -- hook paired with AuthModalProvider above
 export function useAuthModal() {
   const ctx = useContext(AuthModalContext)
   if (!ctx) {
