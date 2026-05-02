@@ -120,7 +120,14 @@
     "groupOrganize": "Organiser le PDF",
     "groupEdit": "Modifier et signer",
     "groupConvert": "Convertir et exporter",
-    "groupSecurity": "Sécurité"
+    "groupSecurity": "Sécurité",
+    "megaOrganizePdf": "Organize PDF",
+    "megaOptimizePdf": "Optimize PDF",
+    "megaConvertToPdf": "Convert to PDF",
+    "megaConvertFromPdf": "Convert from PDF",
+    "megaEditPdf": "Edit PDF",
+    "megaPdfSecurity": "PDF security",
+    "megaPdfIntelligence": "PDF intelligence"
   },
   "megaFooter": {
     "privacy": "Axé sur la confidentialité",
@@ -215,5 +222,24 @@
       "title": "Facture TPS PDF",
       "description": "Lignes fournisseur, acheteur, HSN — téléchargez une facture fiscale au format PDF dans le navigateur."
     }
+  },
+  "megaTool": {
+    "removePages": "Remove pages",
+    "extractPages": "Extract pages",
+    "organizePdf": "Organize PDF",
+    "repairPdf": "Repair PDF",
+    "powerpointToPdf": "PowerPoint to PDF",
+    "excelToPdf": "Excel to PDF",
+    "htmlToPdf": "HTML to PDF",
+    "pdfToPowerpoint": "PDF to PowerPoint",
+    "pdfToExcel": "PDF to Excel",
+    "pdfToPdfA": "PDF to PDF/A",
+    "rotatePdf": "Rotate PDF",
+    "cropPdf": "Crop PDF",
+    "protectPdf": "Protect PDF",
+    "redactPdf": "Redact PDF",
+    "comparePdf": "Compare PDF",
+    "aiSummarizer": "AI summarizer",
+    "translatePdf": "Translate PDF"
   }
 }

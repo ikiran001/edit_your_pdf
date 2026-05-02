@@ -120,7 +120,14 @@
     "groupOrganize": "Organitzar PDF",
     "groupEdit": "Edita i signa",
     "groupConvert": "Convertir i exportar",
-    "groupSecurity": "Seguretat"
+    "groupSecurity": "Seguretat",
+    "megaOrganizePdf": "Organize PDF",
+    "megaOptimizePdf": "Optimize PDF",
+    "megaConvertToPdf": "Convert to PDF",
+    "megaConvertFromPdf": "Convert from PDF",
+    "megaEditPdf": "Edit PDF",
+    "megaPdfSecurity": "PDF security",
+    "megaPdfIntelligence": "PDF intelligence"
   },
   "megaFooter": {
     "privacy": "Centrat en la privadesa",
@@ -215,5 +222,24 @@
       "title": "Factura GST PDF",
       "description": "Proveïdor, comprador, línies HSN: descarregueu una factura fiscal en PDF al navegador."
     }
+  },
+  "megaTool": {
+    "removePages": "Remove pages",
+    "extractPages": "Extract pages",
+    "organizePdf": "Organize PDF",
+    "repairPdf": "Repair PDF",
+    "powerpointToPdf": "PowerPoint to PDF",
+    "excelToPdf": "Excel to PDF",
+    "htmlToPdf": "HTML to PDF",
+    "pdfToPowerpoint": "PDF to PowerPoint",
+    "pdfToExcel": "PDF to Excel",
+    "pdfToPdfA": "PDF to PDF/A",
+    "rotatePdf": "Rotate PDF",
+    "cropPdf": "Crop PDF",
+    "protectPdf": "Protect PDF",
+    "redactPdf": "Redact PDF",
+    "comparePdf": "Compare PDF",
+    "aiSummarizer": "AI summarizer",
+    "translatePdf": "Translate PDF"
   }
 }
