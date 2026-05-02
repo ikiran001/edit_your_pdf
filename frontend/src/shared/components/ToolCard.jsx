@@ -11,10 +11,10 @@ export default function ToolCard({ tool }) {
         !tool.implemented ? 'opacity-90' : ''
       }`}
     >
-      <div className="mb-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 via-violet-600 to-cyan-500 text-white shadow-md shadow-indigo-500/40 dark:shadow-[0_0_20px_rgba(99,102,241,0.45)] sm:mb-4 sm:h-11 sm:w-11 sm:rounded-xl sm:shadow-lg">
-        <Icon className="h-4 w-4 sm:h-5 sm:w-5" strokeWidth={1.75} aria-hidden />
+      <div className="mb-2 flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 via-violet-600 to-cyan-500 text-white shadow-md shadow-indigo-500/40 max-sm:shadow-lg dark:shadow-[0_0_20px_rgba(99,102,241,0.45)] sm:mb-4 sm:h-11 sm:w-11 sm:rounded-xl sm:shadow-lg">
+        <Icon className="h-7 w-7 sm:h-5 sm:w-5" strokeWidth={1.75} aria-hidden />
       </div>
-      <h2 className="line-clamp-3 text-[11px] font-semibold leading-tight tracking-tight text-zinc-900 sm:line-clamp-none sm:text-lg dark:text-zinc-50">
+      <h2 className="line-clamp-2 text-xs font-semibold leading-tight tracking-tight text-zinc-900 max-sm:mt-0.5 sm:line-clamp-none sm:text-lg dark:text-zinc-50">
         {tool.title}
       </h2>
       <p className="mt-2 hidden flex-1 text-sm leading-relaxed text-zinc-600 sm:block dark:text-zinc-400">
