@@ -24,6 +24,21 @@ export const TOOL_ACCENT_KEY_BY_ID = {
   'pdf-to-word': 'blue',
   'word-to-pdf': 'blue',
   'gst-invoice': 'teal',
+  'remove-pages': 'rose',
+  'extract-pages': 'rose',
+  'repair-pdf': 'emerald',
+  'powerpoint-to-pdf': 'orange',
+  'excel-to-pdf': 'orange',
+  'html-to-pdf': 'orange',
+  'pdf-to-powerpoint': 'blue',
+  'pdf-to-excel': 'blue',
+  'pdf-to-pdfa': 'blue',
+  'rotate-pdf': 'violet',
+  'crop-pdf': 'violet',
+  'redact-pdf': 'indigo',
+  'compare-pdf': 'indigo',
+  'ai-pdf-summarizer': 'fuchsia',
+  'translate-pdf': 'fuchsia',
 }
 
 /**

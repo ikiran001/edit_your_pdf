@@ -156,6 +156,10 @@
     "termsLink": "Terms of Service",
     "termsTail": ". Files are processed for your session; see the site footer for contact details."
   },
+  "plannedTool": {
+    "defaultBody": "This tool is on our roadmap. We will ship it as a focused flow when conversion or server pieces are ready; your toolkit card summarizes the intended behavior.",
+    "unknownTitle": "PDF tool"
+  },
   "tool": {
     "edit-pdf": {
       "title": "Edit PDF",
@@ -240,6 +244,79 @@
     "gst-invoice": {
       "title": "GST invoice PDF",
       "description": "Supplier, buyer, HSN lines — download a tax invoice PDF in the browser."
+    },
+    "remove-pages": {
+      "title": "Remove pages",
+      "description": "Delete pages in the grid and download — same engine as Organize PDF (browser-only).",
+      "plannedBody": "You are on the live Remove pages flow (shared with Organize PDF). Select pages, delete, then download."
+    },
+    "extract-pages": {
+      "title": "Extract pages",
+      "description": "Extract ranges or every page — same engine as Split PDF (browser-only).",
+      "plannedBody": "You are on the live Extract pages flow (shared with Split PDF). Use ranges or extract every page, then download."
+    },
+    "repair-pdf": {
+      "title": "Repair PDF",
+      "description": "Recover damaged or malformed PDFs — needs server tooling (qpdf / mutool); we will ship this next.",
+      "plannedBody": "Repair needs trusted binaries on the API. We plan to expose this behind your self-hosted backend when qpdf or similar is configured."
+    },
+    "powerpoint-to-pdf": {
+      "title": "PowerPoint to PDF",
+      "description": "Convert .pptx to PDF — usually needs LibreOffice or a document API on the server.",
+      "plannedBody": "High-fidelity .pptx → PDF almost always runs on a server (LibreOffice / Gotenberg). We will wire an optional document service like Word to PDF."
+    },
+    "excel-to-pdf": {
+      "title": "Excel to PDF",
+      "description": "Convert spreadsheets to PDF — typically server-side rendering.",
+      "plannedBody": "Spreadsheet layout is best rendered server-side. A dedicated Excel-to-PDF module is planned alongside your API."
+    },
+    "html-to-pdf": {
+      "title": "HTML to PDF",
+      "description": "Turn web pages or HTML files into print-ready PDFs — planned as a headless-browser or API-backed tool.",
+      "plannedBody": "HTML printing needs headless Chrome or a document API. We will add this as an optional backend feature when you are ready to self-host it."
+    },
+    "pdf-to-powerpoint": {
+      "title": "PDF to PowerPoint",
+      "description": "Editable slides from PDF — needs a trusted conversion service; not yet wired in this build.",
+      "plannedBody": "Editable slides require LibreOffice or a commercial document API. We plan a server-backed path similar to PDF to Word."
+    },
+    "pdf-to-excel": {
+      "title": "PDF to Excel",
+      "description": "Tables and sheets from PDF — server-side extraction is planned.",
+      "plannedBody": "Reliable table extraction needs OCR and layout models on the server. This tool will ship when we integrate a suitable pipeline."
+    },
+    "pdf-to-pdfa": {
+      "title": "PDF to PDF/A",
+      "description": "Long-term archival PDF/A — requires specialized validators and converters we will add behind your API.",
+      "plannedBody": "PDF/A conversion and validation need specialized tools (e.g. veraPDF, commercial engines). We will expose this for self-hosted deployments."
+    },
+    "rotate-pdf": {
+      "title": "Rotate PDF",
+      "description": "Rotate thumbnails then download — same engine as Organize PDF (browser-only).",
+      "plannedBody": "You are on the live Rotate flow (shared with Organize PDF). Use the arrows on each page, then download."
+    },
+    "crop-pdf": {
+      "title": "Crop PDF",
+      "description": "Trim the viewing area with a uniform crop on every page — in your browser (crop box)."
+    },
+    "redact-pdf": {
+      "title": "Redact PDF",
+      "description": "Permanent blackout of sensitive text and images — needs careful burn-in; shipping as a dedicated tool later.",
+      "plannedBody": "True redaction must remove underlying content, not just draw black boxes. We will ship a dedicated redaction flow when the implementation meets that bar."
+    },
+    "compare-pdf": {
+      "title": "Compare PDF",
+      "description": "Compare selectable text between two PDFs line-by-line (run OCR on scans first)."
+    },
+    "ai-pdf-summarizer": {
+      "title": "AI summarizer",
+      "description": "Summarize long PDFs with AI — planned with clear privacy controls.",
+      "plannedBody": "We plan an optional AI path with explicit consent and clear data handling so summaries never surprise you on privacy."
+    },
+    "translate-pdf": {
+      "title": "Translate PDF",
+      "description": "Extract text locally and translate with an on-device model (Transformers.js), then download a simple text PDF.",
+      "plannedBody": "Layout is not preserved today — output is a plain text PDF. Layout-faithful translation would need heavier tooling later."
     }
   }
 }

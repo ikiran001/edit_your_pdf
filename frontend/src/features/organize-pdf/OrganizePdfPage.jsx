@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import JSZip from 'jszip'
 import { ZoomIn, ZoomOut } from 'lucide-react'
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
@@ -20,8 +22,6 @@ import { buildOrganizedPdf, exportOrganizedSinglePagePdfs } from '../../lib/orga
 import '../../lib/pdfjs.js'
 import { useClientToolDownloadAuth } from '../../auth/ClientToolDownloadAuthContext.jsx'
 import OrganizePageGrid from './OrganizePageGrid.jsx'
-
-const TOOL = ANALYTICS_TOOL.organize_pdf
 
 const GRID_ZOOM_MIN = 0.45
 const GRID_ZOOM_MAX = 1.65
@@ -86,6 +86,8 @@ function resolveRowsByOriginalPageInput(input, numPages, pages) {
 }
 
 export default function OrganizePdfPage() {
+  const { pathname } = useLocation()
+  const { t } = useTranslation()
   const { runWithSignInForDownload } = useClientToolDownloadAuth()
   const [file, setFile] = useState(null)
   const [pdfDoc, setPdfDoc] = useState(null)
@@ -104,7 +106,38 @@ export default function OrganizePdfPage() {
   const [exportModalSource, setExportModalSource] = useState(null)
   const [originalPagesInput, setOriginalPagesInput] = useState('')
 
-  useToolEngagement(TOOL, true)
+  const pathNorm = (pathname || '/').replace(/\/$/, '')
+  const toolVariant = useMemo(() => {
+    if (pathNorm.endsWith('/remove-pages')) return 'remove'
+    if (pathNorm.endsWith('/rotate-pdf')) return 'rotate'
+    return 'organize'
+  }, [pathNorm])
+  const toolAnalytics = useMemo(() => {
+    if (toolVariant === 'remove') return ANALYTICS_TOOL.remove_pages
+    if (toolVariant === 'rotate') return ANALYTICS_TOOL.rotate_pdf
+    return ANALYTICS_TOOL.organize_pdf
+  }, [toolVariant])
+  const shellTitle = useMemo(() => {
+    if (toolVariant === 'remove') return t('tool.remove-pages.title', { defaultValue: 'Remove pages' })
+    if (toolVariant === 'rotate') return t('tool.rotate-pdf.title', { defaultValue: 'Rotate PDF' })
+    return 'Organize PDF Pages'
+  }, [toolVariant, t])
+  const shellSubtitle = useMemo(() => {
+    if (toolVariant === 'remove') {
+      return t('tool.remove-pages.organizeSubtitle', {
+        defaultValue: 'Select pages in the grid and delete them, or use “Delete by original page #” — then download.',
+      })
+    }
+    if (toolVariant === 'rotate') {
+      return t('tool.rotate-pdf.organizeSubtitle', {
+        defaultValue: 'Use the rotation arrows on each thumbnail, then download. Reorder pages if you need to.',
+      })
+    }
+    return 'Rearrange, rotate, or remove pages — all in your browser.'
+  }, [toolVariant, t])
+  const seoToolId = toolVariant === 'remove' ? 'remove-pages' : toolVariant === 'rotate' ? 'rotate-pdf' : 'organize-pdf'
+
+  useToolEngagement(toolAnalytics, true)
 
   const dirty = useMemo(() => {
     if (!baselineSig) return false
@@ -175,11 +208,11 @@ export default function OrganizePdfPage() {
         setPages(initial)
         setBaselineSig(sig)
         setGridZoom(1)
-        markFunnelUpload(TOOL)
+        markFunnelUpload(toolAnalytics)
         trackFileUploaded({
           file_type: 'pdf',
           file_size: file.size / 1024,
-          tool: TOOL,
+          tool: toolAnalytics,
         })
       } catch (e) {
         if (!cancelled) {
@@ -188,7 +221,7 @@ export default function OrganizePdfPage() {
               ? 'This PDF is password-protected. Unlock it first, then try again.'
               : e?.message || 'We could not read this PDF. Try another file.'
           setError(msg)
-          trackErrorOccurred(TOOL, e?.message || 'pdf_load_failed')
+          trackErrorOccurred(toolAnalytics, e?.message || 'pdf_load_failed')
           if (loadedDoc) {
             loadedDoc.destroy()
             loadedDoc = null
@@ -289,14 +322,14 @@ export default function OrganizePdfPage() {
           const u8 = await buildOrganizedPdf(file, ordered)
           const base = file.name.replace(/\.pdf$/i, '') || 'document'
           downloadUint8(u8, `${base}-organized.pdf`)
-          trackToolCompleted(TOOL, true)
+          trackToolCompleted(toolAnalytics, true)
           trackFileDownloaded({
-            tool: TOOL,
+            tool: toolAnalytics,
             file_size: u8.byteLength / 1024,
             total_pages: pages.length,
           })
           const elapsed = (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0
-          trackProcessingTime(TOOL, elapsed)
+          trackProcessingTime(toolAnalytics, elapsed)
           setSuccessHint('Your organized PDF downloaded successfully.')
           window.setTimeout(() => setSuccessHint(null), 5000)
         },
@@ -309,7 +342,7 @@ export default function OrganizePdfPage() {
         setError(e.message || 'Still checking sign-in.')
       } else {
         console.error(e)
-        trackErrorOccurred(TOOL, e?.message || 'organize_failed')
+        trackErrorOccurred(toolAnalytics, e?.message || 'organize_failed')
         setError(e?.message || 'Could not build the PDF. Try again.')
       }
     } finally {
@@ -340,9 +373,9 @@ export default function OrganizePdfPage() {
           if (mode === 'single') {
             const u8 = await buildOrganizedPdf(file, ordered)
             downloadUint8(u8, `${base}-${tag}.pdf`)
-            trackToolCompleted(TOOL, true)
+            trackToolCompleted(toolAnalytics, true)
             trackFileDownloaded({
-              tool: TOOL,
+              tool: toolAnalytics,
               file_size: u8.byteLength / 1024,
               total_pages: ordered.length,
               export_mode:
@@ -370,9 +403,9 @@ export default function OrganizePdfPage() {
               a.click()
               URL.revokeObjectURL(url)
             }
-            trackToolCompleted(TOOL, true)
+            trackToolCompleted(toolAnalytics, true)
             trackFileDownloaded({
-              tool: TOOL,
+              tool: toolAnalytics,
               file_size: parts.reduce((s, u) => s + u.byteLength, 0) / 1024,
               total_pages: parts.length,
               export_mode:
@@ -390,7 +423,7 @@ export default function OrganizePdfPage() {
                   : 'Selected pages downloaded as a ZIP of PDFs.'
           }
           const elapsed = (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0
-          trackProcessingTime(TOOL, elapsed)
+          trackProcessingTime(toolAnalytics, elapsed)
           setSuccessHint(successHintMsg)
           window.setTimeout(() => setSuccessHint(null), 5000)
         },
@@ -403,7 +436,7 @@ export default function OrganizePdfPage() {
         setError(e.message || 'Still checking sign-in.')
       } else {
         console.error(e)
-        trackErrorOccurred(TOOL, e?.message || 'organize_export_failed')
+        trackErrorOccurred(toolAnalytics, e?.message || 'organize_export_failed')
         setError(e?.message || 'Could not export pages. Try again.')
       }
     } finally {
@@ -490,10 +523,7 @@ export default function OrganizePdfPage() {
   const showGrid = docReady && pages.length > 0
 
   return (
-    <ToolPageShell
-      title="Organize PDF Pages"
-      subtitle="Rearrange, rotate, or remove pages — all in your browser."
-    >
+    <ToolPageShell title={shellTitle} subtitle={shellSubtitle}>
       <FileDropzone
         accept="application/pdf"
         disabled={busy || loadingDoc}
@@ -519,7 +549,7 @@ export default function OrganizePdfPage() {
         </div>
       )}
 
-      <ToolFeatureSeoSection toolId="organize-pdf" />
+      <ToolFeatureSeoSection toolId={seoToolId} />
 
       {loadingDoc && (
         <p className="mt-4 text-center text-sm text-zinc-500 dark:text-zinc-400">Preparing page previews…</p>

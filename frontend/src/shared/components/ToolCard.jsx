@@ -13,34 +13,36 @@ export default function ToolCard({ tool }) {
   const description = t(`tool.${tool.id}.description`, { defaultValue: tool.description })
   const content = (
     <article
-      className={`group relative flex h-full flex-col overflow-hidden rounded-xl border border-zinc-200/90 bg-white/96 p-3 shadow-md shadow-zinc-900/[0.04] ring-1 ring-black/[0.03] transition duration-300 ease-out will-change-transform sm:rounded-2xl sm:p-6 motion-safe:hover:-translate-y-0.5 motion-safe:hover:scale-[1.01] max-sm:items-center max-sm:justify-center max-sm:text-center dark:border-zinc-700/85 dark:bg-zinc-950/88 dark:shadow-[0_0_36px_-14px_rgba(0,0,0,0.55)] dark:ring-white/[0.06] ${accent.hoverGlow} ${
+      className={`group relative flex h-full flex-row items-start gap-3 overflow-hidden rounded-xl border border-zinc-200/90 bg-white/96 p-4 text-left shadow-md shadow-zinc-900/[0.04] ring-1 ring-black/[0.03] transition duration-300 ease-out will-change-transform sm:gap-4 sm:rounded-2xl sm:p-5 motion-safe:hover:-translate-y-0.5 motion-safe:hover:scale-[1.01] dark:border-zinc-700/85 dark:bg-zinc-950/88 dark:shadow-[0_0_36px_-14px_rgba(0,0,0,0.55)] dark:ring-white/[0.06] ${accent.hoverGlow} ${
         !tool.implemented ? 'opacity-90' : ''
       }`}
     >
       <div
-        className={`mb-2 flex h-14 w-14 shrink-0 items-center justify-center rounded-xl max-sm:shadow-lg sm:mb-4 sm:h-11 sm:w-11 sm:rounded-xl ${accent.tile} ${accent.tileShadow}`}
+        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl shadow-md sm:h-11 sm:w-11 sm:rounded-xl sm:shadow-none ${accent.tile} ${accent.tileShadow}`}
       >
-        <Icon className="h-7 w-7 sm:h-5 sm:w-5" strokeWidth={1.75} aria-hidden />
+        <Icon className="h-6 w-6 sm:h-5 sm:w-5" strokeWidth={1.75} aria-hidden />
       </div>
-      <h2 className="line-clamp-2 text-xs font-semibold leading-tight tracking-tight text-zinc-900 max-sm:mt-0.5 sm:line-clamp-none sm:text-lg dark:text-zinc-50">
-        {title}
-      </h2>
-      <p className="mt-2 hidden flex-1 text-sm leading-relaxed text-zinc-600 sm:block dark:text-zinc-400">
-        {description}
-      </p>
-      {!tool.implemented && (
-        <span className="mt-1.5 inline-flex w-fit max-w-full shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-900 sm:mt-3 sm:px-2.5 sm:text-xs dark:bg-amber-950/60 dark:text-amber-100">
-          <span className="sm:hidden">{t('common.soon')}</span>
-          <span className="hidden sm:inline">{t('common.comingSoon')}</span>
-        </span>
-      )}
-      {tool.implemented && (
-        <span
-          className={`mt-4 hidden text-sm font-medium opacity-0 transition group-hover:opacity-100 sm:block ${accent.cta}`}
-        >
-          {t('common.openTool')}
-        </span>
-      )}
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col text-left">
+        <h2 className="line-clamp-2 w-full text-sm font-semibold leading-snug tracking-tight text-zinc-900 sm:line-clamp-none sm:text-lg dark:text-zinc-50">
+          {title}
+        </h2>
+        <p className="mt-1 w-full flex-1 text-pretty text-xs leading-relaxed text-zinc-600 sm:mt-2 sm:text-sm dark:text-zinc-400">
+          {description}
+        </p>
+        {!tool.implemented && (
+          <span className="mt-2 inline-flex w-fit max-w-full shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-900 sm:mt-3 sm:px-2.5 sm:text-xs dark:bg-amber-950/60 dark:text-amber-100">
+            <span className="sm:hidden">{t('common.soon')}</span>
+            <span className="hidden sm:inline">{t('common.comingSoon')}</span>
+          </span>
+        )}
+        {tool.implemented && (
+          <span
+            className={`mt-2 block w-full text-sm font-medium sm:mt-auto sm:pt-3 sm:opacity-0 sm:transition sm:group-hover:opacity-100 ${accent.cta}`}
+          >
+            {t('common.openTool')}
+          </span>
+        )}
+      </div>
     </article>
   )
 

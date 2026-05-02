@@ -20,8 +20,8 @@ export const MEGA_NAV_GROUPS = [
     items: [
       { type: 'tool', id: 'merge-pdf' },
       { type: 'tool', id: 'split-pdf' },
-      { type: 'soon', icon: 'Trash2', titleKey: 'megaTool.removePages' },
-      { type: 'soon', icon: 'FileDown', titleKey: 'megaTool.extractPages' },
+      { type: 'tool', id: 'remove-pages', titleKey: 'megaTool.removePages' },
+      { type: 'tool', id: 'extract-pages', titleKey: 'megaTool.extractPages' },
       { type: 'tool', id: 'organize-pdf', titleKey: 'megaTool.organizePdf' },
       { type: 'tool', id: 'scan-to-pdf' },
     ],
@@ -31,7 +31,7 @@ export const MEGA_NAV_GROUPS = [
     tint: 'emerald',
     items: [
       { type: 'tool', id: 'compress-pdf' },
-      { type: 'soon', icon: 'Wrench', titleKey: 'megaTool.repairPdf' },
+      { type: 'tool', id: 'repair-pdf', titleKey: 'megaTool.repairPdf' },
       { type: 'tool', id: 'ocr-pdf' },
     ],
   },
@@ -41,9 +41,9 @@ export const MEGA_NAV_GROUPS = [
     items: [
       { type: 'tool', id: 'jpg-to-pdf' },
       { type: 'tool', id: 'word-to-pdf' },
-      { type: 'soon', icon: 'Presentation', titleKey: 'megaTool.powerpointToPdf' },
-      { type: 'soon', icon: 'Table2', titleKey: 'megaTool.excelToPdf' },
-      { type: 'soon', icon: 'FileCode', titleKey: 'megaTool.htmlToPdf' },
+      { type: 'tool', id: 'powerpoint-to-pdf', titleKey: 'megaTool.powerpointToPdf' },
+      { type: 'tool', id: 'excel-to-pdf', titleKey: 'megaTool.excelToPdf' },
+      { type: 'tool', id: 'html-to-pdf', titleKey: 'megaTool.htmlToPdf' },
     ],
   },
   {
@@ -52,19 +52,19 @@ export const MEGA_NAV_GROUPS = [
     items: [
       { type: 'tool', id: 'pdf-to-jpg' },
       { type: 'tool', id: 'pdf-to-word' },
-      { type: 'soon', icon: 'Presentation', titleKey: 'megaTool.pdfToPowerpoint' },
-      { type: 'soon', icon: 'Table2', titleKey: 'megaTool.pdfToExcel' },
-      { type: 'soon', icon: 'BadgeCheck', titleKey: 'megaTool.pdfToPdfA' },
+      { type: 'tool', id: 'pdf-to-powerpoint', titleKey: 'megaTool.pdfToPowerpoint' },
+      { type: 'tool', id: 'pdf-to-excel', titleKey: 'megaTool.pdfToExcel' },
+      { type: 'tool', id: 'pdf-to-pdfa', titleKey: 'megaTool.pdfToPdfA' },
     ],
   },
   {
     labelKey: 'nav.megaEditPdf',
     tint: 'violet',
     items: [
-      { type: 'soon', icon: 'RotateCw', titleKey: 'megaTool.rotatePdf' },
+      { type: 'tool', id: 'rotate-pdf', titleKey: 'megaTool.rotatePdf' },
       { type: 'tool', id: 'add-page-numbers' },
       { type: 'tool', id: 'add-watermark' },
-      { type: 'soon', icon: 'Crop', titleKey: 'megaTool.cropPdf' },
+      { type: 'tool', id: 'crop-pdf', titleKey: 'megaTool.cropPdf' },
       { type: 'tool', id: 'edit-pdf' },
     ],
   },
@@ -75,16 +75,16 @@ export const MEGA_NAV_GROUPS = [
       { type: 'tool', id: 'unlock-pdf' },
       { type: 'tool', id: 'encrypt-pdf', titleKey: 'megaTool.protectPdf' },
       { type: 'tool', id: 'sign-pdf' },
-      { type: 'soon', icon: 'EyeOff', titleKey: 'megaTool.redactPdf' },
-      { type: 'soon', icon: 'GitCompare', titleKey: 'megaTool.comparePdf' },
+      { type: 'tool', id: 'redact-pdf', titleKey: 'megaTool.redactPdf' },
+      { type: 'tool', id: 'compare-pdf', titleKey: 'megaTool.comparePdf' },
     ],
   },
   {
     labelKey: 'nav.megaPdfIntelligence',
     tint: 'orchid',
     items: [
-      { type: 'soon', icon: 'Sparkles', titleKey: 'megaTool.aiSummarizer' },
-      { type: 'soon', icon: 'Languages', titleKey: 'megaTool.translatePdf' },
+      { type: 'tool', id: 'ai-pdf-summarizer', titleKey: 'megaTool.aiSummarizer' },
+      { type: 'tool', id: 'translate-pdf', titleKey: 'megaTool.translatePdf' },
     ],
   },
 ]

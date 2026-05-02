@@ -27,6 +27,9 @@ export default defineConfig(({ mode }) => {
     /** Pin env files to `frontend/` so `VITE_*` from `.env.development` are never skipped. */
     envDir: __dirname,
     base,
+    optimizeDeps: {
+      exclude: ['@xenova/transformers'],
+    },
     plugins: [
       react(),
       tailwindcss(),

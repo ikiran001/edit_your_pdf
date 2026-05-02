@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import * as Icons from 'lucide-react'
-import { ChevronDown, Lock, Sparkles, Zap } from 'lucide-react'
+import { ChevronDown, LayoutGrid, Lock, Sparkles, Zap } from 'lucide-react'
 import { trackFeatureUsed } from '../../lib/analytics.js'
 import { REGISTRY_ID_TO_FEATURE } from '../../shared/constants/analyticsTools.js'
 import { MEGA_NAV_GROUPS, resolveMegaNavItem } from '../../shared/constants/megaToolNav.js'
@@ -140,19 +140,22 @@ export default function ToolkitNavMenus() {
 
   return (
     <>
-      <div className="flex justify-center lg:justify-center">
+      <div className="flex w-full justify-center lg:w-auto lg:justify-center">
         <button
           ref={triggerRef}
           type="button"
-          className="fx-focus-ring flex items-center gap-2 rounded-xl border border-zinc-200/90 bg-white/90 px-4 py-2.5 text-sm font-semibold text-zinc-800 shadow-sm transition hover:border-indigo-300 hover:bg-indigo-50/90 dark:border-zinc-600 dark:bg-zinc-900/90 dark:text-zinc-100 dark:hover:border-cyan-600/50 dark:hover:bg-zinc-800"
+          className="fx-focus-ring inline-flex min-h-[44px] min-w-0 max-w-full items-center gap-2 rounded-xl border border-white/25 bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 px-4 py-2.5 text-sm font-bold text-white shadow-[0_4px_20px_-4px_rgba(79,70,229,0.55)] ring-2 ring-indigo-400/35 transition hover:brightness-110 hover:shadow-[0_8px_28px_-6px_rgba(124,58,237,0.55)] active:scale-[0.98] sm:gap-2.5 sm:px-5 dark:border-cyan-400/35 dark:from-cyan-600 dark:via-indigo-600 dark:to-violet-700 dark:shadow-[0_4px_24px_-6px_rgba(34,211,238,0.4)] dark:ring-cyan-400/25 dark:hover:shadow-[0_8px_32px_-8px_rgba(34,211,238,0.45)]"
           aria-expanded={open}
           aria-haspopup="dialog"
           aria-controls={open ? panelId : undefined}
+          aria-label={t('header.allToolsMenu')}
+          title={t('header.allToolsMenu')}
           onClick={() => setOpen((v) => !v)}
         >
-          {t('header.allTools')}
+          <LayoutGrid className="h-4 w-4 shrink-0 opacity-95 sm:h-[1.125rem] sm:w-[1.125rem]" strokeWidth={2.25} aria-hidden />
+          <span className="truncate">{t('header.allTools')}</span>
           <ChevronDown
-            className={`h-4 w-4 shrink-0 text-zinc-500 transition dark:text-zinc-400 ${open ? 'rotate-180' : ''}`}
+            className={`h-4 w-4 shrink-0 text-white/90 transition duration-200 ${open ? 'rotate-180' : ''}`}
             aria-hidden
           />
         </button>
