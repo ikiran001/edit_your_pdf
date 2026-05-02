@@ -52,7 +52,7 @@ export default function ToolkitHomePage() {
         <HeroSection />
 
         <section className="fx-toolkit-fade relative isolate mx-auto w-full max-w-[min(100%,96rem)] flex-1 px-4 py-6 md:px-8 md:py-10">
-        <h2 className="mb-4 text-center font-mono text-sm font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-cyan-400/85">
+        <h2 className="mb-4 bg-gradient-to-r from-violet-700 via-fuchsia-600 to-cyan-600 bg-clip-text text-center font-mono text-sm font-semibold uppercase tracking-[0.18em] text-transparent dark:from-cyan-300 dark:via-fuchsia-400 dark:to-amber-300">
           Choose a tool
         </h2>
         <div className="mx-auto mb-6 max-w-2xl" role="search">

@@ -4,7 +4,7 @@ const toolById = Object.fromEntries(TOOL_REGISTRY.map((t) => [t.id, t]))
 
 /**
  * Mega-menu columns on the toolkit home. Each `toolIds` entry must exist in {@link TOOL_REGISTRY}.
- * `tint` picks icon tile colors in the menu (see ToolkitNavMenus.jsx).
+ * `tint` keys: `violet` | `rose` | `amber` | `sky` — maps to mega-menu column theme in ToolkitNavMenus.jsx.
  */
 export const TOOL_NAV_GROUPS = [
   {
