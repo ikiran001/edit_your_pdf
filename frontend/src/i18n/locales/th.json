@@ -120,7 +120,14 @@
     "groupOrganize": "จัดระเบียบ PDF",
     "groupEdit": "แก้ไขและลงนาม",
     "groupConvert": "แปลงและส่งออก",
-    "groupSecurity": "ความปลอดภัย"
+    "groupSecurity": "ความปลอดภัย",
+    "megaOrganizePdf": "Organize PDF",
+    "megaOptimizePdf": "Optimize PDF",
+    "megaConvertToPdf": "Convert to PDF",
+    "megaConvertFromPdf": "Convert from PDF",
+    "megaEditPdf": "Edit PDF",
+    "megaPdfSecurity": "PDF security",
+    "megaPdfIntelligence": "PDF intelligence"
   },
   "megaFooter": {
     "privacy": "เน้นความเป็นส่วนตัว",
@@ -215,5 +222,24 @@
       "title": "ใบแจ้งหนี้ GST PDF",
       "description": "ซัพพลายเออร์ ผู้ซื้อ บรรทัด HSN — ดาวน์โหลดไฟล์ PDF ใบกำกับภาษีในเบราว์เซอร์"
     }
+  },
+  "megaTool": {
+    "removePages": "Remove pages",
+    "extractPages": "Extract pages",
+    "organizePdf": "Organize PDF",
+    "repairPdf": "Repair PDF",
+    "powerpointToPdf": "PowerPoint to PDF",
+    "excelToPdf": "Excel to PDF",
+    "htmlToPdf": "HTML to PDF",
+    "pdfToPowerpoint": "PDF to PowerPoint",
+    "pdfToExcel": "PDF to Excel",
+    "pdfToPdfA": "PDF to PDF/A",
+    "rotatePdf": "Rotate PDF",
+    "cropPdf": "Crop PDF",
+    "protectPdf": "Protect PDF",
+    "redactPdf": "Redact PDF",
+    "comparePdf": "Compare PDF",
+    "aiSummarizer": "AI summarizer",
+    "translatePdf": "Translate PDF"
   }
 }

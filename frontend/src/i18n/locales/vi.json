@@ -120,7 +120,14 @@
     "groupOrganize": "Sắp xếp PDF",
     "groupEdit": "Chỉnh sửa và ký",
     "groupConvert": "Chuyển đổi và xuất",
-    "groupSecurity": "Bảo vệ"
+    "groupSecurity": "Bảo vệ",
+    "megaOrganizePdf": "Organize PDF",
+    "megaOptimizePdf": "Optimize PDF",
+    "megaConvertToPdf": "Convert to PDF",
+    "megaConvertFromPdf": "Convert from PDF",
+    "megaEditPdf": "Edit PDF",
+    "megaPdfSecurity": "PDF security",
+    "megaPdfIntelligence": "PDF intelligence"
   },
   "megaFooter": {
     "privacy": "Tập trung vào quyền riêng tư",
@@ -215,5 +222,24 @@
       "title": "Hóa đơn GST PDF",
       "description": "Nhà cung cấp, người mua, đường HSN — tải xuống bản PDF hóa đơn thuế trong trình duyệt."
     }
+  },
+  "megaTool": {
+    "removePages": "Remove pages",
+    "extractPages": "Extract pages",
+    "organizePdf": "Organize PDF",
+    "repairPdf": "Repair PDF",
+    "powerpointToPdf": "PowerPoint to PDF",
+    "excelToPdf": "Excel to PDF",
+    "htmlToPdf": "HTML to PDF",
+    "pdfToPowerpoint": "PDF to PowerPoint",
+    "pdfToExcel": "PDF to Excel",
+    "pdfToPdfA": "PDF to PDF/A",
+    "rotatePdf": "Rotate PDF",
+    "cropPdf": "Crop PDF",
+    "protectPdf": "Protect PDF",
+    "redactPdf": "Redact PDF",
+    "comparePdf": "Compare PDF",
+    "aiSummarizer": "AI summarizer",
+    "translatePdf": "Translate PDF"
   }
 }

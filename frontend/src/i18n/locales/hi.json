@@ -120,7 +120,14 @@
     "groupOrganize": "PDF व्यवस्थित करें",
     "groupEdit": "संपादन और हस्ताक्षर",
     "groupConvert": "रूपांतरण और निर्यात",
-    "groupSecurity": "सुरक्षा"
+    "groupSecurity": "सुरक्षा",
+    "megaOrganizePdf": "Organize PDF",
+    "megaOptimizePdf": "Optimize PDF",
+    "megaConvertToPdf": "Convert to PDF",
+    "megaConvertFromPdf": "Convert from PDF",
+    "megaEditPdf": "Edit PDF",
+    "megaPdfSecurity": "PDF security",
+    "megaPdfIntelligence": "PDF intelligence"
   },
   "megaFooter": {
     "privacy": "गोपनीयता-केंद्रित",
@@ -215,5 +222,24 @@
       "title": "GST चालान PDF",
       "description": "विक्रेता, खरीदार, HSN पंक्तियाँ — ब्राउज़र में कर चालान PDF डाउनलोड करें।"
     }
+  },
+  "megaTool": {
+    "removePages": "Remove pages",
+    "extractPages": "Extract pages",
+    "organizePdf": "Organize PDF",
+    "repairPdf": "Repair PDF",
+    "powerpointToPdf": "PowerPoint to PDF",
+    "excelToPdf": "Excel to PDF",
+    "htmlToPdf": "HTML to PDF",
+    "pdfToPowerpoint": "PDF to PowerPoint",
+    "pdfToExcel": "PDF to Excel",
+    "pdfToPdfA": "PDF to PDF/A",
+    "rotatePdf": "Rotate PDF",
+    "cropPdf": "Crop PDF",
+    "protectPdf": "Protect PDF",
+    "redactPdf": "Redact PDF",
+    "comparePdf": "Compare PDF",
+    "aiSummarizer": "AI summarizer",
+    "translatePdf": "Translate PDF"
   }
 }
