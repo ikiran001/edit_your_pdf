@@ -8,16 +8,19 @@ const toolById = Object.fromEntries(TOOL_REGISTRY.map((t) => [t.id, t]))
  */
 export const TOOL_NAV_GROUPS = [
   {
+    labelKey: 'nav.groupOrganize',
     label: 'Organize PDF',
     tint: 'violet',
     toolIds: ['merge-pdf', 'split-pdf', 'organize-pdf', 'add-page-numbers'],
   },
   {
+    labelKey: 'nav.groupEdit',
     label: 'Edit & sign',
     tint: 'rose',
     toolIds: ['edit-pdf', 'sign-pdf', 'fill-pdf', 'flatten-pdf', 'add-watermark'],
   },
   {
+    labelKey: 'nav.groupConvert',
     label: 'Convert & export',
     tint: 'amber',
     toolIds: [
@@ -34,6 +37,7 @@ export const TOOL_NAV_GROUPS = [
     ],
   },
   {
+    labelKey: 'nav.groupSecurity',
     label: 'Security',
     tint: 'sky',
     toolIds: ['unlock-pdf', 'encrypt-pdf'],

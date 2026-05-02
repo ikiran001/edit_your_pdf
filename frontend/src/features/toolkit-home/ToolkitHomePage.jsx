@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Search, X } from 'lucide-react'
 import ToolCard from '../../shared/components/ToolCard.jsx'
-import ThemeToggle from '../../shared/components/ThemeToggle.jsx'
-import AccountMenu from '../../shared/components/AccountMenu.jsx'
+import SiteHeaderActions from '../../shared/components/SiteHeaderActions.jsx'
 import BrandLogoLink from '../../shared/components/BrandLogoLink.jsx'
 import LegalFooter from '../../shared/components/LegalFooter.jsx'
 import { TOOL_REGISTRY } from '../../shared/constants/toolRegistry.js'
@@ -11,18 +11,24 @@ import HeroSection from './HeroSection.jsx'
 import ToolkitNavMenus from './ToolkitNavMenus.jsx'
 import { peekFeedbackPrompt } from '../../lib/reviewPromptStorage.js'
 
-function matchesToolSearch(tool, q) {
+function matchesToolSearch(tool, q, t) {
   if (!q) return true
-  const hay = `${tool.title} ${tool.description} ${tool.id} ${tool.path}`.toLowerCase()
+  const title = t(`tool.${tool.id}.title`, { defaultValue: tool.title })
+  const desc = t(`tool.${tool.id}.description`, { defaultValue: tool.description })
+  const hay = `${title} ${desc} ${tool.id} ${tool.path}`.toLowerCase()
   return hay.includes(q)
 }
 
 export default function ToolkitHomePage() {
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const [toolQuery, setToolQuery] = useState('')
   const q = toolQuery.trim().toLowerCase()
 
-  const filteredTools = useMemo(() => TOOL_REGISTRY.filter((t) => matchesToolSearch(t, q)), [q])
+  const filteredTools = useMemo(
+    () => TOOL_REGISTRY.filter((tool) => matchesToolSearch(tool, q, t)),
+    [q, t, i18n.language]
+  )
 
   useEffect(() => {
     if (!peekFeedbackPrompt()) return
@@ -35,8 +41,7 @@ export default function ToolkitHomePage() {
         <div className="mx-auto grid max-w-[min(100%,96rem)] grid-cols-[1fr_auto] items-center gap-x-4 gap-y-2 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:gap-x-6">
           <BrandLogoLink className="min-w-0 justify-self-start" />
           <div className="flex shrink-0 items-center justify-end gap-2 lg:col-start-3 lg:row-start-1">
-            <AccountMenu />
-            <ThemeToggle />
+            <SiteHeaderActions />
           </div>
           <div className="col-span-2 -mx-4 min-w-0 overflow-x-auto px-4 pb-0.5 [scrollbar-width:thin] lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:mx-0 lg:px-0 lg:pb-0">
             <ToolkitNavMenus />
@@ -53,11 +58,11 @@ export default function ToolkitHomePage() {
 
         <section className="fx-toolkit-fade relative isolate mx-auto w-full max-w-[min(100%,96rem)] flex-1 px-4 py-6 md:px-8 md:py-10">
         <h2 className="mb-4 bg-gradient-to-r from-violet-700 via-fuchsia-600 to-cyan-600 bg-clip-text text-center font-mono text-sm font-semibold uppercase tracking-[0.18em] text-transparent dark:from-cyan-300 dark:via-fuchsia-400 dark:to-amber-300">
-          Choose a tool
+          {t('home.chooseTool')}
         </h2>
         <div className="mx-auto mb-6 max-w-2xl" role="search">
           <label htmlFor="toolkit-tool-search" className="sr-only">
-            Search tools by name or task
+            {t('home.searchPlaceholder')}
           </label>
           <div className="relative">
             <Search
@@ -69,7 +74,7 @@ export default function ToolkitHomePage() {
               type="search"
               value={toolQuery}
               onChange={(e) => setToolQuery(e.target.value)}
-              placeholder="Search tools (e.g. merge, scan, watermark)…"
+              placeholder={t('home.searchPlaceholder')}
               autoComplete="off"
               spellCheck={false}
               className="fx-focus-ring w-full rounded-xl border border-zinc-200 bg-white/90 py-2.5 pl-10 pr-10 text-sm text-zinc-900 shadow-sm placeholder:text-zinc-400 dark:border-zinc-600 dark:bg-zinc-900/80 dark:text-zinc-100 dark:placeholder:text-zinc-500"
@@ -79,7 +84,7 @@ export default function ToolkitHomePage() {
                 type="button"
                 onClick={() => setToolQuery('')}
                 className="fx-focus-ring absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-                aria-label="Clear search"
+                aria-label={t('common.close')}
               >
                 <X className="h-4 w-4" strokeWidth={2} />
               </button>
@@ -88,8 +93,8 @@ export default function ToolkitHomePage() {
           {q ? (
             <p className="mt-2 text-center text-xs text-zinc-500 dark:text-zinc-400">
               {filteredTools.length === 0
-                ? `No tools match “${toolQuery.trim()}”. Try another word or clear the search.`
-                : `Showing ${filteredTools.length} of ${TOOL_REGISTRY.length} tools`}
+                ? t('home.searchNoResults', { query: toolQuery.trim() })
+                : t('home.searchShowing', { n: filteredTools.length, total: TOOL_REGISTRY.length })}
             </p>
           ) : null}
         </div>
@@ -100,19 +105,16 @@ export default function ToolkitHomePage() {
             </div>
           ))}
         </div>
-        <p className="mt-12 text-center text-xs text-zinc-500 dark:text-zinc-500">
-          Files are processed in your session. Need the raw API? See the project README for self-hosting on GitHub
-          Pages.
-        </p>
+        <p className="mt-12 text-center text-xs text-zinc-500 dark:text-zinc-500">{t('home.footerProcessing')}</p>
         <p className="mt-6 text-center text-sm">
           <Link
             to="/feedback"
             className="font-medium text-indigo-600 underline-offset-2 hover:underline dark:text-cyan-400 dark:hover:text-cyan-300"
           >
-            Share feedback
+            {t('footer.shareFeedback')}
           </Link>
           <span className="text-zinc-400 dark:text-zinc-600"> · </span>
-          <span className="text-xs text-zinc-500 dark:text-zinc-500">Ratings and comments are shown only after real submissions.</span>
+          <span className="text-xs text-zinc-500 dark:text-zinc-500">{t('home.ratingsNote')}</span>
         </p>
         </section>
       </main>

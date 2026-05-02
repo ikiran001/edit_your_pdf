@@ -1,0 +1,219 @@
+{
+  "common": {
+    "loading": "लोड हो रहा है…",
+    "brandName": "pdfpilot",
+    "soon": "जल्द आ रहा है",
+    "comingSoon": "जल्द उपलब्ध",
+    "close": "बंद करें",
+    "cancel": "रद्द करें",
+    "openTool": "टूल खोलें →",
+    "brandTagline": "अपने PDF को आसानी से संभालें",
+    "brandHeroLine": "PDF को तुरंत संपादित करें, संपीड़ित करें, मर्ज करें और प्रबंधित करें — PurPDF जैसी स्पष्टता, गति और pdfpilot से भरोसेमंद निर्यात।"
+  },
+  "header": {
+    "login": "लॉग इन",
+    "signUp": "साइन अप",
+    "accountAriaGuest": "लॉग इन या साइन अप",
+    "accountAriaUser": "खाता मेनू — संपादित PDF और अन्य टूल से सहेजे गए PDF, साइन आउट",
+    "signedInPrefix": "साइन इन ·",
+    "allTools": "सभी टूल",
+    "allToolsMenu": "सभी PDF टूल",
+    "closeToolsMenu": "टूल मेनू बंद करें"
+  },
+  "appsMenu": {
+    "ariaLabel": "साइट मेनू",
+    "pricing": "मूल्य योजनाएँ",
+    "security": "सुरक्षा और शर्तें",
+    "features": "फ़ीचर्स",
+    "about": "हमारे बारे में",
+    "help": "मदद और फ़ीडबैक",
+    "language": "भाषा",
+    "terms": "सेवा की शर्तें",
+    "back": "वापस",
+    "chooseLanguage": "भाषा चुनें"
+  },
+  "home": {
+    "chooseTool": "एक टूल चुनें",
+    "searchPlaceholder": "टूल खोजें (जैसे मर्ज, स्कैन, वॉटरमार्क)…",
+    "searchNoResults": "“{{query}}” से कोई टूल मेल नहीं खाता। दूसरा शब्द आज़माएँ या खोज साफ़ करें।",
+    "searchShowing": "{{total}} में से {{n}} टूल दिख रहे हैं",
+    "footerProcessing": "फ़ाइलें आपके सत्र में प्रोसेस होती हैं। कच्ची API चाहिए? GitHub Pages पर सेल्फ़-होस्टिंग के लिए प्रोजेक्ट README देखें।",
+    "ratingsNote": "रेटिंग और टिप्पणियाँ केवल वास्तविक जमा के बाद दिखती हैं।"
+  },
+  "hero": {
+    "title": "PDF तुरंत संपादित करें और डाउनलोड करें",
+    "subtitle": "तेज़, सरल और सुरक्षित PDF संपादन सीधे ब्राउज़र में। कोई इंस्टॉल नहीं। कोई झंझट नहीं।",
+    "ctaEdit": "अपना PDF अभी संपादित करें",
+    "ctaSample": "नमूना PDF आज़माएँ",
+    "signInBlurb": "जारी रखने के लिए साइन इन करें या खाता बनाएँ।"
+  },
+  "footer": {
+    "copyright": "© {{year}} pdfpilot",
+    "privacySoon": "गोपनीयता",
+    "shareFeedback": "फ़ीडबैक साझा करें",
+    "terms": "सेवा की शर्तें"
+  },
+  "account": {
+    "signedInLabel": "साइन इन",
+    "savedPdfsTitle": "सहेजे गए PDF और संपादन",
+    "savedPdfsHint": "साइन इन के दौरान Edit PDF (और अन्य टूल) में बदले गए PDF — कभी भी खोलें, डाउनलोड करें या हटाएँ।",
+    "subscriptionTitle": "सदस्यता और बिलिंग",
+    "subscriptionHint": "योजना, उपयोग, Razorpay रसीदें",
+    "signOut": "साइन आउट",
+    "signingOut": "साइन आउट हो रहा है…"
+  },
+  "auth": {
+    "signInTitle": "साइन इन",
+    "signUpTitle": "खाता बनाएँ",
+    "newUser": "नए उपयोगकर्ता?",
+    "createAccount": "खाता बनाएँ",
+    "haveAccount": "पहले से खाता है?",
+    "signInLink": "साइन इन",
+    "continueGoogle": "Google से जारी रखें",
+    "or": "या",
+    "downloadBadge": "डाउनलोड",
+    "downloadBlurb": "साइन इन करें या खाता बनाएँ, फिर आपकी फ़ाइल स्वचालित डाउनलोड होगी। आप इस डिवाइस पर साइन इन रहते हैं।",
+    "notNow": "अभी नहीं",
+    "closeAria": "बंद करें",
+    "createAccountTab": "खाता बनाएँ",
+    "pleaseWait": "कृपया प्रतीक्षा करें…",
+    "continue": "जारी रखें",
+    "signInWithEmailButton": "ईमेल से साइन इन",
+    "createAccountButton": "खाता बनाएँ",
+    "forgotPassword": "पासवर्ड भूल गए?",
+    "emailSection": {
+      "signUpWithEmail": "ईमेल से साइन अप",
+      "signInWithEmail": "ईमेल से साइन इन",
+      "emailPassword": "ईमेल और पासवर्ड",
+      "pickTabHint": "एक टैब चुनें, फ़ील्ड भरें और जारी रखें पर टैप करें।"
+    },
+    "field": {
+      "firstName": "पहला नाम",
+      "lastName": "अंतिम नाम",
+      "dob": "जन्म तिथि",
+      "dobInfo": "आपके खाता प्रोफ़ाइल के लिए",
+      "birthMonth": "जन्म माह",
+      "year": "वर्ष",
+      "birthYear": "जन्म वर्ष",
+      "country": "देश/क्षेत्र",
+      "email": "ईमेल",
+      "password": "पासवर्ड"
+    },
+    "reset": {
+      "blurb": "हम आपको नया पासवर्ड चुनने के लिए एक लिंक ईमेल करेंगे। रीसेट के बाद यहाँ वापस आकर नए पासवर्ड से साइन इन करें।",
+      "sendLink": "रीसेट लिंक भेजें",
+      "backToSignIn": "साइन इन पर वापस"
+    },
+    "errors": {
+      "emailPasswordRequired": "ईमेल और पासवर्ड दर्ज करें।",
+      "passwordMin": "पासवर्ड कम से कम 6 अक्षरों का हो।",
+      "firstLastRequired": "पहला और अंतिम नाम दर्ज करें।",
+      "birthMonthRequired": "जन्म माह चुनें।",
+      "birthYearInvalid": "मान्य 4 अंकों का जन्म वर्ष दर्ज करें।",
+      "birthYearRange": "जन्म वर्ष 1900 और {{max}} के बीच होना चाहिए।",
+      "countryRequired": "अपना देश या क्षेत्र चुनें।",
+      "resetEmailRequired": "अपने खाते का ईमेल दर्ज करें।",
+      "emailInvalid": "यह ईमेल पता मान्य नहीं लगता।"
+    }
+  },
+  "nav": {
+    "groupOrganize": "PDF व्यवस्थित करें",
+    "groupEdit": "संपादन और हस्ताक्षर",
+    "groupConvert": "रूपांतरण और निर्यात",
+    "groupSecurity": "सुरक्षा"
+  },
+  "megaFooter": {
+    "privacy": "गोपनीयता-केंद्रित",
+    "easy": "उपयोग में आसान",
+    "fast": "आपके ब्राउज़र में तेज़",
+    "termsAgree": "हमारे टूल उपयोग करके आप निम्न से सहमत हैं ",
+    "termsLink": "सेवा की शर्तें",
+    "termsTail": "। फ़ाइलें आपके सत्र में प्रोसेस होती हैं; संपर्क विवरण साइट फ़ूटर पर देखें।"
+  },
+  "tool": {
+    "edit-pdf": {
+      "title": "PDF संपादित करें",
+      "description": "टेक्स्ट बदलें, टिप्पणी, हाइलाइट, ड्रॉ करें।"
+    },
+    "ocr-pdf": {
+      "title": "PDF OCR",
+      "description": "स्कैन खोज योग्य बनाएँ — आपके API की आवश्यकता (सर्वर पर ocrmypdf + Tesseract)।"
+    },
+    "merge-pdf": {
+      "title": "PDF मर्ज करें",
+      "description": "कई PDF को एक फ़ाइल में मिलाएँ।"
+    },
+    "split-pdf": {
+      "title": "PDF विभाजित करें",
+      "description": "पृष्ठ सीमाओं से विभाजित करें या हर पृष्ठ निकालें।"
+    },
+    "organize-pdf": {
+      "title": "पृष्ठ व्यवस्थित करें",
+      "description": "पुनः क्रम, घुमाएँ या पृष्ठ हटाएँ, फिर डाउनलोड करें।"
+    },
+    "add-page-numbers": {
+      "title": "पृष्ठ संख्या जोड़ें",
+      "description": "स्थान, सीमाएँ और प्रारूप के साथ पृष्ठ संख्या — आपके ब्राउज़र में।"
+    },
+    "compress-pdf": {
+      "title": "PDF संपीड़ित करें",
+      "description": "आपका API आज़माता है (qpdf / Ghostscript); API न हो तो ब्राउज़र में pdf-lib।"
+    },
+    "pdf-to-jpg": {
+      "title": "PDF से JPG",
+      "description": "पृष्ठ JPEG के रूप में निर्यात। ZIP या अलग फ़ाइलें।"
+    },
+    "pdf-to-png": {
+      "title": "PDF से PNG",
+      "description": "ZIP में लॉसलेस PNG — सब कुछ ब्राउज़र में।"
+    },
+    "pdf-to-text": {
+      "title": "PDF से टेक्स्ट",
+      "description": "चयन योग्य टेक्स्ट से सादा .txt डाउनलोड करें (कच्चे स्कैन के लिए नहीं)।"
+    },
+    "jpg-to-pdf": {
+      "title": "JPG से PDF",
+      "description": "छवियाँ मिलाएँ। क्रम बदलने के लिए खींचें।"
+    },
+    "scan-to-pdf": {
+      "title": "स्कैन से PDF",
+      "description": "कैमरा या फ़ोटो: काटें, बेहतर बनाएँ, बहु-पृष्ठ PDF।"
+    },
+    "sign-pdf": {
+      "title": "PDF पर हस्ताक्षर",
+      "description": "किसी भी पृष्ठ पर हस्ताक्षर, या प्रतिलिपि/पेस्ट से स्थान, फिर डाउनलोड।"
+    },
+    "fill-pdf": {
+      "title": "PDF फ़ॉर्म भरें",
+      "description": "AcroForm फ़ील्ड भरें और डाउनलोड करें — प्रोसेसिंग ब्राउज़र में रहती है।"
+    },
+    "flatten-pdf": {
+      "title": "PDF फ़्लैट करें",
+      "description": "भरने योग्य फ़ॉर्म फ़्लैट करें या पृष्ठों को छवि में — क्लाइंट-साइड।"
+    },
+    "unlock-pdf": {
+      "title": "PDF अनलॉक करें",
+      "description": "आपके API के माध्यम से पासवर्ड हटाएँ (कॉन्फ़िगर होने पर qpdf / Ghostscript)।"
+    },
+    "encrypt-pdf": {
+      "title": "PDF एन्क्रिप्ट करें",
+      "description": "AES-256 से पासवर्ड सुरक्षा (सर्वर पर qpdf)।"
+    },
+    "add-watermark": {
+      "title": "वॉटरमार्क जोड़ें",
+      "description": "टेक्स्ट या छवि वॉटरमार्क, पृष्ठ सीमाएँ, पूर्वावलोकन, फिर डाउनलोड।"
+    },
+    "pdf-to-word": {
+      "title": "PDF से Word",
+      "description": "ब्राउज़र में मसौदा .docx — रूपांतरण के लिए PDF अपलोड नहीं (स्कैन के लिए पहले PDF OCR)।"
+    },
+    "word-to-pdf": {
+      "title": "Word से PDF",
+      "description": "ब्राउज़र में मसौदा PDF — रूपांतरण के लिए .docx अपलोड नहीं।"
+    },
+    "gst-invoice": {
+      "title": "GST चालान PDF",
+      "description": "विक्रेता, खरीदार, HSN पंक्तियाँ — ब्राउज़र में कर चालान PDF डाउनलोड करें।"
+    }
+  }
+}
