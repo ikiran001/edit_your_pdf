@@ -140,11 +140,11 @@ export default function ToolkitNavMenus() {
 
   return (
     <>
-      <div className="flex w-full justify-center lg:w-auto lg:justify-center">
+      <div className="flex justify-center">
         <button
           ref={triggerRef}
           type="button"
-          className="fx-focus-ring inline-flex min-h-[44px] min-w-0 max-w-full items-center gap-2 rounded-xl border border-white/25 bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 px-4 py-2.5 text-sm font-bold text-white shadow-[0_4px_20px_-4px_rgba(79,70,229,0.55)] ring-2 ring-indigo-400/35 transition hover:brightness-110 hover:shadow-[0_8px_28px_-6px_rgba(124,58,237,0.55)] active:scale-[0.98] sm:gap-2.5 sm:px-5 dark:border-cyan-400/35 dark:from-cyan-600 dark:via-indigo-600 dark:to-violet-700 dark:shadow-[0_4px_24px_-6px_rgba(34,211,238,0.4)] dark:ring-cyan-400/25 dark:hover:shadow-[0_8px_32px_-8px_rgba(34,211,238,0.45)]"
+          className={`fx-focus-ring relative inline-flex min-h-[48px] w-full max-w-sm min-w-[13rem] items-center justify-center gap-2.5 rounded-2xl border-2 border-white/40 bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 px-5 py-2.5 text-sm font-bold tracking-tight text-white shadow-[0_6px_28px_-8px_rgba(67,56,202,0.65),0_2px_12px_-4px_rgba(139,92,246,0.45)] ring-[3px] ring-indigo-500/30 ring-offset-2 ring-offset-white transition hover:brightness-[1.07] hover:shadow-[0_10px_36px_-10px_rgba(79,70,229,0.55)] active:scale-[0.98] sm:min-w-[17rem] sm:px-6 sm:py-3 sm:text-base dark:border-cyan-300/45 dark:from-cyan-500 dark:via-indigo-600 dark:to-violet-700 dark:shadow-[0_8px_36px_-12px_rgba(34,211,238,0.5),0_0_0_1px_rgba(34,211,238,0.25)] dark:ring-cyan-400/35 dark:ring-offset-zinc-950 dark:hover:shadow-[0_12px_44px_-12px_rgba(34,211,238,0.55)] lg:w-auto lg:max-w-none ${open ? 'ring-offset-indigo-100 dark:ring-offset-zinc-900' : ''}`}
           aria-expanded={open}
           aria-haspopup="dialog"
           aria-controls={open ? panelId : undefined}
@@ -152,10 +152,10 @@ export default function ToolkitNavMenus() {
           title={t('header.allToolsMenu')}
           onClick={() => setOpen((v) => !v)}
         >
-          <LayoutGrid className="h-4 w-4 shrink-0 opacity-95 sm:h-[1.125rem] sm:w-[1.125rem]" strokeWidth={2.25} aria-hidden />
+          <LayoutGrid className="h-5 w-5 shrink-0 opacity-[0.97]" strokeWidth={2.25} aria-hidden />
           <span className="truncate">{t('header.allTools')}</span>
           <ChevronDown
-            className={`h-4 w-4 shrink-0 text-white/90 transition duration-200 ${open ? 'rotate-180' : ''}`}
+            className={`h-5 w-5 shrink-0 text-white transition duration-200 ${open ? 'rotate-180' : ''}`}
             aria-hidden
           />
         </button>
