@@ -10,13 +10,13 @@ function trackEditEntry() {
 
 export default function HeroSection() {
   return (
-    <section className="relative overflow-hidden border-b border-indigo-200/30 bg-gradient-to-b from-indigo-50/80 via-white to-transparent px-4 pb-10 pt-6 dark:border-indigo-500/10 dark:from-indigo-950/40 dark:via-zinc-950 dark:to-transparent md:px-8 md:pb-14 md:pt-10">
+    <section className="relative overflow-hidden border-b border-indigo-200/30 bg-gradient-to-b from-indigo-50/90 via-white to-violet-50/40 px-4 pb-10 pt-6 dark:border-indigo-500/15 dark:from-indigo-950/35 dark:via-zinc-950 dark:to-fuchsia-950/25 md:px-8 md:pb-14 md:pt-10">
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(99,102,241,0.22),transparent)] dark:bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(99,102,241,0.12),transparent)]"
+        className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-[radial-gradient(ellipse_70%_55%_at_15%_0%,rgba(244,63,94,0.14),transparent_55%),radial-gradient(ellipse_65%_50%_at_85%_5%,rgba(99,102,241,0.16),transparent_50%),radial-gradient(ellipse_55%_45%_at_50%_35%,rgba(34,211,238,0.12),transparent_55%)] dark:bg-[radial-gradient(ellipse_70%_55%_at_15%_0%,rgba(244,63,94,0.1),transparent_55%),radial-gradient(ellipse_65%_50%_at_85%_5%,rgba(129,140,248,0.14),transparent_50%),radial-gradient(ellipse_55%_45%_at_50%_40%,rgba(34,211,238,0.08),transparent_55%)]"
         aria-hidden
       />
       <div className="relative mx-auto max-w-3xl text-center">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600 dark:text-cyan-400/90">
+        <p className="mb-2 bg-gradient-to-r from-indigo-600 via-fuchsia-600 to-cyan-600 bg-clip-text text-xs font-semibold uppercase tracking-[0.2em] text-transparent dark:from-cyan-400 dark:via-fuchsia-400 dark:to-amber-300">
           {BRAND_NAME}
         </p>
         <h1 className="text-balance text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl md:text-5xl dark:text-white">

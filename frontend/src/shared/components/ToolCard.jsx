@@ -2,16 +2,20 @@ import { Link } from 'react-router-dom'
 import * as Icons from 'lucide-react'
 import { trackFeatureUsed } from '../../lib/analytics.js'
 import { REGISTRY_ID_TO_FEATURE } from '../constants/analyticsTools.js'
+import { getToolCardAccent } from '../constants/toolCardAccents.js'
 
 export default function ToolCard({ tool }) {
   const Icon = Icons[tool.icon] || Icons.FileQuestion
+  const accent = getToolCardAccent(tool.id)
   const content = (
     <article
-      className={`group relative flex h-full flex-col overflow-hidden rounded-xl border border-indigo-200/70 bg-white/85 p-3 shadow-md shadow-indigo-500/5 ring-1 ring-indigo-500/5 transition duration-300 ease-out will-change-transform sm:rounded-2xl sm:p-6 motion-safe:hover:-translate-y-0.5 motion-safe:hover:scale-[1.01] hover:border-indigo-400/50 hover:shadow-lg hover:shadow-indigo-500/15 dark:border-indigo-500/20 dark:bg-zinc-950/75 dark:shadow-[0_0_40px_-12px_rgba(99,102,241,0.25)] dark:ring-indigo-400/10 dark:hover:border-cyan-500/25 dark:hover:shadow-[0_0_48px_-8px_rgba(34,211,238,0.12)] max-sm:items-center max-sm:justify-center max-sm:text-center ${
+      className={`group relative flex h-full flex-col overflow-hidden rounded-xl border border-zinc-200/90 bg-white/96 p-3 shadow-md shadow-zinc-900/[0.04] ring-1 ring-black/[0.03] transition duration-300 ease-out will-change-transform sm:rounded-2xl sm:p-6 motion-safe:hover:-translate-y-0.5 motion-safe:hover:scale-[1.01] max-sm:items-center max-sm:justify-center max-sm:text-center dark:border-zinc-700/85 dark:bg-zinc-950/88 dark:shadow-[0_0_36px_-14px_rgba(0,0,0,0.55)] dark:ring-white/[0.06] ${accent.hoverGlow} ${
         !tool.implemented ? 'opacity-90' : ''
       }`}
     >
-      <div className="mb-2 flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 via-violet-600 to-cyan-500 text-white shadow-md shadow-indigo-500/40 max-sm:shadow-lg dark:shadow-[0_0_20px_rgba(99,102,241,0.45)] sm:mb-4 sm:h-11 sm:w-11 sm:rounded-xl sm:shadow-lg">
+      <div
+        className={`mb-2 flex h-14 w-14 shrink-0 items-center justify-center rounded-xl max-sm:shadow-lg sm:mb-4 sm:h-11 sm:w-11 sm:rounded-xl ${accent.tile} ${accent.tileShadow}`}
+      >
         <Icon className="h-7 w-7 sm:h-5 sm:w-5" strokeWidth={1.75} aria-hidden />
       </div>
       <h2 className="line-clamp-2 text-xs font-semibold leading-tight tracking-tight text-zinc-900 max-sm:mt-0.5 sm:line-clamp-none sm:text-lg dark:text-zinc-50">
@@ -27,7 +31,9 @@ export default function ToolCard({ tool }) {
         </span>
       )}
       {tool.implemented && (
-        <span className="mt-4 hidden text-sm font-medium text-indigo-600 opacity-0 transition group-hover:opacity-100 sm:block dark:text-cyan-400">
+        <span
+          className={`mt-4 hidden text-sm font-medium opacity-0 transition group-hover:opacity-100 sm:block ${accent.cta}`}
+        >
           Open tool →
         </span>
       )}
