@@ -1,219 +1,219 @@
 {
   "common": {
-    "loading": "Loading…",
+    "loading": "Belastning…",
     "brandName": "pdfpilot",
-    "soon": "Soon",
-    "comingSoon": "Coming soon",
-    "close": "Close",
-    "cancel": "Cancel",
-    "openTool": "Open tool →",
-    "brandTagline": "Navigate your PDFs effortlessly",
-    "brandHeroLine": "Edit, compress, merge and manage PDFs instantly — PurPDF-grade clarity, speed, and trustworthy exports from pdfpilot."
+    "soon": "Snart",
+    "comingSoon": "Kommer snart",
+    "close": "Nära",
+    "cancel": "Avboka",
+    "openTool": "Öppna verktyg →",
+    "brandTagline": "Navigera enkelt i dina PDF-filer",
+    "brandHeroLine": "Redigera, komprimera, slå samman och hantera PDF-filer direkt - PurPDF-kvalitet, klarhet, hastighet och pålitlig export från pdfpilot."
   },
   "header": {
-    "login": "Log in",
-    "signUp": "Sign up",
-    "accountAriaGuest": "Log in or sign up",
-    "accountAriaUser": "Account menu — saved PDFs from Edit PDF and other tools, sign out",
-    "signedInPrefix": "Signed in ·",
-    "allTools": "All tools",
-    "allToolsMenu": "All PDF tools",
-    "closeToolsMenu": "Close tools menu"
+    "login": "Logga in",
+    "signUp": "Anmäl dig",
+    "accountAriaGuest": "Logga in eller registrera dig",
+    "accountAriaUser": "Kontomeny — sparade PDF-filer från Redigera PDF och andra verktyg, logga ut",
+    "signedInPrefix": "Inloggad ·",
+    "allTools": "Alla verktyg",
+    "allToolsMenu": "Alla PDF-verktyg",
+    "closeToolsMenu": "Stäng verktygsmenyn"
   },
   "appsMenu": {
-    "ariaLabel": "Site menu",
-    "pricing": "Pricing & plans",
-    "security": "Security & terms",
-    "features": "Features",
-    "about": "About",
-    "help": "Help & feedback",
-    "language": "Language",
-    "terms": "Terms of Service",
-    "back": "Back",
-    "chooseLanguage": "Choose language"
+    "ariaLabel": "Webbplatsmeny",
+    "pricing": "Priser & planer",
+    "security": "Säkerhet & villkor",
+    "features": "Drag",
+    "about": "Om",
+    "help": "Hjälp & feedback",
+    "language": "Språk",
+    "terms": "Användarvillkor",
+    "back": "Tillbaka",
+    "chooseLanguage": "Välj språk"
   },
   "home": {
-    "chooseTool": "Choose a tool",
-    "searchPlaceholder": "Search tools (e.g. merge, scan, watermark)…",
-    "searchNoResults": "No tools match “{{query}}”. Try another word or clear the search.",
-    "searchShowing": "Showing {{n}} of {{total}} tools",
-    "footerProcessing": "Files are processed in your session. Need the raw API? See the project README for self-hosting on GitHub Pages.",
-    "ratingsNote": "Ratings and comments are shown only after real submissions."
+    "chooseTool": "Välj ett verktyg",
+    "searchPlaceholder": "Sökverktyg (t.ex. sammanfoga, skanna, vattenstämpel)...",
+    "searchNoResults": "Inga verktyg matchar \"{{query}}\". Försök med ett annat ord eller rensa sökningen.",
+    "searchShowing": "Visar {{n}} av {{total}} verktyg",
+    "footerProcessing": "Filer bearbetas i din session. Behöver du rå API? Se projektet README för självhotell på GitHub-sidor.",
+    "ratingsNote": "Betyg och kommentarer visas först efter riktiga bidrag."
   },
   "hero": {
-    "title": "Edit and download PDFs instantly",
-    "subtitle": "Fast, simple, and secure PDF editing directly in your browser. No installs. No hassle.",
-    "ctaEdit": "Edit your PDF now",
-    "ctaSample": "Try sample PDF",
-    "signInBlurb": "Sign in or create an account to continue."
+    "title": "Redigera och ladda ner PDF-filer direkt",
+    "subtitle": "Snabb, enkel och säker PDF-redigering direkt i din webbläsare. Inga installationer. Inget krångel.",
+    "ctaEdit": "Redigera din PDF nu",
+    "ctaSample": "Prova exempel PDF",
+    "signInBlurb": "Logga in eller skapa ett konto för att fortsätta."
   },
   "footer": {
     "copyright": "© {{year}} pdfpilot",
-    "privacySoon": "Privacy",
-    "shareFeedback": "Share feedback",
-    "terms": "Terms of Service"
+    "privacySoon": "Privatliv",
+    "shareFeedback": "Dela feedback",
+    "terms": "Användarvillkor"
   },
   "account": {
-    "signedInLabel": "Signed in",
-    "savedPdfsTitle": "Saved PDFs and edits",
-    "savedPdfsHint": "PDFs you changed in Edit PDF (and other tools) while signed in — open, download, or delete anytime.",
-    "subscriptionTitle": "Subscription & billing",
-    "subscriptionHint": "Plan, usage, Razorpay receipts",
-    "signOut": "Sign out",
-    "signingOut": "Signing out…"
+    "signedInLabel": "Inloggad",
+    "savedPdfsTitle": "Sparade PDF-filer och redigeringar",
+    "savedPdfsHint": "PDF-filer som du ändrade i Redigera PDF (och andra verktyg) när du var inloggad – öppna, ladda ner eller radera när som helst.",
+    "subscriptionTitle": "Prenumeration & fakturering",
+    "subscriptionHint": "Planering, användning, Razorpay-kvitton",
+    "signOut": "Logga ut",
+    "signingOut": "Loggar ut..."
   },
   "auth": {
-    "signInTitle": "Sign in",
-    "signUpTitle": "Create an account",
-    "newUser": "New user?",
-    "createAccount": "Create an account",
-    "haveAccount": "Already have an account?",
-    "signInLink": "Sign in",
-    "continueGoogle": "Continue with Google",
-    "or": "Or",
-    "downloadBadge": "Download",
-    "downloadBlurb": "Sign in or create an account, then your file downloads automatically. You stay signed in on this device.",
-    "notNow": "Not now",
-    "closeAria": "Close",
-    "createAccountTab": "Create account",
-    "pleaseWait": "Please wait…",
-    "continue": "Continue",
-    "signInWithEmailButton": "Sign in with email",
-    "createAccountButton": "Create account",
-    "forgotPassword": "Forgot password?",
+    "signInTitle": "Logga in",
+    "signUpTitle": "Skapa ett konto",
+    "newUser": "Ny användare?",
+    "createAccount": "Skapa ett konto",
+    "haveAccount": "Har du redan ett konto?",
+    "signInLink": "Logga in",
+    "continueGoogle": "Fortsätt med Google",
+    "or": "Eller",
+    "downloadBadge": "Ladda ner",
+    "downloadBlurb": "Logga in eller skapa ett konto, sedan laddas din fil ned automatiskt. Du förblir inloggad på den här enheten.",
+    "notNow": "Inte nu",
+    "closeAria": "Nära",
+    "createAccountTab": "Skapa konto",
+    "pleaseWait": "Vänligen vänta...",
+    "continue": "Fortsätta",
+    "signInWithEmailButton": "Logga in med e-post",
+    "createAccountButton": "Skapa konto",
+    "forgotPassword": "Glömt lösenordet?",
     "emailSection": {
-      "signUpWithEmail": "Sign up with email",
-      "signInWithEmail": "Sign in with email",
-      "emailPassword": "Email & password",
-      "pickTabHint": "Pick a tab, then complete the fields and tap Continue."
+      "signUpWithEmail": "Anmäl dig med e-post",
+      "signInWithEmail": "Logga in med e-post",
+      "emailPassword": "E-post & lösenord",
+      "pickTabHint": "Välj en flik, fyll sedan i fälten och tryck på Fortsätt."
     },
     "field": {
-      "firstName": "First name",
-      "lastName": "Last name",
-      "dob": "Date of birth",
-      "dobInfo": "Used for your account profile",
-      "birthMonth": "Birth month",
-      "year": "Year",
-      "birthYear": "Birth year",
-      "country": "Country/Region",
-      "email": "Email",
-      "password": "Password"
+      "firstName": "Förnamn",
+      "lastName": "Efternamn",
+      "dob": "Födelsedatum",
+      "dobInfo": "Används för din kontoprofil",
+      "birthMonth": "Födelsemånad",
+      "year": "År",
+      "birthYear": "Födelseår",
+      "country": "Land/Region",
+      "email": "E-post",
+      "password": "Lösenord"
     },
     "reset": {
-      "blurb": "We will email you a link to choose a new password. After you reset it, return here and sign in with your new password.",
-      "sendLink": "Send reset link",
-      "backToSignIn": "Back to sign in"
+      "blurb": "Vi skickar en länk till dig via e-post för att välja ett nytt lösenord. När du har återställt det, återvänd hit och logga in med ditt nya lösenord.",
+      "sendLink": "Skicka återställningslänk",
+      "backToSignIn": "Tillbaka för att logga in"
     },
     "errors": {
-      "emailPasswordRequired": "Enter email and password.",
-      "passwordMin": "Password must be at least 6 characters.",
-      "firstLastRequired": "Enter first and last name.",
-      "birthMonthRequired": "Select your month of birth.",
-      "birthYearInvalid": "Enter a valid 4-digit birth year.",
-      "birthYearRange": "Birth year must be between 1900 and {{max}}.",
-      "countryRequired": "Select your country or region.",
-      "resetEmailRequired": "Enter the email for your account.",
-      "emailInvalid": "That email address does not look valid."
+      "emailPasswordRequired": "Ange e-postadress och lösenord.",
+      "passwordMin": "Lösenordet måste bestå av minst 6 tecken.",
+      "firstLastRequired": "Ange för- och efternamn.",
+      "birthMonthRequired": "Välj din födelsemånad.",
+      "birthYearInvalid": "Ange ett giltigt 4-siffrigt födelseår.",
+      "birthYearRange": "Födelseår måste vara mellan 1900 och {{max}}.",
+      "countryRequired": "Välj ditt land eller din region.",
+      "resetEmailRequired": "Ange e-postadressen för ditt konto.",
+      "emailInvalid": "Den e-postadressen verkar inte giltig."
     }
   },
   "nav": {
-    "groupOrganize": "Organize PDF",
-    "groupEdit": "Edit & sign",
-    "groupConvert": "Convert & export",
-    "groupSecurity": "Security"
+    "groupOrganize": "Ordna PDF",
+    "groupEdit": "Redigera & signera",
+    "groupConvert": "Konvertera & exportera",
+    "groupSecurity": "Säkerhet"
   },
   "megaFooter": {
-    "privacy": "Privacy-focused",
-    "easy": "Easy to use",
-    "fast": "Fast in your browser",
-    "termsAgree": "By using our tools you agree to the",
-    "termsLink": "Terms of Service",
-    "termsTail": ". Files are processed for your session; see the site footer for contact details."
+    "privacy": "Integritetsfokuserad",
+    "easy": "Lätt att använda",
+    "fast": "Snabbt i din webbläsare",
+    "termsAgree": "Genom att använda våra verktyg godkänner du",
+    "termsLink": "Användarvillkor",
+    "termsTail": ". Filer bearbetas för din session; se sidfoten för kontaktuppgifter."
   },
   "tool": {
     "edit-pdf": {
-      "title": "Edit PDF",
-      "description": "Change text, annotate, highlight, draw."
+      "title": "Redigera PDF",
+      "description": "Ändra text, kommentera, markera, rita."
     },
     "ocr-pdf": {
       "title": "OCR PDF",
-      "description": "Make scans searchable — needs your API (ocrmypdf + Tesseract on the server)."
+      "description": "Gör skanningar sökbara – behöver ditt API (ocrmypdf + Tesseract på servern)."
     },
     "merge-pdf": {
-      "title": "Merge PDF",
-      "description": "Combine multiple PDFs into one file."
+      "title": "Slå samman PDF",
+      "description": "Kombinera flera PDF-filer till en fil."
     },
     "split-pdf": {
-      "title": "Split PDF",
-      "description": "Split by page ranges or extract every page."
+      "title": "Dela upp PDF",
+      "description": "Dela upp efter sidintervall eller extrahera varje sida."
     },
     "organize-pdf": {
-      "title": "Organize Pages",
-      "description": "Reorder, rotate, or delete pages, then download."
+      "title": "Organisera sidor",
+      "description": "Ordna om, rotera eller ta bort sidor och ladda sedan ned."
     },
     "add-page-numbers": {
-      "title": "Add page numbers",
-      "description": "Stamp page numbers with placement, ranges, and formats — in your browser."
+      "title": "Lägg till sidnummer",
+      "description": "Stämpla sidnummer med placering, intervall och format — i din webbläsare."
     },
     "compress-pdf": {
-      "title": "Compress PDF",
-      "description": "Tries your API (qpdf / Ghostscript); falls back to in-browser pdf-lib when the API is missing."
+      "title": "Komprimera PDF",
+      "description": "Försöker ditt API (qpdf / Ghostscript); faller tillbaka till pdf-lib i webbläsaren när API:et saknas."
     },
     "pdf-to-jpg": {
-      "title": "PDF to JPG",
-      "description": "Export pages as JPEG. ZIP or single files."
+      "title": "PDF till JPG",
+      "description": "Exportera sidor som JPEG. ZIP eller enstaka filer."
     },
     "pdf-to-png": {
-      "title": "PDF to PNG",
-      "description": "Export pages as lossless PNG in a ZIP — all in your browser."
+      "title": "PDF till PNG",
+      "description": "Exportera sidor som förlustfri PNG i ett ZIP - allt i din webbläsare."
     },
     "pdf-to-text": {
-      "title": "PDF to text",
-      "description": "Download plain .txt from selectable text (not for raw scans)."
+      "title": "PDF till text",
+      "description": "Ladda ner vanlig .txt från valbar text (inte för råskanningar)."
     },
     "jpg-to-pdf": {
-      "title": "JPG to PDF",
-      "description": "Combine images. Drag to reorder."
+      "title": "JPG till PDF",
+      "description": "Kombinera bilder. Dra för att ändra ordning."
     },
     "scan-to-pdf": {
-      "title": "Scan to PDF",
-      "description": "Camera or photos: trim, enhance, multi-page PDF."
+      "title": "Skanna till PDF",
+      "description": "Kamera eller foton: trimma, förbättra, flersidig PDF."
     },
     "sign-pdf": {
-      "title": "Sign PDF",
-      "description": "Sign any page, duplicate or copy/paste placements, then download."
+      "title": "Signera PDF",
+      "description": "Signera vilken sida som helst, duplicera eller kopiera/klistra in placeringar och ladda sedan ned."
     },
     "fill-pdf": {
-      "title": "Fill PDF form",
-      "description": "Fill AcroForm fields and download — processing stays in the browser."
+      "title": "Fyll i PDF-formulär",
+      "description": "Fyll i AcroForm-fält och ladda ner — bearbetningen stannar i webbläsaren."
     },
     "flatten-pdf": {
-      "title": "Flatten PDF",
-      "description": "Flatten fillable forms or rasterize pages to images — client-side."
+      "title": "Platta till PDF",
+      "description": "Platta ut ifyllbara formulär eller rastrera sidor till bilder - klientsidan."
     },
     "unlock-pdf": {
-      "title": "Unlock PDF",
-      "description": "Remove password via your API (qpdf / Ghostscript when configured)."
+      "title": "Lås upp PDF",
+      "description": "Ta bort lösenord via ditt API (qpdf / Ghostscript när det är konfigurerat)."
     },
     "encrypt-pdf": {
-      "title": "Encrypt PDF",
-      "description": "Password-protect with AES-256 (qpdf on the server)."
+      "title": "Kryptera PDF",
+      "description": "Lösenordsskydda med AES-256 (qpdf på servern)."
     },
     "add-watermark": {
-      "title": "Add Watermark",
-      "description": "Text or image watermark, page ranges, preview, then download."
+      "title": "Lägg till vattenstämpel",
+      "description": "Text- eller bildvattenstämpel, sidintervall, förhandsgranska och ladda ner."
     },
     "pdf-to-word": {
-      "title": "PDF to Word",
-      "description": "Draft .docx in your browser — PDF is not uploaded for conversion (use OCR PDF for scans first)."
+      "title": "PDF till Word",
+      "description": "Utkast till .docx i din webbläsare — PDF laddas inte upp för konvertering (använd först OCR PDF för skanningar)."
     },
     "word-to-pdf": {
-      "title": "Word to PDF",
-      "description": "Draft PDF in your browser — .docx is not uploaded for conversion."
+      "title": "Word till PDF",
+      "description": "PDF-utkast i din webbläsare — .docx laddas inte upp för konvertering."
     },
     "gst-invoice": {
-      "title": "GST invoice PDF",
-      "description": "Supplier, buyer, HSN lines — download a tax invoice PDF in the browser."
+      "title": "GST-faktura PDF",
+      "description": "Leverantör, köpare, HSN-linjer — ladda ner en skattefaktura PDF i webbläsaren."
     }
   }
 }

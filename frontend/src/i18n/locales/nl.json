@@ -1,219 +1,219 @@
 {
   "common": {
-    "loading": "Loading…",
+    "loading": "Laden...",
     "brandName": "pdfpilot",
-    "soon": "Soon",
-    "comingSoon": "Coming soon",
-    "close": "Close",
-    "cancel": "Cancel",
-    "openTool": "Open tool →",
-    "brandTagline": "Navigate your PDFs effortlessly",
-    "brandHeroLine": "Edit, compress, merge and manage PDFs instantly — PurPDF-grade clarity, speed, and trustworthy exports from pdfpilot."
+    "soon": "Spoedig",
+    "comingSoon": "Binnenkort beschikbaar",
+    "close": "Dichtbij",
+    "cancel": "Annuleren",
+    "openTool": "Gereedschap openen →",
+    "brandTagline": "Navigeer moeiteloos door uw PDF's",
+    "brandHeroLine": "Bewerk, comprimeer, voeg samen en beheer PDF's direct: helderheid, snelheid en betrouwbare export van PurPDF-niveau vanuit pdfpilot."
   },
   "header": {
-    "login": "Log in",
-    "signUp": "Sign up",
-    "accountAriaGuest": "Log in or sign up",
-    "accountAriaUser": "Account menu — saved PDFs from Edit PDF and other tools, sign out",
-    "signedInPrefix": "Signed in ·",
-    "allTools": "All tools",
-    "allToolsMenu": "All PDF tools",
-    "closeToolsMenu": "Close tools menu"
+    "login": "Inloggen",
+    "signUp": "Schrijf je in",
+    "accountAriaGuest": "Log in of meld je aan",
+    "accountAriaUser": "Accountmenu - opgeslagen PDF's van PDF bewerken en andere tools, uitloggen",
+    "signedInPrefix": "Ingelogd ·",
+    "allTools": "Alle gereedschappen",
+    "allToolsMenu": "Alle PDF-hulpmiddelen",
+    "closeToolsMenu": "Sluit het menu Extra"
   },
   "appsMenu": {
-    "ariaLabel": "Site menu",
-    "pricing": "Pricing & plans",
-    "security": "Security & terms",
-    "features": "Features",
-    "about": "About",
-    "help": "Help & feedback",
-    "language": "Language",
-    "terms": "Terms of Service",
-    "back": "Back",
-    "chooseLanguage": "Choose language"
+    "ariaLabel": "Sitemenu",
+    "pricing": "Prijzen en plannen",
+    "security": "Beveiliging en voorwaarden",
+    "features": "Functies",
+    "about": "Over",
+    "help": "Hulp en feedback",
+    "language": "Taal",
+    "terms": "Servicevoorwaarden",
+    "back": "Rug",
+    "chooseLanguage": "Kies taal"
   },
   "home": {
-    "chooseTool": "Choose a tool",
-    "searchPlaceholder": "Search tools (e.g. merge, scan, watermark)…",
-    "searchNoResults": "No tools match “{{query}}”. Try another word or clear the search.",
-    "searchShowing": "Showing {{n}} of {{total}} tools",
-    "footerProcessing": "Files are processed in your session. Need the raw API? See the project README for self-hosting on GitHub Pages.",
-    "ratingsNote": "Ratings and comments are shown only after real submissions."
+    "chooseTool": "Kies een hulpmiddel",
+    "searchPlaceholder": "Zoekhulpmiddelen (bijvoorbeeld samenvoegen, scannen, watermerk)…",
+    "searchNoResults": "Er zijn geen tools die overeenkomen met “{{query}}”. Probeer een ander woord of wis de zoekopdracht.",
+    "searchShowing": "Toont {{n}} van {{total}} gereedschappen",
+    "footerProcessing": "Bestanden worden verwerkt in uw sessie. Heb je de onbewerkte API nodig? Zie het project README voor zelfhosting op GitHub Pages.",
+    "ratingsNote": "Beoordelingen en opmerkingen worden alleen weergegeven na echte inzendingen."
   },
   "hero": {
-    "title": "Edit and download PDFs instantly",
-    "subtitle": "Fast, simple, and secure PDF editing directly in your browser. No installs. No hassle.",
-    "ctaEdit": "Edit your PDF now",
-    "ctaSample": "Try sample PDF",
-    "signInBlurb": "Sign in or create an account to continue."
+    "title": "Bewerk en download PDF's direct",
+    "subtitle": "Snelle, eenvoudige en veilige PDF-bewerking rechtstreeks in uw browser. Geen installaties. Geen gedoe.",
+    "ctaEdit": "Bewerk nu uw PDF",
+    "ctaSample": "Probeer een voorbeeld-pdf",
+    "signInBlurb": "Meld u aan of maak een account aan om door te gaan."
   },
   "footer": {
-    "copyright": "© {{year}} pdfpilot",
+    "copyright": "© {{jaar}} pdfpilot",
     "privacySoon": "Privacy",
-    "shareFeedback": "Share feedback",
-    "terms": "Terms of Service"
+    "shareFeedback": "Deel feedback",
+    "terms": "Servicevoorwaarden"
   },
   "account": {
-    "signedInLabel": "Signed in",
-    "savedPdfsTitle": "Saved PDFs and edits",
-    "savedPdfsHint": "PDFs you changed in Edit PDF (and other tools) while signed in — open, download, or delete anytime.",
-    "subscriptionTitle": "Subscription & billing",
-    "subscriptionHint": "Plan, usage, Razorpay receipts",
-    "signOut": "Sign out",
-    "signingOut": "Signing out…"
+    "signedInLabel": "Ingelogd",
+    "savedPdfsTitle": "Opgeslagen PDF's en bewerkingen",
+    "savedPdfsHint": "PDF's die u hebt gewijzigd in PDF bewerken (en andere tools) terwijl u bent aangemeld, kunt u op elk gewenst moment openen, downloaden of verwijderen.",
+    "subscriptionTitle": "Abonnement en facturering",
+    "subscriptionHint": "Plan, gebruik, Razorpay-bonnen",
+    "signOut": "Meld u af",
+    "signingOut": "Afmelden…"
   },
   "auth": {
-    "signInTitle": "Sign in",
-    "signUpTitle": "Create an account",
-    "newUser": "New user?",
-    "createAccount": "Create an account",
-    "haveAccount": "Already have an account?",
-    "signInLink": "Sign in",
-    "continueGoogle": "Continue with Google",
-    "or": "Or",
-    "downloadBadge": "Download",
-    "downloadBlurb": "Sign in or create an account, then your file downloads automatically. You stay signed in on this device.",
-    "notNow": "Not now",
-    "closeAria": "Close",
-    "createAccountTab": "Create account",
-    "pleaseWait": "Please wait…",
-    "continue": "Continue",
-    "signInWithEmailButton": "Sign in with email",
-    "createAccountButton": "Create account",
-    "forgotPassword": "Forgot password?",
+    "signInTitle": "Log in",
+    "signUpTitle": "Maak een account aan",
+    "newUser": "Nieuwe gebruiker?",
+    "createAccount": "Maak een account aan",
+    "haveAccount": "Heeft u al een account?",
+    "signInLink": "Log in",
+    "continueGoogle": "Ga verder met Google",
+    "or": "Of",
+    "downloadBadge": "Downloaden",
+    "downloadBlurb": "Meld u aan of maak een account aan, waarna uw bestand automatisch wordt gedownload. Je blijft ingelogd op dit apparaat.",
+    "notNow": "Niet nu",
+    "closeAria": "Dichtbij",
+    "createAccountTab": "Account aanmaken",
+    "pleaseWait": "Even geduld a.u.b....",
+    "continue": "Doorgaan",
+    "signInWithEmailButton": "Meld u aan met e-mail",
+    "createAccountButton": "Account aanmaken",
+    "forgotPassword": "Wachtwoord vergeten?",
     "emailSection": {
-      "signUpWithEmail": "Sign up with email",
-      "signInWithEmail": "Sign in with email",
-      "emailPassword": "Email & password",
-      "pickTabHint": "Pick a tab, then complete the fields and tap Continue."
+      "signUpWithEmail": "Meld u aan met e-mail",
+      "signInWithEmail": "Meld u aan met e-mail",
+      "emailPassword": "E-mailadres en wachtwoord",
+      "pickTabHint": "Kies een tabblad, vul de velden in en tik op Doorgaan."
     },
     "field": {
-      "firstName": "First name",
-      "lastName": "Last name",
-      "dob": "Date of birth",
-      "dobInfo": "Used for your account profile",
-      "birthMonth": "Birth month",
-      "year": "Year",
-      "birthYear": "Birth year",
-      "country": "Country/Region",
-      "email": "Email",
-      "password": "Password"
+      "firstName": "Voornaam",
+      "lastName": "Achternaam",
+      "dob": "Geboortedatum",
+      "dobInfo": "Wordt gebruikt voor uw accountprofiel",
+      "birthMonth": "Geboorte maand",
+      "year": "Jaar",
+      "birthYear": "Geboorte jaar",
+      "country": "Land/regio",
+      "email": "E-mail",
+      "password": "Wachtwoord"
     },
     "reset": {
-      "blurb": "We will email you a link to choose a new password. After you reset it, return here and sign in with your new password.",
-      "sendLink": "Send reset link",
-      "backToSignIn": "Back to sign in"
+      "blurb": "Wij sturen u per e-mail een link waarmee u een nieuw wachtwoord kunt kiezen. Nadat u het opnieuw hebt ingesteld, keert u hier terug en logt u in met uw nieuwe wachtwoord.",
+      "sendLink": "Resetlink verzenden",
+      "backToSignIn": "Terug naar inloggen"
     },
     "errors": {
-      "emailPasswordRequired": "Enter email and password.",
-      "passwordMin": "Password must be at least 6 characters.",
-      "firstLastRequired": "Enter first and last name.",
-      "birthMonthRequired": "Select your month of birth.",
-      "birthYearInvalid": "Enter a valid 4-digit birth year.",
-      "birthYearRange": "Birth year must be between 1900 and {{max}}.",
-      "countryRequired": "Select your country or region.",
-      "resetEmailRequired": "Enter the email for your account.",
-      "emailInvalid": "That email address does not look valid."
+      "emailPasswordRequired": "Voer e-mailadres en wachtwoord in.",
+      "passwordMin": "Wachtwoord moet minimaal 6 tekens lang zijn.",
+      "firstLastRequired": "Voer de voor- en achternaam in.",
+      "birthMonthRequired": "Selecteer uw geboortemaand.",
+      "birthYearInvalid": "Voer een geldig geboortejaar van 4 cijfers in.",
+      "birthYearRange": "Geboortejaar moet tussen 1900 en {{max}} liggen.",
+      "countryRequired": "Selecteer uw land of regio.",
+      "resetEmailRequired": "Voer het e-mailadres van uw account in.",
+      "emailInvalid": "Dat e-mailadres lijkt niet geldig."
     }
   },
   "nav": {
-    "groupOrganize": "Organize PDF",
-    "groupEdit": "Edit & sign",
-    "groupConvert": "Convert & export",
-    "groupSecurity": "Security"
+    "groupOrganize": "PDF organiseren",
+    "groupEdit": "Bewerken en ondertekenen",
+    "groupConvert": "Converteren en exporteren",
+    "groupSecurity": "Beveiliging"
   },
   "megaFooter": {
-    "privacy": "Privacy-focused",
-    "easy": "Easy to use",
-    "fast": "Fast in your browser",
-    "termsAgree": "By using our tools you agree to the",
-    "termsLink": "Terms of Service",
-    "termsTail": ". Files are processed for your session; see the site footer for contact details."
+    "privacy": "Privacygericht",
+    "easy": "Gemakkelijk te gebruiken",
+    "fast": "Snel in uw browser",
+    "termsAgree": "Door onze tools te gebruiken, gaat u akkoord met de",
+    "termsLink": "Servicevoorwaarden",
+    "termsTail": ". Bestanden worden verwerkt voor uw sessie; zie de voettekst van de site voor contactgegevens."
   },
   "tool": {
     "edit-pdf": {
-      "title": "Edit PDF",
-      "description": "Change text, annotate, highlight, draw."
+      "title": "PDF bewerken",
+      "description": "Tekst wijzigen, annoteren, markeren, tekenen."
     },
     "ocr-pdf": {
-      "title": "OCR PDF",
-      "description": "Make scans searchable — needs your API (ocrmypdf + Tesseract on the server)."
+      "title": "OCR-PDF",
+      "description": "Maak scans doorzoekbaar — heeft uw API nodig (ocrmypdf + Tesseract op de server)."
     },
     "merge-pdf": {
-      "title": "Merge PDF",
-      "description": "Combine multiple PDFs into one file."
+      "title": "PDF samenvoegen",
+      "description": "Combineer meerdere PDF's in één bestand."
     },
     "split-pdf": {
-      "title": "Split PDF",
-      "description": "Split by page ranges or extract every page."
+      "title": "PDF splitsen",
+      "description": "Splits op paginabereik of extraheer elke pagina."
     },
     "organize-pdf": {
-      "title": "Organize Pages",
-      "description": "Reorder, rotate, or delete pages, then download."
+      "title": "Pagina's ordenen",
+      "description": "Pagina's opnieuw ordenen, roteren of verwijderen en vervolgens downloaden."
     },
     "add-page-numbers": {
-      "title": "Add page numbers",
-      "description": "Stamp page numbers with placement, ranges, and formats — in your browser."
+      "title": "Voeg paginanummers toe",
+      "description": "Stempel paginanummers met plaatsing, bereiken en formaten — in uw browser."
     },
     "compress-pdf": {
-      "title": "Compress PDF",
-      "description": "Tries your API (qpdf / Ghostscript); falls back to in-browser pdf-lib when the API is missing."
+      "title": "PDF comprimeren",
+      "description": "Probeert uw API (qpdf / Ghostscript); valt terug naar pdf-lib in de browser wanneer de API ontbreekt."
     },
     "pdf-to-jpg": {
-      "title": "PDF to JPG",
-      "description": "Export pages as JPEG. ZIP or single files."
+      "title": "PDF naar JPG",
+      "description": "Exporteer pagina's als JPEG. ZIP of losse bestanden."
     },
     "pdf-to-png": {
-      "title": "PDF to PNG",
-      "description": "Export pages as lossless PNG in a ZIP — all in your browser."
+      "title": "PDF naar PNG",
+      "description": "Exporteer pagina's als verliesvrije PNG in een ZIP - allemaal in uw browser."
     },
     "pdf-to-text": {
-      "title": "PDF to text",
-      "description": "Download plain .txt from selectable text (not for raw scans)."
+      "title": "PDF naar tekst",
+      "description": "Download gewone .txt uit selecteerbare tekst (niet voor onbewerkte scans)."
     },
     "jpg-to-pdf": {
-      "title": "JPG to PDF",
-      "description": "Combine images. Drag to reorder."
+      "title": "JPG naar PDF",
+      "description": "Combineer afbeeldingen. Sleep om de volgorde te wijzigen."
     },
     "scan-to-pdf": {
-      "title": "Scan to PDF",
-      "description": "Camera or photos: trim, enhance, multi-page PDF."
+      "title": "Scannen naar PDF",
+      "description": "Camera of foto's: bijsnijden, verbeteren, PDF van meerdere pagina's."
     },
     "sign-pdf": {
-      "title": "Sign PDF",
-      "description": "Sign any page, duplicate or copy/paste placements, then download."
+      "title": "PDF ondertekenen",
+      "description": "Onderteken elke pagina, dupliceer of kopieer/plak plaatsingen en download vervolgens."
     },
     "fill-pdf": {
-      "title": "Fill PDF form",
-      "description": "Fill AcroForm fields and download — processing stays in the browser."
+      "title": "Vul het PDF-formulier in",
+      "description": "Vul AcroForm-velden in en download – de verwerking blijft in de browser."
     },
     "flatten-pdf": {
-      "title": "Flatten PDF",
-      "description": "Flatten fillable forms or rasterize pages to images — client-side."
+      "title": "PDF plat maken",
+      "description": "Maak invulbare formulieren plat of raster pagina's om naar afbeeldingen - aan de clientzijde."
     },
     "unlock-pdf": {
-      "title": "Unlock PDF",
-      "description": "Remove password via your API (qpdf / Ghostscript when configured)."
+      "title": "Ontgrendel PDF",
+      "description": "Verwijder het wachtwoord via uw API (qpdf / Ghostscript indien geconfigureerd)."
     },
     "encrypt-pdf": {
-      "title": "Encrypt PDF",
-      "description": "Password-protect with AES-256 (qpdf on the server)."
+      "title": "Versleutel PDF",
+      "description": "Wachtwoordbeveiliging met AES-256 (qpdf op de server)."
     },
     "add-watermark": {
-      "title": "Add Watermark",
-      "description": "Text or image watermark, page ranges, preview, then download."
+      "title": "Watermerk toevoegen",
+      "description": "Tekst- of afbeeldingswatermerk, paginabereiken, voorbeeld en vervolgens downloaden."
     },
     "pdf-to-word": {
-      "title": "PDF to Word",
-      "description": "Draft .docx in your browser — PDF is not uploaded for conversion (use OCR PDF for scans first)."
+      "title": "PDF naar Word",
+      "description": "Concept .docx in uw browser — PDF wordt niet geüpload voor conversie (gebruik eerst OCR PDF voor scans)."
     },
     "word-to-pdf": {
-      "title": "Word to PDF",
-      "description": "Draft PDF in your browser — .docx is not uploaded for conversion."
+      "title": "Word naar PDF",
+      "description": "Concept-PDF in uw browser: .docx wordt niet geüpload voor conversie."
     },
     "gst-invoice": {
-      "title": "GST invoice PDF",
-      "description": "Supplier, buyer, HSN lines — download a tax invoice PDF in the browser."
+      "title": "BTW-factuur pdf",
+      "description": "Leverancier, koper, HSN-lijnen: download een belastingfactuur-pdf in de browser."
     }
   }
 }

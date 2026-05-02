@@ -1,219 +1,219 @@
 {
   "common": {
-    "loading": "Loading…",
+    "loading": "Memuatkan…",
     "brandName": "pdfpilot",
-    "soon": "Soon",
-    "comingSoon": "Coming soon",
-    "close": "Close",
-    "cancel": "Cancel",
-    "openTool": "Open tool →",
-    "brandTagline": "Navigate your PDFs effortlessly",
-    "brandHeroLine": "Edit, compress, merge and manage PDFs instantly — PurPDF-grade clarity, speed, and trustworthy exports from pdfpilot."
+    "soon": "Tidak lama lagi",
+    "comingSoon": "Akan datang",
+    "close": "tutup",
+    "cancel": "Batal",
+    "openTool": "Buka alat →",
+    "brandTagline": "Navigasi PDF anda dengan mudah",
+    "brandHeroLine": "Edit, mampatkan, gabungkan dan urus PDF serta-merta — Kejelasan gred PurPDF, kelajuan dan eksport yang boleh dipercayai daripada pdfpilot."
   },
   "header": {
-    "login": "Log in",
-    "signUp": "Sign up",
-    "accountAriaGuest": "Log in or sign up",
-    "accountAriaUser": "Account menu — saved PDFs from Edit PDF and other tools, sign out",
-    "signedInPrefix": "Signed in ·",
-    "allTools": "All tools",
-    "allToolsMenu": "All PDF tools",
-    "closeToolsMenu": "Close tools menu"
+    "login": "Log masuk",
+    "signUp": "daftar",
+    "accountAriaGuest": "Log masuk atau daftar",
+    "accountAriaUser": "Menu akaun — menyimpan PDF daripada Edit PDF dan alatan lain, log keluar",
+    "signedInPrefix": "Dilog masuk ·",
+    "allTools": "Semua alatan",
+    "allToolsMenu": "Semua alat PDF",
+    "closeToolsMenu": "Tutup menu alatan"
   },
   "appsMenu": {
-    "ariaLabel": "Site menu",
-    "pricing": "Pricing & plans",
-    "security": "Security & terms",
-    "features": "Features",
-    "about": "About",
-    "help": "Help & feedback",
-    "language": "Language",
-    "terms": "Terms of Service",
-    "back": "Back",
-    "chooseLanguage": "Choose language"
+    "ariaLabel": "Menu tapak",
+    "pricing": "Harga & pelan",
+    "security": "Keselamatan & syarat",
+    "features": "Ciri-ciri",
+    "about": "Tentang",
+    "help": "Bantuan & maklum balas",
+    "language": "Bahasa",
+    "terms": "Syarat Perkhidmatan",
+    "back": "belakang",
+    "chooseLanguage": "Pilih bahasa"
   },
   "home": {
-    "chooseTool": "Choose a tool",
-    "searchPlaceholder": "Search tools (e.g. merge, scan, watermark)…",
-    "searchNoResults": "No tools match “{{query}}”. Try another word or clear the search.",
-    "searchShowing": "Showing {{n}} of {{total}} tools",
-    "footerProcessing": "Files are processed in your session. Need the raw API? See the project README for self-hosting on GitHub Pages.",
-    "ratingsNote": "Ratings and comments are shown only after real submissions."
+    "chooseTool": "Pilih alat",
+    "searchPlaceholder": "Alat carian (cth. cantumkan, imbasan, tera air)…",
+    "searchNoResults": "Tiada alatan yang sepadan dengan “{{query}}”. Cuba perkataan lain atau kosongkan carian.",
+    "searchShowing": "Menunjukkan {{n}} daripada {{total}} alatan",
+    "footerProcessing": "Fail diproses dalam sesi anda. Perlukan API mentah? Lihat projek README untuk pengehosan sendiri di Halaman GitHub.",
+    "ratingsNote": "Penilaian dan ulasan hanya ditunjukkan selepas penyerahan sebenar."
   },
   "hero": {
-    "title": "Edit and download PDFs instantly",
-    "subtitle": "Fast, simple, and secure PDF editing directly in your browser. No installs. No hassle.",
-    "ctaEdit": "Edit your PDF now",
-    "ctaSample": "Try sample PDF",
-    "signInBlurb": "Sign in or create an account to continue."
+    "title": "Edit dan muat turun PDF serta-merta",
+    "subtitle": "Penyuntingan PDF yang pantas, mudah dan selamat terus dalam penyemak imbas anda. Tiada pemasangan. Tak payah susah-susah.",
+    "ctaEdit": "Edit PDF anda sekarang",
+    "ctaSample": "Cuba sampel PDF",
+    "signInBlurb": "Log masuk atau buat akaun untuk meneruskan."
   },
   "footer": {
-    "copyright": "© {{year}} pdfpilot",
-    "privacySoon": "Privacy",
-    "shareFeedback": "Share feedback",
-    "terms": "Terms of Service"
+    "copyright": "© {{tahun}} pdfpilot",
+    "privacySoon": "Privasi",
+    "shareFeedback": "Kongsi maklum balas",
+    "terms": "Syarat Perkhidmatan"
   },
   "account": {
-    "signedInLabel": "Signed in",
-    "savedPdfsTitle": "Saved PDFs and edits",
-    "savedPdfsHint": "PDFs you changed in Edit PDF (and other tools) while signed in — open, download, or delete anytime.",
-    "subscriptionTitle": "Subscription & billing",
-    "subscriptionHint": "Plan, usage, Razorpay receipts",
-    "signOut": "Sign out",
-    "signingOut": "Signing out…"
+    "signedInLabel": "Log masuk",
+    "savedPdfsTitle": "PDF dan suntingan yang disimpan",
+    "savedPdfsHint": "PDF yang anda tukar dalam Edit PDF (dan alatan lain) semasa log masuk — buka, muat turun atau padamkan pada bila-bila masa.",
+    "subscriptionTitle": "Langganan & pengebilan",
+    "subscriptionHint": "Pelan, penggunaan, resit Razorpay",
+    "signOut": "Log keluar",
+    "signingOut": "Melog keluar…"
   },
   "auth": {
-    "signInTitle": "Sign in",
-    "signUpTitle": "Create an account",
-    "newUser": "New user?",
-    "createAccount": "Create an account",
-    "haveAccount": "Already have an account?",
-    "signInLink": "Sign in",
-    "continueGoogle": "Continue with Google",
-    "or": "Or",
-    "downloadBadge": "Download",
-    "downloadBlurb": "Sign in or create an account, then your file downloads automatically. You stay signed in on this device.",
-    "notNow": "Not now",
-    "closeAria": "Close",
-    "createAccountTab": "Create account",
-    "pleaseWait": "Please wait…",
-    "continue": "Continue",
-    "signInWithEmailButton": "Sign in with email",
-    "createAccountButton": "Create account",
-    "forgotPassword": "Forgot password?",
+    "signInTitle": "Log masuk",
+    "signUpTitle": "Buat akaun",
+    "newUser": "Pengguna baru?",
+    "createAccount": "Buat akaun",
+    "haveAccount": "Sudah mempunyai akaun?",
+    "signInLink": "Log masuk",
+    "continueGoogle": "Teruskan dengan Google",
+    "or": "Ataupun",
+    "downloadBadge": "Muat turun",
+    "downloadBlurb": "Log masuk atau buat akaun, kemudian fail anda dimuat turun secara automatik. Anda kekal log masuk pada peranti ini.",
+    "notNow": "bukan sekarang",
+    "closeAria": "tutup",
+    "createAccountTab": "Buat akaun",
+    "pleaseWait": "Sila tunggu…",
+    "continue": "teruskan",
+    "signInWithEmailButton": "Log masuk dengan e-mel",
+    "createAccountButton": "Buat akaun",
+    "forgotPassword": "Lupa kata laluan?",
     "emailSection": {
-      "signUpWithEmail": "Sign up with email",
-      "signInWithEmail": "Sign in with email",
-      "emailPassword": "Email & password",
-      "pickTabHint": "Pick a tab, then complete the fields and tap Continue."
+      "signUpWithEmail": "Daftar dengan e-mel",
+      "signInWithEmail": "Log masuk dengan e-mel",
+      "emailPassword": "E-mel & kata laluan",
+      "pickTabHint": "Pilih tab, kemudian lengkapkan medan dan ketik Teruskan."
     },
     "field": {
-      "firstName": "First name",
-      "lastName": "Last name",
-      "dob": "Date of birth",
-      "dobInfo": "Used for your account profile",
-      "birthMonth": "Birth month",
-      "year": "Year",
-      "birthYear": "Birth year",
-      "country": "Country/Region",
-      "email": "Email",
-      "password": "Password"
+      "firstName": "nama pertama",
+      "lastName": "nama keluarga",
+      "dob": "Tarikh lahir",
+      "dobInfo": "Digunakan untuk profil akaun anda",
+      "birthMonth": "Bulan kelahiran",
+      "year": "tahun",
+      "birthYear": "tahun lahir",
+      "country": "Negara/Wilayah",
+      "email": "E-mel",
+      "password": "Kata laluan"
     },
     "reset": {
-      "blurb": "We will email you a link to choose a new password. After you reset it, return here and sign in with your new password.",
-      "sendLink": "Send reset link",
-      "backToSignIn": "Back to sign in"
+      "blurb": "Kami akan menghantar pautan melalui e-mel kepada anda untuk memilih kata laluan baharu. Selepas anda menetapkan semula, kembali ke sini dan log masuk dengan kata laluan baharu anda.",
+      "sendLink": "Hantar pautan set semula",
+      "backToSignIn": "Kembali untuk log masuk"
     },
     "errors": {
-      "emailPasswordRequired": "Enter email and password.",
-      "passwordMin": "Password must be at least 6 characters.",
-      "firstLastRequired": "Enter first and last name.",
-      "birthMonthRequired": "Select your month of birth.",
-      "birthYearInvalid": "Enter a valid 4-digit birth year.",
-      "birthYearRange": "Birth year must be between 1900 and {{max}}.",
-      "countryRequired": "Select your country or region.",
-      "resetEmailRequired": "Enter the email for your account.",
-      "emailInvalid": "That email address does not look valid."
+      "emailPasswordRequired": "Masukkan e-mel dan kata laluan.",
+      "passwordMin": "Kata laluan mestilah sekurang-kurangnya 6 aksara.",
+      "firstLastRequired": "Masukkan nama pertama dan nama keluarga.",
+      "birthMonthRequired": "Pilih bulan kelahiran anda.",
+      "birthYearInvalid": "Masukkan tahun lahir 4 digit yang sah.",
+      "birthYearRange": "Tahun lahir mestilah antara 1900 dan {{maks}}.",
+      "countryRequired": "Pilih negara atau wilayah anda.",
+      "resetEmailRequired": "Masukkan e-mel untuk akaun anda.",
+      "emailInvalid": "Alamat e-mel itu kelihatan tidak sah."
     }
   },
   "nav": {
-    "groupOrganize": "Organize PDF",
-    "groupEdit": "Edit & sign",
-    "groupConvert": "Convert & export",
-    "groupSecurity": "Security"
+    "groupOrganize": "Susun PDF",
+    "groupEdit": "Edit & tandatangan",
+    "groupConvert": "Tukar & eksport",
+    "groupSecurity": "Keselamatan"
   },
   "megaFooter": {
-    "privacy": "Privacy-focused",
-    "easy": "Easy to use",
-    "fast": "Fast in your browser",
-    "termsAgree": "By using our tools you agree to the",
-    "termsLink": "Terms of Service",
-    "termsTail": ". Files are processed for your session; see the site footer for contact details."
+    "privacy": "Tertumpu kepada privasi",
+    "easy": "Mudah digunakan",
+    "fast": "Pantas dalam penyemak imbas anda",
+    "termsAgree": "Dengan menggunakan alatan kami, anda bersetuju menerima",
+    "termsLink": "Syarat Perkhidmatan",
+    "termsTail": ". Fail diproses untuk sesi anda; lihat pengaki tapak untuk butiran hubungan."
   },
   "tool": {
     "edit-pdf": {
       "title": "Edit PDF",
-      "description": "Change text, annotate, highlight, draw."
+      "description": "Tukar teks, anotasi, serlahkan, lukis."
     },
     "ocr-pdf": {
       "title": "OCR PDF",
-      "description": "Make scans searchable — needs your API (ocrmypdf + Tesseract on the server)."
+      "description": "Jadikan imbasan boleh dicari — memerlukan API anda (ocrmypdf + Tesseract pada pelayan)."
     },
     "merge-pdf": {
-      "title": "Merge PDF",
-      "description": "Combine multiple PDFs into one file."
+      "title": "Gabungkan PDF",
+      "description": "Gabungkan berbilang PDF ke dalam satu fail."
     },
     "split-pdf": {
-      "title": "Split PDF",
-      "description": "Split by page ranges or extract every page."
+      "title": "Pisahkan PDF",
+      "description": "Pisahkan mengikut julat halaman atau ekstrak setiap halaman."
     },
     "organize-pdf": {
-      "title": "Organize Pages",
-      "description": "Reorder, rotate, or delete pages, then download."
+      "title": "Susun Halaman",
+      "description": "Susun semula, putar atau padam halaman, kemudian muat turun."
     },
     "add-page-numbers": {
-      "title": "Add page numbers",
-      "description": "Stamp page numbers with placement, ranges, and formats — in your browser."
+      "title": "Tambah nombor halaman",
+      "description": "Cap nombor halaman dengan peletakan, julat dan format — dalam penyemak imbas anda."
     },
     "compress-pdf": {
-      "title": "Compress PDF",
-      "description": "Tries your API (qpdf / Ghostscript); falls back to in-browser pdf-lib when the API is missing."
+      "title": "Mampatkan PDF",
+      "description": "Cuba API anda (qpdf / Ghostscript); kembali ke dalam pelayar pdf-lib apabila API tiada."
     },
     "pdf-to-jpg": {
-      "title": "PDF to JPG",
-      "description": "Export pages as JPEG. ZIP or single files."
+      "title": "PDF ke JPG",
+      "description": "Eksport halaman sebagai JPEG. ZIP atau fail tunggal."
     },
     "pdf-to-png": {
-      "title": "PDF to PNG",
-      "description": "Export pages as lossless PNG in a ZIP — all in your browser."
+      "title": "PDF ke PNG",
+      "description": "Eksport halaman sebagai PNG tanpa kerugian dalam ZIP — semuanya dalam penyemak imbas anda."
     },
     "pdf-to-text": {
-      "title": "PDF to text",
-      "description": "Download plain .txt from selectable text (not for raw scans)."
+      "title": "PDF ke teks",
+      "description": "Muat turun .txt biasa daripada teks yang boleh dipilih (bukan untuk imbasan mentah)."
     },
     "jpg-to-pdf": {
-      "title": "JPG to PDF",
-      "description": "Combine images. Drag to reorder."
+      "title": "JPG kepada PDF",
+      "description": "Gabungkan imej. Seret untuk menyusun semula."
     },
     "scan-to-pdf": {
-      "title": "Scan to PDF",
-      "description": "Camera or photos: trim, enhance, multi-page PDF."
+      "title": "Imbas ke PDF",
+      "description": "Kamera atau foto: pangkas, tingkatkan, PDF berbilang halaman."
     },
     "sign-pdf": {
-      "title": "Sign PDF",
-      "description": "Sign any page, duplicate or copy/paste placements, then download."
+      "title": "Tandatangan PDF",
+      "description": "Tandatangani mana-mana halaman, salin atau tampal peletakan, kemudian muat turun."
     },
     "fill-pdf": {
-      "title": "Fill PDF form",
-      "description": "Fill AcroForm fields and download — processing stays in the browser."
+      "title": "Isi borang PDF",
+      "description": "Isi medan AcroForm dan muat turun — pemprosesan kekal dalam penyemak imbas."
     },
     "flatten-pdf": {
-      "title": "Flatten PDF",
-      "description": "Flatten fillable forms or rasterize pages to images — client-side."
+      "title": "Ratakan PDF",
+      "description": "Ratakan borang yang boleh diisi atau rasterkan halaman kepada imej — sebelah pelanggan."
     },
     "unlock-pdf": {
-      "title": "Unlock PDF",
-      "description": "Remove password via your API (qpdf / Ghostscript when configured)."
+      "title": "Buka kunci PDF",
+      "description": "Alih keluar kata laluan melalui API anda (qpdf / Ghostscript apabila dikonfigurasikan)."
     },
     "encrypt-pdf": {
-      "title": "Encrypt PDF",
-      "description": "Password-protect with AES-256 (qpdf on the server)."
+      "title": "Sulitkan PDF",
+      "description": "Lindungi kata laluan dengan AES-256 (qpdf pada pelayan)."
     },
     "add-watermark": {
-      "title": "Add Watermark",
-      "description": "Text or image watermark, page ranges, preview, then download."
+      "title": "Tambah Tera Air",
+      "description": "Teks atau tera air imej, julat halaman, pratonton, kemudian muat turun."
     },
     "pdf-to-word": {
-      "title": "PDF to Word",
-      "description": "Draft .docx in your browser — PDF is not uploaded for conversion (use OCR PDF for scans first)."
+      "title": "PDF ke Word",
+      "description": "Draf .docx dalam penyemak imbas anda — PDF tidak dimuat naik untuk penukaran (gunakan OCR PDF untuk imbasan dahulu)."
     },
     "word-to-pdf": {
-      "title": "Word to PDF",
-      "description": "Draft PDF in your browser — .docx is not uploaded for conversion."
+      "title": "Word ke PDF",
+      "description": "Draf PDF dalam penyemak imbas anda — .docx tidak dimuat naik untuk penukaran."
     },
     "gst-invoice": {
-      "title": "GST invoice PDF",
-      "description": "Supplier, buyer, HSN lines — download a tax invoice PDF in the browser."
+      "title": "PDF invois GST",
+      "description": "Pembekal, pembeli, talian HSN — muat turun invois cukai PDF dalam penyemak imbas."
     }
   }
 }

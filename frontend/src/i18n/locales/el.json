@@ -1,219 +1,219 @@
 {
   "common": {
-    "loading": "Loading…",
+    "loading": "Φόρτωση…",
     "brandName": "pdfpilot",
-    "soon": "Soon",
-    "comingSoon": "Coming soon",
-    "close": "Close",
-    "cancel": "Cancel",
-    "openTool": "Open tool →",
-    "brandTagline": "Navigate your PDFs effortlessly",
-    "brandHeroLine": "Edit, compress, merge and manage PDFs instantly — PurPDF-grade clarity, speed, and trustworthy exports from pdfpilot."
+    "soon": "Σύντομα",
+    "comingSoon": "Προσεχώς",
+    "close": "Κοντά",
+    "cancel": "Ματαίωση",
+    "openTool": "Άνοιγμα εργαλείου →",
+    "brandTagline": "Πλοηγηθείτε στα PDF σας χωρίς κόπο",
+    "brandHeroLine": "Επεξεργασία, συμπίεση, συγχώνευση και διαχείριση αρχείων PDF άμεσα — Σαφήνεια, ταχύτητα και αξιόπιστες εξαγωγές βαθμού PurPDF από το pdfpilot."
   },
   "header": {
-    "login": "Log in",
-    "signUp": "Sign up",
-    "accountAriaGuest": "Log in or sign up",
-    "accountAriaUser": "Account menu — saved PDFs from Edit PDF and other tools, sign out",
-    "signedInPrefix": "Signed in ·",
-    "allTools": "All tools",
-    "allToolsMenu": "All PDF tools",
-    "closeToolsMenu": "Close tools menu"
+    "login": "Συνδεθείτε",
+    "signUp": "Εγγραφείτε",
+    "accountAriaGuest": "Συνδεθείτε ή εγγραφείτε",
+    "accountAriaUser": "Μενού λογαριασμού — αποθηκευμένα αρχεία PDF από Επεξεργασία PDF και άλλα εργαλεία, αποσυνδεθείτε",
+    "signedInPrefix": "συνδεδεμένος ·",
+    "allTools": "Όλα τα εργαλεία",
+    "allToolsMenu": "Όλα τα εργαλεία PDF",
+    "closeToolsMenu": "Κλείσιμο μενού εργαλείων"
   },
   "appsMenu": {
-    "ariaLabel": "Site menu",
-    "pricing": "Pricing & plans",
-    "security": "Security & terms",
-    "features": "Features",
-    "about": "About",
-    "help": "Help & feedback",
-    "language": "Language",
-    "terms": "Terms of Service",
-    "back": "Back",
-    "chooseLanguage": "Choose language"
+    "ariaLabel": "Μενού ιστότοπου",
+    "pricing": "Τιμές & σχέδια",
+    "security": "Ασφάλεια & όροι",
+    "features": "Χαρακτηριστικά",
+    "about": "Για",
+    "help": "Βοήθεια & σχόλια",
+    "language": "Γλώσσα",
+    "terms": "Όροι Παροχής Υπηρεσιών",
+    "back": "Πίσω",
+    "chooseLanguage": "Επιλέξτε γλώσσα"
   },
   "home": {
-    "chooseTool": "Choose a tool",
-    "searchPlaceholder": "Search tools (e.g. merge, scan, watermark)…",
-    "searchNoResults": "No tools match “{{query}}”. Try another word or clear the search.",
-    "searchShowing": "Showing {{n}} of {{total}} tools",
-    "footerProcessing": "Files are processed in your session. Need the raw API? See the project README for self-hosting on GitHub Pages.",
-    "ratingsNote": "Ratings and comments are shown only after real submissions."
+    "chooseTool": "Επιλέξτε ένα εργαλείο",
+    "searchPlaceholder": "Εργαλεία αναζήτησης (π.χ. συγχώνευση, σάρωση, υδατογράφημα)…",
+    "searchNoResults": "Δεν υπάρχουν εργαλεία που να αντιστοιχούν στο \"{{query}}\". Δοκιμάστε άλλη λέξη ή διαγράψτε την αναζήτηση.",
+    "searchShowing": "Εμφάνιση {{n}} από {{σύνολο}} εργαλείων",
+    "footerProcessing": "Τα αρχεία υποβάλλονται σε επεξεργασία στη συνεδρία σας. Χρειάζεστε το ακατέργαστο API; Δείτε το έργο README για αυτο-φιλοξενία στις Σελίδες GitHub.",
+    "ratingsNote": "Οι βαθμολογίες και τα σχόλια εμφανίζονται μόνο μετά από πραγματικές υποβολές."
   },
   "hero": {
-    "title": "Edit and download PDFs instantly",
-    "subtitle": "Fast, simple, and secure PDF editing directly in your browser. No installs. No hassle.",
-    "ctaEdit": "Edit your PDF now",
-    "ctaSample": "Try sample PDF",
-    "signInBlurb": "Sign in or create an account to continue."
+    "title": "Επεξεργαστείτε και κατεβάστε αρχεία PDF άμεσα",
+    "subtitle": "Γρήγορη, απλή και ασφαλής επεξεργασία PDF απευθείας στο πρόγραμμα περιήγησής σας. Δεν υπάρχουν εγκαταστάσεις. Καμία ταλαιπωρία.",
+    "ctaEdit": "Επεξεργαστείτε το PDF σας τώρα",
+    "ctaSample": "Δοκιμάστε δείγμα PDF",
+    "signInBlurb": "Συνδεθείτε ή δημιουργήστε λογαριασμό για να συνεχίσετε."
   },
   "footer": {
     "copyright": "© {{year}} pdfpilot",
-    "privacySoon": "Privacy",
-    "shareFeedback": "Share feedback",
-    "terms": "Terms of Service"
+    "privacySoon": "Μυστικότητα",
+    "shareFeedback": "Μοιραστείτε σχόλια",
+    "terms": "Όροι Παροχής Υπηρεσιών"
   },
   "account": {
-    "signedInLabel": "Signed in",
-    "savedPdfsTitle": "Saved PDFs and edits",
-    "savedPdfsHint": "PDFs you changed in Edit PDF (and other tools) while signed in — open, download, or delete anytime.",
-    "subscriptionTitle": "Subscription & billing",
-    "subscriptionHint": "Plan, usage, Razorpay receipts",
-    "signOut": "Sign out",
-    "signingOut": "Signing out…"
+    "signedInLabel": "Συνδεδεμένος",
+    "savedPdfsTitle": "Αποθηκευμένα αρχεία PDF και επεξεργασίες",
+    "savedPdfsHint": "PDF που αλλάξατε στο Επεξεργασία PDF (και άλλα εργαλεία) ενώ είστε συνδεδεμένοι — ανοίξτε, πραγματοποιήστε λήψη ή διαγραφή ανά πάσα στιγμή.",
+    "subscriptionTitle": "Συνδρομή & χρέωση",
+    "subscriptionHint": "Σχέδιο, χρήση, αποδείξεις Razorpay",
+    "signOut": "Αποσυνδεθείτε",
+    "signingOut": "Έξοδος…"
   },
   "auth": {
-    "signInTitle": "Sign in",
-    "signUpTitle": "Create an account",
-    "newUser": "New user?",
-    "createAccount": "Create an account",
-    "haveAccount": "Already have an account?",
-    "signInLink": "Sign in",
-    "continueGoogle": "Continue with Google",
-    "or": "Or",
-    "downloadBadge": "Download",
-    "downloadBlurb": "Sign in or create an account, then your file downloads automatically. You stay signed in on this device.",
-    "notNow": "Not now",
-    "closeAria": "Close",
-    "createAccountTab": "Create account",
-    "pleaseWait": "Please wait…",
-    "continue": "Continue",
-    "signInWithEmailButton": "Sign in with email",
-    "createAccountButton": "Create account",
-    "forgotPassword": "Forgot password?",
+    "signInTitle": "Συνδεθείτε",
+    "signUpTitle": "Δημιουργία λογαριασμού",
+    "newUser": "Νέος χρήστης;",
+    "createAccount": "Δημιουργία λογαριασμού",
+    "haveAccount": "Έχετε ήδη λογαριασμό;",
+    "signInLink": "Συνδεθείτε",
+    "continueGoogle": "Συνεχίστε με την Google",
+    "or": "Ή",
+    "downloadBadge": "Λήψη",
+    "downloadBlurb": "Συνδεθείτε ή δημιουργήστε έναν λογαριασμό και, στη συνέχεια, το αρχείο σας λαμβάνει αυτόματα. Παραμένετε συνδεδεμένοι σε αυτήν τη συσκευή.",
+    "notNow": "Όχι τώρα",
+    "closeAria": "Κοντά",
+    "createAccountTab": "Δημιουργία λογαριασμού",
+    "pleaseWait": "Παρακαλώ περιμένετε…",
+    "continue": "Συνεχίζω",
+    "signInWithEmailButton": "Συνδεθείτε με email",
+    "createAccountButton": "Δημιουργία λογαριασμού",
+    "forgotPassword": "Ξεχάσατε τον κωδικό πρόσβασης;",
     "emailSection": {
-      "signUpWithEmail": "Sign up with email",
-      "signInWithEmail": "Sign in with email",
-      "emailPassword": "Email & password",
-      "pickTabHint": "Pick a tab, then complete the fields and tap Continue."
+      "signUpWithEmail": "Εγγραφείτε με email",
+      "signInWithEmail": "Συνδεθείτε με email",
+      "emailPassword": "Email & κωδικός πρόσβασης",
+      "pickTabHint": "Επιλέξτε μια καρτέλα, συμπληρώστε τα πεδία και πατήστε Συνέχεια."
     },
     "field": {
-      "firstName": "First name",
-      "lastName": "Last name",
-      "dob": "Date of birth",
-      "dobInfo": "Used for your account profile",
-      "birthMonth": "Birth month",
-      "year": "Year",
-      "birthYear": "Birth year",
-      "country": "Country/Region",
-      "email": "Email",
-      "password": "Password"
+      "firstName": "Ονομα",
+      "lastName": "Επώνυμο",
+      "dob": "Ημερομηνία γεννήσεως",
+      "dobInfo": "Χρησιμοποιείται για το προφίλ του λογαριασμού σας",
+      "birthMonth": "Μήνας γέννησης",
+      "year": "Ετος",
+      "birthYear": "Έτος γέννησης",
+      "country": "Χώρα/Περιοχή",
+      "email": "E-mail",
+      "password": "Σύνθημα"
     },
     "reset": {
-      "blurb": "We will email you a link to choose a new password. After you reset it, return here and sign in with your new password.",
-      "sendLink": "Send reset link",
-      "backToSignIn": "Back to sign in"
+      "blurb": "Θα σας στείλουμε με email έναν σύνδεσμο για να επιλέξετε νέο κωδικό πρόσβασης. Αφού το επαναφέρετε, επιστρέψτε εδώ και συνδεθείτε με τον νέο σας κωδικό πρόσβασης.",
+      "sendLink": "Αποστολή συνδέσμου επαναφοράς",
+      "backToSignIn": "Επιστροφή για είσοδο"
     },
     "errors": {
-      "emailPasswordRequired": "Enter email and password.",
-      "passwordMin": "Password must be at least 6 characters.",
-      "firstLastRequired": "Enter first and last name.",
-      "birthMonthRequired": "Select your month of birth.",
-      "birthYearInvalid": "Enter a valid 4-digit birth year.",
-      "birthYearRange": "Birth year must be between 1900 and {{max}}.",
-      "countryRequired": "Select your country or region.",
-      "resetEmailRequired": "Enter the email for your account.",
-      "emailInvalid": "That email address does not look valid."
+      "emailPasswordRequired": "Εισαγάγετε email και κωδικό πρόσβασης.",
+      "passwordMin": "Ο κωδικός πρόσβασης πρέπει να αποτελείται από τουλάχιστον 6 χαρακτήρες.",
+      "firstLastRequired": "Εισαγάγετε το όνομα και το επώνυμο.",
+      "birthMonthRequired": "Επιλέξτε τον μήνα γέννησής σας.",
+      "birthYearInvalid": "Εισαγάγετε ένα έγκυρο τετραψήφιο έτος γέννησης.",
+      "birthYearRange": "Το έτος γέννησης πρέπει να είναι μεταξύ 1900 και {{max}}.",
+      "countryRequired": "Επιλέξτε τη χώρα ή την περιοχή σας.",
+      "resetEmailRequired": "Εισαγάγετε το email για τον λογαριασμό σας.",
+      "emailInvalid": "Αυτή η διεύθυνση email δεν φαίνεται έγκυρη."
     }
   },
   "nav": {
-    "groupOrganize": "Organize PDF",
-    "groupEdit": "Edit & sign",
-    "groupConvert": "Convert & export",
-    "groupSecurity": "Security"
+    "groupOrganize": "Οργάνωση PDF",
+    "groupEdit": "Επεξεργασία & υπογραφή",
+    "groupConvert": "Μετατροπή & εξαγωγή",
+    "groupSecurity": "Ασφάλεια"
   },
   "megaFooter": {
-    "privacy": "Privacy-focused",
-    "easy": "Easy to use",
-    "fast": "Fast in your browser",
-    "termsAgree": "By using our tools you agree to the",
-    "termsLink": "Terms of Service",
-    "termsTail": ". Files are processed for your session; see the site footer for contact details."
+    "privacy": "Με επίκεντρο το απόρρητο",
+    "easy": "Εύχρηστος",
+    "fast": "Γρήγορα στο πρόγραμμα περιήγησής σας",
+    "termsAgree": "Χρησιμοποιώντας τα εργαλεία μας συμφωνείτε με το",
+    "termsLink": "Όροι Παροχής Υπηρεσιών",
+    "termsTail": ". Τα αρχεία υποβάλλονται σε επεξεργασία για τη συνεδρία σας. δείτε το υποσέλιδο του ιστότοπου για στοιχεία επικοινωνίας."
   },
   "tool": {
     "edit-pdf": {
-      "title": "Edit PDF",
-      "description": "Change text, annotate, highlight, draw."
+      "title": "Επεξεργασία PDF",
+      "description": "Αλλαγή κειμένου, σχολιασμός, επισήμανση, σχεδίαση."
     },
     "ocr-pdf": {
       "title": "OCR PDF",
-      "description": "Make scans searchable — needs your API (ocrmypdf + Tesseract on the server)."
+      "description": "Κάντε τις σαρώσεις με δυνατότητα αναζήτησης — χρειάζεται το API σας (ocrmypdf + Tesseract στον διακομιστή)."
     },
     "merge-pdf": {
-      "title": "Merge PDF",
-      "description": "Combine multiple PDFs into one file."
+      "title": "Συγχώνευση PDF",
+      "description": "Συνδυάστε πολλά PDF σε ένα αρχείο."
     },
     "split-pdf": {
-      "title": "Split PDF",
-      "description": "Split by page ranges or extract every page."
+      "title": "Διαχωρισμός PDF",
+      "description": "Διαχωρίστε κατά εύρη σελίδων ή εξαγάγετε κάθε σελίδα."
     },
     "organize-pdf": {
-      "title": "Organize Pages",
-      "description": "Reorder, rotate, or delete pages, then download."
+      "title": "Οργάνωση σελίδων",
+      "description": "Αναδιάταξη, περιστροφή ή διαγραφή σελίδων και, στη συνέχεια, λήψη."
     },
     "add-page-numbers": {
-      "title": "Add page numbers",
-      "description": "Stamp page numbers with placement, ranges, and formats — in your browser."
+      "title": "Προσθήκη αριθμών σελίδων",
+      "description": "Σφραγίστε αριθμούς σελίδων με τοποθέτηση, εύρη και μορφές — στο πρόγραμμα περιήγησής σας."
     },
     "compress-pdf": {
-      "title": "Compress PDF",
-      "description": "Tries your API (qpdf / Ghostscript); falls back to in-browser pdf-lib when the API is missing."
+      "title": "Συμπίεση PDF",
+      "description": "Δοκιμάζει το API σας (qpdf / Ghostscript). επιστρέφει στο pdf-lib του προγράμματος περιήγησης όταν λείπει το API."
     },
     "pdf-to-jpg": {
-      "title": "PDF to JPG",
-      "description": "Export pages as JPEG. ZIP or single files."
+      "title": "PDF σε JPG",
+      "description": "Εξαγωγή σελίδων ως JPEG. ZIP ή μεμονωμένα αρχεία."
     },
     "pdf-to-png": {
-      "title": "PDF to PNG",
-      "description": "Export pages as lossless PNG in a ZIP — all in your browser."
+      "title": "PDF σε PNG",
+      "description": "Εξαγωγή σελίδων ως PNG χωρίς απώλειες σε ZIP — όλα στο πρόγραμμα περιήγησής σας."
     },
     "pdf-to-text": {
-      "title": "PDF to text",
-      "description": "Download plain .txt from selectable text (not for raw scans)."
+      "title": "PDF σε κείμενο",
+      "description": "Λήψη απλού .txt από επιλεγμένο κείμενο (όχι για ακατέργαστες σαρώσεις)."
     },
     "jpg-to-pdf": {
-      "title": "JPG to PDF",
-      "description": "Combine images. Drag to reorder."
+      "title": "JPG σε PDF",
+      "description": "Συνδυάστε εικόνες. Σύρετε για αναδιάταξη."
     },
     "scan-to-pdf": {
-      "title": "Scan to PDF",
-      "description": "Camera or photos: trim, enhance, multi-page PDF."
+      "title": "Σάρωση σε PDF",
+      "description": "Κάμερα ή φωτογραφίες: περικοπή, βελτίωση, πολυσέλιδο PDF."
     },
     "sign-pdf": {
-      "title": "Sign PDF",
-      "description": "Sign any page, duplicate or copy/paste placements, then download."
+      "title": "Υπογραφή PDF",
+      "description": "Υπογράψτε οποιαδήποτε σελίδα, αντιγράψτε ή αντιγράψτε/επικολλήστε τοποθετήσεις και, στη συνέχεια, πραγματοποιήστε λήψη."
     },
     "fill-pdf": {
-      "title": "Fill PDF form",
-      "description": "Fill AcroForm fields and download — processing stays in the browser."
+      "title": "Συμπληρώστε τη φόρμα PDF",
+      "description": "Συμπληρώστε τα πεδία AcroForm και πραγματοποιήστε λήψη — η επεξεργασία παραμένει στο πρόγραμμα περιήγησης."
     },
     "flatten-pdf": {
-      "title": "Flatten PDF",
-      "description": "Flatten fillable forms or rasterize pages to images — client-side."
+      "title": "Ισοπεδώστε το PDF",
+      "description": "Ισοπεδώστε φόρμες με δυνατότητα συμπλήρωσης ή ραστεροποιήστε τις σελίδες σε εικόνες — από την πλευρά του πελάτη."
     },
     "unlock-pdf": {
-      "title": "Unlock PDF",
-      "description": "Remove password via your API (qpdf / Ghostscript when configured)."
+      "title": "Ξεκλείδωμα PDF",
+      "description": "Καταργήστε τον κωδικό πρόσβασης μέσω του API σας (qpdf / Ghostscript όταν έχει ρυθμιστεί)."
     },
     "encrypt-pdf": {
-      "title": "Encrypt PDF",
-      "description": "Password-protect with AES-256 (qpdf on the server)."
+      "title": "Κρυπτογράφηση PDF",
+      "description": "Προστασία κωδικού πρόσβασης με AES-256 (qpdf στον διακομιστή)."
     },
     "add-watermark": {
-      "title": "Add Watermark",
-      "description": "Text or image watermark, page ranges, preview, then download."
+      "title": "Προσθήκη υδατογραφήματος",
+      "description": "Υδατογράφημα κειμένου ή εικόνας, εύρη σελίδων, προεπισκόπηση και μετά λήψη."
     },
     "pdf-to-word": {
-      "title": "PDF to Word",
-      "description": "Draft .docx in your browser — PDF is not uploaded for conversion (use OCR PDF for scans first)."
+      "title": "PDF σε Word",
+      "description": "Πρόχειρο .docx στο πρόγραμμα περιήγησής σας — Το PDF δεν μεταφορτώνεται για μετατροπή (χρησιμοποιήστε πρώτα το OCR PDF για σαρώσεις)."
     },
     "word-to-pdf": {
-      "title": "Word to PDF",
-      "description": "Draft PDF in your browser — .docx is not uploaded for conversion."
+      "title": "Word σε PDF",
+      "description": "Πρόχειρο PDF στο πρόγραμμα περιήγησής σας — το .docx δεν μεταφορτώνεται για μετατροπή."
     },
     "gst-invoice": {
-      "title": "GST invoice PDF",
-      "description": "Supplier, buyer, HSN lines — download a tax invoice PDF in the browser."
+      "title": "PDF τιμολογίου GST",
+      "description": "Προμηθευτής, αγοραστής, γραμμές HSN — κατεβάστε ένα φορολογικό τιμολόγιο PDF στο πρόγραμμα περιήγησης."
     }
   }
 }

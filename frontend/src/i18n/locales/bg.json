@@ -1,219 +1,219 @@
 {
   "common": {
-    "loading": "Loading…",
+    "loading": "Зарежда се...",
     "brandName": "pdfpilot",
-    "soon": "Soon",
-    "comingSoon": "Coming soon",
-    "close": "Close",
-    "cancel": "Cancel",
-    "openTool": "Open tool →",
-    "brandTagline": "Navigate your PDFs effortlessly",
-    "brandHeroLine": "Edit, compress, merge and manage PDFs instantly — PurPDF-grade clarity, speed, and trustworthy exports from pdfpilot."
+    "soon": "Скоро",
+    "comingSoon": "Очаквайте скоро",
+    "close": "затвори",
+    "cancel": "Отказ",
+    "openTool": "Отворете инструмента →",
+    "brandTagline": "Навигирайте във вашите PDF файлове без усилие",
+    "brandHeroLine": "Редактирайте, компресирайте, обединявайте и управлявайте незабавно PDF файлове — PurPDF клас яснота, скорост и надеждни експорти от pdfpilot."
   },
   "header": {
-    "login": "Log in",
-    "signUp": "Sign up",
-    "accountAriaGuest": "Log in or sign up",
-    "accountAriaUser": "Account menu — saved PDFs from Edit PDF and other tools, sign out",
-    "signedInPrefix": "Signed in ·",
-    "allTools": "All tools",
-    "allToolsMenu": "All PDF tools",
-    "closeToolsMenu": "Close tools menu"
+    "login": "влезте",
+    "signUp": "Запишете се",
+    "accountAriaGuest": "Влезте или се регистрирайте",
+    "accountAriaUser": "Меню на акаунт — запазени PDF файлове от Редактиране на PDF и други инструменти, излезте",
+    "signedInPrefix": "Влезли сте ·",
+    "allTools": "Всички инструменти",
+    "allToolsMenu": "Всички PDF инструменти",
+    "closeToolsMenu": "Затворете менюто с инструменти"
   },
   "appsMenu": {
-    "ariaLabel": "Site menu",
-    "pricing": "Pricing & plans",
-    "security": "Security & terms",
-    "features": "Features",
-    "about": "About",
-    "help": "Help & feedback",
-    "language": "Language",
-    "terms": "Terms of Service",
-    "back": "Back",
-    "chooseLanguage": "Choose language"
+    "ariaLabel": "Меню на сайта",
+    "pricing": "Цени и планове",
+    "security": "Сигурност и условия",
+    "features": "Характеристики",
+    "about": "За",
+    "help": "Помощ и обратна връзка",
+    "language": "език",
+    "terms": "Условия за ползване",
+    "back": "Назад",
+    "chooseLanguage": "Изберете език"
   },
   "home": {
-    "chooseTool": "Choose a tool",
-    "searchPlaceholder": "Search tools (e.g. merge, scan, watermark)…",
-    "searchNoResults": "No tools match “{{query}}”. Try another word or clear the search.",
-    "searchShowing": "Showing {{n}} of {{total}} tools",
-    "footerProcessing": "Files are processed in your session. Need the raw API? See the project README for self-hosting on GitHub Pages.",
-    "ratingsNote": "Ratings and comments are shown only after real submissions."
+    "chooseTool": "Изберете инструмент",
+    "searchPlaceholder": "Инструменти за търсене (напр. обединяване, сканиране, воден знак)…",
+    "searchNoResults": "Няма инструменти, съответстващи на „{{query}}“. Опитайте с друга дума или изчистете търсенето.",
+    "searchShowing": "Показани са {{n}} от {{total}} инструменти",
+    "footerProcessing": "Файловете се обработват във вашата сесия. Нуждаете се от необработения API? Вижте проекта README за самостоятелно хостване на страниците на GitHub.",
+    "ratingsNote": "Оценките и коментарите се показват само след реално изпращане."
   },
   "hero": {
-    "title": "Edit and download PDFs instantly",
-    "subtitle": "Fast, simple, and secure PDF editing directly in your browser. No installs. No hassle.",
-    "ctaEdit": "Edit your PDF now",
-    "ctaSample": "Try sample PDF",
-    "signInBlurb": "Sign in or create an account to continue."
+    "title": "Редактирайте и изтегляйте незабавно PDF файлове",
+    "subtitle": "Бързо, лесно и сигурно редактиране на PDF файлове директно във вашия браузър. Няма инсталирания. Без проблеми.",
+    "ctaEdit": "Редактирайте своя PDF сега",
+    "ctaSample": "Опитайте примерен PDF",
+    "signInBlurb": "Влезте или създайте акаунт, за да продължите."
   },
   "footer": {
-    "copyright": "© {{year}} pdfpilot",
-    "privacySoon": "Privacy",
-    "shareFeedback": "Share feedback",
-    "terms": "Terms of Service"
+    "copyright": "© {{година}} pdfpilot",
+    "privacySoon": "Поверителност",
+    "shareFeedback": "Споделете обратна връзка",
+    "terms": "Условия за ползване"
   },
   "account": {
-    "signedInLabel": "Signed in",
-    "savedPdfsTitle": "Saved PDFs and edits",
-    "savedPdfsHint": "PDFs you changed in Edit PDF (and other tools) while signed in — open, download, or delete anytime.",
-    "subscriptionTitle": "Subscription & billing",
-    "subscriptionHint": "Plan, usage, Razorpay receipts",
-    "signOut": "Sign out",
-    "signingOut": "Signing out…"
+    "signedInLabel": "Влезли сте",
+    "savedPdfsTitle": "Запазени PDF файлове и редакции",
+    "savedPdfsHint": "PDF файлове, които сте променили в Редактиране на PDF (и други инструменти), докато сте влезли — отворете, изтеглете или изтрийте по всяко време.",
+    "subscriptionTitle": "Абонамент и таксуване",
+    "subscriptionHint": "План, използване, разписки от Razorpay",
+    "signOut": "Излезте",
+    "signingOut": "Излиза се..."
   },
   "auth": {
-    "signInTitle": "Sign in",
-    "signUpTitle": "Create an account",
-    "newUser": "New user?",
-    "createAccount": "Create an account",
-    "haveAccount": "Already have an account?",
-    "signInLink": "Sign in",
-    "continueGoogle": "Continue with Google",
-    "or": "Or",
-    "downloadBadge": "Download",
-    "downloadBlurb": "Sign in or create an account, then your file downloads automatically. You stay signed in on this device.",
-    "notNow": "Not now",
-    "closeAria": "Close",
-    "createAccountTab": "Create account",
-    "pleaseWait": "Please wait…",
-    "continue": "Continue",
-    "signInWithEmailButton": "Sign in with email",
-    "createAccountButton": "Create account",
-    "forgotPassword": "Forgot password?",
+    "signInTitle": "влезте",
+    "signUpTitle": "Създайте акаунт",
+    "newUser": "Нов потребител?",
+    "createAccount": "Създайте акаунт",
+    "haveAccount": "Вече имате акаунт?",
+    "signInLink": "влезте",
+    "continueGoogle": "Продължете с Google",
+    "or": "или",
+    "downloadBadge": "Изтегляне",
+    "downloadBlurb": "Влезте или създайте акаунт, след което вашият файл се изтегля автоматично. Оставате влезли на това устройство.",
+    "notNow": "Не сега",
+    "closeAria": "затвори",
+    "createAccountTab": "Създаване на акаунт",
+    "pleaseWait": "моля изчакайте...",
+    "continue": "Продължи",
+    "signInWithEmailButton": "Влезте с имейл",
+    "createAccountButton": "Създаване на акаунт",
+    "forgotPassword": "Забравена парола?",
     "emailSection": {
-      "signUpWithEmail": "Sign up with email",
-      "signInWithEmail": "Sign in with email",
-      "emailPassword": "Email & password",
-      "pickTabHint": "Pick a tab, then complete the fields and tap Continue."
+      "signUpWithEmail": "Регистрирайте се с имейл",
+      "signInWithEmail": "Влезте с имейл",
+      "emailPassword": "Имейл и парола",
+      "pickTabHint": "Изберете раздел, след това попълнете полетата и докоснете Продължи."
     },
     "field": {
-      "firstName": "First name",
-      "lastName": "Last name",
-      "dob": "Date of birth",
-      "dobInfo": "Used for your account profile",
-      "birthMonth": "Birth month",
-      "year": "Year",
-      "birthYear": "Birth year",
-      "country": "Country/Region",
-      "email": "Email",
-      "password": "Password"
+      "firstName": "Първо име",
+      "lastName": "Фамилия",
+      "dob": "Дата на раждане",
+      "dobInfo": "Използва се за профила на вашия акаунт",
+      "birthMonth": "Месец на раждане",
+      "year": "година",
+      "birthYear": "Година на раждане",
+      "country": "Държава/регион",
+      "email": "Имейл",
+      "password": "Парола"
     },
     "reset": {
-      "blurb": "We will email you a link to choose a new password. After you reset it, return here and sign in with your new password.",
-      "sendLink": "Send reset link",
-      "backToSignIn": "Back to sign in"
+      "blurb": "Ще ви изпратим имейл с връзка за избор на нова парола. След като го нулирате, върнете се тук и влезте с новата си парола.",
+      "sendLink": "Изпратете връзка за нулиране",
+      "backToSignIn": "Назад към влизане"
     },
     "errors": {
-      "emailPasswordRequired": "Enter email and password.",
-      "passwordMin": "Password must be at least 6 characters.",
-      "firstLastRequired": "Enter first and last name.",
-      "birthMonthRequired": "Select your month of birth.",
-      "birthYearInvalid": "Enter a valid 4-digit birth year.",
-      "birthYearRange": "Birth year must be between 1900 and {{max}}.",
-      "countryRequired": "Select your country or region.",
-      "resetEmailRequired": "Enter the email for your account.",
-      "emailInvalid": "That email address does not look valid."
+      "emailPasswordRequired": "Въведете имейл и парола.",
+      "passwordMin": "Паролата трябва да е поне 6 знака.",
+      "firstLastRequired": "Въведете име и фамилия.",
+      "birthMonthRequired": "Изберете вашия месец на раждане.",
+      "birthYearInvalid": "Въведете валидна 4-цифрена година на раждане.",
+      "birthYearRange": "Годината на раждане трябва да е между 1900 и {{max}}.",
+      "countryRequired": "Изберете вашата държава или регион.",
+      "resetEmailRequired": "Въведете имейла за вашия акаунт.",
+      "emailInvalid": "Този имейл адрес не изглежда валиден."
     }
   },
   "nav": {
-    "groupOrganize": "Organize PDF",
-    "groupEdit": "Edit & sign",
-    "groupConvert": "Convert & export",
-    "groupSecurity": "Security"
+    "groupOrganize": "Организирайте PDF",
+    "groupEdit": "Редактиране и подписване",
+    "groupConvert": "Конвертиране и експортиране",
+    "groupSecurity": "Сигурност"
   },
   "megaFooter": {
-    "privacy": "Privacy-focused",
-    "easy": "Easy to use",
-    "fast": "Fast in your browser",
-    "termsAgree": "By using our tools you agree to the",
-    "termsLink": "Terms of Service",
-    "termsTail": ". Files are processed for your session; see the site footer for contact details."
+    "privacy": "Фокусиран върху поверителността",
+    "easy": "Лесен за използване",
+    "fast": "Бързо във вашия браузър",
+    "termsAgree": "Използвайки нашите инструменти, вие се съгласявате с",
+    "termsLink": "Условия за ползване",
+    "termsTail": ". Файловете се обработват за вашата сесия; вижте долния колонтитул на сайта за подробности за контакт."
   },
   "tool": {
     "edit-pdf": {
-      "title": "Edit PDF",
-      "description": "Change text, annotate, highlight, draw."
+      "title": "Редактиране на PDF",
+      "description": "Променете текст, коментирайте, маркирайте, рисувайте."
     },
     "ocr-pdf": {
       "title": "OCR PDF",
-      "description": "Make scans searchable — needs your API (ocrmypdf + Tesseract on the server)."
+      "description": "Направете сканиранията достъпни за търсене — изисква вашия API (ocrmypdf + Tesseract на сървъра)."
     },
     "merge-pdf": {
-      "title": "Merge PDF",
-      "description": "Combine multiple PDFs into one file."
+      "title": "Обединяване на PDF",
+      "description": "Комбинирайте множество PDF файлове в един файл."
     },
     "split-pdf": {
-      "title": "Split PDF",
-      "description": "Split by page ranges or extract every page."
+      "title": "Разделяне на PDF",
+      "description": "Разделете по диапазони от страници или извлечете всяка страница."
     },
     "organize-pdf": {
-      "title": "Organize Pages",
-      "description": "Reorder, rotate, or delete pages, then download."
+      "title": "Организиране на страници",
+      "description": "Пренаредете, завъртете или изтрийте страници, след което изтеглете."
     },
     "add-page-numbers": {
-      "title": "Add page numbers",
-      "description": "Stamp page numbers with placement, ranges, and formats — in your browser."
+      "title": "Добавете номера на страници",
+      "description": "Подпечатайте номера на страници с разположение, диапазони и формати - във вашия браузър."
     },
     "compress-pdf": {
-      "title": "Compress PDF",
-      "description": "Tries your API (qpdf / Ghostscript); falls back to in-browser pdf-lib when the API is missing."
+      "title": "Компресирайте PDF",
+      "description": "Изпробва вашия API (qpdf / Ghostscript); се връща към pdf-lib в браузъра, когато API липсва."
     },
     "pdf-to-jpg": {
-      "title": "PDF to JPG",
-      "description": "Export pages as JPEG. ZIP or single files."
+      "title": "PDF към JPG",
+      "description": "Експортиране на страници като JPEG. ZIP или единични файлове."
     },
     "pdf-to-png": {
-      "title": "PDF to PNG",
-      "description": "Export pages as lossless PNG in a ZIP — all in your browser."
+      "title": "PDF към PNG",
+      "description": "Експортирайте страници като PNG без загуби в ZIP - всичко това във вашия браузър."
     },
     "pdf-to-text": {
-      "title": "PDF to text",
-      "description": "Download plain .txt from selectable text (not for raw scans)."
+      "title": "PDF към текст",
+      "description": "Изтеглете обикновен .txt от избираем текст (не за необработени сканирания)."
     },
     "jpg-to-pdf": {
-      "title": "JPG to PDF",
-      "description": "Combine images. Drag to reorder."
+      "title": "JPG към PDF",
+      "description": "Комбинирайте изображения. Плъзнете, за да пренаредите."
     },
     "scan-to-pdf": {
-      "title": "Scan to PDF",
-      "description": "Camera or photos: trim, enhance, multi-page PDF."
+      "title": "Сканиране в PDF",
+      "description": "Камера или снимки: изрязване, подобряване, многостраничен PDF."
     },
     "sign-pdf": {
-      "title": "Sign PDF",
-      "description": "Sign any page, duplicate or copy/paste placements, then download."
+      "title": "Подпишете PDF",
+      "description": "Подпишете всяка страница, дублирайте или копирайте/поставете разположения, след което изтеглете."
     },
     "fill-pdf": {
-      "title": "Fill PDF form",
-      "description": "Fill AcroForm fields and download — processing stays in the browser."
+      "title": "Попълнете PDF формуляр",
+      "description": "Попълнете полетата на AcroForm и изтеглете — обработката остава в браузъра."
     },
     "flatten-pdf": {
-      "title": "Flatten PDF",
-      "description": "Flatten fillable forms or rasterize pages to images — client-side."
+      "title": "Изравняване на PDF",
+      "description": "Изравняване на формуляри за попълване или растеризиране на страници в изображения — от страна на клиента."
     },
     "unlock-pdf": {
-      "title": "Unlock PDF",
-      "description": "Remove password via your API (qpdf / Ghostscript when configured)."
+      "title": "Отключване на PDF",
+      "description": "Премахнете паролата чрез вашия API (qpdf / Ghostscript, когато е конфигуриран)."
     },
     "encrypt-pdf": {
-      "title": "Encrypt PDF",
-      "description": "Password-protect with AES-256 (qpdf on the server)."
+      "title": "Шифроване на PDF",
+      "description": "Защита с парола с AES-256 (qpdf на сървъра)."
     },
     "add-watermark": {
-      "title": "Add Watermark",
-      "description": "Text or image watermark, page ranges, preview, then download."
+      "title": "Добавете воден знак",
+      "description": "Воден знак с текст или изображение, диапазони от страници, визуализация и след това изтегляне."
     },
     "pdf-to-word": {
-      "title": "PDF to Word",
-      "description": "Draft .docx in your browser — PDF is not uploaded for conversion (use OCR PDF for scans first)."
+      "title": "PDF към Word",
+      "description": "Чернова на .docx във вашия браузър — PDF не се качва за конвертиране (първо използвайте OCR PDF за сканиране)."
     },
     "word-to-pdf": {
-      "title": "Word to PDF",
-      "description": "Draft PDF in your browser — .docx is not uploaded for conversion."
+      "title": "Word в PDF",
+      "description": "Чернова на PDF във вашия браузър — .docx не се качва за конвертиране."
     },
     "gst-invoice": {
-      "title": "GST invoice PDF",
-      "description": "Supplier, buyer, HSN lines — download a tax invoice PDF in the browser."
+      "title": "GST фактура PDF",
+      "description": "Доставчик, купувач, HSN линии — изтеглете PDF данъчна фактура в браузъра."
     }
   }
 }

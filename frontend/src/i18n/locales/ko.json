@@ -1,219 +1,219 @@
 {
   "common": {
-    "loading": "Loading…",
-    "brandName": "pdfpilot",
-    "soon": "Soon",
-    "comingSoon": "Coming soon",
-    "close": "Close",
-    "cancel": "Cancel",
-    "openTool": "Open tool →",
-    "brandTagline": "Navigate your PDFs effortlessly",
-    "brandHeroLine": "Edit, compress, merge and manage PDFs instantly — PurPDF-grade clarity, speed, and trustworthy exports from pdfpilot."
+    "loading": "로드 중…",
+    "brandName": "pdf파일럿",
+    "soon": "곧",
+    "comingSoon": "곧 출시 예정",
+    "close": "닫다",
+    "cancel": "취소",
+    "openTool": "도구 열기 →",
+    "brandTagline": "손쉽게 PDF 탐색",
+    "brandHeroLine": "PDF를 즉시 편집, 압축, 병합 및 관리하십시오. PurPDF급 선명도, 속도 및 pdfpilot의 신뢰할 수 있는 내보내기가 가능합니다."
   },
   "header": {
-    "login": "Log in",
-    "signUp": "Sign up",
-    "accountAriaGuest": "Log in or sign up",
-    "accountAriaUser": "Account menu — saved PDFs from Edit PDF and other tools, sign out",
-    "signedInPrefix": "Signed in ·",
-    "allTools": "All tools",
-    "allToolsMenu": "All PDF tools",
-    "closeToolsMenu": "Close tools menu"
+    "login": "로그인",
+    "signUp": "가입",
+    "accountAriaGuest": "로그인 또는 가입",
+    "accountAriaUser": "계정 메뉴 — PDF 편집 및 기타 도구에서 저장된 PDF, 로그아웃",
+    "signedInPrefix": "로그인됨 ·",
+    "allTools": "모든 도구",
+    "allToolsMenu": "모든 PDF 도구",
+    "closeToolsMenu": "도구 메뉴 닫기"
   },
   "appsMenu": {
-    "ariaLabel": "Site menu",
-    "pricing": "Pricing & plans",
-    "security": "Security & terms",
-    "features": "Features",
-    "about": "About",
-    "help": "Help & feedback",
-    "language": "Language",
-    "terms": "Terms of Service",
-    "back": "Back",
-    "chooseLanguage": "Choose language"
+    "ariaLabel": "사이트 메뉴",
+    "pricing": "가격 및 계획",
+    "security": "보안 및 약관",
+    "features": "특징",
+    "about": "에 대한",
+    "help": "도움말 및 피드백",
+    "language": "언어",
+    "terms": "서비스 약관",
+    "back": "뒤쪽에",
+    "chooseLanguage": "언어를 선택하세요"
   },
   "home": {
-    "chooseTool": "Choose a tool",
-    "searchPlaceholder": "Search tools (e.g. merge, scan, watermark)…",
-    "searchNoResults": "No tools match “{{query}}”. Try another word or clear the search.",
-    "searchShowing": "Showing {{n}} of {{total}} tools",
-    "footerProcessing": "Files are processed in your session. Need the raw API? See the project README for self-hosting on GitHub Pages.",
-    "ratingsNote": "Ratings and comments are shown only after real submissions."
+    "chooseTool": "도구를 선택하세요",
+    "searchPlaceholder": "검색 도구(예: 병합, 스캔, 워터마크)...",
+    "searchNoResults": "“{{query}}”와 일치하는 도구가 없습니다. 다른 단어를 시도하거나 검색어를 삭제하세요.",
+    "searchShowing": "도구 {{total}}개 중 {{n}}개 표시 중",
+    "footerProcessing": "파일은 세션에서 처리됩니다. 원시 API가 필요합니까? GitHub 페이지의 자체 호스팅에 대한 프로젝트 README를 참조하세요.",
+    "ratingsNote": "평가와 댓글은 실제 제출 후에만 표시됩니다."
   },
   "hero": {
-    "title": "Edit and download PDFs instantly",
-    "subtitle": "Fast, simple, and secure PDF editing directly in your browser. No installs. No hassle.",
-    "ctaEdit": "Edit your PDF now",
-    "ctaSample": "Try sample PDF",
-    "signInBlurb": "Sign in or create an account to continue."
+    "title": "즉시 PDF 편집 및 다운로드",
+    "subtitle": "브라우저에서 직접 빠르고 간단하며 안전하게 PDF를 편집할 수 있습니다. 설치가 없습니다. 번거롭지 않습니다.",
+    "ctaEdit": "지금 PDF를 편집하세요",
+    "ctaSample": "샘플 PDF를 사용해 보세요",
+    "signInBlurb": "계속하려면 로그인하거나 계정을 만드세요."
   },
   "footer": {
-    "copyright": "© {{year}} pdfpilot",
-    "privacySoon": "Privacy",
-    "shareFeedback": "Share feedback",
-    "terms": "Terms of Service"
+    "copyright": "© {{연도}} pdfpilot",
+    "privacySoon": "은둔",
+    "shareFeedback": "피드백 공유",
+    "terms": "서비스 약관"
   },
   "account": {
-    "signedInLabel": "Signed in",
-    "savedPdfsTitle": "Saved PDFs and edits",
-    "savedPdfsHint": "PDFs you changed in Edit PDF (and other tools) while signed in — open, download, or delete anytime.",
-    "subscriptionTitle": "Subscription & billing",
-    "subscriptionHint": "Plan, usage, Razorpay receipts",
-    "signOut": "Sign out",
-    "signingOut": "Signing out…"
+    "signedInLabel": "로그인됨",
+    "savedPdfsTitle": "저장된 PDF 및 편집사항",
+    "savedPdfsHint": "로그인한 상태에서 PDF 편집(및 기타 도구)에서 변경한 PDF — 언제든지 열거나 다운로드하거나 삭제할 수 있습니다.",
+    "subscriptionTitle": "구독 및 청구",
+    "subscriptionHint": "요금제, 사용량, Razorpay 영수증",
+    "signOut": "로그아웃",
+    "signingOut": "로그아웃 중…"
   },
   "auth": {
-    "signInTitle": "Sign in",
-    "signUpTitle": "Create an account",
-    "newUser": "New user?",
-    "createAccount": "Create an account",
-    "haveAccount": "Already have an account?",
-    "signInLink": "Sign in",
-    "continueGoogle": "Continue with Google",
-    "or": "Or",
-    "downloadBadge": "Download",
-    "downloadBlurb": "Sign in or create an account, then your file downloads automatically. You stay signed in on this device.",
-    "notNow": "Not now",
-    "closeAria": "Close",
-    "createAccountTab": "Create account",
-    "pleaseWait": "Please wait…",
-    "continue": "Continue",
-    "signInWithEmailButton": "Sign in with email",
-    "createAccountButton": "Create account",
-    "forgotPassword": "Forgot password?",
+    "signInTitle": "로그인",
+    "signUpTitle": "계정 만들기",
+    "newUser": "새로운 사용자인가요?",
+    "createAccount": "계정 만들기",
+    "haveAccount": "이미 계정이 있나요?",
+    "signInLink": "로그인",
+    "continueGoogle": "Google로 계속하기",
+    "or": "또는",
+    "downloadBadge": "다운로드",
+    "downloadBlurb": "로그인하거나 계정을 생성하면 파일이 자동으로 다운로드됩니다. 이 기기에서는 로그인 상태가 유지됩니다.",
+    "notNow": "지금은 아님",
+    "closeAria": "닫다",
+    "createAccountTab": "계정 만들기",
+    "pleaseWait": "기다리세요…",
+    "continue": "계속하다",
+    "signInWithEmailButton": "이메일로 로그인",
+    "createAccountButton": "계정 만들기",
+    "forgotPassword": "비밀번호를 잊으셨나요?",
     "emailSection": {
-      "signUpWithEmail": "Sign up with email",
-      "signInWithEmail": "Sign in with email",
-      "emailPassword": "Email & password",
-      "pickTabHint": "Pick a tab, then complete the fields and tap Continue."
+      "signUpWithEmail": "이메일로 가입",
+      "signInWithEmail": "이메일로 로그인",
+      "emailPassword": "이메일 및 비밀번호",
+      "pickTabHint": "탭을 선택한 다음 필드를 완성하고 계속을 탭하세요."
     },
     "field": {
-      "firstName": "First name",
-      "lastName": "Last name",
-      "dob": "Date of birth",
-      "dobInfo": "Used for your account profile",
-      "birthMonth": "Birth month",
-      "year": "Year",
-      "birthYear": "Birth year",
-      "country": "Country/Region",
-      "email": "Email",
-      "password": "Password"
+      "firstName": "이름",
+      "lastName": "성",
+      "dob": "생일",
+      "dobInfo": "귀하의 계정 프로필에 사용됩니다.",
+      "birthMonth": "태어난 달",
+      "year": "년도",
+      "birthYear": "출생연도",
+      "country": "국가/지역",
+      "email": "이메일",
+      "password": "비밀번호"
     },
     "reset": {
-      "blurb": "We will email you a link to choose a new password. After you reset it, return here and sign in with your new password.",
-      "sendLink": "Send reset link",
-      "backToSignIn": "Back to sign in"
+      "blurb": "새 비밀번호를 선택할 수 있는 링크를 이메일로 보내드리겠습니다. 재설정한 후 여기로 돌아와 새 비밀번호로 로그인하세요.",
+      "sendLink": "재설정 링크 보내기",
+      "backToSignIn": "로그인으로 돌아가기"
     },
     "errors": {
-      "emailPasswordRequired": "Enter email and password.",
-      "passwordMin": "Password must be at least 6 characters.",
-      "firstLastRequired": "Enter first and last name.",
-      "birthMonthRequired": "Select your month of birth.",
-      "birthYearInvalid": "Enter a valid 4-digit birth year.",
-      "birthYearRange": "Birth year must be between 1900 and {{max}}.",
-      "countryRequired": "Select your country or region.",
-      "resetEmailRequired": "Enter the email for your account.",
-      "emailInvalid": "That email address does not look valid."
+      "emailPasswordRequired": "이메일과 비밀번호를 입력하세요.",
+      "passwordMin": "비밀번호는 6자 이상이어야 합니다.",
+      "firstLastRequired": "이름과 성을 입력하세요.",
+      "birthMonthRequired": "귀하의 생년월일을 선택하세요.",
+      "birthYearInvalid": "유효한 4자리 출생연도를 입력하세요.",
+      "birthYearRange": "출생 연도는 1900년에서 {{max}} 사이여야 합니다.",
+      "countryRequired": "국가 또는 지역을 선택하세요.",
+      "resetEmailRequired": "귀하의 계정에 대한 이메일을 입력하세요.",
+      "emailInvalid": "해당 이메일 주소가 유효하지 않은 것 같습니다."
     }
   },
   "nav": {
-    "groupOrganize": "Organize PDF",
-    "groupEdit": "Edit & sign",
-    "groupConvert": "Convert & export",
-    "groupSecurity": "Security"
+    "groupOrganize": "PDF 정리",
+    "groupEdit": "편집 및 서명",
+    "groupConvert": "변환 및 내보내기",
+    "groupSecurity": "보안"
   },
   "megaFooter": {
-    "privacy": "Privacy-focused",
-    "easy": "Easy to use",
-    "fast": "Fast in your browser",
-    "termsAgree": "By using our tools you agree to the",
-    "termsLink": "Terms of Service",
-    "termsTail": ". Files are processed for your session; see the site footer for contact details."
+    "privacy": "개인 정보 보호 중심",
+    "easy": "사용하기 쉬움",
+    "fast": "브라우저에서 빠르게",
+    "termsAgree": "당사의 도구를 사용함으로써 귀하는 다음 사항에 동의하게 됩니다.",
+    "termsLink": "서비스 약관",
+    "termsTail": ". 세션에 대한 파일이 처리됩니다. 자세한 연락처는 사이트 바닥글을 참조하세요."
   },
   "tool": {
     "edit-pdf": {
-      "title": "Edit PDF",
-      "description": "Change text, annotate, highlight, draw."
+      "title": "PDF 편집",
+      "description": "텍스트를 변경하고, 주석을 달고, 강조 표시하고, 그립니다."
     },
     "ocr-pdf": {
       "title": "OCR PDF",
-      "description": "Make scans searchable — needs your API (ocrmypdf + Tesseract on the server)."
+      "description": "스캔을 검색 가능하게 만드세요. API(서버의 ocrmypdf + Tesseract)가 필요합니다."
     },
     "merge-pdf": {
-      "title": "Merge PDF",
-      "description": "Combine multiple PDFs into one file."
+      "title": "PDF 병합",
+      "description": "여러 PDF를 하나의 파일로 결합합니다."
     },
     "split-pdf": {
-      "title": "Split PDF",
-      "description": "Split by page ranges or extract every page."
+      "title": "PDF 분할",
+      "description": "페이지 범위별로 분할하거나 모든 페이지를 추출합니다."
     },
     "organize-pdf": {
-      "title": "Organize Pages",
-      "description": "Reorder, rotate, or delete pages, then download."
+      "title": "페이지 구성",
+      "description": "페이지 순서를 바꾸거나 회전하거나 삭제한 다음 다운로드하세요."
     },
     "add-page-numbers": {
-      "title": "Add page numbers",
-      "description": "Stamp page numbers with placement, ranges, and formats — in your browser."
+      "title": "페이지 번호 추가",
+      "description": "브라우저에서 위치, 범위, 형식을 포함한 페이지 번호를 스탬프하세요."
     },
     "compress-pdf": {
-      "title": "Compress PDF",
-      "description": "Tries your API (qpdf / Ghostscript); falls back to in-browser pdf-lib when the API is missing."
+      "title": "PDF 압축",
+      "description": "API(qpdf/Ghostscript)를 사용해 보세요. API가 없으면 브라우저 내 pdf-lib로 대체됩니다."
     },
     "pdf-to-jpg": {
-      "title": "PDF to JPG",
-      "description": "Export pages as JPEG. ZIP or single files."
+      "title": "PDF를 JPG로",
+      "description": "페이지를 JPEG로 내보냅니다. ZIP 또는 단일 파일."
     },
     "pdf-to-png": {
-      "title": "PDF to PNG",
-      "description": "Export pages as lossless PNG in a ZIP — all in your browser."
+      "title": "PDF를 PNG로",
+      "description": "페이지를 무손실 PNG로 ZIP으로 내보냅니다. 모두 브라우저에서 가능합니다."
     },
     "pdf-to-text": {
-      "title": "PDF to text",
-      "description": "Download plain .txt from selectable text (not for raw scans)."
+      "title": "PDF를 텍스트로",
+      "description": "선택 가능한 텍스트에서 일반 .txt를 다운로드합니다(원시 스캔용 아님)."
     },
     "jpg-to-pdf": {
-      "title": "JPG to PDF",
-      "description": "Combine images. Drag to reorder."
+      "title": "JPG를 PDF로",
+      "description": "이미지를 결합합니다. 재정렬하려면 드래그하세요."
     },
     "scan-to-pdf": {
-      "title": "Scan to PDF",
-      "description": "Camera or photos: trim, enhance, multi-page PDF."
+      "title": "PDF로 스캔",
+      "description": "카메라 또는 사진: 다듬기, 향상, 여러 페이지 PDF."
     },
     "sign-pdf": {
-      "title": "Sign PDF",
-      "description": "Sign any page, duplicate or copy/paste placements, then download."
+      "title": "PDF에 서명",
+      "description": "페이지에 서명하고 게재위치를 복제하거나 복사/붙여넣은 다음 다운로드하세요."
     },
     "fill-pdf": {
-      "title": "Fill PDF form",
-      "description": "Fill AcroForm fields and download — processing stays in the browser."
+      "title": "PDF 양식 채우기",
+      "description": "AcroForm 필드를 채우고 다운로드하면 처리가 브라우저에 유지됩니다."
     },
     "flatten-pdf": {
-      "title": "Flatten PDF",
-      "description": "Flatten fillable forms or rasterize pages to images — client-side."
+      "title": "PDF 병합",
+      "description": "클라이언트측에서 채울 수 있는 양식을 평면화하거나 페이지를 이미지로 래스터화합니다."
     },
     "unlock-pdf": {
-      "title": "Unlock PDF",
-      "description": "Remove password via your API (qpdf / Ghostscript when configured)."
+      "title": "PDF 잠금해제",
+      "description": "API를 통해 비밀번호를 제거하세요(구성된 경우 qpdf / Ghostscript)."
     },
     "encrypt-pdf": {
-      "title": "Encrypt PDF",
-      "description": "Password-protect with AES-256 (qpdf on the server)."
+      "title": "PDF 암호화",
+      "description": "AES-256(서버의 qpdf)을 사용하여 비밀번호로 보호합니다."
     },
     "add-watermark": {
-      "title": "Add Watermark",
-      "description": "Text or image watermark, page ranges, preview, then download."
+      "title": "워터마크 추가",
+      "description": "텍스트 또는 이미지 워터마크, 페이지 범위, 미리보기, 다운로드."
     },
     "pdf-to-word": {
-      "title": "PDF to Word",
-      "description": "Draft .docx in your browser — PDF is not uploaded for conversion (use OCR PDF for scans first)."
+      "title": "PDF를 워드로",
+      "description": "브라우저의 초안 .docx — PDF는 변환을 위해 업로드되지 않습니다(먼저 스캔하려면 OCR PDF를 사용하십시오)."
     },
     "word-to-pdf": {
-      "title": "Word to PDF",
-      "description": "Draft PDF in your browser — .docx is not uploaded for conversion."
+      "title": "단어를 PDF로",
+      "description": "브라우저의 초안 PDF — .docx는 변환을 위해 업로드되지 않습니다."
     },
     "gst-invoice": {
-      "title": "GST invoice PDF",
-      "description": "Supplier, buyer, HSN lines — download a tax invoice PDF in the browser."
+      "title": "GST 청구서 PDF",
+      "description": "공급업체, 구매자, HSN 라인 — 브라우저에서 세금계산서 PDF를 다운로드하세요."
     }
   }
 }

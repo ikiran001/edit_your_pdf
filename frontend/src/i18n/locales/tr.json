@@ -1,219 +1,219 @@
 {
   "common": {
-    "loading": "Loading…",
+    "loading": "Yükleniyor…",
     "brandName": "pdfpilot",
-    "soon": "Soon",
-    "comingSoon": "Coming soon",
-    "close": "Close",
-    "cancel": "Cancel",
-    "openTool": "Open tool →",
-    "brandTagline": "Navigate your PDFs effortlessly",
-    "brandHeroLine": "Edit, compress, merge and manage PDFs instantly — PurPDF-grade clarity, speed, and trustworthy exports from pdfpilot."
+    "soon": "Yakında",
+    "comingSoon": "Yakında gelecek",
+    "close": "Kapalı",
+    "cancel": "İptal etmek",
+    "openTool": "Aracı aç →",
+    "brandTagline": "PDF'lerinizde zahmetsizce gezinin",
+    "brandHeroLine": "PDF'leri anında düzenleyin, sıkıştırın, birleştirin ve yönetin - pdfpilot'tan PurPDF düzeyinde netlik, hız ve güvenilir dışa aktarmalar."
   },
   "header": {
-    "login": "Log in",
-    "signUp": "Sign up",
-    "accountAriaGuest": "Log in or sign up",
-    "accountAriaUser": "Account menu — saved PDFs from Edit PDF and other tools, sign out",
-    "signedInPrefix": "Signed in ·",
-    "allTools": "All tools",
-    "allToolsMenu": "All PDF tools",
-    "closeToolsMenu": "Close tools menu"
+    "login": "Giriş yapmak",
+    "signUp": "Üye olmak",
+    "accountAriaGuest": "Giriş yapın veya kaydolun",
+    "accountAriaUser": "Hesap menüsü — PDF'yi Düzenle ve diğer araçlardan kaydedilen PDF'ler, oturumu kapatın",
+    "signedInPrefix": "Oturum açıldı ·",
+    "allTools": "Tüm araçlar",
+    "allToolsMenu": "Tüm PDF araçları",
+    "closeToolsMenu": "Araçlar menüsünü kapat"
   },
   "appsMenu": {
-    "ariaLabel": "Site menu",
-    "pricing": "Pricing & plans",
-    "security": "Security & terms",
-    "features": "Features",
-    "about": "About",
-    "help": "Help & feedback",
-    "language": "Language",
-    "terms": "Terms of Service",
-    "back": "Back",
-    "chooseLanguage": "Choose language"
+    "ariaLabel": "Site menüsü",
+    "pricing": "Fiyatlandırma ve planlar",
+    "security": "Güvenlik ve şartlar",
+    "features": "Özellikler",
+    "about": "Hakkında",
+    "help": "Yardım ve geri bildirim",
+    "language": "Dil",
+    "terms": "Hizmet Şartları",
+    "back": "Geri",
+    "chooseLanguage": "Dil seçin"
   },
   "home": {
-    "chooseTool": "Choose a tool",
-    "searchPlaceholder": "Search tools (e.g. merge, scan, watermark)…",
-    "searchNoResults": "No tools match “{{query}}”. Try another word or clear the search.",
-    "searchShowing": "Showing {{n}} of {{total}} tools",
-    "footerProcessing": "Files are processed in your session. Need the raw API? See the project README for self-hosting on GitHub Pages.",
-    "ratingsNote": "Ratings and comments are shown only after real submissions."
+    "chooseTool": "Bir araç seçin",
+    "searchPlaceholder": "Arama araçları (ör. birleştirme, tarama, filigran)…",
+    "searchNoResults": "“{{query}}” ile eşleşen araç yok. Başka bir kelime deneyin veya aramayı temizleyin.",
+    "searchShowing": "{{total}} araçtan {{n}} tanesi gösteriliyor",
+    "footerProcessing": "Dosyalar oturumunuzda işlenir. Ham API'ye mi ihtiyacınız var? GitHub Sayfalarında kendi kendini barındırmak için README projesine bakın.",
+    "ratingsNote": "Derecelendirmeler ve yorumlar yalnızca gerçek gönderimlerden sonra gösterilir."
   },
   "hero": {
-    "title": "Edit and download PDFs instantly",
-    "subtitle": "Fast, simple, and secure PDF editing directly in your browser. No installs. No hassle.",
-    "ctaEdit": "Edit your PDF now",
-    "ctaSample": "Try sample PDF",
-    "signInBlurb": "Sign in or create an account to continue."
+    "title": "PDF'leri anında düzenleyin ve indirin",
+    "subtitle": "Doğrudan tarayıcınızda hızlı, basit ve güvenli PDF düzenleme. Kurulum yok. Güçlük yok.",
+    "ctaEdit": "PDF'nizi şimdi düzenleyin",
+    "ctaSample": "Örnek PDF'yi deneyin",
+    "signInBlurb": "Devam etmek için oturum açın veya bir hesap oluşturun."
   },
   "footer": {
-    "copyright": "© {{year}} pdfpilot",
-    "privacySoon": "Privacy",
-    "shareFeedback": "Share feedback",
-    "terms": "Terms of Service"
+    "copyright": "© {{yıl}} pdfpilot",
+    "privacySoon": "Mahremiyet",
+    "shareFeedback": "Geri bildirimi paylaşın",
+    "terms": "Hizmet Şartları"
   },
   "account": {
-    "signedInLabel": "Signed in",
-    "savedPdfsTitle": "Saved PDFs and edits",
-    "savedPdfsHint": "PDFs you changed in Edit PDF (and other tools) while signed in — open, download, or delete anytime.",
-    "subscriptionTitle": "Subscription & billing",
-    "subscriptionHint": "Plan, usage, Razorpay receipts",
-    "signOut": "Sign out",
-    "signingOut": "Signing out…"
+    "signedInLabel": "Oturum açıldı",
+    "savedPdfsTitle": "Kaydedilen PDF'ler ve düzenlemeler",
+    "savedPdfsHint": "Oturumunuz açıkken PDF'yi Düzenle'de (ve diğer araçlarda) değiştirdiğiniz PDF'leri istediğiniz zaman açın, indirin veya silin.",
+    "subscriptionTitle": "Abonelik ve faturalandırma",
+    "subscriptionHint": "Plan, kullanım, Razorpay makbuzları",
+    "signOut": "oturumu Kapat",
+    "signingOut": "Oturum kapatılıyor…"
   },
   "auth": {
-    "signInTitle": "Sign in",
-    "signUpTitle": "Create an account",
-    "newUser": "New user?",
-    "createAccount": "Create an account",
-    "haveAccount": "Already have an account?",
-    "signInLink": "Sign in",
-    "continueGoogle": "Continue with Google",
-    "or": "Or",
-    "downloadBadge": "Download",
-    "downloadBlurb": "Sign in or create an account, then your file downloads automatically. You stay signed in on this device.",
-    "notNow": "Not now",
-    "closeAria": "Close",
-    "createAccountTab": "Create account",
-    "pleaseWait": "Please wait…",
-    "continue": "Continue",
-    "signInWithEmailButton": "Sign in with email",
-    "createAccountButton": "Create account",
-    "forgotPassword": "Forgot password?",
+    "signInTitle": "Oturum aç",
+    "signUpTitle": "Bir hesap oluşturun",
+    "newUser": "Yeni kullanıcı mı?",
+    "createAccount": "Bir hesap oluşturun",
+    "haveAccount": "Zaten bir hesabınız var mı?",
+    "signInLink": "Oturum aç",
+    "continueGoogle": "Google ile devam et",
+    "or": "Veya",
+    "downloadBadge": "İndirmek",
+    "downloadBlurb": "Oturum açın veya bir hesap oluşturun, ardından dosyanız otomatik olarak indirilir. Bu cihazda oturumunuz açık kalır.",
+    "notNow": "Şimdi değil",
+    "closeAria": "Kapalı",
+    "createAccountTab": "Hesap oluşturmak",
+    "pleaseWait": "Lütfen bekleyin…",
+    "continue": "Devam etmek",
+    "signInWithEmailButton": "E-postayla oturum açın",
+    "createAccountButton": "Hesap oluşturmak",
+    "forgotPassword": "Parolanızı mı unuttunuz?",
     "emailSection": {
-      "signUpWithEmail": "Sign up with email",
-      "signInWithEmail": "Sign in with email",
-      "emailPassword": "Email & password",
-      "pickTabHint": "Pick a tab, then complete the fields and tap Continue."
+      "signUpWithEmail": "E-postayla kaydolun",
+      "signInWithEmail": "E-postayla oturum açın",
+      "emailPassword": "E-posta ve şifre",
+      "pickTabHint": "Bir sekme seçin, ardından alanları doldurun ve Devam'a dokunun."
     },
     "field": {
-      "firstName": "First name",
-      "lastName": "Last name",
-      "dob": "Date of birth",
-      "dobInfo": "Used for your account profile",
-      "birthMonth": "Birth month",
-      "year": "Year",
-      "birthYear": "Birth year",
-      "country": "Country/Region",
-      "email": "Email",
-      "password": "Password"
+      "firstName": "İlk adı",
+      "lastName": "Soy isim",
+      "dob": "Doğum tarihi",
+      "dobInfo": "Hesap profiliniz için kullanılır",
+      "birthMonth": "Doğum ayı",
+      "year": "Yıl",
+      "birthYear": "Doğum yılı",
+      "country": "Ülke/Bölge",
+      "email": "E-posta",
+      "password": "Şifre"
     },
     "reset": {
-      "blurb": "We will email you a link to choose a new password. After you reset it, return here and sign in with your new password.",
-      "sendLink": "Send reset link",
-      "backToSignIn": "Back to sign in"
+      "blurb": "Size yeni bir şifre seçmeniz için bir bağlantı göndereceğiz. Sıfırladıktan sonra buraya dönün ve yeni şifrenizle oturum açın.",
+      "sendLink": "Sıfırlama bağlantısını gönder",
+      "backToSignIn": "Oturum açmak için geri dön"
     },
     "errors": {
-      "emailPasswordRequired": "Enter email and password.",
-      "passwordMin": "Password must be at least 6 characters.",
-      "firstLastRequired": "Enter first and last name.",
-      "birthMonthRequired": "Select your month of birth.",
-      "birthYearInvalid": "Enter a valid 4-digit birth year.",
-      "birthYearRange": "Birth year must be between 1900 and {{max}}.",
-      "countryRequired": "Select your country or region.",
-      "resetEmailRequired": "Enter the email for your account.",
-      "emailInvalid": "That email address does not look valid."
+      "emailPasswordRequired": "E-posta ve şifreyi girin.",
+      "passwordMin": "Şifre en az 6 karakter olmalıdır.",
+      "firstLastRequired": "Adını ve soyadını girin.",
+      "birthMonthRequired": "Doğduğunuz ayı seçin.",
+      "birthYearInvalid": "4 basamaklı geçerli bir doğum yılı girin.",
+      "birthYearRange": "Doğum yılı 1900 ile {{max}} arasında olmalıdır.",
+      "countryRequired": "Ülkenizi veya bölgenizi seçin.",
+      "resetEmailRequired": "Hesabınızın e-postasını girin.",
+      "emailInvalid": "Bu e-posta adresi geçerli görünmüyor."
     }
   },
   "nav": {
-    "groupOrganize": "Organize PDF",
-    "groupEdit": "Edit & sign",
-    "groupConvert": "Convert & export",
-    "groupSecurity": "Security"
+    "groupOrganize": "PDF'yi düzenle",
+    "groupEdit": "Düzenle ve imzala",
+    "groupConvert": "Dönüştür ve dışa aktar",
+    "groupSecurity": "Güvenlik"
   },
   "megaFooter": {
-    "privacy": "Privacy-focused",
-    "easy": "Easy to use",
-    "fast": "Fast in your browser",
-    "termsAgree": "By using our tools you agree to the",
-    "termsLink": "Terms of Service",
-    "termsTail": ". Files are processed for your session; see the site footer for contact details."
+    "privacy": "Gizlilik odaklı",
+    "easy": "Kullanımı kolay",
+    "fast": "Tarayıcınızda hızlı",
+    "termsAgree": "Araçlarımızı kullanarak şunları kabul etmiş olursunuz:",
+    "termsLink": "Hizmet Şartları",
+    "termsTail": ". Oturumunuz için dosyalar işlenir; iletişim ayrıntıları için site altbilgisine bakın."
   },
   "tool": {
     "edit-pdf": {
-      "title": "Edit PDF",
-      "description": "Change text, annotate, highlight, draw."
+      "title": "PDF'yi düzenle",
+      "description": "Metni değiştirin, açıklama ekleyin, vurgulayın, çizin."
     },
     "ocr-pdf": {
-      "title": "OCR PDF",
-      "description": "Make scans searchable — needs your API (ocrmypdf + Tesseract on the server)."
+      "title": "OCR PDF'si",
+      "description": "Taramaları aranabilir hale getirin — API'nizi gerektirir (sunucuda ocrmypdf + Tesseract)."
     },
     "merge-pdf": {
-      "title": "Merge PDF",
-      "description": "Combine multiple PDFs into one file."
+      "title": "PDF'yi birleştir",
+      "description": "Birden fazla PDF'yi tek bir dosyada birleştirin."
     },
     "split-pdf": {
-      "title": "Split PDF",
-      "description": "Split by page ranges or extract every page."
+      "title": "PDF'yi böl",
+      "description": "Sayfa aralıklarına göre bölün veya her sayfayı çıkarın."
     },
     "organize-pdf": {
-      "title": "Organize Pages",
-      "description": "Reorder, rotate, or delete pages, then download."
+      "title": "Sayfaları Organize Et",
+      "description": "Sayfaları yeniden sıralayın, döndürün veya silin, ardından indirin."
     },
     "add-page-numbers": {
-      "title": "Add page numbers",
-      "description": "Stamp page numbers with placement, ranges, and formats — in your browser."
+      "title": "Sayfa numaraları ekleyin",
+      "description": "Tarayıcınızda sayfa numaralarını yerleşim, aralıklar ve formatlarla damgalayın."
     },
     "compress-pdf": {
-      "title": "Compress PDF",
-      "description": "Tries your API (qpdf / Ghostscript); falls back to in-browser pdf-lib when the API is missing."
+      "title": "PDF'yi sıkıştır",
+      "description": "API'nizi (qpdf / Ghostscript) dener; API eksik olduğunda tarayıcı içi pdf-lib'e geri döner."
     },
     "pdf-to-jpg": {
-      "title": "PDF to JPG",
-      "description": "Export pages as JPEG. ZIP or single files."
+      "title": "PDF'den JPG'ye",
+      "description": "Sayfaları JPEG olarak dışa aktarın. ZIP veya tek dosyalar."
     },
     "pdf-to-png": {
-      "title": "PDF to PNG",
-      "description": "Export pages as lossless PNG in a ZIP — all in your browser."
+      "title": "PDF'den PNG'ye",
+      "description": "Sayfaları ZIP formatında kayıpsız PNG olarak dışa aktarın; üstelik hepsi tarayıcınızda."
     },
     "pdf-to-text": {
-      "title": "PDF to text",
-      "description": "Download plain .txt from selectable text (not for raw scans)."
+      "title": "PDF'yi metne dönüştürme",
+      "description": "Seçilebilir metinden düz .txt dosyasını indirin (ham taramalar için değil)."
     },
     "jpg-to-pdf": {
-      "title": "JPG to PDF",
-      "description": "Combine images. Drag to reorder."
+      "title": "JPG'den PDF'ye",
+      "description": "Görüntüleri birleştirin. Yeniden sıralamak için sürükleyin."
     },
     "scan-to-pdf": {
-      "title": "Scan to PDF",
-      "description": "Camera or photos: trim, enhance, multi-page PDF."
+      "title": "PDF'ye Tara",
+      "description": "Kamera veya fotoğraflar: kırpın, geliştirin, çok sayfalı PDF."
     },
     "sign-pdf": {
-      "title": "Sign PDF",
-      "description": "Sign any page, duplicate or copy/paste placements, then download."
+      "title": "PDF'yi imzala",
+      "description": "Herhangi bir sayfayı imzalayın, yerleşimleri çoğaltın veya kopyalayıp/yapıştırın ve ardından indirin."
     },
     "fill-pdf": {
-      "title": "Fill PDF form",
-      "description": "Fill AcroForm fields and download — processing stays in the browser."
+      "title": "PDF formunu doldurun",
+      "description": "AcroForm alanlarını doldurun ve indirin; işleme tarayıcıda kalır."
     },
     "flatten-pdf": {
-      "title": "Flatten PDF",
-      "description": "Flatten fillable forms or rasterize pages to images — client-side."
+      "title": "PDF'yi düzleştir",
+      "description": "Doldurulabilir formları düzleştirin veya sayfaları görüntülere göre rasterleştirin — istemci tarafında."
     },
     "unlock-pdf": {
-      "title": "Unlock PDF",
-      "description": "Remove password via your API (qpdf / Ghostscript when configured)."
+      "title": "PDF'nin kilidini aç",
+      "description": "API'niz aracılığıyla şifreyi kaldırın (yapılandırıldığında qpdf / Ghostscript)."
     },
     "encrypt-pdf": {
-      "title": "Encrypt PDF",
-      "description": "Password-protect with AES-256 (qpdf on the server)."
+      "title": "PDF'yi şifrele",
+      "description": "AES-256 (sunucuda qpdf) ile parolayla koruyun."
     },
     "add-watermark": {
-      "title": "Add Watermark",
-      "description": "Text or image watermark, page ranges, preview, then download."
+      "title": "Filigran Ekle",
+      "description": "Metin veya resim filigranı, sayfa aralıkları, önizleme ve ardından indirme."
     },
     "pdf-to-word": {
-      "title": "PDF to Word",
-      "description": "Draft .docx in your browser — PDF is not uploaded for conversion (use OCR PDF for scans first)."
+      "title": "PDF'den Word'e",
+      "description": "Tarayıcınızda .docx taslağı oluşturun — PDF, dönüştürme için yüklenmez (önce taramalar için OCR PDF'yi kullanın)."
     },
     "word-to-pdf": {
-      "title": "Word to PDF",
-      "description": "Draft PDF in your browser — .docx is not uploaded for conversion."
+      "title": "Word'den PDF'ye",
+      "description": "Tarayıcınızda PDF taslağı oluşturun — .docx dönüştürülmek üzere yüklenmez."
     },
     "gst-invoice": {
-      "title": "GST invoice PDF",
-      "description": "Supplier, buyer, HSN lines — download a tax invoice PDF in the browser."
+      "title": "GST faturası PDF'si",
+      "description": "Tedarikçi, alıcı, HSN hatları — tarayıcıdan vergi faturası PDF dosyasını indirin."
     }
   }
 }

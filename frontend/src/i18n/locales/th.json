@@ -1,219 +1,219 @@
 {
   "common": {
-    "loading": "Loading…",
-    "brandName": "pdfpilot",
-    "soon": "Soon",
-    "comingSoon": "Coming soon",
-    "close": "Close",
-    "cancel": "Cancel",
-    "openTool": "Open tool →",
-    "brandTagline": "Navigate your PDFs effortlessly",
-    "brandHeroLine": "Edit, compress, merge and manage PDFs instantly — PurPDF-grade clarity, speed, and trustworthy exports from pdfpilot."
+    "loading": "กำลังโหลด...",
+    "brandName": "pdfpilot.pdf",
+    "soon": "เร็วๆ นี้",
+    "comingSoon": "เร็วๆ นี้",
+    "close": "ปิด",
+    "cancel": "ยกเลิก",
+    "openTool": "เปิดเครื่องมือ →",
+    "brandTagline": "นำทาง PDF ของคุณได้อย่างง่ายดาย",
+    "brandHeroLine": "แก้ไข บีบอัด ผสาน และจัดการ PDF ได้ทันที — ความชัดเจน ระดับ PurPDF ความเร็ว และการส่งออกที่เชื่อถือได้จาก pdfpilot"
   },
   "header": {
-    "login": "Log in",
-    "signUp": "Sign up",
-    "accountAriaGuest": "Log in or sign up",
-    "accountAriaUser": "Account menu — saved PDFs from Edit PDF and other tools, sign out",
-    "signedInPrefix": "Signed in ·",
-    "allTools": "All tools",
-    "allToolsMenu": "All PDF tools",
-    "closeToolsMenu": "Close tools menu"
+    "login": "เข้าสู่ระบบ",
+    "signUp": "ลงทะเบียน",
+    "accountAriaGuest": "เข้าสู่ระบบหรือลงทะเบียน",
+    "accountAriaUser": "เมนูบัญชี — PDF ที่บันทึกไว้จากแก้ไข PDF และเครื่องมืออื่นๆ ออกจากระบบ",
+    "signedInPrefix": "ลงชื่อเข้าใช้แล้ว ·",
+    "allTools": "เครื่องมือทั้งหมด",
+    "allToolsMenu": "เครื่องมือ PDF ทั้งหมด",
+    "closeToolsMenu": "ปิดเมนูเครื่องมือ"
   },
   "appsMenu": {
-    "ariaLabel": "Site menu",
-    "pricing": "Pricing & plans",
-    "security": "Security & terms",
-    "features": "Features",
-    "about": "About",
-    "help": "Help & feedback",
-    "language": "Language",
-    "terms": "Terms of Service",
-    "back": "Back",
-    "chooseLanguage": "Choose language"
+    "ariaLabel": "เมนูเว็บไซต์",
+    "pricing": "ราคาและแผน",
+    "security": "ความปลอดภัยและเงื่อนไข",
+    "features": "คุณสมบัติ",
+    "about": "เกี่ยวกับ",
+    "help": "ความช่วยเหลือและข้อเสนอแนะ",
+    "language": "ภาษา",
+    "terms": "ข้อกำหนดในการให้บริการ",
+    "back": "กลับ",
+    "chooseLanguage": "เลือกภาษา"
   },
   "home": {
-    "chooseTool": "Choose a tool",
-    "searchPlaceholder": "Search tools (e.g. merge, scan, watermark)…",
-    "searchNoResults": "No tools match “{{query}}”. Try another word or clear the search.",
-    "searchShowing": "Showing {{n}} of {{total}} tools",
-    "footerProcessing": "Files are processed in your session. Need the raw API? See the project README for self-hosting on GitHub Pages.",
-    "ratingsNote": "Ratings and comments are shown only after real submissions."
+    "chooseTool": "เลือกเครื่องมือ",
+    "searchPlaceholder": "เครื่องมือค้นหา (เช่น ผสาน สแกน ลายน้ำ)...",
+    "searchNoResults": "ไม่มีเครื่องมือที่ตรงกับ “{{query}}” ลองคำอื่นหรือล้างการค้นหา",
+    "searchShowing": "กำลังแสดงเครื่องมือ {{n}} จาก {{total}} รายการ",
+    "footerProcessing": "ไฟล์ได้รับการประมวลผลในเซสชันของคุณ ต้องการ API ดิบหรือไม่ ดูโปรเจ็กต์ README สำหรับการโฮสต์ด้วยตนเองบนหน้า GitHub",
+    "ratingsNote": "การให้คะแนนและความคิดเห็นจะแสดงหลังจากส่งจริงเท่านั้น"
   },
   "hero": {
-    "title": "Edit and download PDFs instantly",
-    "subtitle": "Fast, simple, and secure PDF editing directly in your browser. No installs. No hassle.",
-    "ctaEdit": "Edit your PDF now",
-    "ctaSample": "Try sample PDF",
-    "signInBlurb": "Sign in or create an account to continue."
+    "title": "แก้ไขและดาวน์โหลดไฟล์ PDF ได้ทันที",
+    "subtitle": "การแก้ไข PDF ที่รวดเร็ว ง่ายดาย และปลอดภัยได้โดยตรงในเบราว์เซอร์ของคุณ ไม่มีการติดตั้ง ไม่มีความยุ่งยาก",
+    "ctaEdit": "แก้ไข PDF ของคุณทันที",
+    "ctaSample": "ลองตัวอย่าง PDF",
+    "signInBlurb": "ลงชื่อเข้าใช้หรือสร้างบัญชีเพื่อดำเนินการต่อ"
   },
   "footer": {
     "copyright": "© {{year}} pdfpilot",
-    "privacySoon": "Privacy",
-    "shareFeedback": "Share feedback",
-    "terms": "Terms of Service"
+    "privacySoon": "ความเป็นส่วนตัว",
+    "shareFeedback": "แบ่งปันความคิดเห็น",
+    "terms": "ข้อกำหนดในการให้บริการ"
   },
   "account": {
-    "signedInLabel": "Signed in",
-    "savedPdfsTitle": "Saved PDFs and edits",
-    "savedPdfsHint": "PDFs you changed in Edit PDF (and other tools) while signed in — open, download, or delete anytime.",
-    "subscriptionTitle": "Subscription & billing",
-    "subscriptionHint": "Plan, usage, Razorpay receipts",
-    "signOut": "Sign out",
-    "signingOut": "Signing out…"
+    "signedInLabel": "ลงชื่อเข้าใช้แล้ว",
+    "savedPdfsTitle": "PDF ที่บันทึกไว้และการแก้ไข",
+    "savedPdfsHint": "PDF ที่คุณเปลี่ยนแปลงในแก้ไข PDF (และเครื่องมืออื่นๆ) ขณะลงชื่อเข้าใช้ เปิด ดาวน์โหลด หรือลบได้ตลอดเวลา",
+    "subscriptionTitle": "การสมัครสมาชิกและการเรียกเก็บเงิน",
+    "subscriptionHint": "แผน การใช้งาน ใบเสร็จรับเงิน Razorpay",
+    "signOut": "ออกจากระบบ",
+    "signingOut": "กำลังออกจากระบบ..."
   },
   "auth": {
-    "signInTitle": "Sign in",
-    "signUpTitle": "Create an account",
-    "newUser": "New user?",
-    "createAccount": "Create an account",
-    "haveAccount": "Already have an account?",
-    "signInLink": "Sign in",
-    "continueGoogle": "Continue with Google",
-    "or": "Or",
-    "downloadBadge": "Download",
-    "downloadBlurb": "Sign in or create an account, then your file downloads automatically. You stay signed in on this device.",
-    "notNow": "Not now",
-    "closeAria": "Close",
-    "createAccountTab": "Create account",
-    "pleaseWait": "Please wait…",
-    "continue": "Continue",
-    "signInWithEmailButton": "Sign in with email",
-    "createAccountButton": "Create account",
-    "forgotPassword": "Forgot password?",
+    "signInTitle": "เข้าสู่ระบบ",
+    "signUpTitle": "สร้างบัญชี",
+    "newUser": "ผู้ใช้ใหม่?",
+    "createAccount": "สร้างบัญชี",
+    "haveAccount": "มีบัญชีอยู่แล้ว?",
+    "signInLink": "เข้าสู่ระบบ",
+    "continueGoogle": "ดำเนินการต่อด้วย Google",
+    "or": "หรือ",
+    "downloadBadge": "ดาวน์โหลด",
+    "downloadBlurb": "ลงชื่อเข้าใช้หรือสร้างบัญชี จากนั้นไฟล์ของคุณจะดาวน์โหลดโดยอัตโนมัติ คุณจะลงชื่อเข้าใช้อุปกรณ์นี้ต่อไป",
+    "notNow": "ไม่ใช่ตอนนี้",
+    "closeAria": "ปิด",
+    "createAccountTab": "สร้างบัญชี",
+    "pleaseWait": "โปรดรอ…",
+    "continue": "ดำเนินการต่อ",
+    "signInWithEmailButton": "เข้าสู่ระบบด้วยอีเมล",
+    "createAccountButton": "สร้างบัญชี",
+    "forgotPassword": "ลืมรหัสผ่าน?",
     "emailSection": {
-      "signUpWithEmail": "Sign up with email",
-      "signInWithEmail": "Sign in with email",
-      "emailPassword": "Email & password",
-      "pickTabHint": "Pick a tab, then complete the fields and tap Continue."
+      "signUpWithEmail": "ลงทะเบียนด้วยอีเมล",
+      "signInWithEmail": "เข้าสู่ระบบด้วยอีเมล",
+      "emailPassword": "อีเมลและรหัสผ่าน",
+      "pickTabHint": "เลือกแท็บ จากนั้นกรอกข้อมูลในช่องต่างๆ แล้วแตะดำเนินการต่อ"
     },
     "field": {
-      "firstName": "First name",
-      "lastName": "Last name",
-      "dob": "Date of birth",
-      "dobInfo": "Used for your account profile",
-      "birthMonth": "Birth month",
-      "year": "Year",
-      "birthYear": "Birth year",
-      "country": "Country/Region",
-      "email": "Email",
-      "password": "Password"
+      "firstName": "ชื่อ",
+      "lastName": "นามสกุล",
+      "dob": "วันเกิด",
+      "dobInfo": "ใช้สำหรับโปรไฟล์บัญชีของคุณ",
+      "birthMonth": "เดือนเกิด",
+      "year": "ปี",
+      "birthYear": "ปีเกิด",
+      "country": "ประเทศ/ภูมิภาค",
+      "email": "อีเมล",
+      "password": "รหัสผ่าน"
     },
     "reset": {
-      "blurb": "We will email you a link to choose a new password. After you reset it, return here and sign in with your new password.",
-      "sendLink": "Send reset link",
-      "backToSignIn": "Back to sign in"
+      "blurb": "เราจะส่งลิงก์ให้คุณทางอีเมลเพื่อเลือกรหัสผ่านใหม่ หลังจากที่คุณรีเซ็ตแล้ว ให้กลับมาที่นี่และลงชื่อเข้าใช้ด้วยรหัสผ่านใหม่ของคุณ",
+      "sendLink": "ส่งลิงค์รีเซ็ต",
+      "backToSignIn": "กลับไปลงชื่อเข้าใช้"
     },
     "errors": {
-      "emailPasswordRequired": "Enter email and password.",
-      "passwordMin": "Password must be at least 6 characters.",
-      "firstLastRequired": "Enter first and last name.",
-      "birthMonthRequired": "Select your month of birth.",
-      "birthYearInvalid": "Enter a valid 4-digit birth year.",
-      "birthYearRange": "Birth year must be between 1900 and {{max}}.",
-      "countryRequired": "Select your country or region.",
-      "resetEmailRequired": "Enter the email for your account.",
-      "emailInvalid": "That email address does not look valid."
+      "emailPasswordRequired": "กรอกอีเมลและรหัสผ่าน",
+      "passwordMin": "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร",
+      "firstLastRequired": "กรอกชื่อและนามสกุล",
+      "birthMonthRequired": "เลือกเดือนเกิดของคุณ",
+      "birthYearInvalid": "ป้อนปีเกิดที่ถูกต้องด้วยตัวเลข 4 หลัก",
+      "birthYearRange": "ปีเกิดต้องอยู่ระหว่าง 1900 ถึง {{max}}",
+      "countryRequired": "เลือกประเทศหรือภูมิภาคของคุณ",
+      "resetEmailRequired": "ป้อนอีเมลสำหรับบัญชีของคุณ",
+      "emailInvalid": "ที่อยู่อีเมลนั้นดูไม่ถูกต้อง"
     }
   },
   "nav": {
-    "groupOrganize": "Organize PDF",
-    "groupEdit": "Edit & sign",
-    "groupConvert": "Convert & export",
-    "groupSecurity": "Security"
+    "groupOrganize": "จัดระเบียบ PDF",
+    "groupEdit": "แก้ไขและลงนาม",
+    "groupConvert": "แปลงและส่งออก",
+    "groupSecurity": "ความปลอดภัย"
   },
   "megaFooter": {
-    "privacy": "Privacy-focused",
-    "easy": "Easy to use",
-    "fast": "Fast in your browser",
-    "termsAgree": "By using our tools you agree to the",
-    "termsLink": "Terms of Service",
-    "termsTail": ". Files are processed for your session; see the site footer for contact details."
+    "privacy": "เน้นความเป็นส่วนตัว",
+    "easy": "ใช้งานง่าย",
+    "fast": "รวดเร็วในเบราว์เซอร์ของคุณ",
+    "termsAgree": "การใช้เครื่องมือของเราแสดงว่าคุณยอมรับ",
+    "termsLink": "ข้อกำหนดในการให้บริการ",
+    "termsTail": ". ไฟล์ได้รับการประมวลผลสำหรับเซสชันของคุณ ดูส่วนท้ายของเว็บไซต์สำหรับรายละเอียดการติดต่อ"
   },
   "tool": {
     "edit-pdf": {
-      "title": "Edit PDF",
-      "description": "Change text, annotate, highlight, draw."
+      "title": "แก้ไข PDF",
+      "description": "เปลี่ยนข้อความ ใส่คำอธิบาย ไฮไลต์ วาด"
     },
     "ocr-pdf": {
-      "title": "OCR PDF",
-      "description": "Make scans searchable — needs your API (ocrmypdf + Tesseract on the server)."
+      "title": "โอซีอาร์ PDF",
+      "description": "ทำให้การสแกนสามารถค้นหาได้ — ต้องใช้ API ของคุณ (ocrmypdf + Tesseract บนเซิร์ฟเวอร์)"
     },
     "merge-pdf": {
-      "title": "Merge PDF",
-      "description": "Combine multiple PDFs into one file."
+      "title": "รวม PDF",
+      "description": "รวม PDF หลายไฟล์เป็นไฟล์เดียว"
     },
     "split-pdf": {
-      "title": "Split PDF",
-      "description": "Split by page ranges or extract every page."
+      "title": "แยก PDF",
+      "description": "แยกตามช่วงหน้าหรือแยกทุกหน้า"
     },
     "organize-pdf": {
-      "title": "Organize Pages",
-      "description": "Reorder, rotate, or delete pages, then download."
+      "title": "จัดระเบียบหน้า",
+      "description": "เรียงลำดับใหม่ หมุน หรือลบหน้า แล้วดาวน์โหลด"
     },
     "add-page-numbers": {
-      "title": "Add page numbers",
-      "description": "Stamp page numbers with placement, ranges, and formats — in your browser."
+      "title": "เพิ่มหมายเลขหน้า",
+      "description": "ประทับตราหมายเลขหน้าด้วยตำแหน่ง ช่วง และรูปแบบ — ในเบราว์เซอร์ของคุณ"
     },
     "compress-pdf": {
-      "title": "Compress PDF",
-      "description": "Tries your API (qpdf / Ghostscript); falls back to in-browser pdf-lib when the API is missing."
+      "title": "บีบอัด PDF",
+      "description": "ลองใช้ API ของคุณ (qpdf / Ghostscript); ย้อนกลับไปที่ pdf-lib ในเบราว์เซอร์เมื่อ API หายไป"
     },
     "pdf-to-jpg": {
-      "title": "PDF to JPG",
-      "description": "Export pages as JPEG. ZIP or single files."
+      "title": "PDF เป็น JPG",
+      "description": "ส่งออกหน้าเป็น JPEG ZIP หรือไฟล์เดียว"
     },
     "pdf-to-png": {
-      "title": "PDF to PNG",
-      "description": "Export pages as lossless PNG in a ZIP — all in your browser."
+      "title": "PDF เป็น PNG",
+      "description": "ส่งออกหน้าต่างๆ เป็น PNG แบบไม่สูญเสียข้อมูลในรูปแบบ ZIP — ทั้งหมดในเบราว์เซอร์ของคุณ"
     },
     "pdf-to-text": {
-      "title": "PDF to text",
-      "description": "Download plain .txt from selectable text (not for raw scans)."
+      "title": "PDF เป็นข้อความ",
+      "description": "ดาวน์โหลด .txt ธรรมดาจากข้อความที่เลือกได้ (ไม่ใช่สำหรับการสแกนแบบดิบ)"
     },
     "jpg-to-pdf": {
-      "title": "JPG to PDF",
-      "description": "Combine images. Drag to reorder."
+      "title": "JPG เป็น PDF",
+      "description": "รวมภาพ. ลากเพื่อเรียงลำดับใหม่"
     },
     "scan-to-pdf": {
-      "title": "Scan to PDF",
-      "description": "Camera or photos: trim, enhance, multi-page PDF."
+      "title": "สแกนเป็น PDF",
+      "description": "กล้องหรือภาพถ่าย: ตัดแต่ง ปรับปรุง PDF หลายหน้า"
     },
     "sign-pdf": {
-      "title": "Sign PDF",
-      "description": "Sign any page, duplicate or copy/paste placements, then download."
+      "title": "ลงชื่อ PDF",
+      "description": "ลงนามในหน้าใดๆ ทำซ้ำหรือคัดลอก/วางตำแหน่ง จากนั้นดาวน์โหลด"
     },
     "fill-pdf": {
-      "title": "Fill PDF form",
-      "description": "Fill AcroForm fields and download — processing stays in the browser."
+      "title": "กรอกแบบฟอร์ม PDF",
+      "description": "กรอกข้อมูลในช่อง AcroForm และดาวน์โหลด — การประมวลผลจะยังคงอยู่ในเบราว์เซอร์"
     },
     "flatten-pdf": {
-      "title": "Flatten PDF",
-      "description": "Flatten fillable forms or rasterize pages to images — client-side."
+      "title": "แผ่ PDF",
+      "description": "ทำให้ฟอร์มที่กรอกได้เรียบหรือแรสเตอร์เพจเป็นรูปภาพ — ฝั่งไคลเอ็นต์"
     },
     "unlock-pdf": {
-      "title": "Unlock PDF",
-      "description": "Remove password via your API (qpdf / Ghostscript when configured)."
+      "title": "ปลดล็อค PDF",
+      "description": "ลบรหัสผ่านผ่าน API ของคุณ (qpdf / Ghostscript เมื่อกำหนดค่า)"
     },
     "encrypt-pdf": {
-      "title": "Encrypt PDF",
-      "description": "Password-protect with AES-256 (qpdf on the server)."
+      "title": "เข้ารหัส PDF",
+      "description": "ป้องกันด้วยรหัสผ่านด้วย AES-256 (qpdf บนเซิร์ฟเวอร์)"
     },
     "add-watermark": {
-      "title": "Add Watermark",
-      "description": "Text or image watermark, page ranges, preview, then download."
+      "title": "เพิ่มลายน้ำ",
+      "description": "ลายน้ำข้อความหรือรูปภาพ ช่วงหน้า ดูตัวอย่าง จากนั้นดาวน์โหลด"
     },
     "pdf-to-word": {
-      "title": "PDF to Word",
-      "description": "Draft .docx in your browser — PDF is not uploaded for conversion (use OCR PDF for scans first)."
+      "title": "PDF เป็น Word",
+      "description": "ร่าง .docx ในเบราว์เซอร์ของคุณ — ไม่ได้อัปโหลด PDF สำหรับการแปลง (ใช้ OCR PDF เพื่อสแกนก่อน)"
     },
     "word-to-pdf": {
-      "title": "Word to PDF",
-      "description": "Draft PDF in your browser — .docx is not uploaded for conversion."
+      "title": "คำเป็น PDF",
+      "description": "ร่าง PDF ในเบราว์เซอร์ของคุณ — .docx ไม่ได้อัปโหลดสำหรับการแปลง"
     },
     "gst-invoice": {
-      "title": "GST invoice PDF",
-      "description": "Supplier, buyer, HSN lines — download a tax invoice PDF in the browser."
+      "title": "ใบแจ้งหนี้ GST PDF",
+      "description": "ซัพพลายเออร์ ผู้ซื้อ บรรทัด HSN — ดาวน์โหลดไฟล์ PDF ใบกำกับภาษีในเบราว์เซอร์"
     }
   }
 }

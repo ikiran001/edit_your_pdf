@@ -1,219 +1,219 @@
 {
   "common": {
-    "loading": "Loading…",
-    "brandName": "pdfpilot",
-    "soon": "Soon",
-    "comingSoon": "Coming soon",
-    "close": "Close",
-    "cancel": "Cancel",
-    "openTool": "Open tool →",
-    "brandTagline": "Navigate your PDFs effortlessly",
-    "brandHeroLine": "Edit, compress, merge and manage PDFs instantly — PurPDF-grade clarity, speed, and trustworthy exports from pdfpilot."
+    "loading": "読み込み中…",
+    "brandName": "pdfパイロット",
+    "soon": "すぐ",
+    "comingSoon": "近日公開",
+    "close": "近い",
+    "cancel": "キャンセル",
+    "openTool": "ツールを開く →",
+    "brandTagline": "PDF を簡単に操作できます",
+    "brandHeroLine": "PDF を即座に編集、圧縮、マージ、管理できます。PurPDF グレードの明瞭さ、速度、信頼性の高い pdfpilot からのエクスポートが可能です。"
   },
   "header": {
-    "login": "Log in",
-    "signUp": "Sign up",
-    "accountAriaGuest": "Log in or sign up",
-    "accountAriaUser": "Account menu — saved PDFs from Edit PDF and other tools, sign out",
-    "signedInPrefix": "Signed in ·",
-    "allTools": "All tools",
-    "allToolsMenu": "All PDF tools",
-    "closeToolsMenu": "Close tools menu"
+    "login": "ログイン",
+    "signUp": "サインアップ",
+    "accountAriaGuest": "ログインまたはサインアップ",
+    "accountAriaUser": "アカウント メニュー — PDF の編集およびその他のツールから保存した PDF、サインアウト",
+    "signedInPrefix": "サインインしました ·",
+    "allTools": "すべてのツール",
+    "allToolsMenu": "すべての PDF ツール",
+    "closeToolsMenu": "ツールメニューを閉じる"
   },
   "appsMenu": {
-    "ariaLabel": "Site menu",
-    "pricing": "Pricing & plans",
-    "security": "Security & terms",
-    "features": "Features",
-    "about": "About",
-    "help": "Help & feedback",
-    "language": "Language",
-    "terms": "Terms of Service",
-    "back": "Back",
-    "chooseLanguage": "Choose language"
+    "ariaLabel": "サイトメニュー",
+    "pricing": "料金とプラン",
+    "security": "セキュリティと規約",
+    "features": "特徴",
+    "about": "について",
+    "help": "ヘルプとフィードバック",
+    "language": "言語",
+    "terms": "利用規約",
+    "back": "戻る",
+    "chooseLanguage": "言語を選択してください"
   },
   "home": {
-    "chooseTool": "Choose a tool",
-    "searchPlaceholder": "Search tools (e.g. merge, scan, watermark)…",
-    "searchNoResults": "No tools match “{{query}}”. Try another word or clear the search.",
-    "searchShowing": "Showing {{n}} of {{total}} tools",
-    "footerProcessing": "Files are processed in your session. Need the raw API? See the project README for self-hosting on GitHub Pages.",
-    "ratingsNote": "Ratings and comments are shown only after real submissions."
+    "chooseTool": "ツールを選択してください",
+    "searchPlaceholder": "検索ツール (マージ、スキャン、ウォーターマークなど)…",
+    "searchNoResults": "「{{query}}」に一致するツールはありません。別の単語を試すか、検索をクリアしてください。",
+    "searchShowing": "{{total}} 個中 {{n}} 個のツールを表示しています",
+    "footerProcessing": "ファイルはセッション内で処理されます。生の API が必要ですか? GitHub Pages のセルフホスティングに関するプロジェクトの README を参照してください。",
+    "ratingsNote": "評価とコメントは、実際に投稿された後にのみ表示されます。"
   },
   "hero": {
-    "title": "Edit and download PDFs instantly",
-    "subtitle": "Fast, simple, and secure PDF editing directly in your browser. No installs. No hassle.",
-    "ctaEdit": "Edit your PDF now",
-    "ctaSample": "Try sample PDF",
-    "signInBlurb": "Sign in or create an account to continue."
+    "title": "PDFを即座に編集してダウンロード",
+    "subtitle": "ブラウザで直接、高速、シンプル、安全な PDF 編集が可能です。インストールはありません。面倒なことはありません。",
+    "ctaEdit": "今すぐ PDF を編集してください",
+    "ctaSample": "サンプルPDFを試してみる",
+    "signInBlurb": "続行するには、サインインするかアカウントを作成してください。"
   },
   "footer": {
-    "copyright": "© {{year}} pdfpilot",
-    "privacySoon": "Privacy",
-    "shareFeedback": "Share feedback",
-    "terms": "Terms of Service"
+    "copyright": "© {{年}} pdfpilot",
+    "privacySoon": "プライバシー",
+    "shareFeedback": "フィードバックを共有する",
+    "terms": "利用規約"
   },
   "account": {
-    "signedInLabel": "Signed in",
-    "savedPdfsTitle": "Saved PDFs and edits",
-    "savedPdfsHint": "PDFs you changed in Edit PDF (and other tools) while signed in — open, download, or delete anytime.",
-    "subscriptionTitle": "Subscription & billing",
-    "subscriptionHint": "Plan, usage, Razorpay receipts",
-    "signOut": "Sign out",
-    "signingOut": "Signing out…"
+    "signedInLabel": "サインインしました",
+    "savedPdfsTitle": "保存された PDF と編集内容",
+    "savedPdfsHint": "サインイン中に PDF の編集 (およびその他のツール) で変更した PDF - いつでも開いたり、ダウンロードしたり、削除したりできます。",
+    "subscriptionTitle": "サブスクリプションと請求",
+    "subscriptionHint": "プラン、使用状況、Razorpay の領収書",
+    "signOut": "サインアウト",
+    "signingOut": "サインアウト中…"
   },
   "auth": {
-    "signInTitle": "Sign in",
-    "signUpTitle": "Create an account",
-    "newUser": "New user?",
-    "createAccount": "Create an account",
-    "haveAccount": "Already have an account?",
-    "signInLink": "Sign in",
-    "continueGoogle": "Continue with Google",
-    "or": "Or",
-    "downloadBadge": "Download",
-    "downloadBlurb": "Sign in or create an account, then your file downloads automatically. You stay signed in on this device.",
-    "notNow": "Not now",
-    "closeAria": "Close",
-    "createAccountTab": "Create account",
-    "pleaseWait": "Please wait…",
-    "continue": "Continue",
-    "signInWithEmailButton": "Sign in with email",
-    "createAccountButton": "Create account",
-    "forgotPassword": "Forgot password?",
+    "signInTitle": "サインイン",
+    "signUpTitle": "アカウントを作成する",
+    "newUser": "新しいユーザーですか？",
+    "createAccount": "アカウントを作成する",
+    "haveAccount": "すでにアカウントをお持ちですか?",
+    "signInLink": "サインイン",
+    "continueGoogle": "Google を続ける",
+    "or": "または",
+    "downloadBadge": "ダウンロード",
+    "downloadBlurb": "サインインするかアカウントを作成すると、ファイルが自動的にダウンロードされます。このデバイスではサインインしたままになります。",
+    "notNow": "今じゃない",
+    "closeAria": "近い",
+    "createAccountTab": "アカウントを作成する",
+    "pleaseWait": "お待ちください…",
+    "continue": "続く",
+    "signInWithEmailButton": "電子メールでサインインする",
+    "createAccountButton": "アカウントを作成する",
+    "forgotPassword": "パスワードをお忘れですか？",
     "emailSection": {
-      "signUpWithEmail": "Sign up with email",
-      "signInWithEmail": "Sign in with email",
-      "emailPassword": "Email & password",
-      "pickTabHint": "Pick a tab, then complete the fields and tap Continue."
+      "signUpWithEmail": "メールで登録する",
+      "signInWithEmail": "電子メールでサインインする",
+      "emailPassword": "メールアドレスとパスワード",
+      "pickTabHint": "タブを選択し、フィールドに入力して「続行」をタップします。"
     },
     "field": {
-      "firstName": "First name",
-      "lastName": "Last name",
-      "dob": "Date of birth",
-      "dobInfo": "Used for your account profile",
-      "birthMonth": "Birth month",
-      "year": "Year",
-      "birthYear": "Birth year",
-      "country": "Country/Region",
-      "email": "Email",
-      "password": "Password"
+      "firstName": "ファーストネーム",
+      "lastName": "苗字",
+      "dob": "生年月日",
+      "dobInfo": "アカウントのプロフィールに使用されます",
+      "birthMonth": "誕生月",
+      "year": "年",
+      "birthYear": "誕生年",
+      "country": "国/地域",
+      "email": "電子メール",
+      "password": "パスワード"
     },
     "reset": {
-      "blurb": "We will email you a link to choose a new password. After you reset it, return here and sign in with your new password.",
-      "sendLink": "Send reset link",
-      "backToSignIn": "Back to sign in"
+      "blurb": "新しいパスワードを選択するためのリンクをメールでお送りします。リセットしたら、ここに戻り、新しいパスワードでサインインします。",
+      "sendLink": "リセットリンクを送信する",
+      "backToSignIn": "サインインに戻る"
     },
     "errors": {
-      "emailPasswordRequired": "Enter email and password.",
-      "passwordMin": "Password must be at least 6 characters.",
-      "firstLastRequired": "Enter first and last name.",
-      "birthMonthRequired": "Select your month of birth.",
-      "birthYearInvalid": "Enter a valid 4-digit birth year.",
-      "birthYearRange": "Birth year must be between 1900 and {{max}}.",
-      "countryRequired": "Select your country or region.",
-      "resetEmailRequired": "Enter the email for your account.",
-      "emailInvalid": "That email address does not look valid."
+      "emailPasswordRequired": "メールアドレスとパスワードを入力してください。",
+      "passwordMin": "パスワードは6文字以上である必要があります。",
+      "firstLastRequired": "姓と名を入力します。",
+      "birthMonthRequired": "誕生月を選択してください。",
+      "birthYearInvalid": "有効な 4 桁の誕生年を入力してください。",
+      "birthYearRange": "誕生年は 1900 年から {{max}} までの間である必要があります。",
+      "countryRequired": "国または地域を選択してください。",
+      "resetEmailRequired": "アカウントのメールアドレスを入力します。",
+      "emailInvalid": "その電子メール アドレスは有効ではないようです。"
     }
   },
   "nav": {
-    "groupOrganize": "Organize PDF",
-    "groupEdit": "Edit & sign",
-    "groupConvert": "Convert & export",
-    "groupSecurity": "Security"
+    "groupOrganize": "PDFを整理する",
+    "groupEdit": "編集して署名する",
+    "groupConvert": "変換とエクスポート",
+    "groupSecurity": "安全"
   },
   "megaFooter": {
-    "privacy": "Privacy-focused",
-    "easy": "Easy to use",
-    "fast": "Fast in your browser",
-    "termsAgree": "By using our tools you agree to the",
-    "termsLink": "Terms of Service",
-    "termsTail": ". Files are processed for your session; see the site footer for contact details."
+    "privacy": "プライバシー重視",
+    "easy": "使いやすい",
+    "fast": "ブラウザで高速に動作",
+    "termsAgree": "当社のツールを使用すると、次のことに同意したことになります。",
+    "termsLink": "利用規約",
+    "termsTail": "。ファイルはセッションのために処理されます。連絡先の詳細については、サイトのフッターを参照してください。"
   },
   "tool": {
     "edit-pdf": {
-      "title": "Edit PDF",
-      "description": "Change text, annotate, highlight, draw."
+      "title": "PDFの編集",
+      "description": "テキストを変更し、注釈を付け、ハイライトし、描画します。"
     },
     "ocr-pdf": {
       "title": "OCR PDF",
-      "description": "Make scans searchable — needs your API (ocrmypdf + Tesseract on the server)."
+      "description": "スキャンを検索可能にする — API (サーバー上の ocrmypdf + Tesseract) が必要です。"
     },
     "merge-pdf": {
-      "title": "Merge PDF",
-      "description": "Combine multiple PDFs into one file."
+      "title": "PDFを結合",
+      "description": "複数の PDF を 1 つのファイルに結合します。"
     },
     "split-pdf": {
-      "title": "Split PDF",
-      "description": "Split by page ranges or extract every page."
+      "title": "PDFの分割",
+      "description": "ページ範囲ごとに分割するか、すべてのページを抽出します。"
     },
     "organize-pdf": {
-      "title": "Organize Pages",
-      "description": "Reorder, rotate, or delete pages, then download."
+      "title": "ページを整理する",
+      "description": "ページの並べ替え、回転、削除を行ってからダウンロードします。"
     },
     "add-page-numbers": {
-      "title": "Add page numbers",
-      "description": "Stamp page numbers with placement, ranges, and formats — in your browser."
+      "title": "ページ番号を追加する",
+      "description": "ブラウザで、配置、範囲、形式を使用してページ番号をスタンプします。"
     },
     "compress-pdf": {
-      "title": "Compress PDF",
-      "description": "Tries your API (qpdf / Ghostscript); falls back to in-browser pdf-lib when the API is missing."
+      "title": "PDFを圧縮する",
+      "description": "API (qpdf / Ghostscript) を試します。 API が見つからない場合は、ブラウザー内の pdf-lib にフォールバックします。"
     },
     "pdf-to-jpg": {
-      "title": "PDF to JPG",
-      "description": "Export pages as JPEG. ZIP or single files."
+      "title": "PDFからJPGへ",
+      "description": "ページを JPEG としてエクスポートします。 ZIP または単一ファイル。"
     },
     "pdf-to-png": {
-      "title": "PDF to PNG",
-      "description": "Export pages as lossless PNG in a ZIP — all in your browser."
+      "title": "PDFからPNGへ",
+      "description": "ページをロスレス PNG として ZIP 形式でエクスポートします。すべてブラウザ内で実行できます。"
     },
     "pdf-to-text": {
-      "title": "PDF to text",
-      "description": "Download plain .txt from selectable text (not for raw scans)."
+      "title": "PDFからテキストへ",
+      "description": "選択可能なテキストからプレーン .txt をダウンロードします (未加工のスキャンではありません)。"
     },
     "jpg-to-pdf": {
-      "title": "JPG to PDF",
-      "description": "Combine images. Drag to reorder."
+      "title": "JPGからPDFへ",
+      "description": "画像を結合します。ドラッグして並べ替えます。"
     },
     "scan-to-pdf": {
-      "title": "Scan to PDF",
-      "description": "Camera or photos: trim, enhance, multi-page PDF."
+      "title": "スキャンして PDF に保存",
+      "description": "カメラまたは写真: トリミング、強化、複数ページの PDF。"
     },
     "sign-pdf": {
-      "title": "Sign PDF",
-      "description": "Sign any page, duplicate or copy/paste placements, then download."
+      "title": "PDFに署名",
+      "description": "任意のページに署名し、プレースメントを複製またはコピー/ペーストしてダウンロードします。"
     },
     "fill-pdf": {
-      "title": "Fill PDF form",
-      "description": "Fill AcroForm fields and download — processing stays in the browser."
+      "title": "PDF フォームに記入",
+      "description": "AcroForm フィールドに入力してダウンロードします。処理はブラウザ内で行われます。"
     },
     "flatten-pdf": {
-      "title": "Flatten PDF",
-      "description": "Flatten fillable forms or rasterize pages to images — client-side."
+      "title": "PDF を平坦化する",
+      "description": "クライアント側で、入力可能なフォームを平坦化するか、ページを画像にラスタライズします。"
     },
     "unlock-pdf": {
-      "title": "Unlock PDF",
-      "description": "Remove password via your API (qpdf / Ghostscript when configured)."
+      "title": "PDFのロックを解除する",
+      "description": "API (構成されている場合は qpdf / Ghostscript) 経由でパスワードを削除します。"
     },
     "encrypt-pdf": {
-      "title": "Encrypt PDF",
-      "description": "Password-protect with AES-256 (qpdf on the server)."
+      "title": "PDFを暗号化する",
+      "description": "AES-256 (サーバー上の qpdf) でパスワード保護します。"
     },
     "add-watermark": {
-      "title": "Add Watermark",
-      "description": "Text or image watermark, page ranges, preview, then download."
+      "title": "透かしを追加する",
+      "description": "テキストまたは画像の透かし、ページ範囲、プレビュー、ダウンロード。"
     },
     "pdf-to-word": {
-      "title": "PDF to Word",
-      "description": "Draft .docx in your browser — PDF is not uploaded for conversion (use OCR PDF for scans first)."
+      "title": "PDFからWordへ",
+      "description": "ブラウザで .docx をドラフトします — PDF は変換用にアップロードされません (最初にスキャンには OCR PDF を使用してください)。"
     },
     "word-to-pdf": {
-      "title": "Word to PDF",
-      "description": "Draft PDF in your browser — .docx is not uploaded for conversion."
+      "title": "WordからPDFへ",
+      "description": "ブラウザでのドラフト PDF — .docx は変換のためにアップロードされません。"
     },
     "gst-invoice": {
-      "title": "GST invoice PDF",
-      "description": "Supplier, buyer, HSN lines — download a tax invoice PDF in the browser."
+      "title": "GST請求書のPDF",
+      "description": "サプライヤー、バイヤー、HSN 行 - ブラウザーで税請求書の PDF をダウンロードします。"
     }
   }
 }

@@ -1,219 +1,219 @@
 {
   "common": {
-    "loading": "Loading…",
+    "loading": "Załadunek…",
     "brandName": "pdfpilot",
-    "soon": "Soon",
-    "comingSoon": "Coming soon",
-    "close": "Close",
-    "cancel": "Cancel",
-    "openTool": "Open tool →",
-    "brandTagline": "Navigate your PDFs effortlessly",
-    "brandHeroLine": "Edit, compress, merge and manage PDFs instantly — PurPDF-grade clarity, speed, and trustworthy exports from pdfpilot."
+    "soon": "Wkrótce",
+    "comingSoon": "Już wkrótce",
+    "close": "Zamknąć",
+    "cancel": "Anulować",
+    "openTool": "Otwórz narzędzie →",
+    "brandTagline": "Nawiguj w plikach PDF bez wysiłku",
+    "brandHeroLine": "Błyskawicznie edytuj, kompresuj, łącz i zarządzaj plikami PDF — przejrzystość, szybkość i godny zaufania eksport na poziomie PurPDF z pdfpilot."
   },
   "header": {
-    "login": "Log in",
-    "signUp": "Sign up",
-    "accountAriaGuest": "Log in or sign up",
-    "accountAriaUser": "Account menu — saved PDFs from Edit PDF and other tools, sign out",
-    "signedInPrefix": "Signed in ·",
-    "allTools": "All tools",
-    "allToolsMenu": "All PDF tools",
-    "closeToolsMenu": "Close tools menu"
+    "login": "Zaloguj się",
+    "signUp": "Zapisać się",
+    "accountAriaGuest": "Zaloguj się lub zarejestruj",
+    "accountAriaUser": "Menu Konto — zapisane pliki PDF z Edytuj PDF i innych narzędzi, wyloguj się",
+    "signedInPrefix": "Zalogowano ·",
+    "allTools": "Wszystkie narzędzia",
+    "allToolsMenu": "Wszystkie narzędzia PDF",
+    "closeToolsMenu": "Zamknij menu narzędzi"
   },
   "appsMenu": {
-    "ariaLabel": "Site menu",
-    "pricing": "Pricing & plans",
-    "security": "Security & terms",
-    "features": "Features",
-    "about": "About",
-    "help": "Help & feedback",
-    "language": "Language",
-    "terms": "Terms of Service",
-    "back": "Back",
-    "chooseLanguage": "Choose language"
+    "ariaLabel": "Menu witryny",
+    "pricing": "Ceny i plany",
+    "security": "Bezpieczeństwo i warunki",
+    "features": "Cechy",
+    "about": "O",
+    "help": "Pomoc i opinie",
+    "language": "Język",
+    "terms": "Warunki świadczenia usług",
+    "back": "Z powrotem",
+    "chooseLanguage": "Wybierz język"
   },
   "home": {
-    "chooseTool": "Choose a tool",
-    "searchPlaceholder": "Search tools (e.g. merge, scan, watermark)…",
-    "searchNoResults": "No tools match “{{query}}”. Try another word or clear the search.",
-    "searchShowing": "Showing {{n}} of {{total}} tools",
-    "footerProcessing": "Files are processed in your session. Need the raw API? See the project README for self-hosting on GitHub Pages.",
-    "ratingsNote": "Ratings and comments are shown only after real submissions."
+    "chooseTool": "Wybierz narzędzie",
+    "searchPlaceholder": "Narzędzia wyszukiwania (np. scalanie, skanowanie, znak wodny)…",
+    "searchNoResults": "Żadne narzędzia nie pasują do „{{query}}”. Spróbuj innego słowa lub wyczyść wyszukiwanie.",
+    "searchShowing": "Wyświetlanie {{n}} z {{total}} narzędzi",
+    "footerProcessing": "Pliki są przetwarzane w ramach Twojej sesji. Potrzebujesz surowego API? Zobacz plik README projektu dotyczący samodzielnego hostowania na stronach GitHub.",
+    "ratingsNote": "Oceny i komentarze są wyświetlane dopiero po prawdziwych zgłoszeniach."
   },
   "hero": {
-    "title": "Edit and download PDFs instantly",
-    "subtitle": "Fast, simple, and secure PDF editing directly in your browser. No installs. No hassle.",
-    "ctaEdit": "Edit your PDF now",
-    "ctaSample": "Try sample PDF",
-    "signInBlurb": "Sign in or create an account to continue."
+    "title": "Natychmiast edytuj i pobieraj pliki PDF",
+    "subtitle": "Szybka, prosta i bezpieczna edycja plików PDF bezpośrednio w przeglądarce. Brak instalacji. Żaden problem.",
+    "ctaEdit": "Edytuj teraz swój plik PDF",
+    "ctaSample": "Wypróbuj przykładowy plik PDF",
+    "signInBlurb": "Zaloguj się lub utwórz konto, aby kontynuować."
   },
   "footer": {
     "copyright": "© {{year}} pdfpilot",
-    "privacySoon": "Privacy",
-    "shareFeedback": "Share feedback",
-    "terms": "Terms of Service"
+    "privacySoon": "Prywatność",
+    "shareFeedback": "Podziel się opinią",
+    "terms": "Warunki świadczenia usług"
   },
   "account": {
-    "signedInLabel": "Signed in",
-    "savedPdfsTitle": "Saved PDFs and edits",
-    "savedPdfsHint": "PDFs you changed in Edit PDF (and other tools) while signed in — open, download, or delete anytime.",
-    "subscriptionTitle": "Subscription & billing",
-    "subscriptionHint": "Plan, usage, Razorpay receipts",
-    "signOut": "Sign out",
-    "signingOut": "Signing out…"
+    "signedInLabel": "Zalogowano",
+    "savedPdfsTitle": "Zapisane pliki PDF i zmiany",
+    "savedPdfsHint": "Pliki PDF zmienione w Edytuj plik PDF (i innych narzędziach) po zalogowaniu się — otwieraj, pobieraj lub usuwaj w dowolnym momencie.",
+    "subscriptionTitle": "Subskrypcja i rozliczenia",
+    "subscriptionHint": "Plan, wykorzystanie, rachunki Razorpay",
+    "signOut": "Wyloguj się",
+    "signingOut": "Wylogowuję się…"
   },
   "auth": {
-    "signInTitle": "Sign in",
-    "signUpTitle": "Create an account",
-    "newUser": "New user?",
-    "createAccount": "Create an account",
-    "haveAccount": "Already have an account?",
-    "signInLink": "Sign in",
-    "continueGoogle": "Continue with Google",
-    "or": "Or",
-    "downloadBadge": "Download",
-    "downloadBlurb": "Sign in or create an account, then your file downloads automatically. You stay signed in on this device.",
-    "notNow": "Not now",
-    "closeAria": "Close",
-    "createAccountTab": "Create account",
-    "pleaseWait": "Please wait…",
-    "continue": "Continue",
-    "signInWithEmailButton": "Sign in with email",
-    "createAccountButton": "Create account",
-    "forgotPassword": "Forgot password?",
+    "signInTitle": "Zalogować się",
+    "signUpTitle": "Utwórz konto",
+    "newUser": "Nowy użytkownik?",
+    "createAccount": "Utwórz konto",
+    "haveAccount": "Masz już konto?",
+    "signInLink": "Zalogować się",
+    "continueGoogle": "Kontynuuj z Google",
+    "or": "Lub",
+    "downloadBadge": "Pobierać",
+    "downloadBlurb": "Zaloguj się lub utwórz konto, a plik zostanie pobrany automatycznie. Pozostaniesz zalogowany na tym urządzeniu.",
+    "notNow": "Nie teraz",
+    "closeAria": "Zamknąć",
+    "createAccountTab": "Utwórz konto",
+    "pleaseWait": "Proszę czekać…",
+    "continue": "Kontynuować",
+    "signInWithEmailButton": "Zaloguj się za pomocą e-maila",
+    "createAccountButton": "Utwórz konto",
+    "forgotPassword": "Zapomniałeś hasła?",
     "emailSection": {
-      "signUpWithEmail": "Sign up with email",
-      "signInWithEmail": "Sign in with email",
-      "emailPassword": "Email & password",
-      "pickTabHint": "Pick a tab, then complete the fields and tap Continue."
+      "signUpWithEmail": "Zarejestruj się za pomocą e-maila",
+      "signInWithEmail": "Zaloguj się za pomocą e-maila",
+      "emailPassword": "E-mail i hasło",
+      "pickTabHint": "Wybierz kartę, wypełnij pola i dotknij Kontynuuj."
     },
     "field": {
-      "firstName": "First name",
-      "lastName": "Last name",
-      "dob": "Date of birth",
-      "dobInfo": "Used for your account profile",
-      "birthMonth": "Birth month",
-      "year": "Year",
-      "birthYear": "Birth year",
-      "country": "Country/Region",
-      "email": "Email",
-      "password": "Password"
+      "firstName": "Imię",
+      "lastName": "Nazwisko",
+      "dob": "Data urodzenia",
+      "dobInfo": "Używany w profilu Twojego konta",
+      "birthMonth": "Miesiąc urodzenia",
+      "year": "Rok",
+      "birthYear": "Rok urodzenia",
+      "country": "Kraj/region",
+      "email": "E-mail",
+      "password": "Hasło"
     },
     "reset": {
-      "blurb": "We will email you a link to choose a new password. After you reset it, return here and sign in with your new password.",
-      "sendLink": "Send reset link",
-      "backToSignIn": "Back to sign in"
+      "blurb": "Wyślemy Ci e-mail z linkiem umożliwiającym wybranie nowego hasła. Po zresetowaniu wróć tutaj i zaloguj się przy użyciu nowego hasła.",
+      "sendLink": "Wyślij link resetujący",
+      "backToSignIn": "Wróć do logowania"
     },
     "errors": {
-      "emailPasswordRequired": "Enter email and password.",
-      "passwordMin": "Password must be at least 6 characters.",
-      "firstLastRequired": "Enter first and last name.",
-      "birthMonthRequired": "Select your month of birth.",
-      "birthYearInvalid": "Enter a valid 4-digit birth year.",
-      "birthYearRange": "Birth year must be between 1900 and {{max}}.",
-      "countryRequired": "Select your country or region.",
-      "resetEmailRequired": "Enter the email for your account.",
-      "emailInvalid": "That email address does not look valid."
+      "emailPasswordRequired": "Wpisz adres e-mail i hasło.",
+      "passwordMin": "Hasło musi mieć co najmniej 6 znaków.",
+      "firstLastRequired": "Wpisz imię i nazwisko.",
+      "birthMonthRequired": "Wybierz miesiąc urodzenia.",
+      "birthYearInvalid": "Wprowadź prawidłowy 4-cyfrowy rok urodzenia.",
+      "birthYearRange": "Rok urodzenia musi mieścić się w przedziale od 1900 do {{max}}.",
+      "countryRequired": "Wybierz swój kraj lub region.",
+      "resetEmailRequired": "Wpisz adres e-mail swojego konta.",
+      "emailInvalid": "Ten adres e-mail nie wygląda na prawidłowy."
     }
   },
   "nav": {
-    "groupOrganize": "Organize PDF",
-    "groupEdit": "Edit & sign",
-    "groupConvert": "Convert & export",
-    "groupSecurity": "Security"
+    "groupOrganize": "Organizuj pliki PDF",
+    "groupEdit": "Edytuj i podpisz",
+    "groupConvert": "Konwertuj i eksportuj",
+    "groupSecurity": "Bezpieczeństwo"
   },
   "megaFooter": {
-    "privacy": "Privacy-focused",
-    "easy": "Easy to use",
-    "fast": "Fast in your browser",
-    "termsAgree": "By using our tools you agree to the",
-    "termsLink": "Terms of Service",
-    "termsTail": ". Files are processed for your session; see the site footer for contact details."
+    "privacy": "Skoncentrowany na prywatności",
+    "easy": "Łatwy w użyciu",
+    "fast": "Szybko w Twojej przeglądarce",
+    "termsAgree": "Korzystając z naszych narzędzi, wyrażasz zgodę na",
+    "termsLink": "Warunki świadczenia usług",
+    "termsTail": ". Pliki są przetwarzane na potrzeby Twojej sesji; dane kontaktowe znajdziesz w stopce witryny."
   },
   "tool": {
     "edit-pdf": {
-      "title": "Edit PDF",
-      "description": "Change text, annotate, highlight, draw."
+      "title": "Edytuj PDF",
+      "description": "Zmień tekst, dodawaj adnotacje, zaznaczaj, rysuj."
     },
     "ocr-pdf": {
-      "title": "OCR PDF",
-      "description": "Make scans searchable — needs your API (ocrmypdf + Tesseract on the server)."
+      "title": "PDF-OCR",
+      "description": "Możliwość wyszukiwania skanów — wymaga API (ocrmypdf + Tesseract na serwerze)."
     },
     "merge-pdf": {
-      "title": "Merge PDF",
-      "description": "Combine multiple PDFs into one file."
+      "title": "Połącz PDF",
+      "description": "Połącz wiele plików PDF w jeden plik."
     },
     "split-pdf": {
-      "title": "Split PDF",
-      "description": "Split by page ranges or extract every page."
+      "title": "Podziel plik PDF",
+      "description": "Podziel według zakresów stron lub wyodrębnij każdą stronę."
     },
     "organize-pdf": {
-      "title": "Organize Pages",
-      "description": "Reorder, rotate, or delete pages, then download."
+      "title": "Organizuj strony",
+      "description": "Zmień kolejność, obróć lub usuń strony, a następnie pobierz."
     },
     "add-page-numbers": {
-      "title": "Add page numbers",
-      "description": "Stamp page numbers with placement, ranges, and formats — in your browser."
+      "title": "Dodaj numery stron",
+      "description": "Oznacz numery stron wraz z rozmieszczeniem, zakresami i formatami – w swojej przeglądarce."
     },
     "compress-pdf": {
-      "title": "Compress PDF",
-      "description": "Tries your API (qpdf / Ghostscript); falls back to in-browser pdf-lib when the API is missing."
+      "title": "Kompresuj PDF",
+      "description": "Próbuje twojego API (qpdf / Ghostscript); w przypadku braku interfejsu API powraca do pdf-lib w przeglądarce."
     },
     "pdf-to-jpg": {
-      "title": "PDF to JPG",
-      "description": "Export pages as JPEG. ZIP or single files."
+      "title": "PDF do JPG",
+      "description": "Eksportuj strony jako JPEG. ZIP lub pojedyncze pliki."
     },
     "pdf-to-png": {
-      "title": "PDF to PNG",
-      "description": "Export pages as lossless PNG in a ZIP — all in your browser."
+      "title": "PDF do PNG",
+      "description": "Eksportuj strony jako bezstratny plik PNG w formacie ZIP — wszystko w Twojej przeglądarce."
     },
     "pdf-to-text": {
-      "title": "PDF to text",
-      "description": "Download plain .txt from selectable text (not for raw scans)."
+      "title": "PDF na tekst",
+      "description": "Pobierz zwykły plik .txt z wybranym tekstem (nie w przypadku nieprzetworzonych skanów)."
     },
     "jpg-to-pdf": {
-      "title": "JPG to PDF",
-      "description": "Combine images. Drag to reorder."
+      "title": "JPG do PDF",
+      "description": "Połącz obrazy. Przeciągnij, aby zmienić kolejność."
     },
     "scan-to-pdf": {
-      "title": "Scan to PDF",
-      "description": "Camera or photos: trim, enhance, multi-page PDF."
+      "title": "Skanuj do pliku PDF",
+      "description": "Aparat lub zdjęcia: przycinaj, ulepszaj, wielostronicowy plik PDF."
     },
     "sign-pdf": {
-      "title": "Sign PDF",
-      "description": "Sign any page, duplicate or copy/paste placements, then download."
+      "title": "Podpisz PDF",
+      "description": "Podpisz dowolną stronę, zduplikuj lub skopiuj/wklej miejsca docelowe, a następnie pobierz."
     },
     "fill-pdf": {
-      "title": "Fill PDF form",
-      "description": "Fill AcroForm fields and download — processing stays in the browser."
+      "title": "Wypełnij formularz PDF",
+      "description": "Wypełnij pola AcroForm i pobierz – przetwarzanie odbywa się w przeglądarce."
     },
     "flatten-pdf": {
-      "title": "Flatten PDF",
-      "description": "Flatten fillable forms or rasterize pages to images — client-side."
+      "title": "Spłaszcz plik PDF",
+      "description": "Spłaszcz formularze do wypełnienia lub rasteryzuj strony do obrazów — po stronie klienta."
     },
     "unlock-pdf": {
-      "title": "Unlock PDF",
-      "description": "Remove password via your API (qpdf / Ghostscript when configured)."
+      "title": "Odblokuj PDF",
+      "description": "Usuń hasło za pośrednictwem interfejsu API (qpdf / Ghostscript, jeśli jest skonfigurowany)."
     },
     "encrypt-pdf": {
-      "title": "Encrypt PDF",
-      "description": "Password-protect with AES-256 (qpdf on the server)."
+      "title": "Szyfruj PDF",
+      "description": "Zabezpiecz hasłem za pomocą AES-256 (qpdf na serwerze)."
     },
     "add-watermark": {
-      "title": "Add Watermark",
-      "description": "Text or image watermark, page ranges, preview, then download."
+      "title": "Dodaj znak wodny",
+      "description": "Tekstowy lub obrazowy znak wodny, zakresy stron, podgląd, a następnie pobranie."
     },
     "pdf-to-word": {
-      "title": "PDF to Word",
-      "description": "Draft .docx in your browser — PDF is not uploaded for conversion (use OCR PDF for scans first)."
+      "title": "PDF do Worda",
+      "description": "Wersja robocza .docx w przeglądarce — plik PDF nie jest przesyłany do konwersji (najpierw użyj OCR PDF do zeskanowania)."
     },
     "word-to-pdf": {
-      "title": "Word to PDF",
-      "description": "Draft PDF in your browser — .docx is not uploaded for conversion."
+      "title": "Słowo do pliku PDF",
+      "description": "Wersja robocza pliku PDF w przeglądarce — plik .docx nie jest przesyłany do konwersji."
     },
     "gst-invoice": {
-      "title": "GST invoice PDF",
-      "description": "Supplier, buyer, HSN lines — download a tax invoice PDF in the browser."
+      "title": "Faktura GST w formacie PDF",
+      "description": "Dostawca, kupujący, linie HSN — pobierz fakturę VAT w formacie PDF w przeglądarce."
     }
   }
 }
