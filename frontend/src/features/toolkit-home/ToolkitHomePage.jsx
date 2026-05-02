@@ -43,12 +43,12 @@ export default function ToolkitHomePage() {
   return (
     <div className="flex min-h-svh flex-col bg-transparent text-zinc-900 dark:text-zinc-100">
       <header className={`fx-glass-header relative z-40 py-3 ${TOOLKIT_SHELL_X}`}>
-        <div className="mx-auto grid w-full grid-cols-[1fr_auto] items-center gap-x-4 gap-y-2 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:gap-x-6">
-          <BrandLogoLink className="min-w-0 justify-self-start" />
-          <div className="flex shrink-0 items-center justify-end gap-2 lg:col-start-3 lg:row-start-1">
+        <div className="mx-auto grid w-full grid-cols-[1fr_auto] grid-rows-[auto_auto] items-center gap-x-3 gap-y-2 md:gap-x-4 lg:grid-cols-[1fr_auto_1fr] lg:grid-rows-1 lg:gap-x-6">
+          <BrandLogoLink className="col-start-1 row-start-1 min-w-0 justify-self-start self-center" />
+          <div className="col-start-2 row-start-1 flex shrink-0 items-center justify-self-end self-center lg:col-start-3">
             <SiteHeaderActions />
           </div>
-          <div className="col-span-2 -mx-3 min-w-0 overflow-x-auto px-3 pb-0.5 [scrollbar-width:thin] sm:-mx-5 sm:px-5 md:-mx-8 md:px-8 lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:mx-0 lg:px-0 lg:pb-0">
+          <div className="col-span-2 row-start-2 -mx-3 flex min-w-0 justify-center overflow-x-auto px-3 pb-0.5 [scrollbar-width:thin] sm:-mx-5 sm:px-5 md:-mx-8 md:px-8 lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:mx-0 lg:w-auto lg:justify-self-center lg:overflow-visible lg:px-0 lg:pb-0">
             <ToolkitNavMenus />
           </div>
         </div>
