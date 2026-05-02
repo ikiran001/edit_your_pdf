@@ -27,8 +27,16 @@ export default defineConfig(({ mode }) => {
     /** Pin env files to `frontend/` so `VITE_*` from `.env.development` are never skipped. */
     envDir: __dirname,
     base,
+    resolve: {
+      alias: {
+        // Package `main` points at ort-web.node.js; force browser bundle so ORT backends initialize correctly.
+        'onnxruntime-web': path.resolve(__dirname, 'node_modules/onnxruntime-web/dist/ort-web.min.js'),
+        'onnxruntime-node': path.resolve(__dirname, 'src/shims/onnxruntime-node-empty.js'),
+      },
+    },
     optimizeDeps: {
       exclude: ['@xenova/transformers'],
+      include: ['onnxruntime-common', 'flatbuffers', 'long', 'onnx-proto', 'platform'],
     },
     plugins: [
       react(),
@@ -51,6 +59,7 @@ export default defineConfig(({ mode }) => {
         '/unlock-pdf': { target: 'http://localhost:3001', changeOrigin: true },
         '/ocr-pdf': { target: 'http://localhost:3001', changeOrigin: true },
         '/encrypt-pdf': { target: 'http://localhost:3001', changeOrigin: true },
+        '/repair-pdf': { target: 'http://localhost:3001', changeOrigin: true },
         '/compress-pdf': { target: 'http://localhost:3001', changeOrigin: true },
         '/document-flow': { target: 'http://localhost:3001', changeOrigin: true },
         '/user-sessions': { target: 'http://localhost:3001', changeOrigin: true },
@@ -68,6 +77,7 @@ export default defineConfig(({ mode }) => {
         '/unlock-pdf': { target: 'http://localhost:3001', changeOrigin: true },
         '/ocr-pdf': { target: 'http://localhost:3001', changeOrigin: true },
         '/encrypt-pdf': { target: 'http://localhost:3001', changeOrigin: true },
+        '/repair-pdf': { target: 'http://localhost:3001', changeOrigin: true },
         '/compress-pdf': { target: 'http://localhost:3001', changeOrigin: true },
         '/document-flow': { target: 'http://localhost:3001', changeOrigin: true },
         '/user-sessions': { target: 'http://localhost:3001', changeOrigin: true },

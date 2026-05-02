@@ -1005,4 +1005,50 @@ export const TOOL_SEO_BY_ID = {
       },
     ],
   },
+  'repair-pdf': {
+    featureName: 'Repair PDF',
+    intro: [
+      'Some PDFs have broken cross-references or stream errors that make viewers crash. Rewriting the file through qpdf rebuilds structure many readers can open again.',
+      'Repair PDF sends your file to your configured pdfpilot API where qpdf runs — the same stack used for unlock and compress when you self-host.',
+    ],
+    steps: [
+      'Open Repair PDF and upload the problematic file.',
+      'If the document is encrypted, enter its open password (optional field).',
+      'Run repair and download the rewritten PDF.',
+      'Open the result in your usual viewer; compare page count and content to the original.',
+      'If repair still fails, try Unlock PDF first (when encrypted) or a desktop repair tool for severe damage.',
+    ],
+    benefits: [
+      {
+        title: 'Structural rewrite',
+        body: 'qpdf reads and writes the PDF, which fixes many common corruptions.',
+      },
+      {
+        title: 'Second-chance pass',
+        body: 'When a straight rewrite fails, the server tries rebuilding from page content.',
+      },
+      {
+        title: 'Your API',
+        body: 'Runs on infrastructure you control when the toolkit points at your backend.',
+      },
+      {
+        title: 'Honest limits',
+        body: 'Not every damaged file can be recovered automatically.',
+      },
+    ],
+    highlights: [
+      {
+        title: 'Optional password',
+        body: 'Encrypted inputs can include the same password you use in Acrobat or Preview.',
+      },
+      {
+        title: 'Download workflow',
+        body: 'Same sign-in and download pattern as other server-backed tools.',
+      },
+      {
+        title: 'Pairs with Edit PDF',
+        body: 'After repair, continue cleanup in the editor if you still need changes.',
+      },
+    ],
+  },
 }

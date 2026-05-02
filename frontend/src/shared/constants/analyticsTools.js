@@ -48,7 +48,6 @@ export const ANALYTICS_TOOL = {
   crop_pdf: 'crop_pdf',
   redact_pdf: 'redact_pdf',
   compare_pdf: 'compare_pdf',
-  ai_pdf_summarizer: 'ai_pdf_summarizer',
   translate_pdf: 'translate_pdf',
 }
 
@@ -88,6 +87,5 @@ export const REGISTRY_ID_TO_FEATURE = {
   'crop-pdf': ANALYTICS_TOOL.crop_pdf,
   'redact-pdf': ANALYTICS_TOOL.redact_pdf,
   'compare-pdf': ANALYTICS_TOOL.compare_pdf,
-  'ai-pdf-summarizer': ANALYTICS_TOOL.ai_pdf_summarizer,
   'translate-pdf': ANALYTICS_TOOL.translate_pdf,
 }

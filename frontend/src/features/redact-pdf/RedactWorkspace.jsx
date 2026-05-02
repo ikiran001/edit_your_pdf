@@ -50,11 +50,6 @@ export default function RedactWorkspace({ file, marks, setMarks, busy }) {
   const pageRefs = useRef([])
 
   useEffect(() => {
-    undoStackRef.current = []
-    setCanUndo(false)
-  }, [file])
-
-  useEffect(() => {
     if (!file) return undefined
     let cancelled = false
     let pdf = null

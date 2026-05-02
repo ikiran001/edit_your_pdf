@@ -82,10 +82,7 @@ export const MEGA_NAV_GROUPS = [
   {
     labelKey: 'nav.megaPdfIntelligence',
     tint: 'orchid',
-    items: [
-      { type: 'tool', id: 'ai-pdf-summarizer', titleKey: 'megaTool.aiSummarizer' },
-      { type: 'tool', id: 'translate-pdf', titleKey: 'megaTool.translatePdf' },
-    ],
+    items: [{ type: 'tool', id: 'translate-pdf', titleKey: 'megaTool.translatePdf' }],
   },
 ]
 

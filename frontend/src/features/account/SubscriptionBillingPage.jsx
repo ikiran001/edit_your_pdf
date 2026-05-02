@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   ArrowRight,
   CalendarClock,
+  Check,
   CheckCircle2,
   CreditCard,
   Download,
@@ -38,6 +39,25 @@ function formatIso(value) {
   } catch {
     return d.toLocaleString()
   }
+}
+
+function PlanCompareCell({ children, className = '' }) {
+  return (
+    <td
+      className={`px-3 py-4 text-center align-middle text-sm text-zinc-700 dark:text-zinc-300 ${className}`}
+    >
+      {children}
+    </td>
+  )
+}
+
+function PlanCompareCheck() {
+  return (
+    <span className="inline-flex justify-center" title="Included">
+      <Check className="mx-auto h-5 w-5 text-emerald-600 dark:text-emerald-400" strokeWidth={2.5} aria-hidden />
+      <span className="sr-only">Included</span>
+    </span>
+  )
 }
 
 function DetailRow({ icon, label, children }) {
@@ -101,7 +121,7 @@ export default function SubscriptionBillingPage() {
       title="Subscription & billing"
       subtitle="Your plan, download usage, and Razorpay receipts."
     >
-      <div className="mx-auto max-w-2xl space-y-8">
+      <div className="mx-auto max-w-3xl space-y-8">
         {error ? (
           <div
             className="flex gap-3 rounded-2xl border border-amber-300/80 bg-amber-50 px-4 py-3 text-sm text-amber-950 shadow-sm dark:border-amber-500/40 dark:bg-amber-950/50 dark:text-amber-50"
@@ -251,25 +271,131 @@ export default function SubscriptionBillingPage() {
           </div>
         </section>
 
-        {!sub?.isPaid && !loading && me ? (
-          <section className="rounded-2xl border border-zinc-200 bg-white/90 p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/80">
-            <h3 className="flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-white">
-              <Sparkles className="h-4 w-4 text-indigo-600 dark:text-cyan-400" aria-hidden />
-              Pro includes
-            </h3>
-            <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-              {[
-                'Unlimited PDF downloads (editor + Saved PDFs)',
-                'Same fast editing — limits only apply on Free',
-                '₹99/month or ₹999/year — pay with Razorpay',
-                'Manual renewal — no surprise auto-debit',
-              ].map((line) => (
-                <li key={line} className="flex gap-2 text-sm text-zinc-600 dark:text-zinc-400">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />
-                  <span>{line}</span>
-                </li>
-              ))}
-            </ul>
+        {!loading && me ? (
+          <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/80 sm:p-8">
+            <h2 className="text-center text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
+              Compare all features
+            </h2>
+            <p className="mx-auto mt-2 max-w-lg text-center text-sm text-zinc-500 dark:text-zinc-400">
+              Same editor and tools on every plan — Pro removes the daily download cap.
+            </p>
+            <div className="mt-8 overflow-x-auto rounded-xl border border-zinc-100 dark:border-zinc-800">
+              <table className="w-full min-w-[520px] border-collapse text-sm">
+                <thead>
+                  <tr className="border-b border-zinc-200 bg-zinc-50/80 dark:border-zinc-700 dark:bg-zinc-900/60">
+                    <th
+                      scope="col"
+                      className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400"
+                    >
+                      Feature
+                    </th>
+                    <th
+                      scope="col"
+                      className="w-[22%] px-3 py-4 text-center text-sm font-bold text-zinc-900 dark:text-white"
+                    >
+                      Free
+                    </th>
+                    <th
+                      scope="col"
+                      className="w-[28%] px-3 py-4 text-center text-sm font-bold text-zinc-900 dark:text-white"
+                    >
+                      <span className="block">Pro</span>
+                      <span className="mt-1 block text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+                        ₹99/mo · ₹999/yr
+                      </span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                  <tr>
+                    <th
+                      scope="row"
+                      className="px-4 py-4 text-left font-medium text-zinc-900 dark:text-zinc-100"
+                    >
+                      Edit &amp; convert PDFs in the browser
+                    </th>
+                    <PlanCompareCell>
+                      <PlanCompareCheck />
+                    </PlanCompareCell>
+                    <PlanCompareCell>
+                      <PlanCompareCheck />
+                    </PlanCompareCell>
+                  </tr>
+                  <tr>
+                    <th
+                      scope="row"
+                      className="px-4 py-4 text-left font-medium text-zinc-900 dark:text-zinc-100"
+                    >
+                      Save PDFs to your account
+                    </th>
+                    <PlanCompareCell>
+                      <PlanCompareCheck />
+                    </PlanCompareCell>
+                    <PlanCompareCell>
+                      <PlanCompareCheck />
+                    </PlanCompareCell>
+                  </tr>
+                  <tr>
+                    <th
+                      scope="row"
+                      className="px-4 py-4 text-left font-medium text-zinc-900 dark:text-zinc-100"
+                    >
+                      Daily downloads (editor + Saved PDFs)
+                    </th>
+                    <PlanCompareCell>
+                      <span className="font-medium tabular-nums text-zinc-800 dark:text-zinc-200">
+                        {limit} / day (UTC)
+                      </span>
+                    </PlanCompareCell>
+                    <PlanCompareCell>
+                      <span className="font-medium text-emerald-700 dark:text-emerald-300">Unlimited</span>
+                    </PlanCompareCell>
+                  </tr>
+                  <tr>
+                    <th
+                      scope="row"
+                      className="px-4 py-4 text-left font-medium text-zinc-900 dark:text-zinc-100"
+                    >
+                      Pay with Razorpay (India)
+                    </th>
+                    <PlanCompareCell>
+                      <span className="text-zinc-400 dark:text-zinc-600">—</span>
+                    </PlanCompareCell>
+                    <PlanCompareCell>
+                      <PlanCompareCheck />
+                    </PlanCompareCell>
+                  </tr>
+                  <tr>
+                    <th
+                      scope="row"
+                      className="px-4 py-4 text-left font-medium text-zinc-900 dark:text-zinc-100"
+                    >
+                      Renewal
+                    </th>
+                    <PlanCompareCell>
+                      <span className="text-zinc-500 dark:text-zinc-400">Free tier</span>
+                    </PlanCompareCell>
+                    <PlanCompareCell>
+                      <span className="text-xs leading-snug text-zinc-600 dark:text-zinc-400">
+                        Manual — no auto-debit
+                      </span>
+                    </PlanCompareCell>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            {!sub?.isPaid ? (
+              <div className="mt-6 flex justify-center">
+                <button
+                  type="button"
+                  className="fx-focus-ring inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-400"
+                  onClick={() => setUpgradeOpen(true)}
+                >
+                  <Sparkles className="h-4 w-4 opacity-90" aria-hidden />
+                  Upgrade to Pro
+                </button>
+              </div>
+            ) : null}
           </section>
         ) : null}
 

@@ -30,7 +30,7 @@ const WatermarkPdfPage = lazy(() => import('../features/add-watermark/WatermarkP
 const WordToPdfPage = lazy(() => import('../features/word-to-pdf/WordToPdfPage.jsx'))
 const PdfToWordPage = lazy(() => import('../features/pdf-to-word/PdfToWordPage.jsx'))
 const GstInvoicePage = lazy(() => import('../features/gst-invoice/GstInvoicePage.jsx'))
-const PlannedToolPage = lazy(() => import('../features/placeholder/PlannedToolPage.jsx'))
+const RepairPdfPage = lazy(() => import('../features/repair-pdf/RepairPdfPage.jsx'))
 const CropPdfPage = lazy(() => import('../features/crop-pdf/CropPdfPage.jsx'))
 const ComparePdfPage = lazy(() => import('../features/compare-pdf/ComparePdfPage.jsx'))
 const PowerpointToPdfPage = lazy(() => import('../features/powerpoint-to-pdf/PowerpointToPdfPage.jsx'))
@@ -40,6 +40,7 @@ const PdfToExcelPage = lazy(() => import('../features/pdf-to-excel/PdfToExcelPag
 const PdfToPowerpointPage = lazy(() => import('../features/pdf-to-powerpoint/PdfToPowerpointPage.jsx'))
 const TranslatePdfPage = lazy(() => import('../features/translate-pdf/TranslatePdfPage.jsx'))
 const RedactPdfPage = lazy(() => import('../features/redact-pdf/RedactPdfPage.jsx'))
+const PlannedToolPage = lazy(() => import('../features/placeholder/PlannedToolPage.jsx'))
 const MyDocumentsPage = lazy(() => import('../features/my-documents/MyDocumentsPage.jsx'))
 const SubscriptionBillingPage = lazy(() => import('../features/account/SubscriptionBillingPage.jsx'))
 const TermsOfServicePage = lazy(() => import('../features/legal/TermsOfServicePage.jsx'))
@@ -124,7 +125,7 @@ export default function AppRoutes() {
               <Route path="/tools/gst-invoice" element={<GstInvoicePage />} />
               <Route path="/tools/crop-pdf" element={<CropPdfPage />} />
               <Route path="/tools/compare-pdf" element={<ComparePdfPage />} />
-              <Route path="/tools/repair-pdf" element={<PlannedToolPage />} />
+              <Route path="/tools/repair-pdf" element={<RepairPdfPage />} />
               <Route path="/tools/powerpoint-to-pdf" element={<PowerpointToPdfPage />} />
               <Route path="/tools/excel-to-pdf" element={<ExcelToPdfPage />} />
               <Route path="/tools/html-to-pdf" element={<HtmlToPdfPage />} />
@@ -132,7 +133,6 @@ export default function AppRoutes() {
               <Route path="/tools/pdf-to-excel" element={<PdfToExcelPage />} />
               <Route path="/tools/pdf-to-pdfa" element={<PlannedToolPage />} />
               <Route path="/tools/redact-pdf" element={<RedactPdfPage />} />
-              <Route path="/tools/ai-pdf-summarizer" element={<PlannedToolPage />} />
               <Route path="/tools/translate-pdf" element={<TranslatePdfPage />} />
             </Routes>
           </Suspense>

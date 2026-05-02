@@ -239,7 +239,6 @@
     "protectPdf": "Protect PDF",
     "redactPdf": "Redact PDF",
     "comparePdf": "Compare PDF",
-    "aiSummarizer": "AI summarizer",
     "translatePdf": "Translate PDF"
   }
 }

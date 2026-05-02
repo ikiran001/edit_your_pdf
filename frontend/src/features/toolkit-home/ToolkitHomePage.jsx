@@ -30,6 +30,7 @@ export default function ToolkitHomePage() {
 
   const filteredTools = useMemo(
     () => TOOL_REGISTRY.filter((tool) => matchesToolSearch(tool, q, t)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- need locale in deps; `t` can be referentially stable across language changes
     [q, t, i18n.language]
   )
 
