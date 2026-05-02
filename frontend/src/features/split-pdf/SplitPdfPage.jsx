@@ -1,4 +1,6 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { PDFDocument } from 'pdf-lib'
 import JSZip from 'jszip'
 import ToolPageShell from '../../shared/components/ToolPageShell.jsx'
@@ -13,8 +15,6 @@ import {
 } from '../../lib/pdfMergeSplitCore.js'
 import { useClientToolDownloadAuth } from '../../auth/ClientToolDownloadAuthContext.jsx'
 
-const TOOL = ANALYTICS_TOOL.split_pdf
-
 function downloadUint8(u8, name) {
   const blob = new Blob([u8], { type: 'application/pdf' })
   const url = URL.createObjectURL(blob)
@@ -27,6 +27,22 @@ function downloadUint8(u8, name) {
 }
 
 export default function SplitPdfPage() {
+  const { pathname } = useLocation()
+  const { t } = useTranslation()
+  const pathNorm = (pathname || '/').replace(/\/$/, '')
+  const isExtract = pathNorm.endsWith('/extract-pages')
+  const toolAnalytics = useMemo(
+    () => (isExtract ? ANALYTICS_TOOL.extract_pages : ANALYTICS_TOOL.split_pdf),
+    [isExtract]
+  )
+  const shellTitle = isExtract ? t('tool.extract-pages.title', { defaultValue: 'Extract pages' }) : 'Split PDF'
+  const shellSubtitle = isExtract
+    ? t('tool.extract-pages.splitSubtitle', {
+        defaultValue: 'Split by ranges or extract every page — same as Split PDF, in your browser.',
+      })
+    : 'Split by page ranges or extract every page. Processing stays in your browser.'
+  const seoToolId = isExtract ? 'extract-pages' : 'split-pdf'
+
   const { runWithSignInForDownload } = useClientToolDownloadAuth()
   const [file, setFile] = useState(null)
   const [pageCount, setPageCount] = useState(0)
@@ -36,7 +52,7 @@ export default function SplitPdfPage() {
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
 
-  useToolEngagement(TOOL, true)
+  useToolEngagement(toolAnalytics, true)
 
   const onPdfChosen = async (files) => {
     const f = files[0]
@@ -133,10 +149,7 @@ export default function SplitPdfPage() {
   }
 
   return (
-    <ToolPageShell
-      title="Split PDF"
-      subtitle="Split by page ranges or extract every page. Processing stays in your browser."
-    >
+    <ToolPageShell title={shellTitle} subtitle={shellSubtitle}>
       <FileDropzone
         accept="application/pdf"
         disabled={busy}
@@ -156,7 +169,7 @@ export default function SplitPdfPage() {
           {success}
         </div>
       )}
-      <ToolFeatureSeoSection toolId="split-pdf" />
+      <ToolFeatureSeoSection toolId={seoToolId} />
 
       {file && pageCount > 0 && (
         <div className="mt-8 space-y-6 rounded-2xl border border-zinc-200 bg-white/80 p-6 shadow-inner dark:border-zinc-700 dark:bg-zinc-900/50">

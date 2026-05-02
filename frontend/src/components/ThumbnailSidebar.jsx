@@ -9,6 +9,8 @@ export default function ThumbnailSidebar({
   activePage,
   onSelectPage,
   pageRefs,
+  /** When false, only `onSelectPage` runs (no scrollIntoView). Use for single-page preview tools. */
+  scrollIntoViewOnSelect = true,
 }) {
   return (
     <aside className="hidden w-36 shrink-0 overflow-y-auto border-r border-indigo-200/50 bg-zinc-50/95 p-2 md:block dark:border-indigo-500/15 dark:bg-zinc-950/90">
@@ -24,7 +26,9 @@ export default function ThumbnailSidebar({
               active={activePage === i}
               onSelect={() => {
                 onSelectPage(i)
-                pageRefs.current[i]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                if (scrollIntoViewOnSelect) {
+                  pageRefs.current[i]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                }
               }}
             />
           </li>

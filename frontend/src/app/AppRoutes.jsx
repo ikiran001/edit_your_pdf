@@ -30,6 +30,16 @@ const WatermarkPdfPage = lazy(() => import('../features/add-watermark/WatermarkP
 const WordToPdfPage = lazy(() => import('../features/word-to-pdf/WordToPdfPage.jsx'))
 const PdfToWordPage = lazy(() => import('../features/pdf-to-word/PdfToWordPage.jsx'))
 const GstInvoicePage = lazy(() => import('../features/gst-invoice/GstInvoicePage.jsx'))
+const PlannedToolPage = lazy(() => import('../features/placeholder/PlannedToolPage.jsx'))
+const CropPdfPage = lazy(() => import('../features/crop-pdf/CropPdfPage.jsx'))
+const ComparePdfPage = lazy(() => import('../features/compare-pdf/ComparePdfPage.jsx'))
+const PowerpointToPdfPage = lazy(() => import('../features/powerpoint-to-pdf/PowerpointToPdfPage.jsx'))
+const ExcelToPdfPage = lazy(() => import('../features/excel-to-pdf/ExcelToPdfPage.jsx'))
+const HtmlToPdfPage = lazy(() => import('../features/html-to-pdf/HtmlToPdfPage.jsx'))
+const PdfToExcelPage = lazy(() => import('../features/pdf-to-excel/PdfToExcelPage.jsx'))
+const PdfToPowerpointPage = lazy(() => import('../features/pdf-to-powerpoint/PdfToPowerpointPage.jsx'))
+const TranslatePdfPage = lazy(() => import('../features/translate-pdf/TranslatePdfPage.jsx'))
+const RedactPdfPage = lazy(() => import('../features/redact-pdf/RedactPdfPage.jsx'))
 const MyDocumentsPage = lazy(() => import('../features/my-documents/MyDocumentsPage.jsx'))
 const SubscriptionBillingPage = lazy(() => import('../features/account/SubscriptionBillingPage.jsx'))
 const TermsOfServicePage = lazy(() => import('../features/legal/TermsOfServicePage.jsx'))
@@ -91,6 +101,7 @@ export default function AppRoutes() {
               <Route path="/tools/edit-pdf" element={<EditPdfPage />} />
               <Route path="/tools/merge-pdf" element={<MergePdfPage />} />
               <Route path="/tools/split-pdf" element={<SplitPdfPage />} />
+              <Route path="/tools/extract-pages" element={<SplitPdfPage />} />
               <Route path="/tools/compress-pdf" element={<CompressPdfPage />} />
               <Route path="/tools/pdf-to-jpg" element={<PdfToJpgPage />} />
               <Route path="/tools/pdf-to-png" element={<PdfToPngPage />} />
@@ -104,11 +115,25 @@ export default function AppRoutes() {
               <Route path="/tools/ocr-pdf" element={<OcrPdfPage />} />
               <Route path="/tools/encrypt-pdf" element={<EncryptPdfPage />} />
               <Route path="/tools/organize-pdf" element={<OrganizePdfPage />} />
+              <Route path="/tools/remove-pages" element={<OrganizePdfPage />} />
+              <Route path="/tools/rotate-pdf" element={<OrganizePdfPage />} />
               <Route path="/tools/add-page-numbers" element={<PageNumbersPdfPage />} />
               <Route path="/tools/add-watermark" element={<WatermarkPdfPage />} />
               <Route path="/tools/pdf-to-word" element={<PdfToWordPage />} />
               <Route path="/tools/word-to-pdf" element={<WordToPdfPage />} />
               <Route path="/tools/gst-invoice" element={<GstInvoicePage />} />
+              <Route path="/tools/crop-pdf" element={<CropPdfPage />} />
+              <Route path="/tools/compare-pdf" element={<ComparePdfPage />} />
+              <Route path="/tools/repair-pdf" element={<PlannedToolPage />} />
+              <Route path="/tools/powerpoint-to-pdf" element={<PowerpointToPdfPage />} />
+              <Route path="/tools/excel-to-pdf" element={<ExcelToPdfPage />} />
+              <Route path="/tools/html-to-pdf" element={<HtmlToPdfPage />} />
+              <Route path="/tools/pdf-to-powerpoint" element={<PdfToPowerpointPage />} />
+              <Route path="/tools/pdf-to-excel" element={<PdfToExcelPage />} />
+              <Route path="/tools/pdf-to-pdfa" element={<PlannedToolPage />} />
+              <Route path="/tools/redact-pdf" element={<RedactPdfPage />} />
+              <Route path="/tools/ai-pdf-summarizer" element={<PlannedToolPage />} />
+              <Route path="/tools/translate-pdf" element={<TranslatePdfPage />} />
             </Routes>
           </Suspense>
         </ErrorBoundary>

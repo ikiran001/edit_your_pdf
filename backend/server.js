@@ -32,7 +32,7 @@ import {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-/** Optional local overrides (gitignored). Does not replace vars already set in the shell. */
+/** Optional local overrides (gitignored). Skips keys already set to a non-empty value in the shell. */
 function loadBackendDotEnv() {
   try {
     const envPath = path.join(__dirname, '.env');
@@ -51,7 +51,10 @@ function loadBackendDotEnv() {
       ) {
         val = val.slice(1, -1);
       }
-      if (key && process.env[key] === undefined) process.env[key] = val;
+      // Treat empty shell values as unset so backend/.env can fill SOFFICE_PATH and similar.
+      if (key && (process.env[key] === undefined || process.env[key] === '')) {
+        process.env[key] = val;
+      }
     }
   } catch (e) {
     console.warn('[env] could not read .env:', e?.message || e);
@@ -257,9 +260,16 @@ logUnlockBackends();
 const docFlow = getDocumentFlowCapabilities();
 console.log(
   '[document-flow]',
-  docFlow.pdfToDocx ? 'PDF→DOCX (SOFFICE_PATH)' : 'PDF→DOCX off',
+  docFlow.pdfToDocx ? 'PDF→DOCX' : 'PDF→DOCX off',
   '·',
-  'DOCX→PDF off (web app uses browser-side draft conversion)'
+  docFlow.pdfToXlsx ? 'PDF→XLSX' : 'PDF→XLSX off',
+  '·',
+  docFlow.officeToPdf ? 'Office→PDF' : 'Office→PDF off',
+  '·',
+  docFlow.translate ? 'translate' : 'translate off',
+  '·',
+  'SOFFICE_PATH',
+  docFlow.sofficePath ? 'set' : 'unset'
 );
 
 {
