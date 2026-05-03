@@ -7,6 +7,7 @@ import SiteHeaderActions from '../../shared/components/SiteHeaderActions.jsx'
 import BrandLogoLink from '../../shared/components/BrandLogoLink.jsx'
 import LegalFooter from '../../shared/components/LegalFooter.jsx'
 import { TOOL_REGISTRY } from '../../shared/constants/toolRegistry.js'
+import { TOOLKIT_HOME_CATEGORY_FILTERS } from '../../shared/constants/megaToolNav.js'
 import HeroSection from './HeroSection.jsx'
 import ToolkitNavMenus from './ToolkitNavMenus.jsx'
 import { peekFeedbackPrompt } from '../../lib/reviewPromptStorage.js'
@@ -26,15 +27,27 @@ export default function ToolkitHomePage() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const [toolQuery, setToolQuery] = useState('')
+  const [categoryId, setCategoryId] = useState('all')
   const q = toolQuery.trim().toLowerCase()
 
-  const filteredTools = useMemo(
-    () => TOOL_REGISTRY.filter((tool) => matchesToolSearch(tool, q, t)),
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- need locale in deps; `t` can be referentially stable across language changes
-    [q, t, i18n.language]
-  )
+  const categoryToolIds = useMemo(() => {
+    const row = TOOLKIT_HOME_CATEGORY_FILTERS.find((c) => c.id === categoryId)
+    return row?.toolIds ?? null
+  }, [categoryId])
 
-  const showingAllTools = filteredTools.length === TOOL_REGISTRY.length
+  const filteredTools = useMemo(() => {
+    let list = TOOL_REGISTRY
+    if (categoryToolIds) {
+      list = list.filter((tool) => categoryToolIds.has(tool.id))
+    }
+    if (q) {
+      list = list.filter((tool) => matchesToolSearch(tool, q, t))
+    }
+    return list
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- need locale in deps; `t` can be referentially stable across language changes
+  }, [q, t, i18n.language, categoryToolIds])
+
+  const showingAllTools = filteredTools.length === TOOL_REGISTRY.length && !q && categoryId === 'all'
 
   useEffect(() => {
     if (!peekFeedbackPrompt()) return
@@ -103,6 +116,34 @@ export default function ToolkitHomePage() {
                 : t('home.searchShowing', { n: filteredTools.length, total: TOOL_REGISTRY.length })}
             </p>
           ) : null}
+        </div>
+
+        <div
+          className="mx-auto mb-6 w-full max-w-4xl"
+          role="tablist"
+          aria-label={t('home.toolCategoryFilter')}
+        >
+          <div className="-mx-1 flex flex-nowrap justify-start gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:thin] sm:mx-0 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0">
+            {TOOLKIT_HOME_CATEGORY_FILTERS.map((cat) => {
+              const selected = categoryId === cat.id
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={selected}
+                  onClick={() => setCategoryId(cat.id)}
+                  className={`shrink-0 rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${
+                    selected
+                      ? 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900'
+                      : 'border-zinc-200 bg-white text-zinc-800 hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-zinc-500 dark:hover:bg-zinc-800'
+                  }`}
+                >
+                  {t(cat.labelKey)}
+                </button>
+              )
+            })}
+          </div>
         </div>
         <div
           className={

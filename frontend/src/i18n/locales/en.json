@@ -37,6 +37,12 @@
     "searchPlaceholder": "Search tools (e.g. merge, scan, watermark)…",
     "searchNoResults": "No tools match “{{query}}”. Try another word or clear the search.",
     "searchShowing": "Showing {{n}} of {{total}} tools",
+    "toolCategoryFilter": "Filter tools by category",
+    "filterAll": "All",
+    "filterWorkflows": "Workflows",
+    "filterConvertPdf": "Convert PDF",
+    "filterPdfSecurity": "PDF Security",
+    "filterPdfIntelligence": "PDF Intelligence",
     "footerProcessing": "Files are processed in your session. Need the raw API? See the project README for self-hosting on GitHub Pages.",
     "ratingsNote": "Ratings and comments are shown only after real submissions."
   },

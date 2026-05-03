@@ -176,13 +176,6 @@ export default function WordToPdfPage() {
       subtitle="Draft PDF in your browser — your .docx is not uploaded for conversion (sign-in or analytics may still use your network)."
     >
       <div className="mx-auto max-w-xl space-y-4">
-        <p className="m-0 rounded-xl border border-emerald-200/90 bg-emerald-50/90 px-4 py-3 text-sm text-emerald-950 dark:border-emerald-900 dark:bg-emerald-950/35 dark:text-emerald-100">
-          <span className="font-medium">Fast, private draft:</span> we read your .docx in this tab (via JSZip + XML)
-          and build a simple PDF with pdf-lib. This is <strong>not</strong> a full Word/LibreOffice layout — tables,
-          images, and exact fonts are not reproduced. For pixel-perfect output, export PDF from Word or use a server
-          converter elsewhere.
-        </p>
-
         <ol className="m-0 flex list-none flex-wrap items-center justify-center gap-2 px-0 text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
           <li className="rounded-full bg-indigo-100 px-2.5 py-1 text-indigo-800 dark:bg-indigo-950/80 dark:text-indigo-200">
             1 · Upload

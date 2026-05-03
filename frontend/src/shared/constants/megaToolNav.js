@@ -100,4 +100,52 @@ export function resolveMegaNavItem(item) {
   return { kind: 'tool', tool, titleKey: item.titleKey }
 }
 
+function collectToolIdsFromMegaGroupIndices(...indices) {
+  const ids = new Set()
+  for (const i of indices) {
+    const g = MEGA_NAV_GROUPS[i]
+    if (!g) continue
+    for (const item of g.items) {
+      const r = resolveMegaNavItem(item)
+      if (r?.kind === 'tool') ids.add(r.tool.id)
+    }
+  }
+  return ids
+}
+
+/** Tools often used in longer document / review flows (subset of registry). */
+export const TOOLKIT_WORKFLOW_IDS = new Set([
+  'pdf-to-word',
+  'word-to-pdf',
+  'translate-pdf',
+  'fill-pdf',
+  'gst-invoice',
+  'compare-pdf',
+  'flatten-pdf',
+])
+
+const TOOLKIT_ORGANIZE_IDS = collectToolIdsFromMegaGroupIndices(0)
+const TOOLKIT_OPTIMIZE_IDS = collectToolIdsFromMegaGroupIndices(1)
+const TOOLKIT_CONVERT_IDS = collectToolIdsFromMegaGroupIndices(2, 3)
+TOOLKIT_CONVERT_IDS.add('pdf-to-png')
+TOOLKIT_CONVERT_IDS.add('pdf-to-text')
+const TOOLKIT_EDIT_IDS = collectToolIdsFromMegaGroupIndices(4)
+const TOOLKIT_SECURITY_IDS = collectToolIdsFromMegaGroupIndices(5)
+const TOOLKIT_INTELLIGENCE_IDS = collectToolIdsFromMegaGroupIndices(6)
+
+/**
+ * Toolkit home category chips: `toolIds` null = show all tools; else registry id must be in set.
+ * @type {{ id: string, labelKey: string, toolIds: Set<string> | null }[]}
+ */
+export const TOOLKIT_HOME_CATEGORY_FILTERS = [
+  { id: 'all', labelKey: 'home.filterAll', toolIds: null },
+  { id: 'workflows', labelKey: 'home.filterWorkflows', toolIds: TOOLKIT_WORKFLOW_IDS },
+  { id: 'organize', labelKey: 'nav.megaOrganizePdf', toolIds: TOOLKIT_ORGANIZE_IDS },
+  { id: 'optimize', labelKey: 'nav.megaOptimizePdf', toolIds: TOOLKIT_OPTIMIZE_IDS },
+  { id: 'convert', labelKey: 'home.filterConvertPdf', toolIds: TOOLKIT_CONVERT_IDS },
+  { id: 'edit', labelKey: 'nav.megaEditPdf', toolIds: TOOLKIT_EDIT_IDS },
+  { id: 'security', labelKey: 'home.filterPdfSecurity', toolIds: TOOLKIT_SECURITY_IDS },
+  { id: 'intelligence', labelKey: 'home.filterPdfIntelligence', toolIds: TOOLKIT_INTELLIGENCE_IDS },
+]
+
 export { toolById }
