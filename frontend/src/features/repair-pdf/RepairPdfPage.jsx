@@ -45,7 +45,7 @@ export default function RepairPdfPage() {
     }
     if (import.meta.env.PROD && !isApiBaseConfigured()) {
       setError(
-        'Repair PDF needs the API (qpdf on the server). Set VITE_API_BASE_URL for production builds, or run locally with the backend on port 3001.'
+        'Repair needs the online document service, which is not available from this build. Try again later.'
       )
       return
     }
@@ -125,7 +125,7 @@ export default function RepairPdfPage() {
         )
         setError(
           e?.message === 'Failed to fetch'
-            ? 'Could not reach the API. Start the backend (port 3001) or check your network.'
+            ? 'Could not reach the server. Check your connection and try again.'
             : e?.message || 'Could not repair PDF'
         )
       }

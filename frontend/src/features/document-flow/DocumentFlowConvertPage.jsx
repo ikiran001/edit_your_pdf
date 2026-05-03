@@ -4,7 +4,6 @@ import FileDropzone from '../../shared/components/FileDropzone.jsx'
 import { useToolEngagement } from '../../hooks/useToolEngagement.js'
 import { trackErrorOccurred, trackFileDownloaded, trackToolCompleted } from '../../lib/analytics.js'
 import { postDocumentFlowFile } from '../../lib/documentFlowClient.js'
-import { getResolvedApiBase } from '../../lib/apiBase.js'
 import { useClientToolDownloadAuth } from '../../auth/ClientToolDownloadAuthContext.jsx'
 
 function downloadBlob(blob, name) {
@@ -42,7 +41,6 @@ export default function DocumentFlowConvertPage({
   const { runWithSignInForDownload } = useClientToolDownloadAuth()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
-  const prodApiMissing = import.meta.env.PROD && !getResolvedApiBase()
 
   useToolEngagement(analyticsTool, true)
 
@@ -82,7 +80,7 @@ export default function DocumentFlowConvertPage({
         } else {
           console.error(e)
           trackErrorOccurred(analyticsTool, e?.message || 'convert_failed')
-          setError(e?.message || 'Conversion failed. Is the API running with SOFFICE_PATH set?')
+          setError(e?.message || 'Conversion failed. Try again in a moment.')
         }
       } finally {
         setBusy(false)
@@ -93,15 +91,6 @@ export default function DocumentFlowConvertPage({
 
   return (
     <ToolPageShell title={title} subtitle={subtitle}>
-      {prodApiMissing && (
-        <div
-          role="status"
-          className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100"
-        >
-          Production builds need <code className="rounded bg-amber-100 px-1 dark:bg-amber-900/80">VITE_API_BASE_URL</code> (or
-          runtime API config) so conversions reach your backend with LibreOffice.
-        </div>
-      )}
       <FileDropzone
         accept={accept}
         disabled={busy}
@@ -114,9 +103,7 @@ export default function DocumentFlowConvertPage({
         </div>
       )}
       <p className="mt-6 text-xs text-zinc-500 dark:text-zinc-400">
-        Needs LibreOffice <code className="text-[11px]">soffice</code> on the API (standard install paths and PATH are
-        tried; override with <code className="text-[11px]">SOFFICE_PATH</code> if needed). Run OCR on scanned PDFs before
-        office export when text is missing.
+        Conversions run on our servers. Run OCR on scanned PDFs first if text is missing.
       </p>
     </ToolPageShell>
   )

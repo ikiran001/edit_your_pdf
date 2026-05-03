@@ -770,7 +770,7 @@ export default function PdfEditor({
     if (!res.ok) {
       throw new Error(
         errMsg ||
-          `Save failed (${res.status}). Is the API running on port 3001?`
+          `Save failed (${res.status}). Check your connection and try again.`
       )
     }
     if (import.meta.env.DEV) {
@@ -1340,7 +1340,7 @@ export default function PdfEditor({
       if (!dup.ok) {
         const msg =
           dup.error === 'admin_unavailable'
-            ? 'Named copy needs Firebase Admin on the API (for local dev, set FIREBASE_SERVICE_ACCOUNT_JSON).'
+            ? 'Named copy is not available right now. Try again later.'
             : String(dup.error || 'Could not create a named copy.')
         throw new Error(msg)
       }

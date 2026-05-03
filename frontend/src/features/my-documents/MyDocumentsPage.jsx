@@ -4,7 +4,7 @@ import { Copy, FilePenLine, FileText, Pencil, RefreshCw, Trash2, Download } from
 import { useAuth } from '../../auth/AuthContext.jsx'
 import ToolPageShell from '../../shared/components/ToolPageShell.jsx'
 import { isFirebaseConfigured, isFirebaseAuthReady } from '../../lib/firebase.js'
-import { apiUrl, getResolvedApiBase, isApiBaseConfigured } from '../../lib/apiBase.js'
+import { isApiBaseConfigured } from '../../lib/apiBase.js'
 import { persistEditSession } from '../edit-pdf/editSessionStorage.js'
 import { fetchEditPdfDownload } from '../edit-pdf/editPdfDownload.js'
 import { useSubscription } from '../../subscription/SubscriptionContext.jsx'
@@ -38,54 +38,11 @@ export default function MyDocumentsPage() {
   const [msg, setMsg] = useState(null)
   const [loadError, setLoadError] = useState(null)
   const [adminConfigured, setAdminConfigured] = useState(true)
-  const [adminSetupMessage, setAdminSetupMessage] = useState('')
   const [loadingList, setLoadingList] = useState(false)
-  const [healthProbe, setHealthProbe] = useState(null)
-  const [healthBusy, setHealthBusy] = useState(false)
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false)
   const { refresh: refreshSubscription } = useSubscription()
 
   const fbReady = isFirebaseConfigured() && isFirebaseAuthReady()
-
-  const probeApiHealth = useCallback(async () => {
-    setHealthBusy(true)
-    setHealthProbe(null)
-    try {
-      const url = apiUrl('/health')
-      const res = await fetch(url)
-      const text = await res.text()
-      let json = null
-      try {
-        json = text ? JSON.parse(text) : null
-      } catch {
-        json = { parseError: 'Response was not JSON', raw: text.slice(0, 200) }
-      }
-      const absoluteUrl =
-        typeof window !== 'undefined' ? new URL(url, window.location.href).href : url
-      const looksLikeExpressHealth =
-        json &&
-        typeof json === 'object' &&
-        !json.parseError &&
-        (json.unlock != null || json.qpdf != null || json.firebaseAdminReady != null)
-      setHealthProbe({
-        ok: res.ok,
-        status: res.status,
-        url,
-        absoluteUrl,
-        resolvedApiBase: getResolvedApiBase() || null,
-        looksLikeExpressHealth,
-        json,
-      })
-    } catch (e) {
-      setHealthProbe({
-        ok: false,
-        error: e?.message || 'Network error',
-        url: apiUrl('/health'),
-      })
-    } finally {
-      setHealthBusy(false)
-    }
-  }, [])
 
   const loadLibrary = useCallback(async () => {
     if (!user?.uid || !fbReady) return
@@ -96,10 +53,9 @@ export default function MyDocumentsPage() {
       if (!r.ok) {
         setDocs([])
         setAdminConfigured(true)
-        setAdminSetupMessage('')
         const hint =
           r.status === 503
-            ? `${r.error} The API needs Firebase Admin credentials (same as secure download) so it can write your library to Firestore.`
+            ? `${r.error} The document service is temporarily unavailable — try again later.`
             : r.error
         setLoadError(hint)
         return
@@ -107,25 +63,20 @@ export default function MyDocumentsPage() {
       setDocs(r.documents)
       const ac = r.adminConfigured !== false
       setAdminConfigured(ac)
-      setAdminSetupMessage(ac ? '' : (r.serverMessage || '').trim())
-      if (ac) setHealthProbe(null)
-      else void probeApiHealth()
     } catch (e) {
       setDocs([])
       setAdminConfigured(true)
-      setAdminSetupMessage('')
       setLoadError(e?.message || 'Could not load documents.')
     } finally {
       setLoadingList(false)
     }
-  }, [user?.uid, fbReady, getFreshIdToken, probeApiHealth])
+  }, [user?.uid, fbReady, getFreshIdToken])
 
   useEffect(() => {
     if (!user?.uid || !fbReady) {
       setDocs([])
       setLoadError(null)
       setAdminConfigured(true)
-      setAdminSetupMessage('')
       return undefined
     }
     void loadLibrary()
@@ -158,7 +109,7 @@ export default function MyDocumentsPage() {
         if (!r.ok) {
           const hint =
             r.error === 'admin_unavailable'
-              ? 'Renaming needs Firebase Admin on the API (local dev: set FIREBASE_SERVICE_ACCOUNT_JSON).'
+              ? 'Renaming is not available right now. Try again later.'
               : r.error || 'Rename failed.'
           setMsg(hint)
           return
@@ -192,7 +143,7 @@ export default function MyDocumentsPage() {
         if (!r.ok) {
           const hint =
             r.error === 'admin_unavailable'
-              ? 'Copy needs Firebase Admin on the API (local dev: set FIREBASE_SERVICE_ACCOUNT_JSON).'
+              ? 'Copy is not available right now. Try again later.'
               : r.error || 'Could not duplicate.'
           setMsg(hint)
           return
@@ -321,7 +272,7 @@ export default function MyDocumentsPage() {
     return (
       <ToolPageShell title="Saved PDFs" subtitle="Firebase is not configured in this build.">
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          Add your Firebase web keys to the frontend environment so sign-in and cloud sync can run.
+          Sign-in is not available in this build. Try the main site or another browser profile.
         </p>
       </ToolPageShell>
     )
@@ -356,22 +307,11 @@ export default function MyDocumentsPage() {
       {import.meta.env.PROD && !isApiBaseConfigured() ? (
         <div
           role="alert"
-          className="mb-4 rounded-lg border border-rose-400 bg-rose-950/90 px-4 py-3 text-sm text-rose-50 dark:border-rose-500 dark:bg-rose-950/80"
+          className="mb-4 rounded-lg border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-950 dark:border-rose-800 dark:bg-rose-950/50 dark:text-rose-100"
         >
-          <p className="m-0 font-semibold">The site is not pointed at your PDF API</p>
-          <p className="mt-2 mb-0 text-xs leading-relaxed text-rose-100/95">
-            Requests use this domain only (<strong>no</strong> <code className="rounded bg-black/25 px-1">https://…onrender.com</code> base), so My
-            Saved PDFs and /health never reach Render — Firebase Admin on the API is irrelevant until this is fixed.
+          <p className="m-0 leading-relaxed">
+            Saved PDFs can&apos;t reach the document service from this site. Check your connection and try again later.
           </p>
-          <ol className="mt-3 mb-0 list-decimal space-y-1.5 pl-5 text-xs leading-relaxed text-rose-100/95">
-            <li>
-              GitHub repo → <strong>Settings → Secrets and variables → Actions</strong> → set{' '}
-              <code className="rounded bg-black/25 px-1">VITE_API_BASE_URL</code> to your Render API URL (no trailing slash), e.g.{' '}
-              <code className="rounded bg-black/25 px-1">https://your-service.onrender.com</code>.
-            </li>
-            <li>Run workflow <strong>Deploy frontend to GitHub Pages</strong> again (push to main or manual run).</li>
-            <li>Hard-refresh this page (Ctrl+Shift+R). Diagnostics should show <code className="rounded bg-black/25 px-1">looksLikeExpressHealth: true</code> and real Firebase fields.</li>
-          </ol>
         </div>
       ) : null}
 
@@ -390,71 +330,10 @@ export default function MyDocumentsPage() {
           role="status"
           className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950/45 dark:text-amber-50"
         >
-          <p className="m-0 font-semibold">Saved PDFs needs Firebase Admin on your API</p>
-          <p className="mt-2 mb-0 text-xs leading-relaxed opacity-95">
-            {adminSetupMessage ||
-              'The server cannot verify your ID token or write to Firestore until you add a service account.'}
+          <p className="m-0 leading-relaxed">
+            Cloud library sync isn&apos;t available on this deployment. Try again later or use Download from the editor
+            to keep a local copy.
           </p>
-          <ol className="mt-3 mb-0 list-decimal space-y-1.5 pl-5 text-xs leading-relaxed">
-            <li>
-              Firebase Console → Project settings → Service accounts → <strong>Generate new private key</strong>{' '}
-              (JSON file).
-            </li>
-            <li>
-              On <strong>Render</strong> (or your host): open the <strong>API</strong> web service → Environment → add{' '}
-              <code className="rounded bg-amber-200/80 px-1 dark:bg-amber-900/70">FIREBASE_SERVICE_ACCOUNT_JSON</code>{' '}
-              with the <strong>entire JSON on one line</strong> (Render “secret” / multiline env).
-            </li>
-            <li>
-              In the same Firebase project, enable <strong>Firestore</strong> (Create database, production mode is fine).
-            </li>
-            <li>Redeploy or restart the API, then click Refresh here.</li>
-          </ol>
-          <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-amber-400/30 pt-3 dark:border-amber-700/40">
-            <button
-              type="button"
-              disabled={healthBusy}
-              onClick={() => void probeApiHealth()}
-              className="fx-focus-ring rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-50 dark:bg-amber-700 dark:hover:bg-amber-600"
-            >
-              {healthBusy ? 'Checking API…' : 'Run API diagnostics'}
-            </button>
-            <a
-              href={apiUrl('/health')}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs font-medium text-amber-900 underline underline-offset-2 hover:text-amber-950 dark:text-amber-100 dark:hover:text-white"
-            >
-              Open /health in new tab
-            </a>
-            {import.meta.env.PROD && !isApiBaseConfigured() ? (
-              <span className="text-xs text-amber-900/90 dark:text-amber-100/90">
-                Production build has no <code className="rounded bg-amber-200/80 px-1 dark:bg-amber-900/70">VITE_API_BASE_URL</code> — diagnostics use this site’s origin; set the API URL at build time so Saved PDFs hits the same host where you added the key.
-              </span>
-            ) : null}
-          </div>
-          {healthProbe ? (
-            <pre className="mt-3 max-h-48 overflow-auto rounded-lg bg-amber-900/10 p-2 text-[11px] leading-snug text-amber-950 dark:bg-black/25 dark:text-amber-50">
-              {JSON.stringify(
-                healthProbe.error
-                  ? healthProbe
-                  : {
-                      resolvedApiBase: healthProbe.resolvedApiBase,
-                      requestUrl: healthProbe.url,
-                      absoluteUrl: healthProbe.absoluteUrl,
-                      httpStatus: healthProbe.status,
-                      looksLikeExpressHealth: healthProbe.looksLikeExpressHealth,
-                      firebaseServiceAccountEnvSet: healthProbe.json?.firebaseServiceAccountEnvSet,
-                      firebaseAdminReady: healthProbe.json?.firebaseAdminReady,
-                      firebaseAdminHint: healthProbe.json?.firebaseAdminHint,
-                      projectOk: healthProbe.json?.ok,
-                      parseError: healthProbe.json?.parseError,
-                    },
-                null,
-                2
-              )}
-            </pre>
-          ) : null}
         </div>
       ) : null}
 
@@ -464,9 +343,7 @@ export default function MyDocumentsPage() {
           <p className="mt-3 text-sm font-medium text-zinc-800 dark:text-zinc-200">No saved documents yet</p>
           <p className="mx-auto mt-1 max-w-md text-xs text-zinc-600 dark:text-zinc-400">
             Stay <strong>signed in</strong>, open <strong>Edit PDF</strong>, upload a PDF, then use <strong>Save PDF</strong> in the
-            Edits panel. The API records each session in your library (Firestore). If the list stays empty after saving,
-            confirm the API has <strong>Firebase Admin</strong> configured and <strong>Firestore</strong> enabled for the
-            same project.
+            Edits panel. Your saved files will appear here.
           </p>
           <Link
             to="/tools/edit-pdf"

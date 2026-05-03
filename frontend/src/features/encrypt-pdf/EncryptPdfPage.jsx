@@ -101,7 +101,7 @@ export default function EncryptPdfPage() {
     }
     if (import.meta.env.PROD && !isApiBaseConfigured()) {
       setError(
-        'Encrypt PDF needs the API (qpdf). Set VITE_API_BASE_URL in production, or run the backend on port 3001 locally.'
+        'Encrypt needs the online document service, which is not available from this build. Try again later.'
       )
       return
     }
@@ -167,7 +167,7 @@ export default function EncryptPdfPage() {
         )
         setError(
           e?.message === 'Failed to fetch'
-            ? 'Could not reach the API. Start the backend (port 3001) or check your network.'
+            ? 'Could not reach the server. Check your connection and try again.'
             : e?.message || 'Could not encrypt PDF'
         )
       }

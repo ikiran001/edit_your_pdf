@@ -6,7 +6,6 @@ import {
   CalendarClock,
   Check,
   CheckCircle2,
-  CreditCard,
   Download,
   FolderOpen,
   Receipt,
@@ -79,7 +78,7 @@ function DetailRow({ icon, label, children }) {
 
 export default function SubscriptionBillingPage() {
   const { getFreshIdToken } = useAuth()
-  const { me, loading, error, refresh, checkoutConfigured } = useSubscription()
+  const { me, loading, error, refresh } = useSubscription()
   const [upgradeOpen, setUpgradeOpen] = useState(false)
   const [cancelBusy, setCancelBusy] = useState(false)
   const [cancelMsg, setCancelMsg] = useState(null)
@@ -196,17 +195,6 @@ export default function SubscriptionBillingPage() {
                 </Link>
               </div>
             </div>
-
-            {!checkoutConfigured ? (
-              <div className="mt-6 flex gap-3 rounded-xl border border-amber-200/90 bg-amber-50/90 px-4 py-3 text-xs leading-relaxed text-amber-950 dark:border-amber-500/35 dark:bg-amber-950/40 dark:text-amber-100">
-                <CreditCard className="mt-0.5 h-4 w-4 shrink-0 text-amber-700 dark:text-amber-400" aria-hidden />
-                <p>
-                  Razorpay checkout needs <span className="font-mono font-semibold">RAZORPAY_KEY_ID</span> and{' '}
-                  <span className="font-mono font-semibold">RAZORPAY_KEY_SECRET</span> on your API (e.g. Render →
-                  Environment). You can still open the upgrade window to read instructions.
-                </p>
-              </div>
-            ) : null}
 
             {!loading && me && !daily?.unlimited ? (
               <div className="mt-6 rounded-xl border border-white/60 bg-white/70 p-4 shadow-inner dark:border-zinc-700/80 dark:bg-zinc-950/40">
