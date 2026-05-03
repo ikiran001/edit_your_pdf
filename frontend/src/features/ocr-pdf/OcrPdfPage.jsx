@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { apiUrl, getResolvedApiBase, isApiBaseConfigured } from '../../lib/apiBase'
+import { useState } from 'react'
+import { apiUrl, isApiBaseConfigured } from '../../lib/apiBase'
 import ToolPageShell from '../../shared/components/ToolPageShell.jsx'
 import ToolFeatureSeoSection from '../../shared/components/ToolFeatureSeoSection.jsx'
 import FileDropzone from '../../shared/components/FileDropzone.jsx'
@@ -30,19 +30,6 @@ function downloadBlob(blob, name) {
 
 export default function OcrPdfPage() {
   const { runWithSignInForDownload } = useClientToolDownloadAuth()
-  /** In `npm run dev`, set only when VITE_API_BASE_URL (or pilot-api-runtime.js) points off localhost. */
-  const devRemoteApiBase = useMemo(() => {
-    if (!import.meta.env.DEV) return null
-    const b = getResolvedApiBase()
-    if (!b) return null
-    try {
-      const host = new URL(b).hostname
-      if (host === 'localhost' || host === '127.0.0.1') return null
-      return b
-    } catch {
-      return null
-    }
-  }, [])
   const [file, setFile] = useState(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
@@ -57,9 +44,7 @@ export default function OcrPdfPage() {
       return
     }
     if (import.meta.env.PROD && !isApiBaseConfigured()) {
-      setError(
-        'OCR PDF needs the API (Docker image with ocrmypdf). Set VITE_API_BASE_URL for production builds, or run the backend on port 3001 locally.'
-      )
+      setError('OCR needs the online document service, which is not available from this build. Try again later.')
       return
     }
 
@@ -89,9 +74,7 @@ export default function OcrPdfPage() {
                 /* ignore */
               }
             } else if (res.status === 404) {
-              /* Render/Cloudflare often returns HTML 404 when the route does not exist on the deployed API. */
-              msg =
-                'This API does not expose OCR yet (404). Redeploy your Render web service from the latest Git commit (Dockerfile adds POST /ocr-pdf). After deploy, open GET /health on the same host and confirm "ocrmypdf": true.'
+              msg = 'OCR is not available from this site right now. Try again later.'
             } else {
               try {
                 const t = await res.text()
@@ -112,7 +95,7 @@ export default function OcrPdfPage() {
             const text = await res.text()
             console.warn('[ocr-pdf] unexpected response:', contentType, text.slice(0, 200))
             trackErrorOccurred(OCR_TOOL, 'unexpected_response_type')
-            setError('Server did not return a PDF. Is the API running with ocrmypdf installed?')
+            setError('The service did not return a PDF. Try again later.')
             return
           }
 
@@ -157,7 +140,7 @@ export default function OcrPdfPage() {
         )
         setError(
           e?.message === 'Failed to fetch'
-            ? 'Could not reach the API. Start the backend (port 3001) or check your network.'
+            ? 'Could not reach the server. Check your connection and try again.'
             : e?.message || 'OCR failed'
         )
       }
@@ -171,21 +154,6 @@ export default function OcrPdfPage() {
       title="OCR PDF"
       subtitle="Turn scanned pages into searchable text (server uses ocrmypdf + Tesseract). Download a new PDF, then open it in Edit PDF if you want to change wording."
     >
-      {devRemoteApiBase ? (
-        <div
-          role="note"
-          className="mb-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-950 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-50"
-        >
-          <p className="m-0 font-medium">Local dev is using a remote API</p>
-          <p className="mt-1 mb-0">
-            Requests go to <strong className="break-all">{devRemoteApiBase}</strong>, not your computer. A 404 here
-            means that <strong>host</strong> has not been redeployed with OCR yet — or comment out{' '}
-            <code className="rounded bg-amber-200/90 px-1 dark:bg-amber-900/80">VITE_API_BASE_URL</code> in{' '}
-            <code className="rounded bg-amber-200/90 px-1 dark:bg-amber-900/80">frontend/.env.development</code>, restart
-            Vite, and run the backend on <strong>localhost:3001</strong> (install <code className="rounded bg-amber-200/90 px-1 dark:bg-amber-900/80">ocrmypdf</code> locally) so calls use the dev proxy instead.
-          </p>
-        </div>
-      ) : null}
       <FileDropzone
         accept="application/pdf"
         disabled={busy}
@@ -228,8 +196,7 @@ export default function OcrPdfPage() {
       )}
       <p className="mt-2 max-w-xl text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
         Large files may take several minutes. Password-protected PDFs are not supported here — use{' '}
-        <strong>Unlock PDF</strong> first. The server processes up to <strong>40 pages</strong> per run by default
-        (see API <code className="rounded bg-zinc-200/80 px-1 dark:bg-zinc-800">OCR_MAX_PAGES</code>).
+        <strong>Unlock PDF</strong> first. Up to <strong>40 pages</strong> per run by default.
       </p>
       <button
         type="button"
@@ -241,8 +208,7 @@ export default function OcrPdfPage() {
       </button>
       <ToolFeatureSeoSection toolId="ocr-pdf" />
       <p className="mt-6 text-xs text-zinc-500 dark:text-zinc-400">
-        Production needs the Docker-deployed API (see repo <code className="rounded bg-zinc-200/80 px-1 dark:bg-zinc-800">Dockerfile</code>)
-        so <strong>ocrmypdf</strong> and <strong>Tesseract</strong> (English + Hindi packs) are on the server.
+        OCR runs on our servers with searchable-text output. For best results on scans, use clear, upright pages.
       </p>
     </ToolPageShell>
   )

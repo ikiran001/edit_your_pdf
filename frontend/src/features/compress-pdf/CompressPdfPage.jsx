@@ -154,7 +154,7 @@ export default function CompressPdfPage() {
       trackEvent('compress_pdf_path', { mode })
       if (anyFallback) {
         setSuccess(
-          'Done — but the server compressor (qpdf) was not used, so sizes may not drop. For real compression: run the backend locally (port 3001) or set VITE_API_BASE_URL on your production build.'
+          'Done — the stronger server compressor was not used, so file sizes may not change much. Try again later for deeper compression.'
         )
       } else {
         setSuccess('Compression finished. Review sizes below, then download.')
@@ -252,19 +252,13 @@ export default function CompressPdfPage() {
           role="note"
           className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-950 dark:border-rose-800 dark:bg-rose-950/45 dark:text-rose-100"
         >
-          <strong className="font-semibold">Production:</strong> this static build has no API base URL. Compress
-          will use the browser fallback only (often <strong className="font-semibold">no size change</strong>
-          ). Set <code className="rounded bg-rose-100/90 px-1 font-mono text-xs dark:bg-rose-900/80">VITE_API_BASE_URL</code>{' '}
-          to your deployed API (same as Edit PDF / OCR) and redeploy.
+          <strong className="font-semibold">Note:</strong> this build is not connected to the full compression service.
+          Results may be limited until the online service is available.
         </div>
       )}
       <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
-        The API runs <strong className="font-semibold text-zinc-800 dark:text-zinc-100">qpdf</strong> first,
-        then <strong className="font-semibold text-zinc-800 dark:text-zinc-100">Ghostscript</strong> on{' '}
-        <strong className="font-semibold">Medium</strong> / <strong className="font-semibold">High</strong> for
-        real downsampling (needs backend + Ghostscript). Low = qpdf only. Without the API (
-        <code className="rounded bg-zinc-200/80 px-1 text-xs dark:bg-zinc-700">VITE_API_BASE_URL</code>
-        ), the browser falls back to pdf-lib — sizes rarely move much.
+        Medium and High use stronger server-side compression when the service is available. Low uses a lighter path in
+        the browser — sizes may change little without the online service.
       </p>
 
       <fieldset className="mb-6 rounded-2xl border border-zinc-200 bg-white/80 p-4 dark:border-zinc-700 dark:bg-zinc-900/50">

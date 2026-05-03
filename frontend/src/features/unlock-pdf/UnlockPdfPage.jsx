@@ -49,7 +49,7 @@ export default function UnlockPdfPage() {
     }
     if (import.meta.env.PROD && !isApiBaseConfigured()) {
       setError(
-        'Unlock PDF requires the API (qpdf on the server). Set VITE_API_BASE_URL for production builds, or run locally with the backend on port 3001.'
+        'Unlock needs the online document service, which is not available from this build. Try again later.'
       )
       return
     }
@@ -132,7 +132,7 @@ export default function UnlockPdfPage() {
         )
         setError(
           e?.message === 'Failed to fetch'
-            ? 'Could not reach the API. Start the backend (port 3001) or check your network.'
+            ? 'Could not reach the server. Check your connection and try again.'
             : e?.message || 'Could not unlock PDF'
         )
       }
