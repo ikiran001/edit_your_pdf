@@ -84,6 +84,14 @@ export const TOOL_REGISTRY = [
     icon: 'PenLine',
   },
   {
+    id: 'e-sign-pdf',
+    path: '/tools/e-sign',
+    title: 'E-Sign PDF',
+    description: 'Electronically sign in your browser: draw or upload a signature, place on any page, download.',
+    implemented: true,
+    icon: 'Signature',
+  },
+  {
     id: 'fill-pdf',
     path: '/tools/fill-pdf',
     title: 'Fill PDF form',

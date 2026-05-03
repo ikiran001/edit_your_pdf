@@ -35,6 +35,7 @@ const TOOL_DOC_TITLES = {
   '/tools/split-pdf': 'pdfpilot - Split PDF',
   '/tools/compress-pdf': 'pdfpilot - Compress PDF',
   '/tools/sign-pdf': 'pdfpilot - Sign PDF',
+  '/tools/e-sign': 'pdfpilot - E-Sign PDF',
   '/tools/pdf-to-jpg': 'pdfpilot - PDF to JPG',
   '/tools/pdf-to-png': 'pdfpilot - PDF to PNG',
   '/tools/pdf-to-text': 'pdfpilot - PDF to text',

@@ -212,6 +212,10 @@
       "title": "Sign PDF",
       "description": "Sign any page, duplicate or copy/paste placements, then download."
     },
+    "e-sign-pdf": {
+      "title": "E-Sign PDF",
+      "description": "Electronically sign in your browser: draw or upload a signature, place on any page, download."
+    },
     "fill-pdf": {
       "title": "Fill PDF form",
       "description": "Fill AcroForm fields and download — processing stays in the browser."

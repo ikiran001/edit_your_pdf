@@ -110,6 +110,7 @@ export default function AppRoutes() {
               <Route path="/tools/jpg-to-pdf" element={<JpgToPdfPage />} />
               <Route path="/tools/scan-to-pdf" element={<ScanToPdfPage />} />
               <Route path="/tools/sign-pdf" element={<SignPdfPage />} />
+              <Route path="/tools/e-sign" element={<SignPdfPage />} />
               <Route path="/tools/fill-pdf" element={<FillPdfPage />} />
               <Route path="/tools/flatten-pdf" element={<FlattenPdfPage />} />
               <Route path="/tools/unlock-pdf" element={<UnlockPdfPage />} />
