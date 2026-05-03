@@ -75,6 +75,7 @@ export const MEGA_NAV_GROUPS = [
       { type: 'tool', id: 'unlock-pdf' },
       { type: 'tool', id: 'encrypt-pdf', titleKey: 'megaTool.protectPdf' },
       { type: 'tool', id: 'sign-pdf' },
+      { type: 'tool', id: 'e-sign-pdf' },
       { type: 'tool', id: 'redact-pdf', titleKey: 'megaTool.redactPdf' },
       { type: 'tool', id: 'compare-pdf', titleKey: 'megaTool.comparePdf' },
     ],

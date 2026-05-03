@@ -352,6 +352,54 @@ export const TOOL_SEO_BY_ID = {
     ],
   },
 
+  'e-sign-pdf': {
+    featureName: 'E-Sign PDF',
+    intro: [
+      'E-sign PDFs in your browser: add your signature, drag it onto the right line or box on each page, then download a standard PDF. Good for agreements, HR forms, and quick approvals when you do not need a full certificate-based workflow.',
+      'Processing stays on pdfpilot in your session — useful when you want a simple electronic signature without uploading to unknown third-party sites.',
+    ],
+    steps: [
+      'Open E-Sign PDF and upload the document.',
+      'Create your signature (draw, type, or upload an image).',
+      'Place it on the page; use Duplicate or copy/paste if initials appear in several spots.',
+      'Adjust zoom and scroll until alignment looks correct.',
+      'Apply and download the signed PDF.',
+      'Keep the signed copy for your records and share only that file with others.',
+    ],
+    benefits: [
+      {
+        title: 'No print–sign–scan loop',
+        body: 'Finish routine signatures on screen.',
+      },
+      {
+        title: 'Precise placement',
+        body: 'Line up with signature fields so forms look professional.',
+      },
+      {
+        title: 'Reusable mark',
+        body: 'Use the same signature on multiple pages in one session.',
+      },
+      {
+        title: 'Normal PDF output',
+        body: 'Opens in any PDF reader — same engine as Sign PDF.',
+      },
+    ],
+    highlights: [
+      {
+        title: 'Flexible input',
+        body: 'Draw fresh or reuse a PNG you already trust.',
+      },
+      {
+        title: 'Multi-page',
+        body: 'Initial every page your policy requires.',
+      },
+      {
+        title: 'Straightforward flow',
+        body: 'Upload, place, download.',
+      },
+    ],
+  },
+
   'unlock-pdf': {
     featureName: 'Unlock PDF',
     intro: [

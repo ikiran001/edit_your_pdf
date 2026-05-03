@@ -4,6 +4,8 @@
 export const ANALYTICS_TOOL = {
   edit_pdf: 'edit_pdf',
   sign_pdf: 'sign_pdf',
+  /** Same signing UI as Sign PDF; separate entry for “e-sign” discovery. */
+  e_sign_pdf: 'e_sign_pdf',
   /** JPG → PDF (combine images) */
   merge_pdf: 'merge_pdf',
   /** Merge multiple PDF files into one */
@@ -58,6 +60,7 @@ export const REGISTRY_ID_TO_FEATURE = {
   'split-pdf': ANALYTICS_TOOL.split_pdf,
   'compress-pdf': ANALYTICS_TOOL.compress_pdf,
   'sign-pdf': ANALYTICS_TOOL.sign_pdf,
+  'e-sign-pdf': ANALYTICS_TOOL.e_sign_pdf,
   'pdf-to-jpg': ANALYTICS_TOOL.pdf_to_jpg,
   'jpg-to-pdf': ANALYTICS_TOOL.merge_pdf,
   'unlock-pdf': ANALYTICS_TOOL.unlock_pdf,

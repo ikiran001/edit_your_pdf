@@ -16,6 +16,7 @@ export const TOOL_ACCENT_KEY_BY_ID = {
   'jpg-to-pdf': 'orange',
   'scan-to-pdf': 'orange',
   'sign-pdf': 'sky',
+  'e-sign-pdf': 'sky',
   'fill-pdf': 'sky',
   'flatten-pdf': 'lime',
   'unlock-pdf': 'indigo',

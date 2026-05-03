@@ -240,11 +240,11 @@ export default function SignatureCreationModal({ open, onClose, onDone }) {
           {tab === 'draw' ? (
             <>
               <div
-                className="rounded-xl border border-zinc-300 bg-[length:12px_12px] bg-center dark:border-zinc-600 [background-image:repeating-conic-gradient(rgb(228_228_231)_0%_25%,rgb(250_250_250)_0%_50%)] dark:[background-image:repeating-conic-gradient(rgb(63_63_70)_0%_25%,rgb(39_39_42)_0%_50%)]"
+                className="rounded-xl border border-dashed border-zinc-300 bg-[#f0f3f7] p-0.5 dark:border-zinc-400 dark:bg-[#f0f3f7]"
               >
                 <canvas
                   ref={canvasRef}
-                  className="block w-full max-w-full cursor-crosshair touch-none rounded-[11px] bg-transparent"
+                  className="block w-full max-w-full cursor-crosshair touch-none rounded-[10px] bg-transparent"
                   style={{ background: 'transparent' }}
                   onMouseDown={onPadDown}
                 onMouseMove={onPadMove}
@@ -294,7 +294,7 @@ export default function SignatureCreationModal({ open, onClose, onDone }) {
               </button>
               {imgPreviewUrl ? (
                 <div
-                  className="rounded-xl border border-zinc-200 bg-[length:12px_12px] bg-center p-3 dark:border-zinc-600 [background-image:repeating-conic-gradient(rgb(228_228_231)_0%_25%,rgb(250_250_250)_0%_50%)] dark:[background-image:repeating-conic-gradient(rgb(63_63_70)_0%_25%,rgb(39_39_42)_0%_50%)]"
+                  className="rounded-xl border border-dashed border-zinc-300 bg-[#f0f3f7] p-3 dark:border-zinc-400 dark:bg-[#f0f3f7]"
                 >
                   <p className="mb-2 text-xs font-medium text-zinc-500">Preview</p>
                   <img

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { PDFDocument } from 'pdf-lib'
 import { ClipboardPaste, CopyPlus, PenLine } from 'lucide-react'
 import ToolPageShell from '../../shared/components/ToolPageShell.jsx'
@@ -38,9 +39,23 @@ function downloadUint8(u8, name) {
 }
 
 const PLACE_OFFSET = 0.02
-const SIGN_TOOL = ANALYTICS_TOOL.sign_pdf
 
 export default function SignPdfPage() {
+  const { pathname } = useLocation()
+  const isESignRoute = useMemo(
+    () => (pathname || '').replace(/\/$/, '') === '/tools/e-sign',
+    [pathname]
+  )
+  const analyticsTool = useMemo(
+    () => (isESignRoute ? ANALYTICS_TOOL.e_sign_pdf : ANALYTICS_TOOL.sign_pdf),
+    [isESignRoute]
+  )
+  const shellTitle = isESignRoute ? 'E-Sign PDF' : 'Sign PDF'
+  const shellSubtitle = isESignRoute
+    ? 'Electronically sign in your browser: add your signature, place it on any page, then download.'
+    : 'Place signatures on any page, duplicate or copy/paste, then download a signed PDF.'
+  const seoToolId = isESignRoute ? 'e-sign-pdf' : 'sign-pdf'
+
   const { runWithSignInForDownload } = useClientToolDownloadAuth()
   const viewerRef = useRef(null)
   const prevPlacementsLen = useRef(0)
@@ -57,7 +72,7 @@ export default function SignPdfPage() {
   /** Bumps when user copies a placement so the Paste button re-renders (ref alone does not). */
   const [clipboardRev, setClipboardRev] = useState(0)
 
-  useToolEngagement(SIGN_TOOL, Boolean(pdfFile))
+  useToolEngagement(analyticsTool, Boolean(pdfFile))
 
   useEffect(() => {
     prevPlacementsLen.current = 0
@@ -199,16 +214,16 @@ export default function SignPdfPage() {
 
           const out = await doc.save()
           const pageCount = doc.getPageCount()
-          downloadUint8(out, pdfFile.name.replace(/\.pdf$/i, '') + '-signed.pdf')
-          trackToolCompleted(SIGN_TOOL, true)
+          downloadUint8(out, pdfFile.name.replace(/\.pdf$/i, '') + (isESignRoute ? '-esigned.pdf' : '-signed.pdf'))
+          trackToolCompleted(analyticsTool, true)
           trackFileDownloaded({
-            tool: SIGN_TOOL,
+            tool: analyticsTool,
             file_size: out.byteLength / 1024,
             total_pages: pageCount,
           })
           const elapsed =
             (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0
-          trackProcessingTime(SIGN_TOOL, elapsed)
+          trackProcessingTime(analyticsTool, elapsed)
           setFileReadyHint(MSG.fileReady)
           window.setTimeout(() => setFileReadyHint(null), 6000)
         },
@@ -221,21 +236,18 @@ export default function SignPdfPage() {
         setError(e.message || 'Still checking sign-in.')
       } else {
         console.error(e)
-        trackErrorOccurred(SIGN_TOOL, e?.message || 'sign_apply_failed')
+        trackErrorOccurred(analyticsTool, e?.message || 'sign_apply_failed')
         setError(e?.message || 'Could not embed signature')
       }
     } finally {
       setBusy(false)
     }
-  }, [pdfFile, signaturePng, placements, runWithSignInForDownload])
+  }, [pdfFile, signaturePng, placements, runWithSignInForDownload, analyticsTool, isESignRoute])
 
   const canPaste = Boolean(signaturePng?.length && clipboardRev > 0 && placementClipboardRef.current)
 
   return (
-    <ToolPageShell
-      title="Sign PDF"
-      subtitle="Place signatures on any page, duplicate or copy/paste, then download a signed PDF."
-    >
+    <ToolPageShell title={shellTitle} subtitle={shellSubtitle}>
       <SignatureCreationModal open={modalOpen} onClose={() => setModalOpen(false)} onDone={onSignatureDone} />
 
       <h3 className="mb-2 text-sm font-semibold text-zinc-800 dark:text-zinc-200">1. PDF</h3>
@@ -245,11 +257,11 @@ export default function SignPdfPage() {
         onFiles={(f) => {
           const next = f[0]
           if (next) {
-            markFunnelUpload(SIGN_TOOL)
+            markFunnelUpload(analyticsTool)
             trackFileUploaded({
               file_type: 'pdf',
               file_size: next.size / 1024,
-              tool: SIGN_TOOL,
+              tool: analyticsTool,
             })
           }
           setPdfFile(next)
@@ -278,7 +290,7 @@ export default function SignPdfPage() {
         </div>
       )}
 
-      <ToolFeatureSeoSection toolId="sign-pdf" />
+      <ToolFeatureSeoSection toolId={seoToolId} />
 
       {pdfFile ? (
         <>
