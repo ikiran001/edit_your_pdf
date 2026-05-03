@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import ToolPageShell from '../../shared/components/ToolPageShell.jsx'
 import FileDropzone from '../../shared/components/FileDropzone.jsx'
 import { useToolEngagement } from '../../hooks/useToolEngagement.js'
@@ -31,6 +31,15 @@ function defaultCrop() {
   return { l: 0.05, t: 0.05, w: 0.9, h: 0.9 }
 }
 
+function rectsNearEqual(a, b, eps = 1e-5) {
+  return (
+    Math.abs(a.l - b.l) < eps &&
+    Math.abs(a.t - b.t) < eps &&
+    Math.abs(a.w - b.w) < eps &&
+    Math.abs(a.h - b.h) < eps
+  )
+}
+
 export default function CropPdfPage() {
   const { runWithSignInForDownload } = useClientToolDownloadAuth()
   const [file, setFile] = useState(null)
@@ -40,11 +49,58 @@ export default function CropPdfPage() {
   const [pageScope, setPageScope] = useState(/** @type {'all' | 'current'} */ ('current'))
   const [activePage, setActivePage] = useState(0)
   const [sharedCrop, setSharedCrop] = useState(defaultCrop)
+  /** Saved per-page crops only (updated when user clicks “Save crop for this page”). */
   const [cropsByPage, setCropsByPage] = useState(
     /** @type {Record<number, { l: number, t: number, w: number, h: number }>} */ ({})
   )
+  const [draftCrop, setDraftCrop] = useState(defaultCrop)
+  const isDirtyRef = useRef(false)
 
   useToolEngagement(TOOL, true)
+
+  const baselineForActive = cropsByPage[activePage] ?? defaultCrop()
+  const isDraftDirty =
+    pageScope === 'current' && !rectsNearEqual(draftCrop, baselineForActive)
+  isDirtyRef.current = isDraftDirty
+
+  const savedPageIndices = useMemo(
+    () =>
+      Object.keys(cropsByPage)
+        .map((k) => Number(k))
+        .filter((i) => Number.isFinite(i))
+        .sort((a, b) => a - b),
+    [cropsByPage]
+  )
+
+  useEffect(() => {
+    if (pageScope !== 'current') return
+    setDraftCrop(cropsByPage[activePage] ?? defaultCrop())
+  }, [activePage, pageScope, file])
+
+  const setActivePageNav = useCallback(
+    (next) => {
+      setActivePage((prev) => {
+        const resolved = typeof next === 'function' ? next(prev) : next
+        if (
+          pageScope === 'current' &&
+          isDirtyRef.current &&
+          typeof resolved === 'number' &&
+          resolved !== prev &&
+          typeof window !== 'undefined' &&
+          !window.confirm('Leave this page? Unsaved crop edits on this page will be lost.')
+        ) {
+          return prev
+        }
+        return resolved
+      })
+    },
+    [pageScope]
+  )
+
+  const saveCurrentPageCrop = useCallback(() => {
+    if (pageScope !== 'current') return
+    setCropsByPage((prev) => ({ ...prev, [activePage]: draftCrop }))
+  }, [activePage, draftCrop, pageScope])
 
   const onPdf = useCallback(
     async (files) => {
@@ -60,6 +116,7 @@ export default function CropPdfPage() {
       setError(null)
       setSharedCrop(defaultCrop())
       setCropsByPage({})
+      setDraftCrop(defaultCrop())
       setActivePage(0)
       setFile(f)
       try {
@@ -78,10 +135,15 @@ export default function CropPdfPage() {
   const resetAll = () => {
     setSharedCrop(defaultCrop())
     setCropsByPage({})
+    setDraftCrop(defaultCrop())
   }
 
   const runCrop = async () => {
     if (!file) return
+    if (pageScope === 'current' && savedPageIndices.length === 0) {
+      setError('Save at least one page crop (or switch to “All pages (same crop)”).')
+      return
+    }
     setBusy(true)
     setError(null)
     const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
@@ -90,7 +152,6 @@ export default function CropPdfPage() {
         async () => {
           const u8 = await applyCropPdf(file, {
             scope: pageScope,
-            activePageIndex: activePage,
             sharedCrop,
             cropsByPage,
           })
@@ -151,11 +212,12 @@ export default function CropPdfPage() {
               pageScope={pageScope}
               sharedCrop={sharedCrop}
               setSharedCrop={setSharedCrop}
-              cropsByPage={cropsByPage}
-              setCropsByPage={setCropsByPage}
+              draftCrop={draftCrop}
+              setDraftCrop={setDraftCrop}
               activePage={activePage}
-              setActivePage={setActivePage}
+              setActivePage={setActivePageNav}
               busy={busy}
+              savedPageIndices={savedPageIndices}
             />
           </div>
 
@@ -169,6 +231,34 @@ export default function CropPdfPage() {
                 <p>Click and drag the crop box to move it. Drag the blue handles to resize.</p>
               </div>
             </div>
+
+            {pageScope === 'current' ? (
+              <div className="flex flex-col gap-2 rounded-xl border border-zinc-200 bg-zinc-50/90 px-3 py-2.5 text-sm dark:border-zinc-600 dark:bg-zinc-800/60">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-medium text-zinc-800 dark:text-zinc-100">
+                    Saved crops:{' '}
+                    <span className="tabular-nums text-indigo-600 dark:text-cyan-400">
+                      {savedPageIndices.length}/{pageCount}
+                    </span>
+                  </span>
+                  {isDraftDirty ? (
+                    <span className="text-xs font-medium text-amber-700 dark:text-amber-300">Unsaved edits</span>
+                  ) : null}
+                </div>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={saveCurrentPageCrop}
+                  className="rounded-xl bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:opacity-50 dark:bg-cyan-700 dark:hover:bg-cyan-600"
+                >
+                  Save crop for this page
+                </button>
+                <p className="m-0 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
+                  Adjust the box, save each page you want to change, then download once. Pages you never save keep the
+                  original crop from your file.
+                </p>
+              </div>
+            ) : null}
 
             <div className="flex items-center justify-between gap-2">
               <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Pages</span>
@@ -202,12 +292,14 @@ export default function CropPdfPage() {
                   disabled={busy}
                   className="h-4 w-4 accent-emerald-600"
                 />
-                <span>Current page only</span>
+                <span>Page by page (save each, download once)</span>
               </label>
             </fieldset>
 
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              This updates the crop box only. Other pages stay unchanged when &quot;Current page only&quot; is selected.
+              {pageScope === 'all'
+                ? 'The same crop is applied to every page when you download.'
+                : 'Only pages you save are changed. Unsaved pages keep your PDF’s original viewing area.'}
             </p>
 
             <div className="mt-auto flex justify-end pt-2">
@@ -217,7 +309,7 @@ export default function CropPdfPage() {
                 onClick={runCrop}
                 className="inline-flex items-center gap-2 rounded-2xl bg-red-600 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-red-600/25 transition hover:bg-red-700 disabled:opacity-50"
               >
-                {busy ? 'Cropping…' : 'Crop PDF'}
+                {busy ? 'Building PDF…' : 'Download cropped PDF'}
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20">→</span>
               </button>
             </div>
