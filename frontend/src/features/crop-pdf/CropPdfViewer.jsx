@@ -4,21 +4,18 @@ import CropRectOverlay from '../../components/tool-pdf/CropRectOverlay.jsx'
 import FloatingPdfChrome from '../../components/tool-pdf/FloatingPdfChrome.jsx'
 import { loadPdfDocument } from '../../components/tool-pdf/pdfDocumentLoader.js'
 
-function defaultCrop() {
-  return { l: 0.05, t: 0.05, w: 0.9, h: 0.9 }
-}
-
 /**
  * @param {{
  *   file: File,
  *   pageScope: 'all' | 'current',
  *   sharedCrop: { l: number, t: number, w: number, h: number },
  *   setSharedCrop: (r: { l: number, t: number, w: number, h: number }) => void,
- *   cropsByPage: Record<number, { l: number, t: number, w: number, h: number }>,
- *   setCropsByPage: React.Dispatch<React.SetStateAction<Record<number, { l: number, t: number, w: number, h: number }>>>,
+ *   draftCrop: { l: number, t: number, w: number, h: number },
+ *   setDraftCrop: React.Dispatch<React.SetStateAction<{ l: number, t: number, w: number, h: number }>>,
  *   activePage: number,
- *   setActivePage: (n: number) => void,
+ *   setActivePage: React.Dispatch<React.SetStateAction<number>>,
  *   busy: boolean,
+ *   savedPageIndices: number[],
  * }} props
  */
 export default function CropPdfViewer({
@@ -26,11 +23,12 @@ export default function CropPdfViewer({
   pageScope,
   sharedCrop,
   setSharedCrop,
-  cropsByPage,
-  setCropsByPage,
+  draftCrop,
+  setDraftCrop,
   activePage,
   setActivePage,
   busy,
+  savedPageIndices,
 }) {
   const [pdfDoc, setPdfDoc] = useState(null)
   const [numPages, setNumPages] = useState(0)
@@ -43,20 +41,17 @@ export default function CropPdfViewer({
   const pageRefs = useRef([])
   const [wrapW, setWrapW] = useState(640)
 
-  const displayCrop =
-    pageScope === 'all'
-      ? sharedCrop
-      : cropsByPage[activePage] ?? defaultCrop()
+  const displayCrop = pageScope === 'all' ? sharedCrop : draftCrop
 
   const setDisplayCrop = useCallback(
     (r) => {
       if (pageScope === 'all') {
         setSharedCrop(r)
       } else {
-        setCropsByPage((prev) => ({ ...prev, [activePage]: r }))
+        setDraftCrop(r)
       }
     },
-    [activePage, pageScope, setCropsByPage, setSharedCrop]
+    [pageScope, setDraftCrop, setSharedCrop]
   )
 
   useEffect(() => {
@@ -168,6 +163,8 @@ export default function CropPdfViewer({
         onSelectPage={setActivePage}
         pageRefs={pageRefs}
         scrollIntoViewOnSelect={false}
+        className="min-h-0 max-h-[min(70vh,720px)]"
+        savedPageIndices={pageScope === 'current' ? savedPageIndices : []}
       />
       <div className="flex min-h-[min(70vh,720px)] min-w-0 flex-1 flex-col bg-zinc-200/40 dark:bg-zinc-900/40">
         <div

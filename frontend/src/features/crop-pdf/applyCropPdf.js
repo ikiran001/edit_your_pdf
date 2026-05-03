@@ -34,13 +34,12 @@ function setPageCropFromNormRect(rect, page) {
  * @param {File} file
  * @param {{
  *   scope: 'all' | 'current',
- *   activePageIndex: number,
  *   sharedCrop: { l: number, t: number, w: number, h: number },
  *   cropsByPage: Record<number, { l: number, t: number, w: number, h: number }>,
  * }} opts
  */
 export async function applyCropPdf(file, opts) {
-  const { scope, activePageIndex, sharedCrop, cropsByPage } = opts
+  const { scope, sharedCrop, cropsByPage } = opts
   const srcBytes = new Uint8Array(await file.arrayBuffer())
   const src = await PDFDocument.load(srcBytes, { ignoreEncryption: true })
   const n = src.getPageCount()
@@ -52,11 +51,12 @@ export async function applyCropPdf(file, opts) {
   const pages = out.getPages()
 
   for (let i = 0; i < pages.length; i++) {
-    if (scope === 'current' && i !== activePageIndex) continue
-    const rect =
-      scope === 'all'
-        ? sharedCrop
-        : cropsByPage[activePageIndex] ?? defaultCrop()
+    if (scope === 'all') {
+      setPageCropFromNormRect(sharedCrop, pages[i])
+      continue
+    }
+    const rect = cropsByPage[i]
+    if (!rect) continue
     setPageCropFromNormRect(rect, pages[i])
   }
 
