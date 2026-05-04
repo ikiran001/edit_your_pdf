@@ -7,6 +7,11 @@ let initialized = false
 
 export function initClarity() {
   if (typeof window === 'undefined' || initialized) return
+  /* index.html may already inject the official tag (recommended for Clarity setup detection). */
+  if (document.querySelector('script[src*="clarity.ms/tag/"]')) {
+    initialized = true
+    return
+  }
   const raw = import.meta.env.VITE_CLARITY_PROJECT_ID
   const projectId = typeof raw === 'string' ? raw.trim() : ''
   if (!projectId || !/^[a-z0-9]+$/i.test(projectId)) return
