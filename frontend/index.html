@@ -9,8 +9,8 @@
       gtag('js', new Date());
       gtag('config', 'G-S7NGME62Z8');
     </script>
-    <!-- Microsoft Clarity — same project id as VITE_CLARITY_PROJECT_ID in .env.production; redeploy after edits. -->
-    <script async src="https://www.clarity.ms/tag/wlt2nfi60x"></script>
+    <!-- Microsoft Clarity — %VITE_CLARITY_PROJECT_ID% replaced at build from .env.* (see .env.production / Actions secret). -->
+    <script async src="https://www.clarity.ms/tag/%VITE_CLARITY_PROJECT_ID%"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
