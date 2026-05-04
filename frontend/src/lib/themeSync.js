@@ -6,7 +6,7 @@ const LEGACY_THEME_KEYS = ['PDFly-theme', 'TheBestPDF-theme', 'letsEditPDF-theme
 /** @returns {'dark' | 'light'} */
 export function getStoredThemeMode() {
   try {
-    if (typeof localStorage === 'undefined') return 'dark'
+    if (typeof localStorage === 'undefined') return 'light'
     let v = localStorage.getItem(THEME_STORAGE_KEY)
     if (v == null) {
       for (const legKey of LEGACY_THEME_KEYS) {
@@ -22,9 +22,9 @@ export function getStoredThemeMode() {
         }
       }
     }
-    return v === 'light' ? 'light' : 'dark'
+    return v === 'dark' ? 'dark' : 'light'
   } catch {
-    return 'dark'
+    return 'light'
   }
 }
 
