@@ -114,7 +114,8 @@ export default function TermsOfServicePage() {
 
         <Section title="8. Third-party services">
           <p>
-            The Service may rely on third parties (for example hosting, authentication, analytics, or payment links).
+            The Service may rely on third parties (for example hosting, authentication, analytics such as Google
+            Analytics or Microsoft Clarity, or payment links).
             Their use is subject to their respective terms and privacy policies. We are not responsible for third-party
             outages or acts.
           </p>

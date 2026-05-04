@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import ErrorBoundary from '../shared/components/ErrorBoundary.jsx'
 import PrivateRoute from '../auth/PrivateRoute.jsx'
-import { pageView } from '../lib/analytics.js'
+import { pageView, recordSessionRoute } from '../lib/analytics.js'
 import { docTitleForPath } from '../shared/constants/branding.js'
 import { ClientToolDownloadAuthProvider } from '../auth/ClientToolDownloadAuthContext.jsx'
 import SkipToContent from '../shared/components/SkipToContent.jsx'
@@ -62,6 +62,7 @@ function RouteAnalytics() {
   useEffect(() => {
     const t = docTitleForPath(loc.pathname)
     document.title = t
+    recordSessionRoute(loc.pathname)
     pageView(loc.pathname, t)
   }, [loc.pathname])
   return null

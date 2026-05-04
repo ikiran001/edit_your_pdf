@@ -199,7 +199,7 @@ export async function translatePlainTextOnDevice(opts) {
     if (looksLikeHtmlInsteadOfJsonError(e) && typeof caches !== 'undefined') {
       try {
         await caches.delete('transformers-cache')
-      } catch (_) {
+      } catch {
         /* ignore */
       }
       translatorPromise = null

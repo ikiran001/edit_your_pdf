@@ -1,9 +1,5 @@
 import { PDFDocument } from 'pdf-lib'
 
-function defaultCrop() {
-  return { l: 0.05, t: 0.05, w: 0.9, h: 0.9 }
-}
-
 /**
  * Apply crop box in PDF user space. `rect` uses top-left origin as fractions of page width/height (same as UI).
  *
