@@ -21,7 +21,7 @@
       name="keywords"
       content="edit pdf online, compress pdf free, merge pdf tool, pdfpilot, PurPDF, pure PDF, free pdf editor, sign pdf, split pdf, pdf converter"
     />
-    <meta name="theme-color" content="#0f0614" />
+    <meta name="theme-color" content="#f4f4f5" />
     <meta name="application-name" content="pdfpilot" />
     <!-- Favicons: ICO + 48×48 PNG at site root; ?v= cache-bust after asset changes. Google prefers ≥48×48 PNG. -->
     <link rel="icon" href="/favicon.ico?v=2" type="image/x-icon" />
@@ -94,15 +94,16 @@
               } catch (e2) {}
             }
           }
-          var light = v === 'light'
+          var dark = v === 'dark'
           var root = document.documentElement
           var b = document.body
-          root.classList.toggle('dark', !light)
+          root.classList.toggle('dark', dark)
           b.classList.remove('theme-dark', 'theme-light')
-          b.classList.add(light ? 'theme-light' : 'theme-dark')
+          b.classList.add(dark ? 'theme-dark' : 'theme-light')
         } catch (e) {
-          document.documentElement.classList.add('dark')
-          document.body.classList.add('theme-dark')
+          document.documentElement.classList.remove('dark')
+          document.body.classList.remove('theme-dark')
+          document.body.classList.add('theme-light')
         }
       })()
     </script>
