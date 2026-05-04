@@ -51,19 +51,55 @@ function sanitizeParams(params) {
   return out
 }
 
+// --- Visit id (sessionStorage) — used on every GA hit ---
+
+const SK_VID = 'pdfpilot_session_visit_id'
+const SK_V0 = 'pdfpilot_session_visit_ts'
+const SK_ROUTES = 'pdfpilot_session_routes'
+const SK_STARTED = 'pdfpilot_session_visit_started_sent'
+
+let sessionRecordingInit = false
+let pagehideListenerAttached = false
+
+export function tryGetVisitId() {
+  if (typeof window === 'undefined') return 'ssr'
+  try {
+    let id = sessionStorage.getItem(SK_VID)
+    if (!id) {
+      id =
+        typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+          ? crypto.randomUUID()
+          : `v_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 11)}`
+      sessionStorage.setItem(SK_VID, id)
+    }
+    return id
+  } catch {
+    return 'no_storage'
+  }
+}
+
+function mergeSessionParams(params) {
+  return { ...params, visit_id: tryGetVisitId() }
+}
+
 /**
  * Low-level GA4 event (non-blocking).
  */
 export function analyticsEvent(name, params) {
   if (!gtagAvailable()) return
   try {
-    window.gtag('event', name, sanitizeParams(params))
+    window.gtag('event', name, sanitizeParams(mergeSessionParams(params || {})))
   } catch {
     /* ignore */
   }
 }
 
 /** Queue on microtask so clicks / saves are never blocked.
+ *
+ * **Session / journey** (register as GA4 custom events; every event also gets `visit_id`):
+ * - `visit_started` — once per tab session: `landing_path`, `referrer_host`, `utm_params_present`
+ * - `spa_route` — each in-app navigation: `path`, `route_index`
+ * - `session_summary` — on tab close / navigate away (`pagehide`): `duration_seconds`, `route_hops`, `unique_paths`, `journey_tail`
  *
  * **Conversion-path events** (register as GA4 custom events / explorations):
  * - `pdf_to_word_path` — `{ path: 'client' }` (PDF→Word conversion is client-only)
@@ -92,6 +128,7 @@ export function pageView(path, title) {
     page_path: path,
     page_title: title || document.title,
     page_location: typeof window !== 'undefined' ? window.location.href : undefined,
+    visit_id: tryGetVisitId(),
   })
 }
 
@@ -180,4 +217,133 @@ export function trackProcessingTime(tool, durationMs) {
   const sec = Math.max(0, Math.round(Number(durationMs) / 1000))
   if (sec < 1) return
   trackEvent('processing_time', { tool, duration_seconds: sec })
+}
+
+// --- Session journey (GA4 + explorations) — call `initSessionRecording()` once from main.jsx ---
+
+function ensureVisitStartTs() {
+  try {
+    let t = sessionStorage.getItem(SK_V0)
+    if (!t) {
+      t = String(Date.now())
+      sessionStorage.setItem(SK_V0, t)
+    }
+    return Number(t)
+  } catch {
+    return Date.now()
+  }
+}
+
+function referrerHost() {
+  const r = typeof document !== 'undefined' ? document.referrer : ''
+  if (!r) return '(direct)'
+  try {
+    return new URL(r).hostname.slice(0, 120)
+  } catch {
+    return '(unparseable)'
+  }
+}
+
+function hasUtmInUrl() {
+  try {
+    const s = new URLSearchParams(window.location.search)
+    return ['utm_source', 'utm_medium', 'utm_campaign'].some((k) => s.has(k))
+  } catch {
+    return false
+  }
+}
+
+function readRouteList() {
+  try {
+    const raw = sessionStorage.getItem(SK_ROUTES)
+    const arr = raw ? JSON.parse(raw) : []
+    return Array.isArray(arr) ? arr.filter((x) => typeof x === 'string') : []
+  } catch {
+    return []
+  }
+}
+
+function sendSessionSummary() {
+  const routes = readRouteList()
+  const t0 = ensureVisitStartTs()
+  const durationSeconds = Math.max(0, Math.round((Date.now() - t0) / 1000))
+  const unique = new Set(routes).size
+  const journey = routes.slice(-20).join(' » ')
+  trackEvent('session_summary', {
+    duration_seconds: durationSeconds,
+    route_hops: routes.length,
+    unique_paths: unique,
+    journey_tail: journey,
+  })
+}
+
+/**
+ * Call once at app bootstrap (after `initAnalytics()`). Session keys are always written when
+ * `sessionStorage` is available; GA events only send when `gtag` is loaded (same as `trackEvent`).
+ * - Assigns a per-tab `visit_id` (sessionStorage)
+ * - Fires `visit_started` once (when gtag is available, same as other events)
+ * - Records route list for `session_summary` on `pagehide`
+ */
+export function initSessionRecording() {
+  if (typeof window === 'undefined' || sessionRecordingInit) return
+  sessionRecordingInit = true
+
+  tryGetVisitId()
+  ensureVisitStartTs()
+  try {
+    if (!sessionStorage.getItem(SK_ROUTES)) sessionStorage.setItem(SK_ROUTES, '[]')
+  } catch {
+    /* ignore */
+  }
+
+  try {
+    if (!sessionStorage.getItem(SK_STARTED)) {
+      sessionStorage.setItem(SK_STARTED, '1')
+      const landing = String(window.location.pathname || '/').slice(0, 200)
+      queueMicrotask(() => {
+        trackEvent('visit_started', {
+          landing_path: landing,
+          referrer_host: referrerHost(),
+          utm_params_present: hasUtmInUrl(),
+        })
+      })
+    }
+  } catch {
+    /* ignore */
+  }
+
+  if (!pagehideListenerAttached) {
+    pagehideListenerAttached = true
+    window.addEventListener('pagehide', (ev) => {
+      if (ev.persisted) return
+      sendSessionSummary()
+    })
+  }
+}
+
+/**
+ * Record SPA pathname for journey analytics; emits `spa_route` (dedupes consecutive duplicates).
+ * @param {string} pathname - e.g. `/tools/merge-pdf`
+ */
+export function recordSessionRoute(pathname) {
+  const raw = typeof pathname === 'string' ? pathname.trim() : '/'
+  const p = (raw.startsWith('/') ? raw : `/${raw}`).slice(0, 220) || '/'
+
+  let routeIndex = 0
+  try {
+    const routes = readRouteList()
+    if (routes.length > 0 && routes[routes.length - 1] === p) {
+      return
+    }
+    routes.push(p)
+    routeIndex = routes.length
+    sessionStorage.setItem(SK_ROUTES, JSON.stringify(routes.slice(-80)))
+  } catch {
+    /* ignore */
+  }
+
+  if (routeIndex < 1) return
+  queueMicrotask(() => {
+    trackEvent('spa_route', { path: p, route_index: routeIndex })
+  })
 }

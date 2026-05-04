@@ -3,7 +3,8 @@ import { createRoot } from 'react-dom/client'
 import { I18nextProvider } from 'react-i18next'
 import i18n from './i18n/i18n.js'
 import './lib/firebase.js'
-import { initAnalytics } from './lib/analytics.js'
+import { initAnalytics, initSessionRecording } from './lib/analytics.js'
+import { initClarity } from './lib/clarity.js'
 import { ThemeProvider } from './context/ThemeContext.jsx'
 import { AuthProvider } from './auth/AuthContext.jsx'
 import { AuthModalProvider } from './auth/AuthModalContext.jsx'
@@ -13,6 +14,8 @@ import './index.css'
 import App from './App.jsx'
 
 initAnalytics()
+initSessionRecording()
+initClarity()
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

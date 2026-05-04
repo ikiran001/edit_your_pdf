@@ -61,6 +61,7 @@ jobs:
       #   VITE_GA_MEASUREMENT_ID — overrides .env.production when set. Must match gtag id in frontend/index.html
       #   or remove the secret so the committed ID is used (stale secret = wrong stream in JS bundle).
       #   VITE_SUPPORT_PAYMENT_URL — optional Razorpay (or other) tip link for the post-download modal.
+      #   VITE_CLARITY_PROJECT_ID — optional Microsoft Clarity project ID (heatmaps / recordings).
       - name: Build
         working-directory: frontend
         env:
@@ -76,6 +77,9 @@ jobs:
           if [ -n "${{ secrets.VITE_SUPPORT_PAYMENT_URL }}" ]; then
             export VITE_SUPPORT_PAYMENT_URL="${{ secrets.VITE_SUPPORT_PAYMENT_URL }}"
           fi
+          if [ -n "${{ secrets.VITE_CLARITY_PROJECT_ID }}" ]; then
+            export VITE_CLARITY_PROJECT_ID="${{ secrets.VITE_CLARITY_PROJECT_ID }}"
+          fi
           if [ -n "${{ secrets.VITE_BASE_PATH }}" ]; then
             export VITE_BASE_PATH="${{ secrets.VITE_BASE_PATH }}"
           elif [ -f public/CNAME ]; then
@@ -90,6 +94,15 @@ jobs:
             export VITE_BASE_PATH="/${{ github.event.repository.name }}/"
           fi
           npm ci && npm run build
+      - name: Verify Microsoft Clarity in bundle (when secret set)
+        if: ${{ secrets.VITE_CLARITY_PROJECT_ID != '' }}
+        working-directory: frontend
+        run: |
+          if grep -q 'clarity.ms/tag' dist/assets/*.js 2>/dev/null; then
+            echo "Clarity script URL found in built JS."
+          else
+            echo "::warning::VITE_CLARITY_PROJECT_ID is set but clarity.ms/tag not found in dist — check initClarity / build."
+          fi
       - name: Verify GA4 Measurement ID in bundle
         working-directory: frontend
         run: |
