@@ -1,6 +1,14 @@
 @import 'tailwindcss';
 
-@custom-variant dark (&:where(.dark, .dark *));
+/* `dark:` utilities: classic plum theme uses `html.dark`; system theme uses data attributes (distinct palette in CSS below). */
+@custom-variant dark (
+  &:where(
+    .dark:not([data-theme-pref='system']),
+    .dark:not([data-theme-pref='system']) *,
+    [data-theme-pref='system'][data-system-appearance='dark'],
+    [data-theme-pref='system'][data-system-appearance='dark'] *
+  )
+);
 
 /* Brand accent — raspberry / magenta (selection & highlights, not PDF canvas). */
 :root {
@@ -17,11 +25,12 @@ html {
   scroll-behavior: smooth;
 }
 
-html.dark {
+html.dark,
+html[data-theme-pref='system'][data-system-appearance='dark'] {
   color-scheme: dark;
 }
 
-html:not(.dark) {
+html:not(.dark):not([data-theme-pref='system'][data-system-appearance='dark']) {
   color-scheme: light;
 }
 
@@ -73,6 +82,18 @@ html.dark .fx-focus-ring:focus-visible {
   box-shadow:
     0 0 0 2px rgb(24 24 27),
     0 0 0 4px rgb(129 140 248);
+}
+
+html[data-theme-pref='system'][data-system-appearance='dark'] .fx-focus-ring:focus-visible {
+  box-shadow:
+    0 0 0 2px rgb(15 28 24),
+    0 0 0 4px rgb(52 211 153);
+}
+
+html[data-theme-pref='system'][data-system-appearance='light'] .fx-focus-ring:focus-visible {
+  box-shadow:
+    0 0 0 2px rgb(255 255 255),
+    0 0 0 4px rgb(16 185 129);
 }
 
 html,
@@ -141,6 +162,40 @@ body.theme-light::before {
   -webkit-mask-image: radial-gradient(ellipse 90% 80% at 50% 40%, black 15%, transparent 68%);
 }
 
+/* System theme — Vue / emerald “forest” dark (not plum) + mint light (not indigo white). */
+html[data-theme-pref='system'][data-system-appearance='dark'] body.theme-dark {
+  background-color: #0f1c18;
+  background-image:
+    radial-gradient(ellipse 130% 75% at 50% -28%, rgba(66, 184, 131, 0.18), transparent 52%),
+    radial-gradient(ellipse 120% 70% at 100% 0%, rgba(53, 73, 94, 0.45), transparent 55%),
+    radial-gradient(ellipse 90% 55% at 0% 100%, rgba(16, 185, 129, 0.12), transparent 50%),
+    radial-gradient(ellipse 70% 50% at 85% 75%, rgba(52, 211, 153, 0.08), transparent 48%),
+    radial-gradient(ellipse 60% 45% at 15% 40%, rgba(34, 197, 94, 0.06), transparent 45%);
+  background-attachment: fixed;
+}
+
+html[data-theme-pref='system'][data-system-appearance='dark'] body.theme-dark::before {
+  background-image:
+    linear-gradient(rgba(52, 211, 153, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(52, 211, 153, 0.055) 1px, transparent 1px);
+}
+
+html[data-theme-pref='system'][data-system-appearance='light'] body.theme-light {
+  background-color: #f0fdf4;
+  background-image:
+    linear-gradient(180deg, #ecfdf5 0%, #f8fafc 38%, #ffffff 100%),
+    radial-gradient(ellipse 110% 65% at 50% -18%, rgba(52, 211, 153, 0.2), transparent 58%),
+    radial-gradient(ellipse 85% 50% at 100% 12%, rgba(16, 185, 129, 0.08), transparent 52%),
+    radial-gradient(ellipse 75% 45% at 0% 90%, rgba(167, 243, 208, 0.35), transparent 50%);
+  background-attachment: fixed;
+}
+
+html[data-theme-pref='system'][data-system-appearance='light'] body.theme-light::before {
+  background-image:
+    linear-gradient(rgba(16, 185, 129, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16, 185, 129, 0.06) 1px, transparent 1px);
+}
+
 /* Futuristic glass header — use with html.dark for dark variant. */
 .fx-glass-header {
   border-bottom: 1px solid rgba(99, 102, 241, 0.14);
@@ -163,6 +218,17 @@ html.dark .fx-glass-header {
     0 0 60px -20px rgba(99, 102, 241, 0.12);
 }
 
+html[data-theme-pref='system'][data-system-appearance='dark'] .fx-glass-header {
+  position: relative;
+  border-bottom-color: rgba(66, 184, 131, 0.28);
+  background-color: rgba(15 28 24 / 0.82);
+  box-shadow:
+    0 1px 0 0 rgba(52 211 153 / 0.18),
+    0 14px 48px -14px rgba(0 0 0 / 0.42),
+    0 0 72px -20px rgba(52 211 153 / 0.12),
+    0 0 48px -16px rgba(53 73 94 / 0.35);
+}
+
 /* Subtle grain on dark glass (organic feel, very light). */
 html.dark .fx-glass-header::after {
   content: '';
@@ -178,6 +244,30 @@ html.dark .fx-glass-header::after {
 html.dark .fx-glass-header > * {
   position: relative;
   z-index: 1;
+}
+
+html[data-theme-pref='system'][data-system-appearance='dark'] .fx-glass-header::after {
+  content: '';
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.16;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='a'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23a)'/%3E%3C/svg%3E");
+  mix-blend-mode: soft-light;
+}
+
+html[data-theme-pref='system'][data-system-appearance='dark'] .fx-glass-header > * {
+  position: relative;
+  z-index: 1;
+}
+
+html[data-theme-pref='system'][data-system-appearance='light'] .fx-glass-header {
+  border-bottom-color: rgba(16 185 129 / 0.22);
+  background-color: rgba(255 255 255 / 0.82);
+  box-shadow:
+    0 1px 0 0 rgba(16 185 129 / 0.12),
+    0 10px 36px -10px rgba(52 211 153 / 0.12);
 }
 
 /* Contenteditable over PDF canvas: root fill is set inline (sampled PDF background) to hide canvas text
