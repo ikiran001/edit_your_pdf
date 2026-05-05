@@ -9,7 +9,17 @@
       gtag('js', new Date());
       gtag('config', 'G-S7NGME62Z8');
     </script>
-    <!-- Microsoft Clarity — %VITE_CLARITY_PROJECT_ID% replaced at build from .env.* (see .env.production / Actions secret). -->
+    <!-- Microsoft Clarity: queue stub MUST run before the async tag script (tag calls window.clarity immediately). -->
+    <script>
+      (function (w, d, n) {
+        w[n] =
+          w[n] ||
+          function () {
+            ;(w[n].q = w[n].q || []).push(arguments)
+          }
+      })(window, document, 'clarity')
+    </script>
+    <!-- %VITE_CLARITY_PROJECT_ID% replaced at build from .env.* (see .env.production / Actions secret). -->
     <script async src="https://www.clarity.ms/tag/%VITE_CLARITY_PROJECT_ID%"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
