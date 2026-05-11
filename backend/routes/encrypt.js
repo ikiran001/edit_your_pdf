@@ -3,12 +3,13 @@ import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import { spawn } from 'child_process';
 import { getQpdfBinary } from '../utils/resolveQpdf.js';
+import { runProcess } from '../utils/runProcess.js';
 
 const MAX_BYTES = 52 * 1024 * 1024;
 const MIN_PASSWORD_LEN = 12;
 const MAX_PASSWORD_LEN = 128;
+const ENCRYPT_TIMEOUT_MS = Number.parseInt(process.env.ENCRYPT_TIMEOUT_MS || '', 10) || 60_000;
 
 const router = Router();
 
@@ -23,43 +24,6 @@ const mem = multer({
     cb(null, true);
   },
 }).single('file');
-
-function runProcess(bin, args) {
-  return new Promise((resolve, reject) => {
-    const child = spawn(bin, args, {
-      stdio: ['ignore', 'pipe', 'pipe'],
-      env: { ...process.env },
-    });
-    let stderr = '';
-    let settled = false;
-    const done = (fn) => {
-      if (settled) return;
-      settled = true;
-      fn();
-    };
-    child.stderr?.on('data', (chunk) => {
-      stderr += chunk.toString();
-    });
-    child.stdout?.on('data', (chunk) => {
-      stderr += chunk.toString();
-    });
-    child.on('error', (err) => {
-      done(() => reject(err));
-    });
-    child.on('close', (code) => {
-      if (code === 0) done(() => resolve({ stderr }));
-      else
-        done(() =>
-          reject(
-            Object.assign(new Error(stderr.trim() || `${bin} exited with code ${code}`), {
-              exitCode: code,
-              stderr,
-            })
-          )
-        );
-    });
-  });
-}
 
 /**
  * AES-256 PDF encryption via qpdf (same family as /unlock-pdf).
@@ -108,15 +72,11 @@ router.post('/encrypt-pdf', (req, res) => {
        * qpdf: user + owner password (same), 256 = AES-256.
        * https://qpdf.readthedocs.io/en/stable/cli.html#encrypt
        */
-      await runProcess(bin, [
-        '--encrypt',
-        password,
-        password,
-        '256',
-        '--',
-        inPath,
-        outPath,
-      ]);
+      await runProcess(
+        bin,
+        ['--encrypt', password, password, '256', '--', inPath, outPath],
+        { timeoutMs: ENCRYPT_TIMEOUT_MS }
+      );
 
       const stat = await fs.promises.stat(outPath);
       if (!stat.isFile() || stat.size === 0) {
@@ -133,6 +93,12 @@ router.post('/encrypt-pdf', (req, res) => {
     } catch (e) {
       const msg = String(e?.stderr || e?.message || e);
       console.error('[encrypt-pdf]', msg);
+      if (e?.code === 'TIMEOUT') {
+        if (!res.headersSent) {
+          res.status(504).json({ error: 'Encryption timed out — try a smaller PDF.' });
+        }
+        return;
+      }
       if (/already.*encrypt|encrypted/i.test(msg)) {
         return res.status(400).json({
           error:
