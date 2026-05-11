@@ -3,12 +3,13 @@ import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import { spawn } from 'child_process';
 import { PDFDocument } from 'pdf-lib';
 import { getQpdfBinary } from '../utils/resolveQpdf.js';
 import { getGhostscriptBinary } from '../utils/resolveGhostscript.js';
+import { runProcess } from '../utils/runProcess.js';
 
 const MAX_BYTES = 52 * 1024 * 1024;
+const UNLOCK_TIMEOUT_MS = Number.parseInt(process.env.UNLOCK_TIMEOUT_MS || '', 10) || 120_000;
 
 const router = Router();
 
@@ -24,43 +25,6 @@ const mem = multer({
   },
 }).single('file');
 
-function runProcess(bin, args) {
-  return new Promise((resolve, reject) => {
-    const child = spawn(bin, args, {
-      stdio: ['ignore', 'pipe', 'pipe'],
-      env: { ...process.env },
-    });
-    let stderr = '';
-    let settled = false;
-    const done = (fn) => {
-      if (settled) return;
-      settled = true;
-      fn();
-    };
-    child.stderr?.on('data', (chunk) => {
-      stderr += chunk.toString();
-    });
-    child.stdout?.on('data', (chunk) => {
-      stderr += chunk.toString();
-    });
-    child.on('error', (err) => {
-      done(() => reject(err));
-    });
-    child.on('close', (code) => {
-      if (code === 0) done(() => resolve({ stderr }));
-      else
-        done(() =>
-          reject(
-            Object.assign(new Error(stderr.trim() || `${bin} exited with code ${code}`), {
-              exitCode: code,
-              stderr,
-            })
-          )
-        );
-    });
-  });
-}
-
 /**
  * qpdf --password-file + --decrypt (preferred).
  */
@@ -69,7 +33,9 @@ function decryptWithQpdf(inPath, outPath, pwPath) {
   if (!bin) {
     return Promise.reject(Object.assign(new Error('qpdf not found'), { code: 'ENOENT' }));
   }
-  return runProcess(bin, [`--password-file=${pwPath}`, '--decrypt', inPath, outPath]);
+  return runProcess(bin, [`--password-file=${pwPath}`, '--decrypt', inPath, outPath], {
+    timeoutMs: UNLOCK_TIMEOUT_MS,
+  });
 }
 
 /**
@@ -81,16 +47,20 @@ function decryptWithGhostscript(inPath, outPath, password) {
     return Promise.reject(Object.assign(new Error('gs not found'), { code: 'ENOENT' }));
   }
   // No -q: wrong-password cases often only appear on stderr while still writing a blank PDF.
-  return runProcess(bin, [
-    '-dNOPAUSE',
-    '-dBATCH',
-    '-sDEVICE=pdfwrite',
-    '-dCompatibilityLevel=1.4',
-    `-sOutputFile=${outPath}`,
-    `-sPDFPassword=${password}`,
-    '-f',
-    inPath,
-  ]);
+  return runProcess(
+    bin,
+    [
+      '-dNOPAUSE',
+      '-dBATCH',
+      '-sDEVICE=pdfwrite',
+      '-dCompatibilityLevel=1.4',
+      `-sOutputFile=${outPath}`,
+      `-sPDFPassword=${password}`,
+      '-f',
+      inPath,
+    ],
+    { timeoutMs: UNLOCK_TIMEOUT_MS }
+  );
 }
 
 function isWrongPassword(stderr, message) {
@@ -208,6 +178,10 @@ router.post('/unlock-pdf', (req, res) => {
           return res.status(401).json({ error: 'Wrong password. The PDF could not be decrypted.' });
         }
       } catch (qErr) {
+        if (qErr?.code === 'TIMEOUT') {
+          console.warn('[unlock-pdf] qpdf timed out');
+          return res.status(504).json({ error: 'Unlock timed out — try a smaller PDF.' });
+        }
         if (isNoBackendError(qErr) || /qpdf not found/i.test(String(qErr.message))) {
           console.log('[unlock-pdf] qpdf unavailable, trying ghostscript');
           backend = 'ghostscript';
@@ -218,6 +192,10 @@ router.post('/unlock-pdf', (req, res) => {
               return res.status(401).json({ error: 'Wrong password. The PDF could not be decrypted.' });
             }
           } catch (gErr) {
+            if (gErr?.code === 'TIMEOUT') {
+              console.warn('[unlock-pdf] ghostscript timed out');
+              return res.status(504).json({ error: 'Unlock timed out — try a smaller PDF.' });
+            }
             if (isNoBackendError(gErr)) {
               console.error('[unlock-pdf] neither qpdf nor ghostscript available');
               return res.status(503).json({

@@ -3,11 +3,12 @@ import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import { spawn } from 'child_process';
 import { getQpdfBinary } from '../utils/resolveQpdf.js';
 import { getGhostscriptBinary } from '../utils/resolveGhostscript.js';
+import { runProcess } from '../utils/runProcess.js';
 
 const MAX_BYTES = 52 * 1024 * 1024;
+const COMPRESS_TIMEOUT_MS = Number.parseInt(process.env.COMPRESS_TIMEOUT_MS || '', 10) || 180_000;
 
 const router = Router();
 
@@ -22,43 +23,6 @@ const mem = multer({
     cb(null, true);
   },
 }).single('file');
-
-function runProcess(bin, args) {
-  return new Promise((resolve, reject) => {
-    const child = spawn(bin, args, {
-      stdio: ['ignore', 'pipe', 'pipe'],
-      env: { ...process.env },
-    });
-    let stderr = '';
-    let settled = false;
-    const done = (fn) => {
-      if (settled) return;
-      settled = true;
-      fn();
-    };
-    child.stderr?.on('data', (chunk) => {
-      stderr += chunk.toString();
-    });
-    child.stdout?.on('data', (chunk) => {
-      stderr += chunk.toString();
-    });
-    child.on('error', (err) => {
-      done(() => reject(err));
-    });
-    child.on('close', (code) => {
-      if (code === 0) done(() => resolve({ stderr }));
-      else
-        done(() =>
-          reject(
-            Object.assign(new Error(stderr.trim() || `${bin} exited with code ${code}`), {
-              exitCode: code,
-              stderr,
-            })
-          )
-        );
-    });
-  });
-}
 
 /** @param {string} raw */
 function normalizeLevel(raw) {
@@ -140,7 +104,7 @@ router.post('/compress-pdf', (req, res) => {
       await fs.promises.writeFile(inPath, req.file.buffer);
 
       const args = [...qpdfCompressionArgs(level), inPath, qpdfOut];
-      await runProcess(bin, args);
+      await runProcess(bin, args, { timeoutMs: COMPRESS_TIMEOUT_MS });
 
       const inSize = req.file.buffer.length;
       /** Never return a “compressed” file larger than the upload when a smaller candidate exists. */
@@ -158,16 +122,20 @@ router.post('/compress-pdf', (req, res) => {
       if (gsBin && gsProfile) {
         const gsOut = path.join(workRoot, 'gs-out.pdf');
         try {
-          await runProcess(gsBin, [
-            '-q',
-            '-dNOPAUSE',
-            '-dBATCH',
-            '-sDEVICE=pdfwrite',
-            `-dPDFSETTINGS=${gsProfile}`,
-            '-dCompatibilityLevel=1.4',
-            `-sOutputFile=${gsOut}`,
-            qpdfOut,
-          ]);
+          await runProcess(
+            gsBin,
+            [
+              '-q',
+              '-dNOPAUSE',
+              '-dBATCH',
+              '-sDEVICE=pdfwrite',
+              `-dPDFSETTINGS=${gsProfile}`,
+              '-dCompatibilityLevel=1.4',
+              `-sOutputFile=${gsOut}`,
+              qpdfOut,
+            ],
+            { timeoutMs: COMPRESS_TIMEOUT_MS }
+          );
           const st = await fs.promises.stat(gsOut);
           if (st.size > 0) {
             const gsBuf = await fs.promises.readFile(gsOut);
@@ -193,6 +161,9 @@ router.post('/compress-pdf', (req, res) => {
       res.send(Buffer.from(best.buf));
     } catch (e) {
       console.error('[compress-pdf]', e?.stderr || e?.message || e);
+      if (e?.code === 'TIMEOUT') {
+        return res.status(504).json({ error: 'Compression timed out — try a smaller PDF or a lower level.' });
+      }
       const msg = String(e?.message || e || 'Compression failed');
       return res.status(500).json({
         error: msg.includes('qpdf') ? msg : `Compression failed: ${msg}`,

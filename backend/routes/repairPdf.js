@@ -3,10 +3,11 @@ import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import { spawn } from 'child_process';
 import { getQpdfBinary } from '../utils/resolveQpdf.js';
+import { runProcess } from '../utils/runProcess.js';
 
 const MAX_BYTES = 52 * 1024 * 1024;
+const REPAIR_TIMEOUT_MS = Number.parseInt(process.env.REPAIR_TIMEOUT_MS || '', 10) || 120_000;
 
 const router = Router();
 
@@ -21,43 +22,6 @@ const mem = multer({
     cb(null, true);
   },
 }).single('file');
-
-function runProcess(bin, args) {
-  return new Promise((resolve, reject) => {
-    const child = spawn(bin, args, {
-      stdio: ['ignore', 'pipe', 'pipe'],
-      env: { ...process.env },
-    });
-    let stderr = '';
-    let settled = false;
-    const done = (fn) => {
-      if (settled) return;
-      settled = true;
-      fn();
-    };
-    child.stderr?.on('data', (chunk) => {
-      stderr += chunk.toString();
-    });
-    child.stdout?.on('data', (chunk) => {
-      stderr += chunk.toString();
-    });
-    child.on('error', (err) => {
-      done(() => reject(err));
-    });
-    child.on('close', (code) => {
-      if (code === 0) done(() => resolve({ stderr }));
-      else
-        done(() =>
-          reject(
-            Object.assign(new Error(stderr.trim() || `${bin} exited with code ${code}`), {
-              exitCode: code,
-              stderr,
-            })
-          )
-        );
-    });
-  });
-}
 
 function pdfHeadOk(buf) {
   const head = buf.subarray(0, Math.min(5, buf.length)).toString('latin1');
@@ -106,14 +70,19 @@ router.post('/repair-pdf', (req, res) => {
       const pwArg = password ? [`--password-file=${pwPath}`] : [];
 
       const tryDirect = async () => {
-        await runProcess(bin, [...pwArg, inPath, outDirect]);
+        await runProcess(bin, [...pwArg, inPath, outDirect], { timeoutMs: REPAIR_TIMEOUT_MS });
       };
 
       const tryPageRebuild = async () => {
-        await runProcess(bin, [...pwArg, '--empty', '--pages', inPath, '1-z', '--', outPages]);
+        await runProcess(
+          bin,
+          [...pwArg, '--empty', '--pages', inPath, '1-z', '--', outPages],
+          { timeoutMs: REPAIR_TIMEOUT_MS }
+        );
       };
 
       let outPath = null;
+      let timedOut = false;
       try {
         await tryDirect();
         const st = await fs.promises.stat(outDirect);
@@ -122,10 +91,11 @@ router.post('/repair-pdf', (req, res) => {
           if (pdfHeadOk(buf)) outPath = outDirect;
         }
       } catch (e) {
+        if (e?.code === 'TIMEOUT') timedOut = true;
         console.warn('[repair-pdf] direct qpdf pass failed:', e?.stderr || e?.message || e);
       }
 
-      if (!outPath) {
+      if (!outPath && !timedOut) {
         try {
           await tryPageRebuild();
           const st = await fs.promises.stat(outPages);
@@ -134,8 +104,13 @@ router.post('/repair-pdf', (req, res) => {
             if (pdfHeadOk(buf)) outPath = outPages;
           }
         } catch (e) {
+          if (e?.code === 'TIMEOUT') timedOut = true;
           console.warn('[repair-pdf] page-rebuild pass failed:', e?.stderr || e?.message || e);
         }
+      }
+
+      if (timedOut && !outPath) {
+        return res.status(504).json({ error: 'Repair timed out — try a smaller PDF.' });
       }
 
       if (!outPath) {

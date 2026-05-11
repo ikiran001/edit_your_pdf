@@ -19,7 +19,8 @@ export function securityHelmet() {
 
 /**
  * CORS: if `ALLOWED_ORIGINS` is set (comma-separated), only those origins may use credentialed requests.
- * If unset, reflects `Origin` (previous behaviour) — fine for local dev; production should set the allowlist.
+ * In production, missing/empty allowlist denies cross-origin requests (set the env var explicitly).
+ * In dev, an empty allowlist reflects the request origin so localhost on any port works.
  */
 export function securityCors() {
   const raw = process.env.ALLOWED_ORIGINS;
@@ -31,20 +32,26 @@ export function securityCors() {
           .filter(Boolean)
       : null;
 
-  if (process.env.NODE_ENV === 'production' && (!list || list.length === 0)) {
+  const isProd = process.env.NODE_ENV === 'production';
+
+  if (isProd && (!list || list.length === 0)) {
     console.warn(
-      '[cors] ALLOWED_ORIGINS is empty — any browser origin is accepted. Set comma-separated origins (e.g. https://pdfpilot.pro) for strict CORS.'
+      '[cors] ALLOWED_ORIGINS is empty in production — denying all cross-origin requests. Set comma-separated origins (e.g. https://pdfpilot.pro) to allow.'
     );
   }
 
-  const origin =
-    !list || list.length === 0
-      ? true
-      : (requestOrigin, cb) => {
-          if (!requestOrigin) return cb(null, true);
-          if (list.includes(requestOrigin)) return cb(null, true);
-          return cb(null, false);
-        };
+  let origin;
+  if (list && list.length > 0) {
+    origin = (requestOrigin, cb) => {
+      if (!requestOrigin) return cb(null, true);
+      if (list.includes(requestOrigin)) return cb(null, true);
+      return cb(null, false);
+    };
+  } else if (isProd) {
+    origin = (requestOrigin, cb) => (requestOrigin ? cb(null, false) : cb(null, true));
+  } else {
+    origin = true;
+  }
 
   return cors({
     origin,
@@ -53,9 +60,13 @@ export function securityCors() {
   });
 }
 
+/**
+ * Heavy ops (compress/ocr/repair/unlock/encrypt/document-flow) each spend ~10–60s of CPU
+ * per request, so the per-IP budget is much smaller than upload/edit. Override via env if needed.
+ */
 export const cpuHeavyLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: intEnv('RATE_LIMIT_CPU_HEAVY_MAX', 40),
+  max: intEnv('RATE_LIMIT_CPU_HEAVY_MAX', 15),
   standardHeaders: true,
   legacyHeaders: false,
   message: { ok: false, error: 'Too many heavy requests from this network. Try again in a few minutes.' },
