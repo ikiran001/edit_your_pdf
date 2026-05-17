@@ -12,8 +12,8 @@
 # Environment) to your Firebase service account JSON (one line). Same project must have Firestore enabled.
 # Do not commit secrets into this file; use sync: false below or paste only in the Render UI.
 #
-# Recommended for production CORS: set `ALLOWED_ORIGINS` on the API (Dashboard → Environment) to your SPA
-# origins (comma-separated), e.g. `https://pdfpilot.pro`. Optional: `HEALTH_VERBOSE=1` for detailed GET /health.
+# Optional CORS: if `ALLOWED_ORIGINS` is unset, production allows https://pdfpilot.pro and https://www.pdfpilot.pro.
+# Set it (comma-separated) to use different origins instead, or to add staging/preview URLs alongside production.
 services:
   - type: web
     name: edit-your-pdf-chew
