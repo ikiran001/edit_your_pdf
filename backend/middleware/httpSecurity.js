@@ -17,14 +17,19 @@ export function securityHelmet() {
   });
 }
 
+/** Public SPA hosts for pdfpilot — used only when `ALLOWED_ORIGINS` is unset in production (avoids broken uploads). */
+const DEFAULT_PRODUCTION_BROWSER_ORIGINS = ['https://pdfpilot.pro', 'https://www.pdfpilot.pro'];
+
 /**
- * CORS: if `ALLOWED_ORIGINS` is set (comma-separated), only those origins may use credentialed requests.
- * In production, missing/empty allowlist denies cross-origin requests (set the env var explicitly).
- * In dev, an empty allowlist reflects the request origin so localhost on any port works.
+ * CORS: `ALLOWED_ORIGINS` (comma-separated) lists browser origins allowed for credentialed requests.
+ * In production, if the env var is missing or empty, the public pdfpilot frontends above are allowed
+ * so the API works out of the box. If you set `ALLOWED_ORIGINS`, it replaces this list — include every SPA
+ * origin you need (e.g. production + staging), comma-separated.
+ * In dev, an empty allowlist reflects any origin so localhost on any port works.
  */
 export function securityCors() {
   const raw = process.env.ALLOWED_ORIGINS;
-  const list =
+  let list =
     raw && raw.trim()
       ? raw
           .split(',')
@@ -35,8 +40,11 @@ export function securityCors() {
   const isProd = process.env.NODE_ENV === 'production';
 
   if (isProd && (!list || list.length === 0)) {
-    console.warn(
-      '[cors] ALLOWED_ORIGINS is empty in production — denying all cross-origin requests. Set comma-separated origins (e.g. https://pdfpilot.pro) to allow.'
+    list = [...DEFAULT_PRODUCTION_BROWSER_ORIGINS];
+    console.info(
+      '[cors] ALLOWED_ORIGINS unset — allowing default production frontends:',
+      list.join(', '),
+      '(set ALLOWED_ORIGINS to a comma-separated list to use different origins instead)'
     );
   }
 
