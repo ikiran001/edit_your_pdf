@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Mic, MicOff, RefreshCw, Send, Sparkles } from 'lucide-react'
 import ToolPageShell from '../../shared/components/ToolPageShell.jsx'
 import FileDropzone from '../../shared/components/FileDropzone.jsx'
+import { useAuth } from '../../auth/AuthContext.jsx'
+import { useAuthModal } from '../../auth/AuthModalContext.jsx'
 import { apiUrl } from '../../lib/apiBase.js'
 import { useToolEngagement } from '../../hooks/useToolEngagement.js'
 import {
@@ -15,6 +17,8 @@ const TOOL = ANALYTICS_TOOL.chat_with_pdf
 const MAX_UPLOAD_BYTES = 50 * 1024 * 1024
 
 export default function ChatWithPdfPage() {
+  const { user, loading: authLoading } = useAuth()
+  const { openAuth } = useAuthModal()
   const [sessionId, setSessionId] = useState(null)
   const [filename, setFilename] = useState(null)
   const [messages, setMessages] = useState([])
@@ -83,6 +87,22 @@ export default function ChatWithPdfPage() {
   const send = useCallback(async () => {
     const text = input.trim()
     if (!text || !sessionId || thinking) return
+    if (authLoading) {
+      setError('Still checking sign-in… try again in a moment.')
+      return
+    }
+    if (!user) {
+      if (listening) {
+        try {
+          recognitionRef.current?.stop?.()
+        } catch {
+          /* ignore */
+        }
+      }
+      setError(null)
+      openAuth('signin')
+      return
+    }
     if (listening) {
       try {
         recognitionRef.current?.stop?.()
@@ -121,7 +141,7 @@ export default function ChatWithPdfPage() {
     } finally {
       setThinking(false)
     }
-  }, [input, sessionId, thinking, messages, listening])
+  }, [input, sessionId, thinking, messages, listening, user, authLoading, openAuth])
 
   const toggleDictation = useCallback(() => {
     if (!speechSupported || thinking) return
