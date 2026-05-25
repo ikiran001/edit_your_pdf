@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { extractPdfText } from '../services/extractPdfText.js';
+import { requirePro } from '../middleware/requirePro.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const uploadsRoot = path.join(__dirname, '..', 'uploads');
@@ -38,7 +39,7 @@ async function getSessionPdfText(sessionId) {
   return entry;
 }
 
-router.post('/ai/chat', express.json({ limit: '1mb' }), async (req, res) => {
+router.post('/ai/chat', express.json({ limit: '1mb' }), requirePro, async (req, res) => {
   try {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {

@@ -7,6 +7,7 @@ import crypto from 'crypto';
 import { spawn } from 'child_process';
 import { PDFDocument } from 'pdf-lib';
 import { getOcrmypdfBinary } from '../utils/resolveOcrmypdf.js';
+import { requirePro } from '../middleware/requirePro.js';
 
 const MAX_BYTES = 52 * 1024 * 1024;
 
@@ -118,7 +119,7 @@ const mem = multer({
 /**
  * POST /ocr-pdf — multipart field `file` (PDF) → searchable PDF (Tesseract via ocrmypdf).
  */
-router.post('/ocr-pdf', (req, res) => {
+router.post('/ocr-pdf', requirePro, (req, res) => {
   mem(req, res, async (err) => {
     if (err) {
       return res.status(400).json({ error: err.message || 'Upload failed' });

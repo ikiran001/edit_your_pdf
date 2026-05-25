@@ -4,9 +4,11 @@ import FileDropzone from '../../shared/components/FileDropzone.jsx'
 import { useToolEngagement } from '../../hooks/useToolEngagement.js'
 import { trackErrorOccurred, trackFileDownloaded, trackToolCompleted } from '../../lib/analytics.js'
 import { ANALYTICS_TOOL } from '../../shared/constants/analyticsTools.js'
+import { apiUrl } from '../../lib/apiBase.js'
 import { extractPdfPlainText, CLIENT_PDF_MAX_BYTES, CLIENT_PDF_MAX_PAGES } from '../pdf-to-word/extractPdfText.js'
 import { buildDraftPdfBlob } from '../word-to-pdf/buildDraftPdfFromPlainText.js'
-import { translatePlainTextOnDevice } from './clientOnnxTranslate.js'
+import { useAuth } from '../../auth/AuthContext.jsx'
+import { useAuthModal } from '../../auth/AuthModalContext.jsx'
 import { useClientToolDownloadAuth } from '../../auth/ClientToolDownloadAuthContext.jsx'
 
 const TOOL = ANALYTICS_TOOL.translate_pdf
@@ -36,19 +38,10 @@ function triggerDownloadBlob(blob, name) {
   URL.revokeObjectURL(url)
 }
 
-function friendlyOnnxMessage(raw) {
-  const m = String(raw || '')
-  if (/registerBackend|onnxruntime|WebAssembly|wasm/i.test(m)) {
-    return (
-      'On-device translation could not start (browser ML runtime). Try: restart the dev server after pulling latest, use Chrome or Edge, ' +
-      'allow WebAssembly, and disable extensions that block scripts or cross-site requests. First run needs network to download the model from Hugging Face.'
-    )
-  }
-  return m || 'Translation failed. Try a smaller PDF or a different browser.'
-}
-
 export default function TranslatePdfPage() {
   const { runWithSignInForDownload } = useClientToolDownloadAuth()
+  const { user, loading: authLoading, getFreshIdToken } = useAuth()
+  const { openAuth } = useAuthModal()
   const [target, setTarget] = useState('es')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
@@ -64,6 +57,16 @@ export default function TranslatePdfPage() {
         setError(`PDF must be under ${Math.round(CLIENT_PDF_MAX_BYTES / (1024 * 1024))} MB.`)
         return
       }
+      if (authLoading) {
+        setError('Still checking sign-in… try again in a moment.')
+        return
+      }
+      if (!user) {
+        setError(null)
+        openAuth('signin')
+        return
+      }
+
       setError(null)
       setStatus(null)
       setBusy(true)
@@ -80,16 +83,40 @@ export default function TranslatePdfPage() {
           return
         }
 
-        setStatus('Preparing on-device translator…')
-        const merged = await translatePlainTextOnDevice({
-          text: trimmed,
-          targetUiCode: target,
-          onStatus: (msg) => setStatus(msg),
+        setStatus('Translating with AI…')
+        const idToken = await getFreshIdToken().catch(() => null)
+        if (!idToken) {
+          setError(null)
+          openAuth('signin')
+          return
+        }
+        const res = await fetch(apiUrl('/ai/translate'), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${idToken}`,
+          },
+          body: JSON.stringify({ text: trimmed, targetLang: target }),
         })
+        const body = await res.json().catch(() => ({}))
+        if (res.status === 401 || body?.code === 'auth_required') {
+          openAuth('signin')
+          return
+        }
+        if (!res.ok) {
+          throw new Error(body?.error || `Translation failed (${res.status})`)
+        }
+        const translated = String(body?.translated || '').trim()
+        if (!translated) {
+          throw new Error('AI returned no translated text. Try again.')
+        }
+        if (body?.truncated) {
+          setStatus('Long document — translated up to the AI input limit. The output PDF may end early.')
+        }
 
         await runWithSignInForDownload(
           async () => {
-            const { blob, numPages: outPages } = await buildDraftPdfBlob(merged)
+            const { blob, numPages: outPages } = await buildDraftPdfBlob(translated)
             const base = (file.name || 'document').replace(/\.pdf$/i, '') || 'document'
             triggerDownloadBlob(blob, `${base}-translated-${target}.pdf`)
             trackToolCompleted(TOOL, true)
@@ -109,20 +136,20 @@ export default function TranslatePdfPage() {
         } else {
           console.error(e)
           trackErrorOccurred(TOOL, e?.message || 'translate_failed')
-          setError(friendlyOnnxMessage(e?.message))
+          setError(e?.message || 'Translation failed. Try a smaller PDF.')
         }
       } finally {
         setBusy(false)
         setStatus(null)
       }
     },
-    [runWithSignInForDownload, target]
+    [runWithSignInForDownload, target, user, authLoading, openAuth, getFreshIdToken]
   )
 
   return (
     <ToolPageShell
       title="Translate PDF"
-      subtitle="Extract text in your browser and translate with a free on-device model (Transformers.js / NLLB). No server translation quota — downloads once from Hugging Face, then runs locally."
+      subtitle="Extract text in your browser and translate it with AI — fast, accurate, server-side. Sign in to download the translated PDF."
     >
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Translate to</label>
@@ -160,8 +187,9 @@ export default function TranslatePdfPage() {
       )}
 
       <p className="mt-6 text-xs text-zinc-500 dark:text-zinc-400">
-        Translation stays in your browser (no third-party translation API). Source language is guessed from the text; quality
-        varies by language pair. Long PDFs run in sections and may take time on slower devices.
+        Text is extracted in your browser and sent to our AI translation service. Sign in is required — the translated
+        PDF will only download for authenticated accounts. Long PDFs are translated up to a maximum length cap; split
+        very long documents first for best results.
       </p>
     </ToolPageShell>
   )

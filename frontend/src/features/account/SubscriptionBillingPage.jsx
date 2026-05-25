@@ -8,8 +8,12 @@ import {
   CheckCircle2,
   Download,
   FolderOpen,
+  Infinity as InfinityIcon,
+  Mail,
+  MessageSquare,
   Receipt,
   RefreshCw,
+  ScanText,
   ShieldCheck,
   Sparkles,
 } from 'lucide-react'
@@ -259,13 +263,100 @@ export default function SubscriptionBillingPage() {
           </div>
         </section>
 
+        {!loading && me && !sub?.isPaid ? (
+          <section
+            aria-label="Why upgrade to Pro"
+            className="overflow-hidden rounded-2xl border border-indigo-200/70 bg-gradient-to-br from-indigo-50 via-white to-cyan-50 p-6 shadow-sm dark:border-indigo-500/30 dark:from-indigo-950/40 dark:via-zinc-900/80 dark:to-cyan-950/30 sm:p-8"
+          >
+            <div className="flex flex-col items-center text-center">
+              <span className="inline-flex items-center gap-1 rounded-full bg-indigo-600/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-700 dark:bg-indigo-400/10 dark:text-indigo-200">
+                <Sparkles className="h-3 w-3" aria-hidden />
+                Pro · ₹99/mo · ₹999/yr
+              </span>
+              <h2 className="mt-3 text-2xl font-bold tracking-tight text-zinc-900 dark:text-white sm:text-3xl">
+                Get every Pro feature for less than ₹3/day
+              </h2>
+              <p className="mx-auto mt-2 max-w-xl text-sm text-zinc-600 dark:text-zinc-300">
+                Pro pays for itself the first time you stop manually retyping a scan or hunting through a 60-page contract for one clause.
+              </p>
+            </div>
+
+            <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <li className="flex gap-3 rounded-xl border border-indigo-100 bg-white/70 p-4 shadow-sm dark:border-indigo-500/20 dark:bg-zinc-900/60">
+                <MessageSquare className="mt-0.5 h-5 w-5 shrink-0 text-indigo-600 dark:text-indigo-300" aria-hidden />
+                <div>
+                  <p className="font-semibold text-zinc-900 dark:text-white">Chat with PDF</p>
+                  <p className="mt-1 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
+                    Ask any question, get answers with page citations — for contracts, research papers, manuals.
+                  </p>
+                </div>
+              </li>
+              <li className="flex gap-3 rounded-xl border border-indigo-100 bg-white/70 p-4 shadow-sm dark:border-indigo-500/20 dark:bg-zinc-900/60">
+                <ScanText className="mt-0.5 h-5 w-5 shrink-0 text-indigo-600 dark:text-indigo-300" aria-hidden />
+                <div>
+                  <p className="font-semibold text-zinc-900 dark:text-white">Server OCR</p>
+                  <p className="mt-1 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
+                    Turn scans and photos into searchable, copy-paste-ready PDFs (English + Hindi included).
+                  </p>
+                </div>
+              </li>
+              <li className="flex gap-3 rounded-xl border border-indigo-100 bg-white/70 p-4 shadow-sm dark:border-indigo-500/20 dark:bg-zinc-900/60">
+                <InfinityIcon className="mt-0.5 h-5 w-5 shrink-0 text-indigo-600 dark:text-indigo-300" aria-hidden />
+                <div>
+                  <p className="font-semibold text-zinc-900 dark:text-white">Unlimited downloads</p>
+                  <p className="mt-1 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
+                    No 3-per-day cap. Process whole batches of invoices, statements, or scans in one sitting.
+                  </p>
+                </div>
+              </li>
+              <li className="flex gap-3 rounded-xl border border-indigo-100 bg-white/70 p-4 shadow-sm dark:border-indigo-500/20 dark:bg-zinc-900/60">
+                <Mail className="mt-0.5 h-5 w-5 shrink-0 text-indigo-600 dark:text-indigo-300" aria-hidden />
+                <div>
+                  <p className="font-semibold text-zinc-900 dark:text-white">Priority support</p>
+                  <p className="mt-1 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
+                    Email us with a PDF that's misbehaving — we'll respond and dig in.
+                  </p>
+                </div>
+              </li>
+            </ul>
+
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-xs text-zinc-600 dark:text-zinc-400">
+              <span className="inline-flex items-center gap-1.5">
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-300" aria-hidden />
+                Secure Razorpay checkout
+              </span>
+              <span aria-hidden>·</span>
+              <span className="inline-flex items-center gap-1.5">
+                <RefreshCw className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-300" aria-hidden />
+                Manual renewal — no auto-debit
+              </span>
+              <span aria-hidden>·</span>
+              <span className="inline-flex items-center gap-1.5">
+                <CalendarClock className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-300" aria-hidden />
+                Cancel any time
+              </span>
+            </div>
+
+            <div className="mt-6 flex justify-center">
+              <button
+                type="button"
+                className="fx-focus-ring inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-400"
+                onClick={() => setUpgradeOpen(true)}
+              >
+                <Sparkles className="h-4 w-4 opacity-90" aria-hidden />
+                Upgrade to Pro
+              </button>
+            </div>
+          </section>
+        ) : null}
+
         {!loading && me ? (
           <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/80 sm:p-8">
             <h2 className="text-center text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
               Compare all features
             </h2>
             <p className="mx-auto mt-2 max-w-lg text-center text-sm text-zinc-500 dark:text-zinc-400">
-              Same editor and tools on every plan — Pro removes the daily download cap.
+              Free covers everyday edits. Pro unlocks AI Chat with PDF, server OCR, and removes the daily download cap.
             </p>
             <div className="mt-8 overflow-x-auto rounded-xl border border-zinc-100 dark:border-zinc-800">
               <table className="w-full min-w-[520px] border-collapse text-sm">
@@ -344,7 +435,21 @@ export default function SubscriptionBillingPage() {
                       scope="row"
                       className="px-4 py-4 text-left font-medium text-zinc-900 dark:text-zinc-100"
                     >
-                      Pay with Razorpay (India)
+                      Chat with PDF (AI — ask anything about your document)
+                    </th>
+                    <PlanCompareCell>
+                      <span className="text-zinc-400 dark:text-zinc-600">—</span>
+                    </PlanCompareCell>
+                    <PlanCompareCell>
+                      <span className="font-medium text-emerald-700 dark:text-emerald-300">Unlimited</span>
+                    </PlanCompareCell>
+                  </tr>
+                  <tr>
+                    <th
+                      scope="row"
+                      className="px-4 py-4 text-left font-medium text-zinc-900 dark:text-zinc-100"
+                    >
+                      OCR PDF (scans → searchable text on the server)
                     </th>
                     <PlanCompareCell>
                       <span className="text-zinc-400 dark:text-zinc-600">—</span>
@@ -358,14 +463,28 @@ export default function SubscriptionBillingPage() {
                       scope="row"
                       className="px-4 py-4 text-left font-medium text-zinc-900 dark:text-zinc-100"
                     >
-                      Renewal
+                      Priority email support
+                    </th>
+                    <PlanCompareCell>
+                      <span className="text-xs text-zinc-500 dark:text-zinc-400">Community</span>
+                    </PlanCompareCell>
+                    <PlanCompareCell>
+                      <PlanCompareCheck />
+                    </PlanCompareCell>
+                  </tr>
+                  <tr>
+                    <th
+                      scope="row"
+                      className="px-4 py-4 text-left font-medium text-zinc-900 dark:text-zinc-100"
+                    >
+                      Payment & renewal
                     </th>
                     <PlanCompareCell>
                       <span className="text-zinc-500 dark:text-zinc-400">Free tier</span>
                     </PlanCompareCell>
                     <PlanCompareCell>
                       <span className="text-xs leading-snug text-zinc-600 dark:text-zinc-400">
-                        Manual — no auto-debit
+                        Razorpay · manual renewal, no auto-debit
                       </span>
                     </PlanCompareCell>
                   </tr>
@@ -384,6 +503,41 @@ export default function SubscriptionBillingPage() {
                 </button>
               </div>
             ) : null}
+          </section>
+        ) : null}
+
+        {!loading && me && !sub?.isPaid ? (
+          <section
+            aria-label="Common questions"
+            className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/80 sm:p-8"
+          >
+            <h3 className="text-lg font-semibold text-zinc-900 dark:text-white">Common questions</h3>
+            <dl className="mt-4 grid gap-5 sm:grid-cols-2">
+              <div>
+                <dt className="font-medium text-zinc-900 dark:text-zinc-100">Will my card be auto-charged?</dt>
+                <dd className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                  No. Pro renewals are manual on the monthly and yearly plans — you choose when to renew, so there are no surprise charges.
+                </dd>
+              </div>
+              <div>
+                <dt className="font-medium text-zinc-900 dark:text-zinc-100">Can I cancel at any time?</dt>
+                <dd className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                  Yes. Cancellation stops the next renewal; you keep Pro access until your current period ends.
+                </dd>
+              </div>
+              <div>
+                <dt className="font-medium text-zinc-900 dark:text-zinc-100">Is my PDF used to train AI?</dt>
+                <dd className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                  No. Chat with PDF sends extracted text to the AI provider just to answer your question; we don't store conversations and the document is removed from our server shortly after your session.
+                </dd>
+              </div>
+              <div>
+                <dt className="font-medium text-zinc-900 dark:text-zinc-100">Does Free still work?</dt>
+                <dd className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                  Yes — every editor and conversion tool stays free, with a 3-download-per-day cap. Pro unlocks AI Chat, server OCR, and removes the cap.
+                </dd>
+              </div>
+            </dl>
           </section>
         ) : null}
 

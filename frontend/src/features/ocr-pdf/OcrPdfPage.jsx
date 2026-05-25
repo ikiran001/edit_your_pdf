@@ -15,6 +15,8 @@ import {
 import { ANALYTICS_TOOL } from '../../shared/constants/analyticsTools.js'
 import { MSG } from '../../shared/constants/branding.js'
 import { useClientToolDownloadAuth } from '../../auth/ClientToolDownloadAuthContext.jsx'
+import { useAuth } from '../../auth/AuthContext.jsx'
+import UpgradePlanModal from '../../subscription/UpgradePlanModal.jsx'
 
 const OCR_TOOL = ANALYTICS_TOOL.ocr_pdf
 
@@ -30,11 +32,13 @@ function downloadBlob(blob, name) {
 
 export default function OcrPdfPage() {
   const { runWithSignInForDownload } = useClientToolDownloadAuth()
+  const { getFreshIdToken } = useAuth()
   const [file, setFile] = useState(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   const [fileReadyHint, setFileReadyHint] = useState(null)
   const [ocrMetaHint, setOcrMetaHint] = useState(null)
+  const [upgradeOpen, setUpgradeOpen] = useState(false)
 
   useToolEngagement(OCR_TOOL, true)
 
@@ -60,8 +64,29 @@ export default function OcrPdfPage() {
           const fd = new FormData()
           fd.append('file', file)
 
-          const res = await fetch(apiUrl('/ocr-pdf'), { method: 'POST', body: fd, credentials: 'include' })
+          const idToken = await getFreshIdToken().catch(() => null)
+          const headers = idToken ? { Authorization: `Bearer ${idToken}` } : undefined
+          const res = await fetch(apiUrl('/ocr-pdf'), {
+            method: 'POST',
+            body: fd,
+            credentials: 'include',
+            headers,
+          })
           const contentType = res.headers.get('Content-Type') || ''
+
+          if (res.status === 403) {
+            let code = ''
+            try {
+              const j = await res.json()
+              code = j?.code || ''
+            } catch {
+              /* ignore */
+            }
+            if (code === 'pro_required') {
+              setUpgradeOpen(true)
+              return
+            }
+          }
 
           if (!res.ok) {
             let msg = res.statusText || 'Request failed'
@@ -210,6 +235,7 @@ export default function OcrPdfPage() {
       <p className="mt-6 text-xs text-zinc-500 dark:text-zinc-400">
         OCR runs on our servers with searchable-text output. For best results on scans, use clear, upright pages.
       </p>
+      <UpgradePlanModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
     </ToolPageShell>
   )
 }
