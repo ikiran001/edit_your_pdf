@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { Send, Sparkles, RefreshCw } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Mic, MicOff, RefreshCw, Send, Sparkles } from 'lucide-react'
 import ToolPageShell from '../../shared/components/ToolPageShell.jsx'
 import FileDropzone from '../../shared/components/FileDropzone.jsx'
 import { apiUrl } from '../../lib/apiBase.js'
@@ -22,9 +22,26 @@ export default function ChatWithPdfPage() {
   const [uploading, setUploading] = useState(false)
   const [thinking, setThinking] = useState(false)
   const [error, setError] = useState(null)
+  const [listening, setListening] = useState(false)
   const scrollRef = useRef(null)
+  const recognitionRef = useRef(null)
+  const inputBeforeDictationRef = useRef('')
+
+  const SpeechRecognitionCtor = useMemo(() => {
+    if (typeof window === 'undefined') return null
+    return window.SpeechRecognition || window.webkitSpeechRecognition || null
+  }, [])
+  const speechSupported = Boolean(SpeechRecognitionCtor)
 
   useToolEngagement(TOOL, true)
+
+  useEffect(() => () => {
+    try {
+      recognitionRef.current?.abort?.()
+    } catch {
+      /* ignore */
+    }
+  }, [])
 
   useEffect(() => {
     const el = scrollRef.current
@@ -66,6 +83,13 @@ export default function ChatWithPdfPage() {
   const send = useCallback(async () => {
     const text = input.trim()
     if (!text || !sessionId || thinking) return
+    if (listening) {
+      try {
+        recognitionRef.current?.stop?.()
+      } catch {
+        /* ignore */
+      }
+    }
     setError(null)
     const next = [...messages, { role: 'user', content: text }]
     setMessages(next)
@@ -97,9 +121,75 @@ export default function ChatWithPdfPage() {
     } finally {
       setThinking(false)
     }
-  }, [input, sessionId, thinking, messages])
+  }, [input, sessionId, thinking, messages, listening])
+
+  const toggleDictation = useCallback(() => {
+    if (!speechSupported || thinking) return
+    if (listening) {
+      try {
+        recognitionRef.current?.stop?.()
+      } catch {
+        /* ignore */
+      }
+      return
+    }
+    let rec
+    try {
+      rec = new SpeechRecognitionCtor()
+    } catch (e) {
+      setError(e?.message || 'Voice input failed to start.')
+      return
+    }
+    rec.continuous = true
+    rec.interimResults = true
+    rec.lang = navigator.language || 'en-US'
+    inputBeforeDictationRef.current = input ? input.replace(/\s+$/, '') + ' ' : ''
+    rec.onresult = (event) => {
+      let interim = ''
+      let finalText = ''
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const r = event.results[i]
+        if (r.isFinal) finalText += r[0].transcript
+        else interim += r[0].transcript
+      }
+      const combined = (inputBeforeDictationRef.current + finalText + interim).replace(/\s+/g, ' ').trimStart()
+      setInput(combined)
+      if (finalText) {
+        inputBeforeDictationRef.current = (inputBeforeDictationRef.current + finalText).replace(/\s+$/, '') + ' '
+      }
+    }
+    rec.onerror = (event) => {
+      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+        setError('Microphone permission denied. Enable it for this site and try again.')
+      } else if (event.error === 'no-speech') {
+        /* silent; let UI return to idle */
+      } else if (event.error !== 'aborted') {
+        setError(`Voice input error: ${event.error}`)
+      }
+    }
+    rec.onend = () => {
+      setListening(false)
+      recognitionRef.current = null
+    }
+    recognitionRef.current = rec
+    setError(null)
+    setListening(true)
+    try {
+      rec.start()
+    } catch (e) {
+      setListening(false)
+      recognitionRef.current = null
+      setError(e?.message || 'Voice input failed to start.')
+    }
+  }, [SpeechRecognitionCtor, speechSupported, thinking, listening, input])
 
   const resetDoc = useCallback(() => {
+    try {
+      recognitionRef.current?.abort?.()
+    } catch {
+      /* ignore */
+    }
+    setListening(false)
     setSessionId(null)
     setFilename(null)
     setMessages([])
@@ -216,10 +306,27 @@ export default function ChatWithPdfPage() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={onKeyDown}
               rows={2}
-              placeholder="Ask about this PDF…"
+              placeholder={listening ? 'Listening… speak now' : 'Ask about this PDF…'}
               disabled={thinking}
               className="flex-1 resize-none rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 disabled:opacity-60 dark:border-zinc-600 dark:bg-zinc-900"
             />
+            {speechSupported && (
+              <button
+                type="button"
+                onClick={toggleDictation}
+                disabled={thinking}
+                aria-pressed={listening}
+                title={listening ? 'Stop voice input' : 'Speak your question'}
+                className={`inline-flex items-center justify-center rounded-2xl border px-3 py-3 text-sm shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                  listening
+                    ? 'animate-pulse border-red-500 bg-red-50 text-red-600 dark:border-red-400 dark:bg-red-950/50 dark:text-red-300'
+                    : 'border-zinc-300 bg-white text-zinc-700 hover:border-indigo-400 hover:text-indigo-600 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-indigo-400'
+                }`}
+              >
+                {listening ? <MicOff className="size-4" /> : <Mic className="size-4" />}
+                <span className="sr-only">{listening ? 'Stop voice input' : 'Voice input'}</span>
+              </button>
+            )}
             <button
               type="submit"
               disabled={thinking || !input.trim()}
