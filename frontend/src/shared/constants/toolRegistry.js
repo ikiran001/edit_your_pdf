@@ -261,4 +261,12 @@ export const TOOL_REGISTRY = [
     implemented: true,
     icon: 'Languages',
   },
+  {
+    id: 'chat-with-pdf',
+    path: '/tools/chat-with-pdf',
+    title: 'Chat with PDF',
+    description: 'Ask questions about your PDF — server extracts the text and an AI model answers with page citations.',
+    implemented: true,
+    icon: 'Sparkles',
+  },
 ]

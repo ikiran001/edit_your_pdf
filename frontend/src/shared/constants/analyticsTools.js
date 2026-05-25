@@ -51,6 +51,8 @@ export const ANALYTICS_TOOL = {
   redact_pdf: 'redact_pdf',
   compare_pdf: 'compare_pdf',
   translate_pdf: 'translate_pdf',
+  /** Chat-with-PDF: backend proxies to OpenAI with extracted PDF text as context. */
+  chat_with_pdf: 'chat_with_pdf',
 }
 
 /** Toolkit registry `id` → analytics feature key for `feature_used` */
@@ -91,4 +93,5 @@ export const REGISTRY_ID_TO_FEATURE = {
   'redact-pdf': ANALYTICS_TOOL.redact_pdf,
   'compare-pdf': ANALYTICS_TOOL.compare_pdf,
   'translate-pdf': ANALYTICS_TOOL.translate_pdf,
+  'chat-with-pdf': ANALYTICS_TOOL.chat_with_pdf,
 }
