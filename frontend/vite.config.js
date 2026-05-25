@@ -65,6 +65,7 @@ export default defineConfig(({ mode }) => {
         '/user-sessions': { target: 'http://localhost:3001', changeOrigin: true },
         '/subscription': { target: 'http://localhost:3001', changeOrigin: true },
         '/feedback': { target: 'http://localhost:3001', changeOrigin: true },
+        '/ai': { target: 'http://localhost:3001', changeOrigin: true },
       },
     },
     preview: {
@@ -83,6 +84,7 @@ export default defineConfig(({ mode }) => {
         '/user-sessions': { target: 'http://localhost:3001', changeOrigin: true },
         '/subscription': { target: 'http://localhost:3001', changeOrigin: true },
         '/feedback': { target: 'http://localhost:3001', changeOrigin: true },
+        '/ai': { target: 'http://localhost:3001', changeOrigin: true },
       },
     },
   }

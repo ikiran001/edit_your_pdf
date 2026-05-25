@@ -39,6 +39,7 @@ const HtmlToPdfPage = lazy(() => import('../features/html-to-pdf/HtmlToPdfPage.j
 const PdfToExcelPage = lazy(() => import('../features/pdf-to-excel/PdfToExcelPage.jsx'))
 const PdfToPowerpointPage = lazy(() => import('../features/pdf-to-powerpoint/PdfToPowerpointPage.jsx'))
 const TranslatePdfPage = lazy(() => import('../features/translate-pdf/TranslatePdfPage.jsx'))
+const ChatWithPdfPage = lazy(() => import('../features/chat-with-pdf/ChatWithPdfPage.jsx'))
 const RedactPdfPage = lazy(() => import('../features/redact-pdf/RedactPdfPage.jsx'))
 const PlannedToolPage = lazy(() => import('../features/placeholder/PlannedToolPage.jsx'))
 const MyDocumentsPage = lazy(() => import('../features/my-documents/MyDocumentsPage.jsx'))
@@ -136,6 +137,7 @@ export default function AppRoutes() {
               <Route path="/tools/pdf-to-pdfa" element={<PlannedToolPage />} />
               <Route path="/tools/redact-pdf" element={<RedactPdfPage />} />
               <Route path="/tools/translate-pdf" element={<TranslatePdfPage />} />
+              <Route path="/tools/chat-with-pdf" element={<ChatWithPdfPage />} />
             </Routes>
           </Suspense>
         </ErrorBoundary>

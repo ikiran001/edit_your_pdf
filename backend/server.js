@@ -14,6 +14,7 @@ import repairPdfRouter from './routes/repairPdf.js';
 import documentFlowRouter from './routes/documentFlow.js';
 import userSessionsRouter from './routes/userSessions.js';
 import feedbackRouter from './routes/feedback.js';
+import aiChatRouter from './routes/aiChat.js';
 import subscriptionRouter, { handleRazorpayWebhook } from './routes/subscription.js';
 import { getDocumentFlowCapabilities } from './services/documentFlowConvert.js';
 import { isDownloadAuthEnabled, isFirstAnonymousDownloadEnabled } from './services/downloadAuthPolicy.js';
@@ -193,6 +194,7 @@ app.use('/encrypt-pdf', cpuHeavyLimiter);
 app.use('/repair-pdf', cpuHeavyLimiter);
 app.use('/upload', uploadLimiter);
 app.use('/edit', editLimiter);
+app.use('/ai', cpuHeavyLimiter);
 
 app.use(uploadRouter);
 app.use(editRouter);
@@ -205,6 +207,7 @@ app.use(repairPdfRouter);
 app.use(documentFlowRouter);
 app.use(userSessionsRouter);
 app.use(feedbackRouter);
+app.use(aiChatRouter);
 app.use(subscriptionRouter);
 console.log(
   '[subscription] mounted: GET /subscription/me, POST /subscription/razorpay/order, POST /subscription/razorpay/verify, POST /subscription/webhooks/razorpay'
