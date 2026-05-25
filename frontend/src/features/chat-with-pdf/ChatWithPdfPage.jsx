@@ -4,6 +4,7 @@ import ToolPageShell from '../../shared/components/ToolPageShell.jsx'
 import FileDropzone from '../../shared/components/FileDropzone.jsx'
 import { useAuth } from '../../auth/AuthContext.jsx'
 import { useAuthModal } from '../../auth/AuthModalContext.jsx'
+import UpgradePlanModal from '../../subscription/UpgradePlanModal.jsx'
 import { apiUrl } from '../../lib/apiBase.js'
 import { useToolEngagement } from '../../hooks/useToolEngagement.js'
 import {
@@ -17,8 +18,9 @@ const TOOL = ANALYTICS_TOOL.chat_with_pdf
 const MAX_UPLOAD_BYTES = 50 * 1024 * 1024
 
 export default function ChatWithPdfPage() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, loading: authLoading, getFreshIdToken } = useAuth()
   const { openAuth } = useAuthModal()
+  const [upgradeOpen, setUpgradeOpen] = useState(false)
   const [sessionId, setSessionId] = useState(null)
   const [filename, setFilename] = useState(null)
   const [messages, setMessages] = useState([])
@@ -116,9 +118,12 @@ export default function ChatWithPdfPage() {
     setInput('')
     setThinking(true)
     try {
+      const idToken = await getFreshIdToken().catch(() => null)
+      const headers = { 'Content-Type': 'application/json' }
+      if (idToken) headers.Authorization = `Bearer ${idToken}`
       const res = await fetch(apiUrl('/ai/chat'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           sessionId,
           message: text,
@@ -126,6 +131,18 @@ export default function ChatWithPdfPage() {
         }),
       })
       const body = await res.json().catch(() => ({}))
+      if (res.status === 401 || body?.code === 'auth_required') {
+        setMessages((prev) => prev.slice(0, -1))
+        setInput(text)
+        openAuth('signin')
+        return
+      }
+      if (res.status === 403 || body?.code === 'pro_required') {
+        setMessages((prev) => prev.slice(0, -1))
+        setInput(text)
+        setUpgradeOpen(true)
+        return
+      }
       if (!res.ok) {
         throw new Error(body?.error || `Request failed (${res.status})`)
       }
@@ -141,7 +158,7 @@ export default function ChatWithPdfPage() {
     } finally {
       setThinking(false)
     }
-  }, [input, sessionId, thinking, messages, listening, user, authLoading, openAuth])
+  }, [input, sessionId, thinking, messages, listening, user, authLoading, openAuth, getFreshIdToken])
 
   const toggleDictation = useCallback(() => {
     if (!speechSupported || thinking) return
@@ -358,6 +375,8 @@ export default function ChatWithPdfPage() {
           </form>
         </div>
       )}
+
+      <UpgradePlanModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
     </ToolPageShell>
   )
 }
