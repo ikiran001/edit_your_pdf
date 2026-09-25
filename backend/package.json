@@ -25,6 +25,7 @@
     "pdfjs-dist": "^4.10.38",
     "razorpay": "^2.9.6",
     "regenerator-runtime": "^0.14.1",
+    "swagger-ui-express": "^5.0.1",
     "uuid": "^11.0.3"
   }
 }

@@ -32,6 +32,8 @@ import {
   securityHelmet,
   uploadLimiter,
 } from './middleware/httpSecurity.js';
+import swaggerUi from 'swagger-ui-express';
+import openApiDocument from './openapi.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -81,6 +83,16 @@ const healthVerbose =
   process.env.HEALTH_VERBOSE === 'true' ||
   process.env.NODE_ENV !== 'production';
 
+/** Interactive OpenAPI docs (Swagger UI). */
+app.use(
+  '/api-docs',
+  swaggerUi.serve,
+  swaggerUi.setup(openApiDocument, {
+    customSiteTitle: 'pdfpilot API docs',
+    swaggerOptions: { persistAuthorization: true, displayRequestDuration: true },
+  })
+);
+
 /** Root URL — browsers and uptime checks often hit `/` first (Docker/Render default). */
 app.get('/', (req, res) => {
   if (req.accepts('html')) {
@@ -89,7 +101,11 @@ app.get('/', (req, res) => {
 <title>pdfpilot API</title></head><body style="font-family:system-ui,sans-serif;max-width:40rem;margin:2rem;line-height:1.5">
 <h1 style="font-size:1.25rem">pdfpilot API</h1>
 <p>This URL is the <strong>backend</strong> for the PDF editor and tools. There is no web app here — open your <strong>frontend</strong> site instead.</p>
-<p>Useful checks: <a href="/health">GET /health</a> · <a href="/document-flow/capabilities">GET /document-flow/capabilities</a></p>
+<p>Useful checks:
+  <a href="/api-docs"><strong>Swagger UI — /api-docs</strong></a> ·
+  <a href="/health">GET /health</a> ·
+  <a href="/document-flow/capabilities">GET /document-flow/capabilities</a>
+</p>
 </body></html>`);
     return;
   }
@@ -97,7 +113,11 @@ app.get('/', (req, res) => {
     ok: true,
     service: 'pdfpilot-api',
     message: 'Backend only — open the frontend app in the browser.',
-    get: { health: '/health', documentFlowCapabilities: '/document-flow/capabilities' },
+    get: {
+      apiDocs: '/api-docs',
+      health: '/health',
+      documentFlowCapabilities: '/document-flow/capabilities',
+    },
   });
 });
 
