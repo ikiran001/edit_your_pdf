@@ -171,6 +171,18 @@ Locally, leave `VITE_API_BASE_URL` unset; Vite’s dev proxy still sends `/uploa
 
 **One machine instead:** a small VPS (DigitalOcean, Linode, etc.) running Node + nginx: serve `frontend/dist` as static files and **reverse-proxy** `/upload`, `/edit`, `/download`, `/pdf` to Express on an internal port so everything is one origin (then you do not need `VITE_API_BASE_URL`).
 
+### Home Linux server (Docker + Cloudflare Tunnel + BigRock)
+
+Scripts and step-by-step docs for running the API on your own Linux machine (e.g. a spare laptop) with **`https://api.pdfpilot.pro`** via Cloudflare Tunnel and the frontend on **BigRock**:
+
+```bash
+bash deploy/home-server/check-specs.sh    # Phase 1 — hardware check
+bash deploy/home-server/build-api.sh      # build from repo-root Dockerfile
+bash deploy/home-server/build-bigrock-frontend.sh
+```
+
+See **[deploy/home-server/README.md](deploy/home-server/README.md)** (cutover: [CUTOVER.md](deploy/home-server/CUTOVER.md), ops: [OPS.md](deploy/home-server/OPS.md)).
+
 ## Project layout
 
 - `frontend/` — Vite React app

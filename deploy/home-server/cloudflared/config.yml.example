@@ -1,0 +1,16 @@
+# Cloudflare Tunnel config — copy after creating the tunnel in Zero Trust dashboard.
+# Replace <TUNNEL_UUID> and credentials path from:
+#   cloudflared tunnel create pdfpilot-home-api
+#
+# Typical install:
+#   sudo cloudflared service install
+#   sudo cp config.yml /etc/cloudflared/config.yml
+#   sudo systemctl restart cloudflared
+
+tunnel: <TUNNEL_UUID>
+credentials-file: /home/<USER>/.cloudflared/<TUNNEL_UUID>.json
+
+ingress:
+  - hostname: api.pdfpilot.pro
+    service: http://127.0.0.1:3001
+  - service: http_status:404
