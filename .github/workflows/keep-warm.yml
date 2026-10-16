@@ -1,0 +1,38 @@
+# Keeps the free Render API warm so users don't hit the ~20s cold start.
+# Pings the health endpoint on a schedule; one ping wakes the whole backend.
+#
+# URL: override by setting a repo variable KEEP_WARM_URL
+#      (Settings → Secrets and variables → Actions → Variables), otherwise the default below is used.
+#
+# Notes:
+# - GitHub cron runs are best-effort and can be delayed under load, so an occasional gap may still
+#   let Render sleep briefly. A 10-min interval leaves margin against Render's 15-min idle timeout.
+# - GitHub disables scheduled workflows after 60 days with no repo commits — just push anything to re-enable.
+name: keep-warm
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'   # every 10 minutes
+  workflow_dispatch:          # lets you run it manually from the Actions tab
+
+# If a run is still going when the next fires, skip the new one instead of stacking.
+concurrency:
+  group: keep-warm
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ping health endpoint
+        run: |
+          URL="${{ vars.KEEP_WARM_URL || 'https://edit-your-pdf-1.onrender.com/health' }}"
+          echo "Pinging $URL"
+          # Generous timeout: a cold start can take ~30s+. Retry a few times before failing.
+          curl --fail --show-error --silent \
+               --max-time 90 \
+               --retry 3 --retry-delay 15 --retry-all-errors \
+               "$URL"
+          echo
+          echo "OK"
