@@ -60,7 +60,7 @@ export default function SignPdfPage() {
   const viewerRef = useRef(null)
   const prevPlacementsLen = useRef(0)
   const placementClipboardRef = useRef(null)
-  /** Page + y the user was looking at when "Add signature" was clicked. */
+  /** Page + y the user was viewing when "Add signature" was clicked (before the modal). */
   const placementTargetRef = useRef(null)
   const [pdfFile, setPdfFile] = useState(null)
   const [signaturePng, setSignaturePng] = useState(null)
@@ -152,13 +152,14 @@ export default function SignPdfPage() {
     return () => window.removeEventListener('keydown', onKey)
   }, [pdfFile, selectedPlacementId, signaturePng, copySelectedPlacement, pasteFromClipboard])
 
+  // Drop the signature on the page the user was viewing when they clicked
+  // "Add signature" (captured before the modal), centered in their view, then
+  // scroll it into view. Capturing before the modal avoids any scroll shift that
+  // happens while the modal is open.
   const onSignatureDone = useCallback(
     async (pngBytes) => {
       setSignaturePng(pngBytes)
       const api = viewerRef.current
-      // Drop the signature exactly where the user was looking (viewport center),
-      // captured when they clicked "Add signature" — falls back to the live
-      // viewport center, then the focused page.
       const target =
         placementTargetRef.current ||
         api?.getCurrentPlacementTarget?.() || { pageIndex: focusedPageIndex, ny: 0.5 }
@@ -310,7 +311,8 @@ export default function SignPdfPage() {
               type="button"
               disabled={busy}
               onClick={() => {
-                // Remember where the user is looking now, before the modal covers it.
+                // Capture the page under the viewport now — before the modal opens
+                // and any scroll shift happens while it's up.
                 placementTargetRef.current = viewerRef.current?.getCurrentPlacementTarget?.() ?? null
                 setModalOpen(true)
               }}

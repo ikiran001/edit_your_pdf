@@ -470,29 +470,26 @@ const SignPdfViewer = forwardRef(function SignPdfViewer(
     [setPlacements, onSelectPlacement]
   )
 
-  /** After a move, if pointer released over another page’s canvas, reparent and rebase position. */
+  /** After a move, if pointer released over another page, reparent and rebase position. */
   const onPlacementMoveEnd = useCallback(
     (placement, clientX, clientY) => {
+      // Hit-test the live DOM rows (reliable under virtualization) + their canvas.
+      const rows = containerRef.current?.querySelectorAll('[data-page-index]') || []
       let targetPage = null
-      for (let i = 0; i < numPages; i++) {
-        const canvas = pageCanvasRef.current.get(i)
-        if (!canvas) continue
-        const r = canvas.getBoundingClientRect()
-        if (
-          clientX >= r.left &&
-          clientX <= r.right &&
-          clientY >= r.top &&
-          clientY <= r.bottom
-        ) {
-          targetPage = i
+      let targetCanvas = null
+      for (const el of rows) {
+        const r = el.getBoundingClientRect()
+        if (r.height <= 0) continue
+        if (clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom) {
+          targetPage = Number(el.dataset.pageIndex)
+          targetCanvas = el.querySelector('canvas.sign-pdf-page-canvas')
           break
         }
       }
       if (targetPage === null || targetPage === placement.pageIndex) return
 
-      const canvas = pageCanvasRef.current.get(targetPage)
-      if (!canvas) return
-      const r = canvas.getBoundingClientRect()
+      const r = (targetCanvas || null)?.getBoundingClientRect()
+      if (!r) return
       const nw = placement.nw
       const nh = placement.nh
       let nx = (clientX - r.left) / Math.max(r.width, 1) - nw / 2
@@ -504,7 +501,7 @@ const SignPdfViewer = forwardRef(function SignPdfViewer(
         prev.map((p) => (p.id === placement.id ? { ...p, pageIndex: targetPage, nx, ny } : p))
       )
     },
-    [numPages, setPlacements]
+    [setPlacements]
   )
 
   const getViewportForPage = useCallback(
@@ -540,27 +537,28 @@ const SignPdfViewer = forwardRef(function SignPdfViewer(
    * @returns {{ pageIndex: number, ny: number }}
    */
   const getCurrentPlacementTarget = useCallback(() => {
-    if (typeof window === 'undefined' || numPages <= 0) {
-      return { pageIndex: focusedPageIndex, ny: 0.5 }
-    }
+    if (typeof window === 'undefined') return { pageIndex: focusedPageIndex, ny: 0.5 }
     const centerY = window.innerHeight / 2
+    // Hit-test the live DOM rows (reliable); the ref maps go stale under virtualization.
+    const rows = containerRef.current?.querySelectorAll('[data-page-index]') || []
     let fallback = null
-    for (let i = 0; i < numPages; i++) {
-      const el = pageNodesRef.current.get(i)
-      if (!el) continue
+    for (const el of rows) {
       const r = el.getBoundingClientRect()
       if (r.height <= 0) continue
+      const i = Number(el.dataset.pageIndex)
       if (r.top <= centerY && r.bottom >= centerY) {
-        return { pageIndex: i, ny: clamp((centerY - r.top) / r.height, 0, 1) }
+        const canvas = el.querySelector('canvas.sign-pdf-page-canvas')
+        const cr = canvas ? canvas.getBoundingClientRect() : r
+        return { pageIndex: i, ny: clamp((centerY - cr.top) / Math.max(cr.height, 1), 0, 1) }
       }
       const dist = centerY < r.top ? r.top - centerY : centerY - r.bottom
       if (!fallback || dist < fallback.dist) {
-        fallback = { dist, pageIndex: i, ny: centerY < r.top ? 0.1 : 0.9 }
+        fallback = { dist, pageIndex: i, ny: centerY < r.top ? 0.12 : 0.88 }
       }
     }
     if (fallback) return { pageIndex: fallback.pageIndex, ny: fallback.ny }
     return { pageIndex: focusedPageIndex, ny: 0.5 }
-  }, [numPages, focusedPageIndex])
+  }, [focusedPageIndex])
 
   /** Smooth-scroll a just-placed signature box into view (retries until it renders). */
   const scrollToPlacement = useCallback((id) => {
@@ -574,6 +572,20 @@ const SignPdfViewer = forwardRef(function SignPdfViewer(
       if (tries++ < 10) requestAnimationFrame(tick)
     }
     requestAnimationFrame(tick)
+  }, [])
+
+  // Disable browser scroll anchoring while this viewer is mounted. Virtualized
+  // rows mounting/unmounting (and overlays appearing) make the browser silently
+  // jump the window scroll to keep an "anchor" in view — which threw the page to
+  // the document middle when a signature was added. Opt out for a stable scroll.
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined
+    const root = document.documentElement
+    const prev = root.style.overflowAnchor
+    root.style.overflowAnchor = 'none'
+    return () => {
+      root.style.overflowAnchor = prev
+    }
   }, [])
 
   // Estimate a uniform page height (from page 1) to reserve space for virtualized rows.
