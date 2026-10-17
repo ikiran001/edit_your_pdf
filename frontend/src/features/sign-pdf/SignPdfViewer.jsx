@@ -189,6 +189,7 @@ function PdfPageRow({
   pageIndex,
   pdfDoc,
   maxWidth,
+  estHeight,
   signaturePreviewUrl,
   placements,
   onPlacementChange,
@@ -201,12 +202,37 @@ function PdfPageRow({
   onSelectPlacement,
 }) {
   const canvasRef = useRef(null)
+  const rowRef = useRef(null)
   const [canvasForOverlay, setCanvasForOverlay] = useState(null)
   const renderTaskRef = useRef(null)
   const [viewport, setViewport] = useState(null)
+  // Virtualization: only the heavy canvas/render runs while the page is near the
+  // viewport. First two pages start active (preview isn't blank on load); if
+  // IntersectionObserver is unavailable, every page starts active (no virtualization).
+  const [active, setActive] = useState(
+    () => pageIndex < 2 || typeof IntersectionObserver === 'undefined'
+  )
+  const hasPlacements = placements.some((p) => p.pageIndex === pageIndex)
 
   useEffect(() => {
-    if (!pdfDoc || !maxWidth) return undefined
+    const el = rowRef.current
+    if (!el || typeof IntersectionObserver === 'undefined') return undefined
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) setActive(e.isIntersecting)
+      },
+      // Pre-render a generous band above/below so scrolling stays smooth.
+      { rootMargin: '1400px 0px' }
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+
+  // Keep pages that carry signatures mounted so placements never silently drop.
+  const mounted = active || hasPlacements
+
+  useEffect(() => {
+    if (!mounted || !pdfDoc || !maxWidth) return undefined
 
     let cancelled = false
     ;(async () => {
@@ -253,13 +279,18 @@ function PdfPageRow({
         }
       }
     }
-  }, [pdfDoc, pageIndex, maxWidth])
+  }, [mounted, pdfDoc, pageIndex, maxWidth])
 
   const pagePlacements = placements.filter((p) => p.pageIndex === pageIndex)
+  // Reserve the correct height so scroll position stays stable while unmounted.
+  const reserveH = viewport?.height || estHeight || 500
 
   return (
     <div
-      ref={(el) => registerPageNode(pageIndex, el)}
+      ref={(el) => {
+        rowRef.current = el
+        registerPageNode(pageIndex, el)
+      }}
       className={`relative mx-auto mb-8 w-full max-w-full shadow-md ring-2 transition-shadow dark:ring-zinc-700 ${
         isFocusPage
           ? 'ring-indigo-500 dark:ring-indigo-500'
@@ -267,37 +298,46 @@ function PdfPageRow({
       }`}
       style={{ maxWidth: maxWidth ? `${maxWidth}px` : undefined }}
     >
-      <div className="relative w-full">
-        <canvas
-          ref={(el) => {
-            canvasRef.current = el
-            registerPageCanvas(pageIndex, el)
-            setCanvasForOverlay(el)
-          }}
-          className="sign-pdf-page-canvas block h-auto w-full bg-white dark:bg-zinc-100"
-          style={{ verticalAlign: 'top' }}
-        />
-        {viewport && signaturePreviewUrl && canvasForOverlay ? (
-          <div className="pointer-events-none absolute inset-0 z-20">
-            <div className="relative h-full w-full min-h-[1px] min-w-[1px]">
-              {pagePlacements.map((p) => (
-                <SignatureBoxOverlay
-                  key={p.id}
-                  placement={p}
-                  previewUrl={signaturePreviewUrl}
-                  canvasEl={canvasForOverlay}
-                  viewport={viewport}
-                  onChange={onPlacementChange}
-                  onRemove={onRemovePlacement}
-                  onMoveEnd={onPlacementMoveEnd}
-                  isSelected={selectedPlacementId === p.id}
-                  onSelect={onSelectPlacement}
-                />
-              ))}
+      {mounted ? (
+        <div className="relative w-full">
+          <canvas
+            ref={(el) => {
+              canvasRef.current = el
+              registerPageCanvas(pageIndex, el)
+              setCanvasForOverlay(el)
+            }}
+            className="sign-pdf-page-canvas block h-auto w-full bg-white dark:bg-zinc-100"
+            style={{ verticalAlign: 'top' }}
+          />
+          {viewport && signaturePreviewUrl && canvasForOverlay ? (
+            <div className="pointer-events-none absolute inset-0 z-20">
+              <div className="relative h-full w-full min-h-[1px] min-w-[1px]">
+                {pagePlacements.map((p) => (
+                  <SignatureBoxOverlay
+                    key={p.id}
+                    placement={p}
+                    previewUrl={signaturePreviewUrl}
+                    canvasEl={canvasForOverlay}
+                    viewport={viewport}
+                    onChange={onPlacementChange}
+                    onRemove={onRemovePlacement}
+                    onMoveEnd={onPlacementMoveEnd}
+                    isSelected={selectedPlacementId === p.id}
+                    onSelect={onSelectPlacement}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-        ) : null}
-      </div>
+          ) : null}
+        </div>
+      ) : (
+        <div
+          className="flex w-full items-center justify-center bg-white text-sm font-medium text-zinc-300 dark:bg-zinc-100 dark:text-zinc-400"
+          style={{ height: `${reserveH}px` }}
+        >
+          Page {pageIndex + 1}
+        </div>
+      )}
       <p className="border-t border-zinc-200 bg-zinc-50 px-2 py-1 text-center text-xs text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
         Page {pageIndex + 1}
         {pagePlacements.length > 0 ? ` · ${pagePlacements.length} signature${pagePlacements.length === 1 ? '' : 's'}` : ''}
@@ -334,6 +374,7 @@ const SignPdfViewer = forwardRef(function SignPdfViewer(
   const [pdfDoc, setPdfDoc] = useState(null)
   const [numPages, setNumPages] = useState(0)
   const [maxWidth, setMaxWidth] = useState(560)
+  const [estPageHeight, setEstPageHeight] = useState(0)
   const [loadErr, setLoadErr] = useState(null)
   const containerRef = useRef(null)
   const pageNodesRef = useRef(new Map())
@@ -506,6 +547,19 @@ const SignPdfViewer = forwardRef(function SignPdfViewer(
     requestAnimationFrame(tick)
   }, [])
 
+  // Estimate a uniform page height (from page 1) to reserve space for virtualized rows.
+  useEffect(() => {
+    if (!pdfDoc) return undefined
+    let cancelled = false
+    ;(async () => {
+      const vp = await getViewportForPage(0)
+      if (!cancelled && vp?.height) setEstPageHeight(vp.height)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [pdfDoc, getViewportForPage])
+
   // Keep the page-number input in sync with the scroll-driven active page (unless the user is typing).
   useEffect(() => {
     if (!inputFocusedRef.current) setPageInput(String(focusedPageIndex + 1))
@@ -608,6 +662,7 @@ const SignPdfViewer = forwardRef(function SignPdfViewer(
           pageIndex={i}
           pdfDoc={pdfDoc}
           maxWidth={maxWidth}
+          estHeight={estPageHeight}
           signaturePreviewUrl={signaturePreviewUrl}
           placements={placements}
           onPlacementChange={onPlacementChange}
