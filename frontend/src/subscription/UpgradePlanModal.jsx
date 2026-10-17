@@ -24,7 +24,7 @@ function loadRazorpayScript() {
  * @param {{
  *   open: boolean,
  *   onClose: () => void,
- *   initialPlan?: 'monthly' | 'yearly',
+ *   initialPlan?: 'daily' | 'monthly' | 'yearly',
  *   onPaid?: () => void,
  * }} props
  */
@@ -65,7 +65,12 @@ export default function UpgradePlanModal({ open, onClose, initialPlan = 'monthly
         key,
         order_id: orderId,
         name: 'pdfpilot Pro',
-        description: plan === 'yearly' ? 'Pro — Yearly (₹999)' : 'Pro — Monthly (₹99)',
+        description:
+          plan === 'yearly'
+            ? 'Pro — Yearly (₹999)'
+            : plan === 'daily'
+              ? 'Pro — Daily (₹10)'
+              : 'Pro — Monthly (₹99)',
         theme: { color: '#4f46e5' },
         modal: {
           ondismiss: () => {
@@ -152,6 +157,21 @@ export default function UpgradePlanModal({ open, onClose, initialPlan = 'monthly
           before expiry to stay on Pro.
         </p>
         <div className="mt-4 grid gap-3">
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-zinc-200 p-3 dark:border-zinc-600">
+            <input
+              type="radio"
+              name="eyp-plan"
+              checked={plan === 'daily'}
+              onChange={() => setPlan('daily')}
+              className="mt-1"
+            />
+            <span>
+              <span className="font-medium text-zinc-900 dark:text-zinc-100">₹10 / day</span>
+              <span className="mt-0.5 block text-xs text-zinc-500">
+                Unlimited downloads for 24 hours
+              </span>
+            </span>
+          </label>
           <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-zinc-200 p-3 dark:border-zinc-600">
             <input
               type="radio"

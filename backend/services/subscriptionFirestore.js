@@ -4,6 +4,7 @@ import {
   FREE_DAILY_DOWNLOAD_LIMIT,
   durationMsForPlan,
   firestorePlanToLabel,
+  isPaidFirestorePlan,
   nextUtcMidnightIso,
   planToFirestorePlan,
 } from './subscriptionConstants.js';
@@ -90,8 +91,7 @@ export async function readSubscriptionSummary(uid) {
   const expiresAtMs = tsToMillis(data.expiresAt);
   const graceMs = defaultGraceMs();
   const now = Date.now();
-  const isPaid =
-    (plan === 'pro_monthly' || plan === 'pro_yearly') && expiresAtMs + graceMs > now;
+  const isPaid = isPaidFirestorePlan(plan) && expiresAtMs + graceMs > now;
   return {
     effectivePlan: isPaid ? plan : 'free',
     isPaid,
@@ -123,8 +123,7 @@ export async function reserveAuthenticatedDownload(uid) {
     const plan = typeof sub.plan === 'string' ? sub.plan : 'free';
     const expiresAtMs = tsToMillis(sub.expiresAt);
     const now = Date.now();
-    const isPaid =
-      (plan === 'pro_monthly' || plan === 'pro_yearly') && expiresAtMs + graceMs > now;
+    const isPaid = isPaidFirestorePlan(plan) && expiresAtMs + graceMs > now;
     if (isPaid) {
       return { kind: 'paid' };
     }
@@ -189,9 +188,7 @@ export async function applySubscriptionAfterPayment(uid, planKey, meta, outerTra
     const currentExp = tsToMillis(sub.expiresAt);
     const now = Date.now();
     const graceMs = defaultGraceMs();
-    const paidActive =
-      (currentPlan === 'pro_monthly' || currentPlan === 'pro_yearly') &&
-      currentExp + graceMs > now;
+    const paidActive = isPaidFirestorePlan(currentPlan) && currentExp + graceMs > now;
 
     let baseStart = now;
     if (paidActive) {

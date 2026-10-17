@@ -271,7 +271,7 @@ export default function SubscriptionBillingPage() {
             <div className="flex flex-col items-center text-center">
               <span className="inline-flex items-center gap-1 rounded-full bg-indigo-600/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-700 dark:bg-indigo-400/10 dark:text-indigo-200">
                 <Sparkles className="h-3 w-3" aria-hidden />
-                Pro · ₹99/mo · ₹999/yr
+                Pro · ₹10/day · ₹99/mo · ₹999/yr
               </span>
               <h2 className="mt-3 text-2xl font-bold tracking-tight text-zinc-900 dark:text-white sm:text-3xl">
                 Get every Pro feature for less than ₹3/day
@@ -380,7 +380,7 @@ export default function SubscriptionBillingPage() {
                     >
                       <span className="block">Pro</span>
                       <span className="mt-1 block text-xs font-semibold text-zinc-500 dark:text-zinc-400">
-                        ₹99/mo · ₹999/yr
+                        ₹10/day · ₹99/mo · ₹999/yr
                       </span>
                     </th>
                   </tr>
@@ -516,7 +516,7 @@ export default function SubscriptionBillingPage() {
               <div>
                 <dt className="font-medium text-zinc-900 dark:text-zinc-100">Will my card be auto-charged?</dt>
                 <dd className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                  No. Pro renewals are manual on the monthly and yearly plans — you choose when to renew, so there are no surprise charges.
+                  No. Pro renewals are manual on the daily, monthly, and yearly plans — you choose when to renew, so there are no surprise charges.
                 </dd>
               </div>
               <div>
@@ -643,9 +643,9 @@ export default function SubscriptionBillingPage() {
             </span>
           </summary>
           <p className="mt-3 border-t border-zinc-200/80 pt-3 text-xs leading-relaxed text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
-            Upgrades apply as soon as Razorpay payment is verified on the server. Monthly and yearly
-            periods generally stack from the later of &quot;now&quot; or your current Pro end date; if you
-            already have yearly Pro and buy monthly, the monthly time starts after yearly ends.
+            Upgrades apply as soon as Razorpay payment is verified on the server. Daily, monthly, and
+            yearly periods generally stack from the later of &quot;now&quot; or your current Pro end date; if
+            you already have yearly Pro and buy monthly, the monthly time starts after yearly ends.
           </p>
         </details>
       </div>

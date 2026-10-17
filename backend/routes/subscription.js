@@ -77,7 +77,7 @@ router.post('/subscription/razorpay/order', async (req, res) => {
   }
   const planKey = normalizePlanKey(req.body?.plan);
   if (!planKey) {
-    return res.status(400).json({ error: 'bad_request', message: 'Invalid plan. Use monthly or yearly.' });
+    return res.status(400).json({ error: 'bad_request', message: 'Invalid plan. Use daily, monthly, or yearly.' });
   }
   const amountPaise = PLAN_AMOUNTS_PAISE[planKey];
   const receipt = `u_${user.uid.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10)}_${Date.now()}`.slice(0, 40);

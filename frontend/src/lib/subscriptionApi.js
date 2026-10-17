@@ -23,7 +23,7 @@ export async function fetchSubscriptionMe(getFreshIdToken) {
 
 /**
  * @param {() => Promise<string | null>} getFreshIdToken
- * @param {'monthly' | 'yearly'} plan
+ * @param {'daily' | 'monthly' | 'yearly'} plan
  */
 export async function createRazorpayOrderRequest(getFreshIdToken, plan) {
   const headers = {
