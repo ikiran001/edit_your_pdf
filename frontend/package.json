@@ -7,6 +7,8 @@
     "dev": "vite",
     "prebuild": "node scripts/generate-sitemap.mjs",
     "build": "vite build",
+    "build:static": "vite build && node scripts/prerender.mjs",
+    "prerender": "node scripts/prerender.mjs",
     "generate-sitemap": "node scripts/generate-sitemap.mjs",
     "build:analyze": "ANALYZE=1 vite build",
     "generate-favicons": "node scripts/generate-favicons.mjs",
