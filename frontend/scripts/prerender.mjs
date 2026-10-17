@@ -29,11 +29,16 @@ const DIST = resolve(__dirname, '../dist')
 const PORT = Number(process.env.PRERENDER_PORT || 4188)
 const ORIGIN = `http://127.0.0.1:${PORT}`
 
-/** Only public, crawlable routes — never auth/editor/admin pages. */
+/**
+ * Only public, crawlable routes — never auth/editor/admin pages.
+ * Home ('/') goes LAST: writing its snapshot overwrites dist/index.html, which
+ * `vite preview` serves as the SPA fallback for the other routes — so capture
+ * every tool route from the clean build first.
+ */
 const ROUTES = [
-  '/',
-  '/terms',
   ...TOOL_REGISTRY.filter((t) => t.implemented !== false).map((t) => t.path),
+  '/terms',
+  '/',
 ]
 
 function waitForServer(url, timeoutMs = 20000) {
