@@ -12,6 +12,7 @@ import { writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 import { TOOL_REGISTRY } from '../src/shared/constants/toolRegistry.js'
+import { BLOG_POSTS } from '../src/content/blogPosts.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const SITE_URL = String(process.env.VITE_SITE_URL || 'https://pdfpilot.pro').replace(/\/$/, '')
@@ -35,8 +36,16 @@ const PRIORITY = {
 /** Static, crawlable, non-auth routes to always include. */
 const STATIC_ROUTES = [
   { path: '/', priority: 1.0, changefreq: 'weekly' },
+  { path: '/blog', priority: 0.7, changefreq: 'weekly' },
   { path: '/terms', priority: 0.3, changefreq: 'monthly' },
 ]
+
+/** One entry per published blog post. */
+const BLOG_ROUTES = BLOG_POSTS.map((post) => ({
+  path: `/blog/${post.slug}`,
+  priority: 0.7,
+  changefreq: 'monthly',
+}))
 
 function urlEntry({ path, priority, changefreq }) {
   const loc = `${SITE_URL}${path === '/' ? '/' : path}`
@@ -56,7 +65,7 @@ const toolEntries = TOOL_REGISTRY.filter((t) => t.implemented !== false).map((t)
   changefreq: 'weekly',
 }))
 
-const entries = [...STATIC_ROUTES, ...toolEntries]
+const entries = [...STATIC_ROUTES, ...toolEntries, ...BLOG_ROUTES]
 
 const xml = [
   '<?xml version="1.0" encoding="UTF-8"?>',

@@ -4,7 +4,6 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import ErrorBoundary from '../shared/components/ErrorBoundary.jsx'
 import PrivateRoute from '../auth/PrivateRoute.jsx'
 import { pageView, recordSessionRoute } from '../lib/analytics.js'
-import { docTitleForPath } from '../shared/constants/branding.js'
 import { applyRouteHead } from '../shared/utils/routeHead.js'
 import { ClientToolDownloadAuthProvider } from '../auth/ClientToolDownloadAuthContext.jsx'
 import SkipToContent from '../shared/components/SkipToContent.jsx'
@@ -48,6 +47,8 @@ const SubscriptionBillingPage = lazy(() => import('../features/account/Subscript
 const TermsOfServicePage = lazy(() => import('../features/legal/TermsOfServicePage.jsx'))
 const FeedbackPage = lazy(() => import('../features/feedback/FeedbackPage.jsx'))
 const AdminFeedbackPage = lazy(() => import('../features/feedback/AdminFeedbackPage.jsx'))
+const BlogIndexPage = lazy(() => import('../features/blog/BlogIndexPage.jsx'))
+const BlogPostPage = lazy(() => import('../features/blog/BlogPostPage.jsx'))
 
 function RouteFallback() {
   const { t } = useTranslation()
@@ -63,9 +64,9 @@ function RouteAnalytics() {
   const loc = useLocation()
   useEffect(() => {
     applyRouteHead(loc.pathname)
-    const t = docTitleForPath(loc.pathname)
     recordSessionRoute(loc.pathname)
-    pageView(loc.pathname, t)
+    // applyRouteHead has set the correct per-route document.title (incl. blog posts).
+    pageView(loc.pathname, document.title)
   }, [loc.pathname])
   return null
 }
@@ -83,6 +84,8 @@ export default function AppRoutes() {
             <Routes>
               <Route path="/" element={<ToolkitHomePage />} />
               <Route path="/terms" element={<TermsOfServicePage />} />
+              <Route path="/blog" element={<BlogIndexPage />} />
+              <Route path="/blog/:slug" element={<BlogPostPage />} />
               <Route path="/feedback" element={<FeedbackPage />} />
               <Route path="/admin/feedback" element={<AdminFeedbackPage />} />
               <Route

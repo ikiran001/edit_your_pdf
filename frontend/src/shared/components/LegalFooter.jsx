@@ -21,6 +21,15 @@ export default function LegalFooter({ className = '' }) {
           ·
         </span>
         <Link
+          to="/blog"
+          className="fx-focus-ring rounded-md px-2 py-1.5 font-medium text-indigo-600 underline-offset-2 hover:bg-indigo-50 hover:underline dark:text-cyan-400 dark:hover:bg-cyan-950/40 dark:hover:text-cyan-300"
+        >
+          Blog
+        </Link>
+        <span className="text-zinc-300 dark:text-zinc-600" aria-hidden>
+          ·
+        </span>
+        <Link
           to="/feedback"
           className="fx-focus-ring rounded-md px-2 py-1.5 font-medium text-indigo-600 underline-offset-2 hover:bg-indigo-50 hover:underline dark:text-cyan-400 dark:hover:bg-cyan-950/40 dark:hover:text-cyan-300"
         >

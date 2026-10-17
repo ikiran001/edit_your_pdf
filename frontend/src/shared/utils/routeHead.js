@@ -18,6 +18,10 @@ import {
   metaDescriptionForPath,
 } from '../constants/branding.js'
 import { TOOL_SEO_BY_ID } from '../constants/toolSeoContent.js'
+import { getBlogPost } from '../../content/blogPosts.js'
+
+const BLOG_INDEX_DESCRIPTION =
+  'Practical PDF how-to guides and India-specific tips from pdfpilot — compress for government uploads, create GST invoices, convert PDF to Word, run OCR, and more.'
 
 const SITE_URL = String(import.meta.env.VITE_SITE_URL || '').replace(/\/$/, '')
 
@@ -69,8 +73,22 @@ function upsertJsonLd(id, data) {
 export function applyRouteHead(pathname) {
   if (typeof document === 'undefined') return
   const p = (pathname || '/').replace(/\/$/, '') || '/'
-  const title = docTitleForPath(p)
-  const description = metaDescriptionForPath(p)
+  const blogSlug = p.startsWith('/blog/') ? p.slice('/blog/'.length) : null
+  const post = blogSlug ? getBlogPost(blogSlug) : null
+
+  let title
+  let description
+  if (post) {
+    title = `${post.title} | pdfpilot Blog`
+    description = post.description
+  } else if (p === '/blog') {
+    title = 'PDF Tips & Guides | pdfpilot Blog'
+    description = BLOG_INDEX_DESCRIPTION
+  } else {
+    title = docTitleForPath(p)
+    description = metaDescriptionForPath(p)
+  }
+
   const origin = siteOrigin()
   const canonical = origin ? origin + (p === '/' ? '/' : p) : ''
 
@@ -85,24 +103,36 @@ export function applyRouteHead(pathname) {
     upsertMeta('property', 'og:url', canonical)
   }
 
-  // Per-tool SoftwareApplication schema → eligible for rich results on tool pages.
+  // Primary structured data: SoftwareApplication for tools, BlogPosting for posts.
   const isTool = p.startsWith('/tools/')
-  upsertJsonLd(
-    'route-jsonld',
-    isTool
-      ? {
-          '@context': 'https://schema.org',
-          '@type': 'SoftwareApplication',
-          name: `${title.replace(/^pdfpilot\s*[-–]\s*/, '')} — ${BRAND_NAME}`,
-          applicationCategory: 'BusinessApplication',
-          operatingSystem: 'Web browser',
-          ...(canonical ? { url: canonical } : {}),
-          description,
-          offers: { '@type': 'Offer', price: '0', priceCurrency: 'INR' },
-          publisher: { '@type': 'Organization', name: BRAND_NAME },
-        }
-      : null
-  )
+  let primaryLd = null
+  if (isTool) {
+    primaryLd = {
+      '@context': 'https://schema.org',
+      '@type': 'SoftwareApplication',
+      name: `${title.replace(/^pdfpilot\s*[-–]\s*/, '')} — ${BRAND_NAME}`,
+      applicationCategory: 'BusinessApplication',
+      operatingSystem: 'Web browser',
+      ...(canonical ? { url: canonical } : {}),
+      description,
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'INR' },
+      publisher: { '@type': 'Organization', name: BRAND_NAME },
+    }
+  } else if (post) {
+    primaryLd = {
+      '@context': 'https://schema.org',
+      '@type': 'BlogPosting',
+      headline: post.title,
+      description: post.description,
+      datePublished: post.date,
+      dateModified: post.updated || post.date,
+      ...(canonical ? { url: canonical, mainEntityOfPage: canonical } : {}),
+      author: { '@type': 'Organization', name: BRAND_NAME },
+      publisher: { '@type': 'Organization', name: BRAND_NAME },
+      ...(post.tags?.length ? { keywords: post.tags.join(', ') } : {}),
+    }
+  }
+  upsertJsonLd('route-jsonld', primaryLd)
 
   // FAQPage schema → eligible for FAQ rich snippets, for tools that define FAQs.
   const toolId = isTool ? p.slice('/tools/'.length) : null

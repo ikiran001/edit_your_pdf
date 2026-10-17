@@ -23,6 +23,7 @@ import { fileURLToPath } from 'node:url'
 import { dirname, resolve, join } from 'node:path'
 import { chromium } from 'playwright'
 import { TOOL_REGISTRY } from '../src/shared/constants/toolRegistry.js'
+import { BLOG_POSTS } from '../src/content/blogPosts.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const DIST = resolve(__dirname, '../dist')
@@ -38,6 +39,8 @@ const ORIGIN = `http://127.0.0.1:${PORT}`
 const ROUTES = [
   ...TOOL_REGISTRY.filter((t) => t.implemented !== false).map((t) => t.path),
   '/terms',
+  '/blog',
+  ...BLOG_POSTS.map((post) => `/blog/${post.slug}`),
   '/',
 ]
 
