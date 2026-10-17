@@ -89,6 +89,14 @@ async function main() {
       await page.waitForSelector('#root *', { timeout: 15000 }).catch(() => {})
       await page.waitForTimeout(500)
 
+      // Make the snapshot fully visible: drop the JS reveal-gate and mark every
+      // scroll-reveal element shown. Motion is a runtime nicety — crawlers and
+      // first paint must see all content, not an opacity:0 pre-reveal state.
+      await page.evaluate(() => {
+        document.documentElement.classList.remove('fx-js')
+        document.querySelectorAll('.fx-reveal').forEach((el) => el.classList.add('is-visible'))
+      })
+
       const html = await page.content()
       const dir = route === '/' ? DIST : join(DIST, route)
       mkdirSync(dir, { recursive: true })
