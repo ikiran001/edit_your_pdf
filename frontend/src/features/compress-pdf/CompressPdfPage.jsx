@@ -79,6 +79,8 @@ export default function CompressPdfPage() {
   const [success, setSuccess] = useState(null)
   /** True when qpdf API was not used (browser-only pdf-lib path — sizes often unchanged). */
   const [usedFallbackOnly, setUsedFallbackOnly] = useState(false)
+  /** True when the server ran but nothing got smaller (file already optimized). */
+  const [noSavings, setNoSavings] = useState(false)
 
   const prodApiMissing = import.meta.env.PROD && !getResolvedApiBase()
 
@@ -129,6 +131,7 @@ export default function CompressPdfPage() {
     setError(null)
     setSuccess(null)
     setUsedFallbackOnly(false)
+    setNoSavings(false)
     try {
       const next = []
       for (const it of items) {
@@ -143,7 +146,11 @@ export default function CompressPdfPage() {
       }
       setItems(next)
       const anyFallback = next.some((x) => x.compressedVia === 'fallback')
+      const anySmaller = next.some(
+        (x) => x.compressedSize != null && x.compressedSize < x.originalSize
+      )
       setUsedFallbackOnly(anyFallback)
+      setNoSavings(!anyFallback && !anySmaller)
       const paths = next.map((x) => x.compressedVia || 'fallback')
       const mode =
         paths.every((p) => p === 'api')
@@ -155,6 +162,10 @@ export default function CompressPdfPage() {
       if (anyFallback) {
         setSuccess(
           'Done — the stronger server compressor was not used, so file sizes may not change much. Try again later for deeper compression.'
+        )
+      } else if (!anySmaller) {
+        setSuccess(
+          `This PDF is already well optimized — ${normalizedLevel === 'high' ? 'even High' : 'this level'} couldn't shrink it further (its images are likely already compressed). Your original is unchanged.${normalizedLevel !== 'high' ? ' You can try the High level for one more attempt.' : ''}`
         )
       } else {
         setSuccess('Compression finished. Review sizes below, then download.')
@@ -239,7 +250,7 @@ export default function CompressPdfPage() {
         <div
           role="status"
           className={`mb-4 rounded-xl border px-4 py-3 text-sm ${
-            usedFallbackOnly
+            usedFallbackOnly || noSavings
               ? 'border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100'
               : 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-100'
           }`}

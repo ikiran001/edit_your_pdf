@@ -13,6 +13,9 @@ import ContinueDownloadModal from './ContinueDownloadModal.jsx'
 import { isFirebaseClientConfigured } from './firebaseClient.js'
 import { getFirebaseAuthErrorHint } from '../lib/firebase.js'
 import { subscribeAuthLogoutCleanup } from './authLogoutCleanup.js'
+import { useSubscription } from '../subscription/SubscriptionContext.jsx'
+import UpgradePlanModal from '../subscription/UpgradePlanModal.jsx'
+import { consumeDownloadRequest } from '../lib/subscriptionApi.js'
 
 const ClientToolDownloadAuthContext = createContext(null)
 
@@ -25,16 +28,19 @@ export function ClientToolDownloadAuthProvider({ children }) {
   const {
     user,
     loading: authLoading,
+    getFreshIdToken,
     signInWithGooglePopup,
     requestPasswordResetEmail,
     signInWithEmailPassword,
     signUpWithEmailPassword,
   } = useAuth()
+  const { refresh: refreshSubscription } = useSubscription()
 
   const [modalOpen, setModalOpen] = useState(false)
   const [modalBusy, setModalBusy] = useState(false)
   const [modalError, setModalError] = useState(null)
   const [modalSuccess, setModalSuccess] = useState(null)
+  const [upgradeOpen, setUpgradeOpen] = useState(false)
 
   const pendingRunRef = useRef(null)
   const gateResolversRef = useRef(null)
@@ -73,6 +79,33 @@ export function ClientToolDownloadAuthProvider({ children }) {
     })
   }, [])
 
+  /**
+   * Count this download against the signed-in user's free daily limit, then run it.
+   * Fail-open: a metering hiccup (or the endpoint not being deployed yet) never blocks
+   * a download. On limit, open the upgrade modal and skip the download.
+   * @param {() => Promise<void>} run
+   */
+  const consumeThenRun = useCallback(
+    async (run) => {
+      try {
+        const r = await consumeDownloadRequest(getFreshIdToken)
+        if (r.status === 403 && r.data?.error === 'download_limit_exceeded') {
+          setUpgradeOpen(true)
+          return
+        }
+      } catch {
+        /* fail open — never block a download on a metering error */
+      }
+      await run()
+      try {
+        await refreshSubscription()
+      } catch {
+        /* ignore — count UI will catch up on next load */
+      }
+    },
+    [getFreshIdToken, refreshSubscription]
+  )
+
   const flushPendingRun = useCallback(async () => {
     if (flushInFlightRef.current) return
     const run = pendingRunRef.current
@@ -81,7 +114,7 @@ export function ClientToolDownloadAuthProvider({ children }) {
     setModalBusy(true)
     pendingRunRef.current = null
     try {
-      await run()
+      await consumeThenRun(run)
       gateResolversRef.current?.resolve()
     } catch (e) {
       gateResolversRef.current?.reject(e)
@@ -94,7 +127,7 @@ export function ClientToolDownloadAuthProvider({ children }) {
       setModalError(null)
       setModalSuccess(null)
     }
-  }, [])
+  }, [consumeThenRun])
 
   useEffect(() => {
     if (!user || !modalOpen || !pendingRunRef.current) return
@@ -174,7 +207,7 @@ export function ClientToolDownloadAuthProvider({ children }) {
         })
       }
       if (user) {
-        await run()
+        await consumeThenRun(run)
         return
       }
       if (!isFirebaseClientConfigured()) {
@@ -189,7 +222,7 @@ export function ClientToolDownloadAuthProvider({ children }) {
         gateResolversRef.current = { resolve, reject }
       })
     },
-    [user, authLoading]
+    [user, authLoading, consumeThenRun]
   )
 
   const value = useMemo(
@@ -222,6 +255,11 @@ export function ClientToolDownloadAuthProvider({ children }) {
         }
         onEmailSignUp={(payload) => runPopupOauthThenFlush(() => signUpWithEmailPassword(payload))}
         onSendPasswordReset={(email) => runPasswordReset(email)}
+      />
+      <UpgradePlanModal
+        open={upgradeOpen}
+        onClose={() => setUpgradeOpen(false)}
+        onPaid={() => void refreshSubscription()}
       />
     </ClientToolDownloadAuthContext.Provider>
   )

@@ -70,6 +70,31 @@ export async function verifyRazorpayPaymentRequest(getFreshIdToken, payload) {
 }
 
 /**
+ * Counts one download against the free daily limit for the signed-in user.
+ * 403 with { error: 'download_limit_exceeded' } means the cap is reached.
+ * @param {() => Promise<string | null>} getFreshIdToken
+ */
+export async function consumeDownloadRequest(getFreshIdToken) {
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(await bearerHeaders(getFreshIdToken)),
+  }
+  const res = await fetch(apiUrl('/subscription/consume-download'), {
+    method: 'POST',
+    headers,
+    credentials: 'include',
+    body: JSON.stringify({}),
+  })
+  let data = null
+  try {
+    data = await res.json()
+  } catch {
+    data = null
+  }
+  return { ok: res.ok, status: res.status, data }
+}
+
+/**
  * @param {() => Promise<string | null>} getFreshIdToken
  */
 export async function cancelSubscriptionRequest(getFreshIdToken) {

@@ -9,6 +9,7 @@ import {
   markSubscriptionCancelled,
   applySubscriptionIfNewOrder,
   writePendingOrderLedger,
+  reserveAuthenticatedDownload,
 } from '../services/subscriptionFirestore.js';
 import {
   createRazorpayOrder,
@@ -194,6 +195,45 @@ router.post('/subscription/cancel', async (req, res) => {
   } catch (e) {
     console.error('[subscription/cancel]', e);
     return res.status(500).json({ error: 'cancel_failed', message: e?.message || 'Could not update subscription.' });
+  }
+});
+
+/**
+ * Counts one download against the signed-in user's free daily limit (Pro = no counter).
+ * Used by the browser-side toolkit tools (compress, merge, etc.) which download blobs
+ * directly and otherwise never reach the metered GET /download editor path.
+ * Returns 403 download_limit_exceeded when the free cap is hit.
+ */
+router.post('/subscription/consume-download', async (req, res) => {
+  const user = await requireUser(req, res);
+  if (!user) return;
+  try {
+    const result = await reserveAuthenticatedDownload(user.uid);
+    return res.json({
+      ok: true,
+      kind: result.kind,
+      ...(result.kind === 'free'
+        ? { used: result.used, limit: result.limit, utcDay: result.utcDay }
+        : {}),
+    });
+  } catch (e) {
+    if (e?.code === 'DOWNLOAD_LIMIT_EXCEEDED') {
+      return res.status(403).json({
+        error: 'download_limit_exceeded',
+        message:
+          'You have used all free downloads for today (3 per day, UTC). Upgrade to Pro for unlimited downloads.',
+        ...(e.meta && typeof e.meta === 'object' ? e.meta : {}),
+      });
+    }
+    if (e?.code === 'SUBSCRIPTION_SERVICE_UNAVAILABLE') {
+      return res
+        .status(503)
+        .json({ error: 'subscription_unavailable', message: 'Could not verify download allowance.' });
+    }
+    console.error('[subscription/consume-download]', e);
+    return res
+      .status(503)
+      .json({ error: 'consume_failed', message: 'Could not verify download allowance.' });
   }
 });
 
