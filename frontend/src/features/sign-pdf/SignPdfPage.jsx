@@ -60,6 +60,8 @@ export default function SignPdfPage() {
   const viewerRef = useRef(null)
   const prevPlacementsLen = useRef(0)
   const placementClipboardRef = useRef(null)
+  /** Page + y the user was looking at when "Add signature" was clicked. */
+  const placementTargetRef = useRef(null)
   const [pdfFile, setPdfFile] = useState(null)
   const [signaturePng, setSignaturePng] = useState(null)
   const [placements, setPlacements] = useState([])
@@ -154,13 +156,19 @@ export default function SignPdfPage() {
     async (pngBytes) => {
       setSignaturePng(pngBytes)
       const api = viewerRef.current
-      const { nx, ny, nw, nh } = await defaultPlacementForPng(
-        pngBytes,
-        api?.getViewportForPage,
-        focusedPageIndex
-      )
+      // Drop the signature exactly where the user was looking (viewport center),
+      // captured when they clicked "Add signature" — falls back to the live
+      // viewport center, then the focused page.
+      const target =
+        placementTargetRef.current ||
+        api?.getCurrentPlacementTarget?.() || { pageIndex: focusedPageIndex, ny: 0.5 }
+      placementTargetRef.current = null
+      const pageIndex = Number.isInteger(target.pageIndex) ? target.pageIndex : focusedPageIndex
+      const { nw, nh } = await defaultPlacementForPng(pngBytes, api?.getViewportForPage, pageIndex)
+      const nx = clamp(0.5 - nw / 2, 0, 1 - nw)
+      const ny = clamp((target.ny ?? 0.5) - nh / 2, 0, 1 - nh)
       const id = crypto.randomUUID()
-      setPlacements((prev) => [...prev, { id, pageIndex: focusedPageIndex, nx, ny, nw, nh }])
+      setPlacements((prev) => [...prev, { id, pageIndex, nx, ny, nw, nh }])
       setSelectedPlacementId(id)
       api?.scrollToPlacement?.(id)
     },
@@ -297,11 +305,15 @@ export default function SignPdfPage() {
 
       {pdfFile ? (
         <>
-          <div className="mt-6 flex flex-wrap items-center gap-3">
+          <div className="sticky top-16 z-40 mt-6 flex flex-wrap items-center gap-3 rounded-xl border border-zinc-200 bg-white/92 px-3 py-3 shadow-sm backdrop-blur dark:border-zinc-700 dark:bg-zinc-950/90">
             <button
               type="button"
               disabled={busy}
-              onClick={() => setModalOpen(true)}
+              onClick={() => {
+                // Remember where the user is looking now, before the modal covers it.
+                placementTargetRef.current = viewerRef.current?.getCurrentPlacementTarget?.() ?? null
+                setModalOpen(true)
+              }}
               className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg hover:bg-indigo-500 disabled:opacity-50"
             >
               <PenLine className="h-4 w-4" aria-hidden />

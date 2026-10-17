@@ -533,6 +533,35 @@ const SignPdfViewer = forwardRef(function SignPdfViewer(
     [numPages, setFocusedPageIndex, scrollToPage]
   )
 
+  /**
+   * Where the user is actually looking: the page under the viewport's vertical
+   * center and the normalized y within it. Used to drop a new signature right in
+   * front of the user instead of a fixed spot on a scroll-tracked page.
+   * @returns {{ pageIndex: number, ny: number }}
+   */
+  const getCurrentPlacementTarget = useCallback(() => {
+    if (typeof window === 'undefined' || numPages <= 0) {
+      return { pageIndex: focusedPageIndex, ny: 0.5 }
+    }
+    const centerY = window.innerHeight / 2
+    let fallback = null
+    for (let i = 0; i < numPages; i++) {
+      const el = pageNodesRef.current.get(i)
+      if (!el) continue
+      const r = el.getBoundingClientRect()
+      if (r.height <= 0) continue
+      if (r.top <= centerY && r.bottom >= centerY) {
+        return { pageIndex: i, ny: clamp((centerY - r.top) / r.height, 0, 1) }
+      }
+      const dist = centerY < r.top ? r.top - centerY : centerY - r.bottom
+      if (!fallback || dist < fallback.dist) {
+        fallback = { dist, pageIndex: i, ny: centerY < r.top ? 0.1 : 0.9 }
+      }
+    }
+    if (fallback) return { pageIndex: fallback.pageIndex, ny: fallback.ny }
+    return { pageIndex: focusedPageIndex, ny: 0.5 }
+  }, [numPages, focusedPageIndex])
+
   /** Smooth-scroll a just-placed signature box into view (retries until it renders). */
   const scrollToPlacement = useCallback((id) => {
     let tries = 0
@@ -567,8 +596,8 @@ const SignPdfViewer = forwardRef(function SignPdfViewer(
 
   useImperativeHandle(
     ref,
-    () => ({ getViewportForPage, maxWidth, scrollToPage, scrollToPlacement }),
-    [getViewportForPage, maxWidth, scrollToPage, scrollToPlacement]
+    () => ({ getViewportForPage, maxWidth, scrollToPage, scrollToPlacement, getCurrentPlacementTarget }),
+    [getViewportForPage, maxWidth, scrollToPage, scrollToPlacement, getCurrentPlacementTarget]
   )
 
   if (loadErr) {
@@ -581,7 +610,7 @@ const SignPdfViewer = forwardRef(function SignPdfViewer(
 
   return (
     <div ref={containerRef} className="w-full">
-      <div className="sticky top-16 z-40 mb-4 flex flex-wrap items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white/90 px-3 py-2 shadow-sm backdrop-blur dark:border-zinc-700 dark:bg-zinc-900/90">
+      <div className="mb-4 flex flex-wrap items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white/90 px-3 py-2 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/90">
         <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Active page:</span>
         <button
           type="button"
