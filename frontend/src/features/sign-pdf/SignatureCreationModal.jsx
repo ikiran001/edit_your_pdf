@@ -73,6 +73,26 @@ export default function SignatureCreationModal({ open, onClose, onDone }) {
     return undefined
   }, [open])
 
+  // Prevent the background from scrolling while the modal is open (a layout reflow
+  // was jumping the document to the middle). overflow:hidden holds position without
+  // shifting content, so the modal stays interactive. Restore the exact scroll
+  // position on close in case anything moved it.
+  useEffect(() => {
+    if (!open || typeof document === 'undefined') return undefined
+    const scrollY = window.scrollY
+    const html = document.documentElement
+    const body = document.body
+    const prevHtml = html.style.overflow
+    const prevBody = body.style.overflow
+    html.style.overflow = 'hidden'
+    body.style.overflow = 'hidden'
+    return () => {
+      html.style.overflow = prevHtml
+      body.style.overflow = prevBody
+      window.scrollTo(0, scrollY)
+    }
+  }, [open])
+
   const clearPad = () => {
     initDrawPad()
     setError(null)
