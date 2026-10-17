@@ -15,8 +15,10 @@
 # Optional CORS: if `ALLOWED_ORIGINS` is unset, production allows https://pdfpilot.pro and https://www.pdfpilot.pro.
 # Set it (comma-separated) to use different origins instead, or to add staging/preview URLs alongside production.
 services:
+  # Must match the live Render service exactly → https://edit-your-pdf-1.onrender.com
+  # (the frontend's VITE_API_BASE_URL points here).
   - type: web
-    name: edit-your-pdf-chew
+    name: edit-your-pdf-1
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .

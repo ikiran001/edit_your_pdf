@@ -128,6 +128,7 @@ function SignatureBoxOverlay({
 
   return (
     <div
+      data-placement-id={placement.id}
       className={`pointer-events-auto absolute z-30 border-2 bg-transparent shadow-lg ring-2 ${
         isSelected
           ? 'border-cyan-500 ring-cyan-400/50'
@@ -337,6 +338,8 @@ const SignPdfViewer = forwardRef(function SignPdfViewer(
   const containerRef = useRef(null)
   const pageNodesRef = useRef(new Map())
   const pageCanvasRef = useRef(new Map())
+  const [pageInput, setPageInput] = useState('1')
+  const inputFocusedRef = useRef(false)
 
   useEffect(() => {
     if (!file) {
@@ -474,7 +477,45 @@ const SignPdfViewer = forwardRef(function SignPdfViewer(
     [pdfDoc, maxWidth]
   )
 
-  useImperativeHandle(ref, () => ({ getViewportForPage, maxWidth }), [getViewportForPage, maxWidth])
+  /** Scroll a page to the center of the viewport (used by the page navigator). */
+  const scrollToPage = useCallback((pageIndex) => {
+    pageNodesRef.current.get(pageIndex)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [])
+
+  /** Jump the active page + scroll it into view. */
+  const goToPage = useCallback(
+    (pageIndex) => {
+      const i = clamp(pageIndex, 0, Math.max(0, numPages - 1))
+      setFocusedPageIndex(i)
+      scrollToPage(i)
+    },
+    [numPages, setFocusedPageIndex, scrollToPage]
+  )
+
+  /** Smooth-scroll a just-placed signature box into view (retries until it renders). */
+  const scrollToPlacement = useCallback((id) => {
+    let tries = 0
+    const tick = () => {
+      const el = containerRef.current?.querySelector(`[data-placement-id="${id}"]`)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        return
+      }
+      if (tries++ < 10) requestAnimationFrame(tick)
+    }
+    requestAnimationFrame(tick)
+  }, [])
+
+  // Keep the page-number input in sync with the scroll-driven active page (unless the user is typing).
+  useEffect(() => {
+    if (!inputFocusedRef.current) setPageInput(String(focusedPageIndex + 1))
+  }, [focusedPageIndex])
+
+  useImperativeHandle(
+    ref,
+    () => ({ getViewportForPage, maxWidth, scrollToPage, scrollToPlacement }),
+    [getViewportForPage, maxWidth, scrollToPage, scrollToPlacement]
+  )
 
   if (loadErr) {
     return <p className="text-sm text-red-600 dark:text-red-400">{loadErr}</p>
@@ -486,25 +527,79 @@ const SignPdfViewer = forwardRef(function SignPdfViewer(
 
   return (
     <div ref={containerRef} className="w-full">
-      <div className="mb-4 flex flex-wrap items-center justify-center gap-2">
-        <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Add / paste on page:</span>
-        {Array.from({ length: numPages }, (_, i) => (
-          <button
-            key={i}
-            type="button"
-            onClick={() => {
-              setFocusedPageIndex(i)
-              pageNodesRef.current.get(i)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      <div className="sticky top-16 z-40 mb-4 flex flex-wrap items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white/90 px-3 py-2 shadow-sm backdrop-blur dark:border-zinc-700 dark:bg-zinc-900/90">
+        <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Active page:</span>
+        <button
+          type="button"
+          onClick={() => goToPage(focusedPageIndex - 1)}
+          disabled={focusedPageIndex <= 0}
+          className="rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-zinc-700 enabled:hover:bg-zinc-50 disabled:opacity-40 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:enabled:hover:bg-zinc-800"
+          aria-label="Previous page"
+        >
+          ◀ Prev
+        </button>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            const n = parseInt(pageInput, 10)
+            if (Number.isFinite(n) && n >= 1 && n <= numPages) goToPage(n - 1)
+          }}
+          className="flex items-center gap-1.5"
+        >
+          <input
+            type="number"
+            min={1}
+            max={numPages}
+            value={pageInput}
+            onFocus={() => {
+              inputFocusedRef.current = true
             }}
-            className={`min-w-9 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-              focusedPageIndex === i
-                ? 'bg-indigo-600 text-white shadow-md'
-                : 'border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800'
-            }`}
+            onBlur={() => {
+              inputFocusedRef.current = false
+              // Commit the typed page (don't discard it — Go/Enter blurs before submit).
+              const n = parseInt(pageInput, 10)
+              if (Number.isFinite(n) && n >= 1 && n <= numPages) goToPage(n - 1)
+              else setPageInput(String(focusedPageIndex + 1))
+            }}
+            onChange={(e) => setPageInput(e.target.value)}
+            className="w-16 rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-center text-xs font-semibold text-zinc-800 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+            aria-label="Go to page"
+          />
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">of {numPages}</span>
+          <button
+            type="submit"
+            className="rounded-lg bg-indigo-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500"
           >
-            {i + 1}
+            Go
           </button>
-        ))}
+        </form>
+        <button
+          type="button"
+          onClick={() => goToPage(focusedPageIndex + 1)}
+          disabled={focusedPageIndex >= numPages - 1}
+          className="rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-zinc-700 enabled:hover:bg-zinc-50 disabled:opacity-40 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:enabled:hover:bg-zinc-800"
+          aria-label="Next page"
+        >
+          Next ▶
+        </button>
+        {numPages <= 20 ? (
+          <div className="flex flex-wrap items-center gap-1.5 border-l border-zinc-200 pl-2 dark:border-zinc-700">
+            {Array.from({ length: numPages }, (_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => goToPage(i)}
+                className={`min-w-8 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+                  focusedPageIndex === i
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : 'border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800'
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       {Array.from({ length: numPages }, (_, i) => (

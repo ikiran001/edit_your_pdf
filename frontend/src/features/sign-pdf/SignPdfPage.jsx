@@ -110,6 +110,7 @@ export default function SignPdfPage() {
     const ny = clamp(clip.ny + PLACE_OFFSET * 0.75, 0, 1 - nh)
     setPlacements((prev) => [...prev, { id, pageIndex: focusedPageIndex, nx, ny, nw, nh }])
     setSelectedPlacementId(id)
+    viewerRef.current?.scrollToPlacement?.(id)
   }, [signaturePng, focusedPageIndex])
 
   const duplicateSelected = useCallback(() => {
@@ -123,6 +124,7 @@ export default function SignPdfPage() {
     const ny = clamp(p.ny + PLACE_OFFSET, 0, 1 - nh)
     setPlacements((prev) => [...prev, { id, pageIndex: focusedPageIndex, nx, ny, nw, nh }])
     setSelectedPlacementId(id)
+    viewerRef.current?.scrollToPlacement?.(id)
   }, [placements, selectedPlacementId, focusedPageIndex])
 
   useEffect(() => {
@@ -160,6 +162,7 @@ export default function SignPdfPage() {
       const id = crypto.randomUUID()
       setPlacements((prev) => [...prev, { id, pageIndex: focusedPageIndex, nx, ny, nw, nh }])
       setSelectedPlacementId(id)
+      api?.scrollToPlacement?.(id)
     },
     [focusedPageIndex]
   )
