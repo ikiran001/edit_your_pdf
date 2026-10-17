@@ -19,6 +19,24 @@
 export const TOOL_SEO_BY_ID = {
   'edit-pdf': {
     featureName: 'Edit PDF',
+    faqs: [
+      {
+        q: 'Can I edit text in a PDF for free?',
+        a: 'Yes. Edit PDF is free — fix text where supported, highlight lines, and add annotations in your browser, then download the updated PDF. Signed-out users get a few downloads per day; a Pro plan removes the cap.',
+      },
+      {
+        q: 'Is my PDF uploaded to a server when I edit it?',
+        a: 'Editing runs in a focused session in your browser on pdfpilot, so you can avoid passing drafts through random file-sharing sites. Download the updated file when you are done and keep the original as a backup.',
+      },
+      {
+        q: 'Why can’t I edit some of the text in my PDF?',
+        a: 'Text editing works best on PDFs that contain real, selectable text. Scanned or image-only PDFs have no editable text layer — run the OCR PDF tool first to add one, then edit.',
+      },
+      {
+        q: 'Can I edit a PDF on my phone?',
+        a: 'Yes — Edit PDF runs in your mobile browser with no app install. A larger screen makes precise placement easier, but basic text fixes and highlights work fine on mobile.',
+      },
+    ],
     intro: [
       'Edit PDF online to fix text, add highlights, sketch notes, and mark up pages without installing desktop software. Upload starts a focused editing session so you can work through your document in one place.',
       'Your PDF is tied to your session on pdfpilot—ideal when you want to avoid passing drafts through random file-sharing sites. When you are done, download the updated PDF and keep a copy of the original if you might need it later.',
@@ -67,6 +85,24 @@ export const TOOL_SEO_BY_ID = {
 
   'merge-pdf': {
     featureName: 'Merge PDF',
+    faqs: [
+      {
+        q: 'How do I merge multiple PDFs into one file?',
+        a: 'Open Merge PDF, upload all your files, drag them into the order you want, and click merge. You get one combined PDF to download.',
+      },
+      {
+        q: 'Is merging PDFs free, and are my files uploaded?',
+        a: 'Yes, it is free — and merging runs entirely in your browser, so your PDFs are combined locally and not sent to a server. That keeps sensitive annexes private.',
+      },
+      {
+        q: 'Can I reorder files before merging?',
+        a: 'Yes. Drag the files in the list until the sequence matches how readers should see them, and remove any file you added by mistake before you merge.',
+      },
+      {
+        q: 'Is there a limit on how many PDFs I can merge?',
+        a: 'You can stack several PDFs in one run. Because combining happens in the browser, very large sets may be slower on low-memory phones or tablets.',
+      },
+    ],
     intro: [
       'Merge PDF files into one document for easier sharing, printing, and archiving. Put appendices, exhibits, and scans in the exact order you want.',
       'Everything runs in your browser on pdfpilot—your PDFs are combined locally, so you skip uploading them to a third-party server just to stitch pages together.',
@@ -115,6 +151,24 @@ export const TOOL_SEO_BY_ID = {
 
   'split-pdf': {
     featureName: 'Split PDF',
+    faqs: [
+      {
+        q: 'How do I split a PDF into separate files?',
+        a: 'Open Split PDF, upload your document, and choose split by page ranges (e.g. 1-5, 8) or extract every page into its own PDF. Download a ZIP or individual files.',
+      },
+      {
+        q: 'Can I extract just a few pages from a PDF?',
+        a: 'Yes. Use range mode and enter the pages you need (like 3-7) to pull out only those pages — handy for sharing one section while keeping the rest private.',
+      },
+      {
+        q: 'Is splitting done in my browser?',
+        a: 'Yes — processing stays in your browser on pdfpilot, so you can split a contract locally instead of uploading it to an unknown website.',
+      },
+      {
+        q: 'Is Split PDF free?',
+        a: 'Yes. Splitting is free; signed-out users can download a few files per day and a Pro plan removes the daily cap.',
+      },
+    ],
     intro: [
       'Split PDF pages into separate files by custom ranges or by every page. Pull out chapters, invoices, or signed sections without copy-pasting screenshots.',
       'Processing stays in your browser, so you can extract pages locally instead of uploading a full contract to an unknown website.',
@@ -229,6 +283,24 @@ export const TOOL_SEO_BY_ID = {
 
   'pdf-to-jpg': {
     featureName: 'PDF to JPG',
+    faqs: [
+      {
+        q: 'How do I convert a PDF to JPG images?',
+        a: 'Open PDF to JPG, upload your PDF, optionally pick quality or scale, and convert. Each page becomes a JPG — download them as a ZIP or individually.',
+      },
+      {
+        q: 'Can I choose the image quality?',
+        a: 'If offered, pick quality or scale — higher looks sharper but makes larger files. Choose higher for printing and lower for web or chat sharing.',
+      },
+      {
+        q: 'Are my files uploaded when converting PDF to JPG?',
+        a: 'No — export happens in your browser, so your document is not sent to a third-party converter.',
+      },
+      {
+        q: 'Will the JPG images have selectable text?',
+        a: 'No. JPGs are images, so the text is no longer selectable. Keep the original PDF, or use OCR PDF, if you still need searchable text later.',
+      },
+    ],
     intro: [
       'Turn each PDF page into JPG images for slides, social posts, or tools that prefer pictures over documents. Export happens in your browser, so your deck is not uploaded to a random converter.',
       'PDF to JPG online is perfect when a teammate can open images everywhere but struggles with PDF viewers on mobile.',
@@ -277,6 +349,24 @@ export const TOOL_SEO_BY_ID = {
 
   'jpg-to-pdf': {
     featureName: 'JPG to PDF',
+    faqs: [
+      {
+        q: 'How do I combine JPG images into one PDF?',
+        a: 'Open JPG to PDF, upload your images, drag the thumbnails into order, and create the PDF — you get one file to download.',
+      },
+      {
+        q: 'Can I add multiple photos to a single PDF?',
+        a: 'Yes. Add as many images as you need and reorder them before creating the PDF — great for applications, receipts, or photo sets.',
+      },
+      {
+        q: 'Does it support PNG as well as JPG?',
+        a: 'Yes — both JPG and PNG images can be combined into one PDF.',
+      },
+      {
+        q: 'Are my photos uploaded to a server?',
+        a: 'No — JPG to PDF runs in your browser, so your scans and photos are not sent through a cloud you do not control.',
+      },
+    ],
     intro: [
       'Combine JPG or PNG images into one polished PDF—great for applications, receipts, or photo sets. Build the story in the right order, then download a single file.',
       'JPG to PDF online runs in your browser so your scans and photos are not sent through an extra cloud you do not control.',
@@ -325,6 +415,24 @@ export const TOOL_SEO_BY_ID = {
 
   'sign-pdf': {
     featureName: 'Sign PDF',
+    faqs: [
+      {
+        q: 'How do I sign a PDF online?',
+        a: 'Open Sign PDF, upload your file, create a signature by drawing, typing, or uploading an image, place it on the right spot, and download the signed PDF.',
+      },
+      {
+        q: 'Is this a legally valid e-signature?',
+        a: 'It places an electronic signature image on the page, which is fine for routine agreements. It is not a certified digital signature (DSC with a certificate); for filings that legally mandate a DSC, use a certified provider.',
+      },
+      {
+        q: 'Are my documents uploaded when I sign?',
+        a: 'Signing happens in your browser on pdfpilot, which keeps routine agreements off random “free sign” sites for a simpler, more private flow.',
+      },
+      {
+        q: 'Can I place my signature in more than one spot?',
+        a: 'Yes. Copy or move the signature so initials or signatures appear wherever the document needs them, then export the signed PDF once.',
+      },
+    ],
     intro: [
       'Sign PDF documents by placing your signature on the right page, then download a normal PDF others can open anywhere. Draw or paste a signature and position it precisely on lines or boxes.',
       'Signing happens in your browser on pdfpilot, which keeps routine agreements off random “free sign” sites when you want a simpler, more private flow.',
@@ -421,6 +529,24 @@ export const TOOL_SEO_BY_ID = {
 
   'unlock-pdf': {
     featureName: 'Unlock PDF',
+    faqs: [
+      {
+        q: 'How do I remove a password from a PDF?',
+        a: 'Open Unlock PDF, upload the protected file, type the correct password, and download an unlocked copy. You must know the password.',
+      },
+      {
+        q: 'Can I unlock a PDF without knowing the password?',
+        a: 'No. Unlock PDF only removes an open password you already know, for documents you have permission to change — it is not a password-recovery or cracking tool.',
+      },
+      {
+        q: 'Where is my file processed when unlocking?',
+        a: 'Unlock uses your pdfpilot API with qpdf on the server, so the file and password go to that endpoint rather than to a public converter.',
+      },
+      {
+        q: 'Is it safe to unlock bank statements or Aadhaar PDFs?',
+        a: 'Only unlock documents you own and are allowed to change. Store the unlocked copy per your security policy and delete older copies if your rules allow.',
+      },
+    ],
     intro: [
       'Remove an open password from a PDF when you know the password and are allowed to keep an unlocked copy. This helps teams stop retyping the same password for internal references they already own.',
       'Unlock PDF uses your configured pdfpilot API (with qpdf on the server) when available—your file and password go to that endpoint, not to a public converter. Only unlock documents you have permission to change.',
@@ -708,6 +834,24 @@ export const TOOL_SEO_BY_ID = {
 
   'pdf-to-word': {
     featureName: 'PDF to Word',
+    faqs: [
+      {
+        q: 'How do I convert a PDF to an editable Word file?',
+        a: 'Open PDF to Word, upload a text-based PDF, and your browser extracts the text and builds a draft .docx you can download and edit.',
+      },
+      {
+        q: 'Is the conversion exact?',
+        a: 'It is a best-effort draft — text and paragraphs transfer, but complex layouts, tables, and fonts may simplify. Always review the .docx before final use.',
+      },
+      {
+        q: 'Why is my scanned PDF converting to an empty or garbled Word file?',
+        a: 'Scanned PDFs are images with no selectable text. Run OCR PDF first to add a text layer, then convert to Word.',
+      },
+      {
+        q: 'Are my files uploaded for the conversion?',
+        a: 'No — conversion runs in your browser with PDF.js, so your PDF is not uploaded to a converter API. Keep the page open until the download starts.',
+      },
+    ],
     intro: [
       'Convert PDF to Word in your browser when you need an editable .docx from a text-based PDF. pdf.js reads the file in your tab and pdfpilot builds a draft Word document locally — your PDF is not uploaded for conversion.',
       'Output is best-effort draft text and paragraphs; complex layouts, tables, and fonts may simplify. Scanned PDFs need OCR first — use pdfpilot’s OCR PDF tool, then try again.',
@@ -755,6 +899,24 @@ export const TOOL_SEO_BY_ID = {
 
   'word-to-pdf': {
     featureName: 'Word to PDF',
+    faqs: [
+      {
+        q: 'How do I convert a Word document to PDF?',
+        a: 'Open Word to PDF, upload a .docx, and your browser builds a simple, text-first PDF to download.',
+      },
+      {
+        q: 'Will my formatting, tables, and images be preserved?',
+        a: 'This is a fast draft — tables, images, headers, and exact fonts are not reproduced. For print-ready fidelity, use Word’s own “Save as PDF” or a server-based converter.',
+      },
+      {
+        q: 'Is Word to PDF free and private?',
+        a: 'Yes — it is free and runs in your browser, so your document is not uploaded to a converter service for this step.',
+      },
+      {
+        q: 'Does it support .doc or only .docx?',
+        a: 'It reads modern .docx files. Save older .doc files as .docx in Word first, then convert.',
+      },
+    ],
     intro: [
       'Turn a Microsoft Word .docx into a draft PDF in your browser. JSZip reads the file in this tab; pdf-lib writes a simple, text-first PDF. Your document is not uploaded to a converter service for this step.',
       'This is a fast draft — not a replacement for Microsoft Word’s own “Save as PDF” or a server with LibreOffice/Gotenberg. Tables, images, headers, and exact fonts are not reproduced; use those tools when you need print-ready fidelity.',
@@ -871,6 +1033,24 @@ export const TOOL_SEO_BY_ID = {
   },
   'ocr-pdf': {
     featureName: 'OCR PDF',
+    faqs: [
+      {
+        q: 'What does OCR do to a PDF?',
+        a: 'OCR (optical character recognition) adds a searchable text layer over a scanned PDF, so you can find words, copy passages, and use editors that rely on real text.',
+      },
+      {
+        q: 'Does OCR support Hindi and other Indian languages?',
+        a: 'Yes — pdfpilot runs OCR on the server with ocrmypdf and Tesseract, including English and Hindi, so scanned Hindi documents become searchable.',
+      },
+      {
+        q: 'How long does OCR take?',
+        a: 'It runs on the server and large files can take a few minutes. You download a new PDF; keep the original if you still need the untouched scan.',
+      },
+      {
+        q: 'Is OCR free?',
+        a: 'Server OCR is a Pro feature because it runs on the server. Free accounts can still edit and convert PDFs; Pro unlocks OCR, Chat with PDF, and unlimited downloads.',
+      },
+    ],
     intro: [
       'Scanned PDFs are often pictures of pages. OCR (optical character recognition) adds a searchable text layer so you can find words, copy passages, and get better results in editors that rely on real text.',
       'pdfpilot runs OCR on the server with open-source tools (ocrmypdf and Tesseract). You download a new PDF; keep the original if you still need the untouched scan.',
