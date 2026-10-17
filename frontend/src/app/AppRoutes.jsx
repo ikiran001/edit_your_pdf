@@ -10,47 +10,73 @@ import { ClientToolDownloadAuthProvider } from '../auth/ClientToolDownloadAuthCo
 import SkipToContent from '../shared/components/SkipToContent.jsx'
 import AnimatedBackground from '../shared/components/AnimatedBackground.jsx'
 
-const ToolkitHomePage = lazy(() => import('../features/toolkit-home/ToolkitHomePage.jsx'))
-const EditPdfPage = lazy(() => import('../features/edit-pdf/EditPdfPage.jsx'))
-const MergePdfPage = lazy(() => import('../features/merge-pdf/MergePdfPage.jsx'))
-const SplitPdfPage = lazy(() => import('../features/split-pdf/SplitPdfPage.jsx'))
-const CompressPdfPage = lazy(() => import('../features/compress-pdf/CompressPdfPage.jsx'))
-const PdfToJpgPage = lazy(() => import('../features/pdf-to-jpg/PdfToJpgPage.jsx'))
-const PdfToPngPage = lazy(() => import('../features/pdf-to-png/PdfToPngPage.jsx'))
-const PdfToTextPage = lazy(() => import('../features/pdf-to-text/PdfToTextPage.jsx'))
-const JpgToPdfPage = lazy(() => import('../features/jpg-to-pdf/JpgToPdfPage.jsx'))
-const ScanToPdfPage = lazy(() => import('../features/scan-to-pdf/ScanToPdfPage.jsx'))
-const SignPdfPage = lazy(() => import('../features/sign-pdf/SignPdfPage.jsx'))
-const FillPdfPage = lazy(() => import('../features/fill-pdf/FillPdfPage.jsx'))
-const FlattenPdfPage = lazy(() => import('../features/flatten-pdf/FlattenPdfPage.jsx'))
-const UnlockPdfPage = lazy(() => import('../features/unlock-pdf/UnlockPdfPage.jsx'))
-const OcrPdfPage = lazy(() => import('../features/ocr-pdf/OcrPdfPage.jsx'))
-const EncryptPdfPage = lazy(() => import('../features/encrypt-pdf/EncryptPdfPage.jsx'))
-const OrganizePdfPage = lazy(() => import('../features/organize-pdf/OrganizePdfPage.jsx'))
-const PageNumbersPdfPage = lazy(() => import('../features/add-page-numbers/PageNumbersPdfPage.jsx'))
-const WatermarkPdfPage = lazy(() => import('../features/add-watermark/WatermarkPdfPage.jsx'))
-const WordToPdfPage = lazy(() => import('../features/word-to-pdf/WordToPdfPage.jsx'))
-const PdfToWordPage = lazy(() => import('../features/pdf-to-word/PdfToWordPage.jsx'))
-const GstInvoicePage = lazy(() => import('../features/gst-invoice/GstInvoicePage.jsx'))
-const RepairPdfPage = lazy(() => import('../features/repair-pdf/RepairPdfPage.jsx'))
-const CropPdfPage = lazy(() => import('../features/crop-pdf/CropPdfPage.jsx'))
-const ComparePdfPage = lazy(() => import('../features/compare-pdf/ComparePdfPage.jsx'))
-const PowerpointToPdfPage = lazy(() => import('../features/powerpoint-to-pdf/PowerpointToPdfPage.jsx'))
-const ExcelToPdfPage = lazy(() => import('../features/excel-to-pdf/ExcelToPdfPage.jsx'))
-const HtmlToPdfPage = lazy(() => import('../features/html-to-pdf/HtmlToPdfPage.jsx'))
-const PdfToExcelPage = lazy(() => import('../features/pdf-to-excel/PdfToExcelPage.jsx'))
-const PdfToPowerpointPage = lazy(() => import('../features/pdf-to-powerpoint/PdfToPowerpointPage.jsx'))
-const TranslatePdfPage = lazy(() => import('../features/translate-pdf/TranslatePdfPage.jsx'))
-const ChatWithPdfPage = lazy(() => import('../features/chat-with-pdf/ChatWithPdfPage.jsx'))
-const RedactPdfPage = lazy(() => import('../features/redact-pdf/RedactPdfPage.jsx'))
-const PlannedToolPage = lazy(() => import('../features/placeholder/PlannedToolPage.jsx'))
-const MyDocumentsPage = lazy(() => import('../features/my-documents/MyDocumentsPage.jsx'))
-const SubscriptionBillingPage = lazy(() => import('../features/account/SubscriptionBillingPage.jsx'))
-const TermsOfServicePage = lazy(() => import('../features/legal/TermsOfServicePage.jsx'))
-const FeedbackPage = lazy(() => import('../features/feedback/FeedbackPage.jsx'))
-const AdminFeedbackPage = lazy(() => import('../features/feedback/AdminFeedbackPage.jsx'))
-const BlogIndexPage = lazy(() => import('../features/blog/BlogIndexPage.jsx'))
-const BlogPostPage = lazy(() => import('../features/blog/BlogPostPage.jsx'))
+/**
+ * lazy() that recovers from stale-chunk 404s. After a new deploy, an already-open
+ * tab (or cached index.html) references old hashed chunk filenames that no longer
+ * exist → "Failed to fetch dynamically imported module". We reload once to pull
+ * the fresh index.html + new chunks. The 10s guard prevents an infinite loop if
+ * the import genuinely fails for another reason, and re-arms for future deploys.
+ */
+function lazyWithReload(factory) {
+  return lazy(() =>
+    factory().catch((err) => {
+      try {
+        const key = 'eyp-chunk-reload-at'
+        const last = Number(sessionStorage.getItem(key) || 0)
+        if (Date.now() - last > 10000) {
+          sessionStorage.setItem(key, String(Date.now()))
+          window.location.reload()
+          return new Promise(() => {}) // hang until the reload takes over
+        }
+      } catch {
+        /* sessionStorage blocked — fall through to the error boundary */
+      }
+      throw err
+    })
+  )
+}
+
+const ToolkitHomePage = lazyWithReload(() => import('../features/toolkit-home/ToolkitHomePage.jsx'))
+const EditPdfPage = lazyWithReload(() => import('../features/edit-pdf/EditPdfPage.jsx'))
+const MergePdfPage = lazyWithReload(() => import('../features/merge-pdf/MergePdfPage.jsx'))
+const SplitPdfPage = lazyWithReload(() => import('../features/split-pdf/SplitPdfPage.jsx'))
+const CompressPdfPage = lazyWithReload(() => import('../features/compress-pdf/CompressPdfPage.jsx'))
+const PdfToJpgPage = lazyWithReload(() => import('../features/pdf-to-jpg/PdfToJpgPage.jsx'))
+const PdfToPngPage = lazyWithReload(() => import('../features/pdf-to-png/PdfToPngPage.jsx'))
+const PdfToTextPage = lazyWithReload(() => import('../features/pdf-to-text/PdfToTextPage.jsx'))
+const JpgToPdfPage = lazyWithReload(() => import('../features/jpg-to-pdf/JpgToPdfPage.jsx'))
+const ScanToPdfPage = lazyWithReload(() => import('../features/scan-to-pdf/ScanToPdfPage.jsx'))
+const SignPdfPage = lazyWithReload(() => import('../features/sign-pdf/SignPdfPage.jsx'))
+const FillPdfPage = lazyWithReload(() => import('../features/fill-pdf/FillPdfPage.jsx'))
+const FlattenPdfPage = lazyWithReload(() => import('../features/flatten-pdf/FlattenPdfPage.jsx'))
+const UnlockPdfPage = lazyWithReload(() => import('../features/unlock-pdf/UnlockPdfPage.jsx'))
+const OcrPdfPage = lazyWithReload(() => import('../features/ocr-pdf/OcrPdfPage.jsx'))
+const EncryptPdfPage = lazyWithReload(() => import('../features/encrypt-pdf/EncryptPdfPage.jsx'))
+const OrganizePdfPage = lazyWithReload(() => import('../features/organize-pdf/OrganizePdfPage.jsx'))
+const PageNumbersPdfPage = lazyWithReload(() => import('../features/add-page-numbers/PageNumbersPdfPage.jsx'))
+const WatermarkPdfPage = lazyWithReload(() => import('../features/add-watermark/WatermarkPdfPage.jsx'))
+const WordToPdfPage = lazyWithReload(() => import('../features/word-to-pdf/WordToPdfPage.jsx'))
+const PdfToWordPage = lazyWithReload(() => import('../features/pdf-to-word/PdfToWordPage.jsx'))
+const GstInvoicePage = lazyWithReload(() => import('../features/gst-invoice/GstInvoicePage.jsx'))
+const RepairPdfPage = lazyWithReload(() => import('../features/repair-pdf/RepairPdfPage.jsx'))
+const CropPdfPage = lazyWithReload(() => import('../features/crop-pdf/CropPdfPage.jsx'))
+const ComparePdfPage = lazyWithReload(() => import('../features/compare-pdf/ComparePdfPage.jsx'))
+const PowerpointToPdfPage = lazyWithReload(() => import('../features/powerpoint-to-pdf/PowerpointToPdfPage.jsx'))
+const ExcelToPdfPage = lazyWithReload(() => import('../features/excel-to-pdf/ExcelToPdfPage.jsx'))
+const HtmlToPdfPage = lazyWithReload(() => import('../features/html-to-pdf/HtmlToPdfPage.jsx'))
+const PdfToExcelPage = lazyWithReload(() => import('../features/pdf-to-excel/PdfToExcelPage.jsx'))
+const PdfToPowerpointPage = lazyWithReload(() => import('../features/pdf-to-powerpoint/PdfToPowerpointPage.jsx'))
+const TranslatePdfPage = lazyWithReload(() => import('../features/translate-pdf/TranslatePdfPage.jsx'))
+const ChatWithPdfPage = lazyWithReload(() => import('../features/chat-with-pdf/ChatWithPdfPage.jsx'))
+const RedactPdfPage = lazyWithReload(() => import('../features/redact-pdf/RedactPdfPage.jsx'))
+const PlannedToolPage = lazyWithReload(() => import('../features/placeholder/PlannedToolPage.jsx'))
+const MyDocumentsPage = lazyWithReload(() => import('../features/my-documents/MyDocumentsPage.jsx'))
+const SubscriptionBillingPage = lazyWithReload(() => import('../features/account/SubscriptionBillingPage.jsx'))
+const TermsOfServicePage = lazyWithReload(() => import('../features/legal/TermsOfServicePage.jsx'))
+const FeedbackPage = lazyWithReload(() => import('../features/feedback/FeedbackPage.jsx'))
+const AdminFeedbackPage = lazyWithReload(() => import('../features/feedback/AdminFeedbackPage.jsx'))
+const BlogIndexPage = lazyWithReload(() => import('../features/blog/BlogIndexPage.jsx'))
+const BlogPostPage = lazyWithReload(() => import('../features/blog/BlogPostPage.jsx'))
 
 function RouteFallback() {
   const { t } = useTranslation()
