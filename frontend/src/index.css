@@ -23,6 +23,9 @@
 html {
   color-scheme: light dark;
   scroll-behavior: smooth;
+  /* Always reserve the scrollbar's space so content never shifts horizontally
+     when the scrollbar appears/disappears (or a modal/menu toggles page scroll). */
+  scrollbar-gutter: stable;
 }
 
 html.dark,
