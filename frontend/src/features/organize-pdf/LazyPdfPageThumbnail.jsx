@@ -84,6 +84,20 @@ export default function LazyPdfPageThumbnail({ pdfDoc, pageIndex1Based, extraRot
       }, 64)
     }
 
+    // Free the canvas bitmap when scrolled far away so a huge doc does not
+    // accumulate hundreds of rendered thumbnails in memory. The wrapper keeps its
+    // reserved aspect-ratio box, so layout/scroll stays stable; it re-renders on return.
+    const release = () => {
+      window.clearTimeout(debounceRef.current)
+      const canvas = canvasRef.current
+      if (canvas) {
+        canvas.width = 0
+        canvas.height = 0
+      }
+      lastSignatureRef.current = ''
+      setStatus('idle')
+    }
+
     lastSignatureRef.current = ''
 
     const io = new IntersectionObserver(
@@ -91,8 +105,9 @@ export default function LazyPdfPageThumbnail({ pdfDoc, pageIndex1Based, extraRot
         const hit = entries.some((e) => e.isIntersecting)
         visibleRef.current = hit
         if (hit) scheduleRender()
+        else release()
       },
-      { root: null, rootMargin: '220px', threshold: 0.02 }
+      { root: null, rootMargin: '500px', threshold: 0.02 }
     )
     io.observe(el)
 

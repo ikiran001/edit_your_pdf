@@ -1709,7 +1709,15 @@ export default function PdfEditor({
                 style={{ width: `${Math.round(EDITOR_PAGE_BASE_CSS_PX * zoom)}px` }}
               >
                 <div className="mb-2 text-sm font-medium text-zinc-500">Page {i + 1}</div>
-                <LazyPageLoader pdfDoc={pdfDoc} pageIndex={i} scrollRef={scrollRef}>
+                <LazyPageLoader
+                  pdfDoc={pdfDoc}
+                  pageIndex={i}
+                  scrollRef={scrollRef}
+                  keepLoaded={
+                    (pagesItems[i]?.length ?? 0) > 0 ||
+                    (nativesPerPage[i]?.length ?? 0) > 0
+                  }
+                >
                   {(page) => (
                     <PdfPageCanvas
                       pdfPage={page}
@@ -1815,33 +1823,58 @@ export default function PdfEditor({
   )
 }
 
-/** Loads page PDF.js proxy only after the page wrapper is near the viewport (scroll root). */
-function LazyPageLoader({ pdfDoc, pageIndex, scrollRef, children }) {
-  const [shouldLoad, setShouldLoad] = useState(false)
+/**
+ * Virtualized page mount: renders a page only while it is within a generous band
+ * of the viewport, and unmounts it once far away so huge PDFs don't accumulate
+ * hundreds of rendered canvases. Pages with edits stay mounted (keepLoaded) and
+ * the actively-edited page is always in view, so no in-progress edit is lost.
+ * The placeholder reserves the page's last measured height → no scroll jumps.
+ */
+function LazyPageLoader({ pdfDoc, pageIndex, scrollRef, keepLoaded = false, children }) {
+  const [inBand, setInBand] = useState(() => typeof IntersectionObserver === 'undefined')
+  const [reservedH, setReservedH] = useState(0)
   const wrapRef = useRef(null)
 
   useEffect(() => {
     const el = wrapRef.current
-    if (!el) return
+    if (!el || typeof IntersectionObserver === 'undefined') return undefined
     const root = scrollRef?.current ?? null
     const io = new IntersectionObserver(
       (entries) => {
-        if (entries[0]?.isIntersecting) setShouldLoad(true)
+        setInBand(Boolean(entries[0]?.isIntersecting))
       },
-      { root, rootMargin: '400px 0px', threshold: 0 }
+      { root, rootMargin: '1200px 0px', threshold: 0 }
     )
     io.observe(el)
     return () => io.disconnect()
   }, [scrollRef])
 
+  const mounted = inBand || keepLoaded
+
+  // Remember the rendered height so the placeholder reserves the same space.
+  useEffect(() => {
+    if (!mounted) return undefined
+    const el = wrapRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return undefined
+    const ro = new ResizeObserver(() => {
+      const h = el.getBoundingClientRect().height
+      setReservedH((prev) => (h > 60 && Math.abs(h - prev) > 1 ? h : prev))
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [mounted])
+
   return (
     <div ref={wrapRef} className="w-full">
-      {shouldLoad ? (
+      {mounted ? (
         <PageLoader pdfDoc={pdfDoc} pageIndex={pageIndex}>
           {children}
         </PageLoader>
       ) : (
-        <div className="flex min-h-[45vh] items-center justify-center rounded-lg border border-dashed border-zinc-300 bg-white/60 text-sm text-zinc-500 dark:border-zinc-600 dark:bg-zinc-900/40 dark:text-zinc-400">
+        <div
+          className="flex items-center justify-center rounded-lg border border-dashed border-zinc-300 bg-white/60 text-sm text-zinc-500 dark:border-zinc-600 dark:bg-zinc-900/40 dark:text-zinc-400"
+          style={{ minHeight: reservedH ? `${reservedH}px` : '45vh' }}
+        >
           Scroll to load this page…
         </div>
       )}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 /**
  * Renders small page previews; clicking scrolls the main view to that page.
@@ -48,8 +48,31 @@ export default function ThumbnailSidebar({
 
 function ThumbnailItem({ pdfDoc, pageIndex, active, saved = false, onSelect }) {
   const canvasRef = useRef(null)
+  const btnRef = useRef(null)
+  // Virtualize: only render the mini-canvas while the row is near the sidebar's
+  // viewport; release it when scrolled away so huge PDFs don't keep N canvases.
+  const [visible, setVisible] = useState(() => typeof IntersectionObserver === 'undefined')
 
   useEffect(() => {
+    const el = btnRef.current
+    if (!el || typeof IntersectionObserver === 'undefined') return undefined
+    const io = new IntersectionObserver(
+      (entries) => setVisible(entries.some((e) => e.isIntersecting)),
+      { rootMargin: '300px' }
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+
+  useEffect(() => {
+    if (!visible) {
+      const c = canvasRef.current
+      if (c) {
+        c.width = 0
+        c.height = 0
+      }
+      return undefined
+    }
     let cancelled = false
     let renderTask = null
     ;(async () => {
@@ -77,10 +100,11 @@ function ThumbnailItem({ pdfDoc, pageIndex, active, saved = false, onSelect }) {
         /* ignore */
       }
     }
-  }, [pdfDoc, pageIndex])
+  }, [pdfDoc, pageIndex, visible])
 
   return (
     <button
+      ref={btnRef}
       type="button"
       onClick={onSelect}
       className={`relative w-full rounded-lg border p-1 text-left transition ${
@@ -96,7 +120,10 @@ function ThumbnailItem({ pdfDoc, pageIndex, active, saved = false, onSelect }) {
           aria-hidden
         />
       ) : null}
-      <canvas ref={canvasRef} className="mx-auto block max-h-40 w-auto rounded bg-white shadow-sm" />
+      {/* Reserve height so releasing the canvas doesn't collapse the row. */}
+      <div className="mx-auto flex min-h-[9rem] items-center justify-center">
+        <canvas ref={canvasRef} className="block max-h-40 w-auto rounded bg-white shadow-sm" />
+      </div>
       <span className="mt-1 block text-center text-[11px] text-zinc-600 dark:text-zinc-400">
         {pageIndex + 1}
       </span>
