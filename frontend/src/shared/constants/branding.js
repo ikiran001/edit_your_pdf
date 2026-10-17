@@ -79,6 +79,76 @@ export function docTitleForPath(pathname) {
   return TOOL_DOC_TITLES[p] || DOC_TITLE_HOME
 }
 
+/**
+ * Hand-written, unique SEO meta descriptions for high-intent tool routes (≤160 chars).
+ * Each must read naturally and lead with the primary keyword a user would search.
+ * Routes not listed here get a synthesized unique description from their title.
+ */
+const TOOL_META_DESCRIPTIONS = {
+  '/tools/edit-pdf':
+    'Edit PDF online free — change text, highlight, draw, and annotate pages right in your browser. No installation. Fast, private, and easy with pdfpilot.',
+  '/tools/merge-pdf':
+    'Merge PDF files online free — combine multiple PDFs into one document in seconds. Reorder before you merge. No sign-up, no watermark, powered by pdfpilot.',
+  '/tools/split-pdf':
+    'Split PDF online free — separate pages by range or extract every page into its own file. Fast, secure, no installation needed. pdfpilot PDF tools.',
+  '/tools/compress-pdf':
+    'Compress PDF online free — reduce PDF file size for email, uploads, and Aadhaar/GST forms while keeping quality. Fast and private with pdfpilot.',
+  '/tools/sign-pdf':
+    'Sign PDF online free — draw, type, or upload your signature and place it anywhere on the document. Secure e-signatures in your browser with pdfpilot.',
+  '/tools/fill-pdf':
+    'Fill PDF forms online free — type into form fields, add text, and download the completed PDF. No printing or scanning needed. pdfpilot form filler.',
+  '/tools/pdf-to-word':
+    'Convert PDF to Word online free — turn PDF into an editable DOCX while preserving layout and text. Fast, accurate conversion with pdfpilot.',
+  '/tools/word-to-pdf':
+    'Convert Word to PDF online free — turn DOC and DOCX files into clean, shareable PDFs in seconds. Keep your formatting intact with pdfpilot.',
+  '/tools/pdf-to-jpg':
+    'Convert PDF to JPG online free — export each PDF page as a high-quality JPG image. Fast, private, no installation. pdfpilot PDF to image converter.',
+  '/tools/jpg-to-pdf':
+    'Convert JPG to PDF online free — combine photos and images into a single PDF. Reorder pages before export. Fast and secure with pdfpilot.',
+  '/tools/ocr-pdf':
+    'OCR PDF online — turn scanned PDFs and photos into searchable, copy-paste text (English + Hindi supported). Make any scan selectable with pdfpilot.',
+  '/tools/scan-to-pdf':
+    'Scan to PDF online free — capture documents with your camera and save them as a clean, shareable PDF. Great for receipts and forms. pdfpilot scanner.',
+  '/tools/unlock-pdf':
+    'Unlock PDF online free — remove a known password from a protected PDF so you can view and edit it. Fast and secure with pdfpilot.',
+  '/tools/encrypt-pdf':
+    'Encrypt PDF online free — add a password and protect your PDF with strong encryption before sharing. Keep sensitive documents safe with pdfpilot.',
+  '/tools/organize-pdf':
+    'Organize PDF pages online free — reorder, rotate, and delete pages with drag-and-drop, then download. Fast and private with pdfpilot.',
+  '/tools/add-watermark':
+    'Add a watermark to PDF online free — stamp text or an image across pages with custom opacity and placement. Brand or protect files with pdfpilot.',
+  '/tools/add-page-numbers':
+    'Add page numbers to PDF online free — choose position, format, and page range, then download. Fast, in-browser page numbering with pdfpilot.',
+  '/tools/gst-invoice':
+    'Free GST invoice generator — create a professional, GST-compliant invoice PDF in minutes. Add items, tax, and your logo, then download. pdfpilot.',
+  '/tools/rotate-pdf':
+    'Rotate PDF online free — fix sideways or upside-down pages and save the corrected PDF. Rotate single pages or the whole file with pdfpilot.',
+  '/tools/crop-pdf':
+    'Crop PDF online free — trim margins and remove unwanted areas from pages, then download. Fast, precise cropping in your browser with pdfpilot.',
+  '/tools/redact-pdf':
+    'Redact PDF online free — permanently black out sensitive text and information before sharing. Protect private data with pdfpilot.',
+  '/tools/flatten-pdf':
+    'Flatten PDF online free — merge annotations and form fields into the page so they can’t be edited. Lock your final document with pdfpilot.',
+  '/tools/translate-pdf':
+    'Translate PDF online — convert your document into another language while keeping it readable. AI-powered PDF translation with pdfpilot.',
+}
+
+/**
+ * SEO meta description for a route pathname. Falls back to a unique synthesized
+ * line from the route title, then the site default for the home/unknown routes.
+ */
+export function metaDescriptionForPath(pathname) {
+  const p = (pathname || '/').replace(/\/$/, '') || '/'
+  if (p === '/') return DEFAULT_SITE_DESCRIPTION
+  if (TOOL_META_DESCRIPTIONS[p]) return TOOL_META_DESCRIPTIONS[p]
+  const title = TOOL_DOC_TITLES[p]
+  if (title) {
+    const feature = title.replace(/^pdfpilot\s*[-–]\s*/, '')
+    return `${feature} online free with pdfpilot — fast, secure, and easy to use. No installation needed for most tools.`
+  }
+  return DEFAULT_SITE_DESCRIPTION
+}
+
 export const MSG = {
   uploading: 'Uploading to pdfpilot…',
   processingFile: 'Processing your file…',

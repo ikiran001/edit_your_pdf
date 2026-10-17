@@ -5,6 +5,7 @@ import ErrorBoundary from '../shared/components/ErrorBoundary.jsx'
 import PrivateRoute from '../auth/PrivateRoute.jsx'
 import { pageView, recordSessionRoute } from '../lib/analytics.js'
 import { docTitleForPath } from '../shared/constants/branding.js'
+import { applyRouteHead } from '../shared/utils/routeHead.js'
 import { ClientToolDownloadAuthProvider } from '../auth/ClientToolDownloadAuthContext.jsx'
 import SkipToContent from '../shared/components/SkipToContent.jsx'
 
@@ -61,8 +62,8 @@ function RouteFallback() {
 function RouteAnalytics() {
   const loc = useLocation()
   useEffect(() => {
+    applyRouteHead(loc.pathname)
     const t = docTitleForPath(loc.pathname)
-    document.title = t
     recordSessionRoute(loc.pathname)
     pageView(loc.pathname, t)
   }, [loc.pathname])

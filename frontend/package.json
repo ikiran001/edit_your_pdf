@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "node scripts/generate-sitemap.mjs",
     "build": "vite build",
+    "generate-sitemap": "node scripts/generate-sitemap.mjs",
     "build:analyze": "ANALYZE=1 vite build",
     "generate-favicons": "node scripts/generate-favicons.mjs",
     "create-hero-sample": "node scripts/create-hero-sample-pdf.mjs",
