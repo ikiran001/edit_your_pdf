@@ -481,6 +481,24 @@ export const TOOL_SEO_BY_ID = {
 
   'e-sign-pdf': {
     featureName: 'E-Sign PDF',
+    faqs: [
+      {
+        q: 'How do I e-sign a PDF?',
+        a: 'Open E-Sign PDF, upload your file, add your signature, drag it onto the right line or box on each page, and download a standard PDF.',
+      },
+      {
+        q: 'Is an electronic signature legally valid?',
+        a: 'An electronic signature is accepted for many routine agreements, HR forms, and approvals. It is not a certificate-based digital signature (DSC); for filings that legally require a DSC, use a certified provider.',
+      },
+      {
+        q: 'Are my documents uploaded when I e-sign?',
+        a: 'Processing stays in your browser session on pdfpilot, so you get a simple electronic signature without uploading to unknown third-party sites.',
+      },
+      {
+        q: 'What is the difference between E-Sign PDF and Sign PDF?',
+        a: 'Both place an electronic signature in your browser; E-Sign focuses on quickly dropping your signature onto form lines and boxes for agreements and approvals. Neither is a certificate-based DSC.',
+      },
+    ],
     intro: [
       'E-sign PDFs in your browser: add your signature, drag it onto the right line or box on each page, then download a standard PDF. Good for agreements, HR forms, and quick approvals when you do not need a full certificate-based workflow.',
       'Processing stays on pdfpilot in your session — useful when you want a simple electronic signature without uploading to unknown third-party sites.',
@@ -595,6 +613,24 @@ export const TOOL_SEO_BY_ID = {
 
   'encrypt-pdf': {
     featureName: 'Encrypt PDF',
+    faqs: [
+      {
+        q: 'How do I password-protect a PDF?',
+        a: 'Open Encrypt PDF, upload your file, set a strong password, and download an AES-256 encrypted PDF that only opens with that password.',
+      },
+      {
+        q: 'What encryption does it use?',
+        a: 'AES-256, applied on your pdfpilot API server with qpdf. The file is only as safe as the password you choose and how you share it.',
+      },
+      {
+        q: 'Can I recover the file if I forget the password?',
+        a: 'No — there is no backdoor. Store the password in a password manager. If you lose it, you would need the original unencrypted copy.',
+      },
+      {
+        q: 'Is it safe for sensitive documents like bank statements?',
+        a: 'AES-256 is strong, but security also depends on using a unique password and sharing it over a separate channel from the file itself.',
+      },
+    ],
     intro: [
       'Add an open password to a PDF with AES-256 so only people who know the password can open it. pdfpilot encrypts the file on your API server with qpdf—the same stack many teams already use for Unlock PDF.',
       'Use a strong, unique password and store it in a password manager. Encrypted PDFs are still only as safe as the password you choose and how you share it.',
@@ -642,6 +678,24 @@ export const TOOL_SEO_BY_ID = {
 
   'organize-pdf': {
     featureName: 'Organize PDF Pages',
+    faqs: [
+      {
+        q: 'How do I reorder pages in a PDF?',
+        a: 'Open Organize PDF, upload your file, drag page thumbnails (or use the arrows) into the order you want, then download the reorganized PDF.',
+      },
+      {
+        q: 'Can I rotate or delete pages too?',
+        a: 'Yes. Rotate mis-scanned sheets and delete extra pages, then download a clean PDF — all in one place.',
+      },
+      {
+        q: 'Does organizing run in my browser?',
+        a: 'Yes — the whole workflow runs in your browser, so page thumbnails and your final file stay on your device.',
+      },
+      {
+        q: 'Will I see the pages before saving?',
+        a: 'Yes — you see every page as a thumbnail before you commit, which cuts mistakes before you share.',
+      },
+    ],
     intro: [
       'Organize PDF pages visually: reorder with drag-and-drop or arrows, rotate mis-scanned sheets, and delete extras—then download a clean PDF. The whole workflow runs in your browser, so page thumbnails and your final file stay on your device.',
       'Whether you are fixing a merged report or trimming a long download, you see every page before you commit, which cuts mistakes before you share.',
@@ -690,6 +744,24 @@ export const TOOL_SEO_BY_ID = {
 
   'add-watermark': {
     featureName: 'Add Watermark',
+    faqs: [
+      {
+        q: 'How do I add a watermark to a PDF?',
+        a: 'Open Add Watermark, upload your file, add a text or image watermark, set opacity, rotation, position, and which pages get it, preview page one, and download.',
+      },
+      {
+        q: 'Can I use an image or logo as the watermark?',
+        a: 'Yes — add a text label (like DRAFT or CONFIDENTIAL) or an image/logo stamp across your pages.',
+      },
+      {
+        q: 'Can I watermark only some pages?',
+        a: 'Yes. You choose which pages receive the watermark before downloading.',
+      },
+      {
+        q: 'Are my files uploaded?',
+        a: 'No — watermarking runs in your browser, so your file is not sent to a separate watermarking service.',
+      },
+    ],
     intro: [
       'Add a text or image watermark across your PDF—set opacity, rotation, position, and which pages receive it, then preview on page one before you download. Processing uses pdf-lib in your browser, so your file is not sent to a separate watermarking service.',
       'Use it for DRAFT labels, confidential banners, or logo stamps while keeping the original structure of the PDF.',
@@ -738,6 +810,24 @@ export const TOOL_SEO_BY_ID = {
 
   'add-page-numbers': {
     featureName: 'Add page numbers',
+    faqs: [
+      {
+        q: 'How do I add page numbers to a PDF?',
+        a: 'Open Add page numbers, upload your PDF, choose a position and format, set margins and typography, then download a numbered copy.',
+      },
+      {
+        q: 'Can I use the "Page N of M" format?',
+        a: 'Yes — pick plain numbers or the Page N of M format to suit reports, contracts, or booklets.',
+      },
+      {
+        q: 'Can I number facing pages or spreads?',
+        a: 'Yes. Choose a single-page grid position, or facing spreads with outer-margin alternation for booklet-style layouts.',
+      },
+      {
+        q: 'Does it upload my file?',
+        a: 'No — numbering runs in your browser, so the PDF is not sent through a separate service.',
+      },
+    ],
     intro: [
       'Add page numbers to any PDF with clear placement controls — choose a grid position for single-page layouts or facing spreads with outer-margin alternation, then pick formats like plain numbers or Page N of M.',
       'Processing runs in your browser with pdf-lib: upload the file, set margin and typography, and download a numbered copy without sending the PDF through a separate numbering service.',
@@ -786,6 +876,24 @@ export const TOOL_SEO_BY_ID = {
 
   'scan-to-pdf': {
     featureName: 'Scan to PDF',
+    faqs: [
+      {
+        q: 'How do I scan documents to PDF with my phone?',
+        a: 'Open Scan to PDF, grant camera access for the tab, capture each page, reorder or retake as needed, and download one multi-page PDF.',
+      },
+      {
+        q: 'What if I have no camera or deny access?',
+        a: 'Upload existing photos instead — the same trim and contrast tools apply before the PDF is built.',
+      },
+      {
+        q: 'Is my camera or scan data uploaded?',
+        a: 'pdfpilot runs in your browser and uses the camera only for this tab; the PDF is built locally on your device.',
+      },
+      {
+        q: 'Can I scan multiple pages into one file?',
+        a: 'Yes — capture page after page, reorder them, then download them as a single PDF.',
+      },
+    ],
     intro: [
       'Turn phone or laptop camera shots into a clean multi-page PDF. pdfpilot runs in your browser: you grant camera access only for this tab, capture each page, reorder or retake, then download one file.',
       'If you cannot use the camera (permission denied or desktop without a webcam), upload existing photos instead — the same trim and contrast tools apply before the PDF is built.',
@@ -1092,6 +1200,24 @@ export const TOOL_SEO_BY_ID = {
   },
   'pdf-to-png': {
     featureName: 'PDF to PNG',
+    faqs: [
+      {
+        q: 'How do I convert a PDF to PNG images?',
+        a: 'Open PDF to PNG, upload your PDF, convert, and download a ZIP with one lossless PNG per page.',
+      },
+      {
+        q: 'Why choose PNG over JPG?',
+        a: 'PNG is lossless, so it keeps sharp edges and crisp text — better for design tools, slides, and archives. JPG makes smaller files and suits photos.',
+      },
+      {
+        q: 'Are my files uploaded?',
+        a: 'No — conversion runs entirely in your browser, so your document does not pass through an extra upload pipeline.',
+      },
+      {
+        q: 'Will the PNG images have selectable text?',
+        a: 'No. PNGs are images; keep the original PDF, or use PDF to text / OCR, if you still need the words.',
+      },
+    ],
     intro: [
       'Export every PDF page as a PNG image when you need lossless screenshots for design tools, crisp slides, or archives that keep sharp edges.',
       'Conversion runs entirely in your browser on pdfpilot, so your document does not pass through an extra upload pipeline before you download the ZIP.',
@@ -1138,6 +1264,24 @@ export const TOOL_SEO_BY_ID = {
   },
   'pdf-to-text': {
     featureName: 'PDF to text',
+    faqs: [
+      {
+        q: 'How do I extract text from a PDF?',
+        a: 'Open PDF to text, upload a digital PDF, and pdfpilot reads the embedded text layer in your browser so you can copy the plain text.',
+      },
+      {
+        q: 'Why is my scanned PDF giving no text?',
+        a: 'Scanned PDFs are images with no selectable text. Run OCR PDF first (when the server is configured) to add a text layer, then export text again.',
+      },
+      {
+        q: 'Does it keep the original layout?',
+        a: 'No — it pulls plain text, ideal when you just need the words for notes, scripts, or quick edits rather than the formatting.',
+      },
+      {
+        q: 'Are my files uploaded?',
+        a: 'No — text extraction runs in your browser from the PDF’s embedded text layer.',
+      },
+    ],
     intro: [
       'Pull plain text out of digital PDFs for notes, scripts, or quick edits. pdfpilot reads the embedded text layer in your browser—ideal when you just need words, not layout.',
       'Scanned PDFs that are only pictures do not contain selectable text until OCR adds a layer; use OCR PDF first on pdfpilot when the server is configured, then try text export again.',
@@ -1184,6 +1328,24 @@ export const TOOL_SEO_BY_ID = {
   },
   'flatten-pdf': {
     featureName: 'Flatten PDF',
+    faqs: [
+      {
+        q: 'What does flattening a PDF do?',
+        a: 'It turns interactive elements into static appearance so form fields and annotations can no longer be edited — useful for final, locked copies.',
+      },
+      {
+        q: 'What is the difference between the two flatten options?',
+        a: 'Form flattening merges AcroForm fields into the page; full-page rasterization converts pages to images for the strongest guarantee nothing stays editable (larger files, no selectable text).',
+      },
+      {
+        q: 'Will flattening reduce quality?',
+        a: 'Form flattening keeps text crisp. Rasterization turns pages into images, so text is no longer selectable and file size may grow — use it only when you need a printed-like snapshot.',
+      },
+      {
+        q: 'Does it run in my browser?',
+        a: 'Yes — both the form-flattening and rasterization paths run in your browser on pdfpilot.',
+      },
+    ],
     intro: [
       'Flattening turns interactive elements into static appearance—either by flattening AcroForm fields or by rasterizing entire pages to images when you need the strongest guarantee that nothing stays editable.',
       'pdfpilot offers both paths in the browser: form flattening via pdf-lib, or full-page rasterization that trades file size for a printed-like snapshot.',
@@ -1230,6 +1392,24 @@ export const TOOL_SEO_BY_ID = {
   },
   'fill-pdf': {
     featureName: 'Fill PDF form',
+    faqs: [
+      {
+        q: 'How do I fill a PDF form online?',
+        a: 'Open Fill PDF form, upload a standard AcroForm PDF, and pdfpilot lists the fields it can edit so you can type, tick boxes, and pick dropdown values, then download.',
+      },
+      {
+        q: 'Why are my form fields not showing up?',
+        a: 'Some complex government PDFs use widgets that cannot be edited in the browser. Simpler AcroForm PDFs work; for others, edit elsewhere or print and fill.',
+      },
+      {
+        q: 'Do I need to print and scan to fill a form?',
+        a: 'No — fill standard forms on screen and download the completed PDF without printing or scanning.',
+      },
+      {
+        q: 'Are my files uploaded?',
+        a: 'Filling runs in your browser, so your form data and file stay on your device.',
+      },
+    ],
     intro: [
       'Complete standard AcroForm PDFs without printing and scanning. pdfpilot lists fields it can edit in the browser so you can type, tick boxes, and choose dropdown values before downloading.',
       'Complex government PDFs sometimes include widgets pdf-lib cannot edit—when that happens, download still works for simpler forms or after editing elsewhere.',
@@ -1276,6 +1456,24 @@ export const TOOL_SEO_BY_ID = {
   },
   'repair-pdf': {
     featureName: 'Repair PDF',
+    faqs: [
+      {
+        q: 'How do I fix a corrupt PDF that will not open?',
+        a: 'Open Repair PDF, upload the file, and pdfpilot rewrites it through qpdf to rebuild structure that many readers can open again.',
+      },
+      {
+        q: 'What kinds of problems can it fix?',
+        a: 'Broken cross-reference tables and stream errors that make viewers crash or refuse to open the file. It cannot recover content that is genuinely missing.',
+      },
+      {
+        q: 'Where is my file processed?',
+        a: 'Repair sends your file to your configured pdfpilot API where qpdf runs — the same stack used for Unlock and Compress.',
+      },
+      {
+        q: 'Will repair recover deleted pages or text?',
+        a: 'No — it rebuilds the file’s structure so it opens; it cannot restore data that was never in the file.',
+      },
+    ],
     intro: [
       'Some PDFs have broken cross-references or stream errors that make viewers crash. Rewriting the file through qpdf rebuilds structure many readers can open again.',
       'Repair PDF sends your file to your configured pdfpilot API where qpdf runs — the same stack used for unlock and compress when you self-host.',
