@@ -465,12 +465,16 @@ html.fx-js .fx-reveal.is-visible {
   transform: none;
 }
 
-/* --- Page transition ------------------------------------------------------- */
+/* --- Page transition -------------------------------------------------------
+   Opacity ONLY — never a transform. A lingering transform here (even the
+   identity matrix left by animation-fill-mode: both) would make this wrapper the
+   containing block for any position:fixed descendant (modals), anchoring them to
+   the page instead of the viewport. */
 @keyframes fxPageIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: none; }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
-.fx-page-in { animation: fxPageIn 0.45s ease-out both; }
+.fx-page-in { animation: fxPageIn 0.4s ease-out both; }
 
 /* --- Branded loader -------------------------------------------------------- */
 @keyframes fxLoaderBounce {
