@@ -12,6 +12,7 @@
  * @property {string[]} steps — numbered “how to” steps
  * @property {SeoBenefitOrHighlight[]} benefits — “why use” items
  * @property {SeoBenefitOrHighlight[]} highlights — exactly 3 cards
+ * @property {{ q: string, a: string }[]} [faqs] — optional FAQ (renders + emits FAQPage JSON-LD)
  */
 
 /** @type {Record<string, ToolSeoEntry>} */
@@ -204,6 +205,24 @@ export const TOOL_SEO_BY_ID = {
       {
         title: 'Size feedback',
         body: 'See how much you saved at a glance.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'How do I compress a PDF to 100KB for an Aadhaar or government upload?',
+        a: 'Open Compress PDF, add your file, and choose a stronger level (Medium or High). Many Indian portals — UIDAI, SSC, UPSC, and state sites — cap PDF uploads at 100–200KB. Compress, check the new size shown in the list, and re-run at a higher level if it is still above the limit. The strongest shrink needs the pdfpilot API (qpdf + Ghostscript).',
+      },
+      {
+        q: 'What are the common file-size limits for Indian government forms?',
+        a: 'Limits vary by portal, but PDFs are often capped at 100KB, 200KB, or 500KB, while photos and signatures are usually 20KB–50KB. Compress to just under the stated limit and keep the original in case you later need a sharper copy.',
+      },
+      {
+        q: 'Will compressing reduce the quality of my scanned documents?',
+        a: 'Light compression keeps text crisp; stronger levels downsample images, which can soften scans. For Aadhaar, PAN, or mark-sheet uploads that only need to be legible, Medium or High is usually fine — always spot-check readability before you submit.',
+      },
+      {
+        q: 'Is it free to compress PDF files on pdfpilot?',
+        a: 'Yes. Compressing PDFs is free. Signed-out users can download a few files per day; a Pro plan removes the daily cap for unlimited downloads.',
       },
     ],
   },
@@ -825,6 +844,28 @@ export const TOOL_SEO_BY_ID = {
       {
         title: 'Disclaimer built in',
         body: 'The PDF reminds readers that professional verification is still required.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Is the GST invoice format generated here valid in India?',
+        a: 'The tool produces a GST-style tax invoice with GSTIN, HSN/SAC codes, taxable value, and CGST/SGST or IGST splits from the state codes you enter. It is designed for drafts and internal paperwork — confirm the final format, e-invoicing (IRN and QR code), and return filing with a qualified chartered accountant before relying on it for compliance.',
+      },
+      {
+        q: 'What fields are mandatory on a GST invoice?',
+        a: 'Generally: supplier name, address and GSTIN; a unique invoice number and date; buyer details (with GSTIN for B2B); place of supply; HSN/SAC codes; description, quantity and taxable value; the GST rate; and the CGST/SGST or IGST amounts. Fill these in the form and they appear on the PDF.',
+      },
+      {
+        q: 'When do I charge CGST + SGST instead of IGST?',
+        a: 'If the supplier and buyer are in the same state (matching two-digit state codes, e.g. 27 for Maharashtra), GST splits into CGST + SGST. If they are in different states, IGST applies. The tool decides this automatically from the state codes you enter.',
+      },
+      {
+        q: 'Can I add multiple goods or services to one invoice?',
+        a: 'Yes — add or remove rows in the line table, each with its own HSN/SAC code, quantity, taxable rate, and GST %. Totals update automatically from your lines and state codes.',
+      },
+      {
+        q: 'Is this GST invoice generator free?',
+        a: 'Yes — you can create and download a GST-style invoice PDF for free. The form is turned into a PDF right in your browser.',
       },
     ],
   },

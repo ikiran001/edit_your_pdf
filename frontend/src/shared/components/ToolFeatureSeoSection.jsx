@@ -70,6 +70,27 @@ export default function ToolFeatureSeoSection({ toolId }) {
               ))}
             </ul>
           </div>
+
+          {c.faqs?.length ? (
+            <div>
+              <h2 className="text-base font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+                Frequently asked questions
+              </h2>
+              <dl className="mt-4 space-y-3">
+                {c.faqs.map((f, i) => (
+                  <div
+                    key={i}
+                    className="rounded-2xl border border-zinc-200 bg-white/80 p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/60"
+                  >
+                    <dt className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{f.q}</dt>
+                    <dd className="mt-1.5 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+                      {f.a}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          ) : null}
         </div>
       </details>
     </article>

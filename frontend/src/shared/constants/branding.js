@@ -120,7 +120,7 @@ const TOOL_META_DESCRIPTIONS = {
   '/tools/add-page-numbers':
     'Add page numbers to PDF online free — choose position, format, and page range, then download. Fast, in-browser page numbering with pdfpilot.',
   '/tools/gst-invoice':
-    'Free GST invoice generator — create a professional, GST-compliant invoice PDF in minutes. Add items, tax, and your logo, then download. pdfpilot.',
+    'Free GST invoice generator — create a clean GST-style tax invoice PDF in minutes. Add items with HSN, auto CGST/SGST/IGST, then download. pdfpilot.',
   '/tools/rotate-pdf':
     'Rotate PDF online free — fix sideways or upside-down pages and save the corrected PDF. Rotate single pages or the whole file with pdfpilot.',
   '/tools/crop-pdf':

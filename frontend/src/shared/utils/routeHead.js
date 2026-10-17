@@ -17,6 +17,7 @@ import {
   docTitleForPath,
   metaDescriptionForPath,
 } from '../constants/branding.js'
+import { TOOL_SEO_BY_ID } from '../constants/toolSeoContent.js'
 
 const SITE_URL = String(import.meta.env.VITE_SITE_URL || '').replace(/\/$/, '')
 
@@ -99,6 +100,24 @@ export function applyRouteHead(pathname) {
           description,
           offers: { '@type': 'Offer', price: '0', priceCurrency: 'INR' },
           publisher: { '@type': 'Organization', name: BRAND_NAME },
+        }
+      : null
+  )
+
+  // FAQPage schema → eligible for FAQ rich snippets, for tools that define FAQs.
+  const toolId = isTool ? p.slice('/tools/'.length) : null
+  const faqs = toolId ? TOOL_SEO_BY_ID[toolId]?.faqs : null
+  upsertJsonLd(
+    'route-faq-jsonld',
+    faqs?.length
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: faqs.map((f) => ({
+            '@type': 'Question',
+            name: f.q,
+            acceptedAnswer: { '@type': 'Answer', text: f.a },
+          })),
         }
       : null
   )
