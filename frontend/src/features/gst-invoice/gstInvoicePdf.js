@@ -320,5 +320,12 @@ export async function buildGstInvoicePdfBytes(form) {
     y -= 2
   }
 
+  ensureSpace(LINE_H * 1.6)
+  y -= 4
+  draw('Made with pdfpilot.pro — free GST invoice & PDF tools', M, y, {
+    size: 7,
+    color: rgb(0.5, 0.5, 0.55),
+  })
+
   return doc.save()
 }

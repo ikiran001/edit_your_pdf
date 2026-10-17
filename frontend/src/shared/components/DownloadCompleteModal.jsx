@@ -4,6 +4,7 @@ import { Check, FileText, MessageCircle, Shield } from 'lucide-react'
 import { BRAND_NAME } from '../constants/branding.js'
 import { getSupportPaymentUrl } from '../../lib/supportPaymentUrl.js'
 import { trackFeatureUsed } from '../../lib/analytics.js'
+import ShareTools from './ShareTools.jsx'
 
 function formatFileSize(bytes) {
   const n = Number(bytes)
@@ -107,6 +108,9 @@ export default function DownloadCompleteModal({ open, onClose, fileName, fileSiz
         </p>
 
         <div className="my-4 border-t border-zinc-700/80" />
+
+        <ShareTools label="Found this useful? Share pdfpilot 💙" className="mb-4" />
+
         <Link
           to="/feedback?from=download"
           onClick={onClose}

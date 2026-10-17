@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Search, X } from 'lucide-react'
+import { BadgeIndianRupee, MapPin, Search, ShieldCheck, X, Zap } from 'lucide-react'
 import ToolCard from '../../shared/components/ToolCard.jsx'
+import ShareTools from '../../shared/components/ShareTools.jsx'
 import SiteHeaderActions from '../../shared/components/SiteHeaderActions.jsx'
 import BrandLogoLink from '../../shared/components/BrandLogoLink.jsx'
 import LegalFooter from '../../shared/components/LegalFooter.jsx'
@@ -74,6 +75,27 @@ export default function ToolkitHomePage() {
         className="flex flex-1 flex-col scroll-mt-24 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/45 dark:focus-visible:ring-cyan-400/35"
       >
         <HeroSection />
+
+        <div className={`relative border-b border-zinc-200/60 py-3 dark:border-zinc-800/60 ${TOOLKIT_SHELL_X}`}>
+          <ul className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-medium text-zinc-600 dark:text-zinc-400">
+            <li className="inline-flex items-center gap-1.5">
+              <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" aria-hidden />
+              Private by default — many tools run in your browser
+            </li>
+            <li className="inline-flex items-center gap-1.5">
+              <Zap className="h-4 w-4 text-indigo-600 dark:text-cyan-400" aria-hidden />
+              No sign-up for most tools
+            </li>
+            <li className="inline-flex items-center gap-1.5">
+              <BadgeIndianRupee className="h-4 w-4 text-fuchsia-600 dark:text-fuchsia-400" aria-hidden />
+              Free to use
+            </li>
+            <li className="inline-flex items-center gap-1.5">
+              <MapPin className="h-4 w-4 text-rose-600 dark:text-rose-400" aria-hidden />
+              Built for India — GST, Aadhaar sizes, Hindi OCR
+            </li>
+          </ul>
+        </div>
 
         <section className={`fx-toolkit-fade relative isolate mx-auto w-full max-w-none flex-1 py-6 md:py-10 ${TOOLKIT_SHELL_X}`}>
         <h2 className="mb-4 bg-gradient-to-r from-violet-700 via-fuchsia-600 to-cyan-600 bg-clip-text text-center font-mono text-sm font-semibold uppercase tracking-[0.18em] text-transparent dark:from-cyan-300 dark:via-fuchsia-400 dark:to-amber-300">
@@ -169,6 +191,9 @@ export default function ToolkitHomePage() {
           <span className="text-zinc-400 dark:text-zinc-600"> · </span>
           <span className="text-xs text-zinc-500 dark:text-zinc-500">{t('home.ratingsNote')}</span>
         </p>
+        <div className="mt-8 flex flex-col items-center">
+          <ShareTools label="Know someone who wrangles PDFs? Share pdfpilot 💙" />
+        </div>
         </section>
       </main>
 

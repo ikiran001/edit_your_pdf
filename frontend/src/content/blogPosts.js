@@ -145,6 +145,90 @@ export const BLOG_POSTS = [
       { type: 'cta', path: '/tools/pdf-to-text', label: 'Extract text from a PDF' },
     ],
   },
+  {
+    slug: 'password-protect-pdf-free',
+    title: 'How to Password-Protect a PDF for Free',
+    description:
+      'Add a password to a PDF with strong AES-256 encryption so only people you trust can open it — free, step by step.',
+    date: '2026-10-17',
+    readMins: 3,
+    tags: ['Security', 'Encrypt'],
+    relatedTools: [
+      { path: '/tools/encrypt-pdf', label: 'Encrypt PDF' },
+      { path: '/tools/unlock-pdf', label: 'Unlock PDF' },
+    ],
+    body: [
+      { type: 'p', text: 'Sending a salary slip, bank statement, or contract? Add a password so only the right person can open it. Here is how to encrypt a PDF for free.' },
+      { type: 'h2', text: 'Password-protect your PDF' },
+      { type: 'ol', items: [
+        'Open the Encrypt PDF tool and upload your file.',
+        'Choose a strong, unique password.',
+        'Download the encrypted PDF — it now needs the password to open.',
+      ] },
+      { type: 'cta', path: '/tools/encrypt-pdf', label: 'Encrypt a PDF' },
+      { type: 'h2', text: 'How strong is it?' },
+      { type: 'p', text: 'The file is protected with AES-256 — the same encryption standard trusted for sensitive documents. But a PDF is only as safe as the password you choose, so avoid names and dates, and store it in a password manager.' },
+      { type: 'note', text: 'Share the password through a different channel than the file itself (e.g. file by email, password by message).' },
+      { type: 'h2', text: 'Need to remove a password later?' },
+      { type: 'p', text: 'If you already know the password and want an unlocked copy for your own records, use the Unlock PDF tool.' },
+      { type: 'cta', path: '/tools/unlock-pdf', label: 'Unlock a PDF' },
+    ],
+  },
+  {
+    slug: 'merge-pdf-for-applications',
+    title: 'How to Merge PDF Files for Job & Visa Applications',
+    description:
+      'Combine certificates, mark sheets, and ID proofs into one neat PDF in the right order — free and private, in your browser.',
+    date: '2026-10-17',
+    readMins: 3,
+    tags: ['Merge', 'Applications'],
+    relatedTools: [
+      { path: '/tools/merge-pdf', label: 'Merge PDF' },
+      { path: '/tools/compress-pdf', label: 'Compress PDF' },
+    ],
+    body: [
+      { type: 'p', text: 'Most job portals, university forms, and visa applications ask for a single PDF with all your documents in a set order. Instead of stapling screenshots together, merge them into one clean file.' },
+      { type: 'h2', text: 'Merge your documents into one PDF' },
+      { type: 'ol', items: [
+        'Open the Merge PDF tool and add every file (certificates, mark sheets, ID proofs).',
+        'Drag them into the exact order the application asks for.',
+        'Remove anything added by mistake, then merge.',
+        'Download the single combined PDF.',
+      ] },
+      { type: 'cta', path: '/tools/merge-pdf', label: 'Merge PDFs now' },
+      { type: 'h2', text: 'Keep it private' },
+      { type: 'p', text: 'Merging runs entirely in your browser, so your personal documents are combined locally and not uploaded to a third-party server.' },
+      { type: 'h2', text: 'Too large to upload?' },
+      { type: 'p', text: 'If the merged file is over the portal’s size limit, run it through Compress PDF to shrink it before you submit.' },
+      { type: 'cta', path: '/tools/compress-pdf', label: 'Compress the merged PDF' },
+    ],
+  },
+  {
+    slug: 'images-to-pdf-for-applications',
+    title: 'How to Convert Photos to PDF for Online Applications',
+    description:
+      'Turn phone photos or scans of your documents into a single, neat PDF for uploads — free, in the right order, in your browser.',
+    date: '2026-10-17',
+    readMins: 3,
+    tags: ['Images', 'Applications'],
+    relatedTools: [
+      { path: '/tools/jpg-to-pdf', label: 'JPG to PDF' },
+      { path: '/tools/scan-to-pdf', label: 'Scan to PDF' },
+    ],
+    body: [
+      { type: 'p', text: 'Many forms want a PDF, but all you have are photos of your documents. Converting images to a single PDF takes seconds and looks far more professional than uploading loose JPGs.' },
+      { type: 'h2', text: 'Convert your photos to one PDF' },
+      { type: 'ol', items: [
+        'Open the JPG to PDF tool and upload your images (JPG or PNG).',
+        'Drag the thumbnails into the correct order.',
+        'Create the PDF and download it.',
+      ] },
+      { type: 'cta', path: '/tools/jpg-to-pdf', label: 'Convert images to PDF' },
+      { type: 'h2', text: 'No photos yet? Scan with your camera' },
+      { type: 'p', text: 'If you still need to capture the documents, use Scan to PDF to photograph each page with your phone or webcam and build a clean multi-page PDF directly.' },
+      { type: 'cta', path: '/tools/scan-to-pdf', label: 'Scan documents to PDF' },
+    ],
+  },
 ]
 
 /** @param {string} slug */

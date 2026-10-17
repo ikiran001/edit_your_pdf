@@ -30,20 +30,26 @@ function loadRazorpayScript() {
  */
 export default function UpgradePlanModal({ open, onClose, initialPlan = 'monthly', onPaid }) {
   const { getFreshIdToken } = useAuth()
-  const { razorpayKeyId, checkoutConfigured, refresh } = useSubscription()
+  const { me, razorpayKeyId, checkoutConfigured, refresh } = useSubscription()
   const [plan, setPlan] = useState(initialPlan)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState(null)
 
+  // When the user has exhausted their free daily downloads, treat this as the
+  // paywall moment: lead with the low-friction ₹10/day plan and explain why.
+  const daily = me?.dailyDownloads
+  const dailyLimit = daily?.limit ?? 3
+  const atLimit = Boolean(daily && !daily.unlimited && (daily.usedToday ?? 0) >= dailyLimit)
+
   useEffect(() => {
     if (!open) return
-    setPlan(initialPlan)
+    setPlan(atLimit ? 'daily' : initialPlan)
     if (!checkoutConfigured || !razorpayKeyId) {
       setMessage('Upgrade checkout is not available on this site right now. Please try again later.')
     } else {
       setMessage(null)
     }
-  }, [open, initialPlan, checkoutConfigured, razorpayKeyId])
+  }, [open, initialPlan, checkoutConfigured, razorpayKeyId, atLimit])
 
   const runCheckout = useCallback(async () => {
     setBusy(true)
@@ -146,8 +152,17 @@ export default function UpgradePlanModal({ open, onClose, initialPlan = 'monthly
           <X className="h-5 w-5" />
         </button>
         <h2 id="eyp-upgrade-title" className="pr-10 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-          Upgrade to Pro
+          {atLimit ? "You've hit today's free limit" : 'Upgrade to Pro'}
         </h2>
+        {atLimit ? (
+          <div className="mt-3 rounded-xl border border-amber-300/70 bg-amber-50 px-3 py-2.5 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-950/40 dark:text-amber-100">
+            <strong>
+              {daily?.usedToday ?? dailyLimit}/{dailyLimit} free downloads used today.
+            </strong>{' '}
+            Keep going with unlimited downloads — from just <strong>₹10 for 24 hours</strong>. No
+            auto-charge.
+          </div>
+        ) : null}
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
           Free accounts can download up to <strong>3 PDFs per day</strong> (UTC midnight reset). Pro
           includes <strong>unlimited</strong> downloads from the editor and Saved PDFs.
