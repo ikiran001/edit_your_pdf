@@ -5,8 +5,10 @@ import ErrorBoundary from '../shared/components/ErrorBoundary.jsx'
 import PrivateRoute from '../auth/PrivateRoute.jsx'
 import { pageView, recordSessionRoute } from '../lib/analytics.js'
 import { applyRouteHead } from '../shared/utils/routeHead.js'
+import { rescanReveal } from '../shared/utils/scrollReveal.js'
 import { ClientToolDownloadAuthProvider } from '../auth/ClientToolDownloadAuthContext.jsx'
 import SkipToContent from '../shared/components/SkipToContent.jsx'
+import AnimatedBackground from '../shared/components/AnimatedBackground.jsx'
 
 const ToolkitHomePage = lazy(() => import('../features/toolkit-home/ToolkitHomePage.jsx'))
 const EditPdfPage = lazy(() => import('../features/edit-pdf/EditPdfPage.jsx'))
@@ -53,8 +55,12 @@ const BlogPostPage = lazy(() => import('../features/blog/BlogPostPage.jsx'))
 function RouteFallback() {
   const { t } = useTranslation()
   return (
-    <div className="flex min-h-[40vh] flex-col items-center justify-center gap-2 text-slate-500">
-      <span className="inline-block size-6 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600" aria-hidden />
+    <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-slate-500">
+      <span className="flex items-center gap-1.5" aria-hidden>
+        <span className="fx-loader-dot h-2.5 w-2.5 rounded-full bg-indigo-500 dark:bg-cyan-400" />
+        <span className="fx-loader-dot h-2.5 w-2.5 rounded-full bg-fuchsia-500 dark:bg-fuchsia-400" style={{ animationDelay: '0.15s' }} />
+        <span className="fx-loader-dot h-2.5 w-2.5 rounded-full bg-cyan-500 dark:bg-amber-300" style={{ animationDelay: '0.3s' }} />
+      </span>
       <p className="text-sm">{t('common.loading')}</p>
     </div>
   )
@@ -67,8 +73,21 @@ function RouteAnalytics() {
     recordSessionRoute(loc.pathname)
     // applyRouteHead has set the correct per-route document.title (incl. blog posts).
     pageView(loc.pathname, document.title)
+    // Pick up any `.fx-reveal` elements the new page just rendered.
+    const id = setTimeout(rescanReveal, 80)
+    return () => clearTimeout(id)
   }, [loc.pathname])
   return null
+}
+
+/** Fades each route in on navigation (keyed by pathname). */
+function PageFade({ children }) {
+  const loc = useLocation()
+  return (
+    <div key={loc.pathname} className="fx-page-in motion-reduce:animate-none">
+      {children}
+    </div>
+  )
 }
 
 export default function AppRoutes() {
@@ -76,11 +95,13 @@ export default function AppRoutes() {
   const basename = raw === '/' ? undefined : raw.replace(/\/$/, '')
   return (
     <BrowserRouter basename={basename}>
+      <AnimatedBackground />
       <SkipToContent />
       <ClientToolDownloadAuthProvider>
         <ErrorBoundary>
           <RouteAnalytics />
           <Suspense fallback={<RouteFallback />}>
+            <PageFade>
             <Routes>
               <Route path="/" element={<ToolkitHomePage />} />
               <Route path="/terms" element={<TermsOfServicePage />} />
@@ -143,6 +164,7 @@ export default function AppRoutes() {
               <Route path="/tools/translate-pdf" element={<TranslatePdfPage />} />
               <Route path="/tools/chat-with-pdf" element={<ChatWithPdfPage />} />
             </Routes>
+            </PageFade>
           </Suspense>
         </ErrorBoundary>
       </ClientToolDownloadAuthProvider>

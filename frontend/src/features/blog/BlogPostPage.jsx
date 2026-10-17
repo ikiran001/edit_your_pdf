@@ -124,7 +124,7 @@ export default function BlogPostPage() {
         </div>
 
         {post.relatedTools?.length ? (
-          <aside className="mt-10 rounded-2xl border border-zinc-200 bg-white/70 p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/50">
+          <aside className="fx-reveal mt-10 rounded-2xl border border-zinc-200 bg-white/70 p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/50">
             <h2 className="flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-zinc-50">
               <Wrench className="h-4 w-4 text-indigo-600 dark:text-cyan-400" aria-hidden />
               Tools used in this guide

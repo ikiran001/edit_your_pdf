@@ -36,11 +36,11 @@ export default function BlogIndexPage() {
         </header>
 
         <ul className="space-y-4">
-          {BLOG_POSTS.map((post) => (
-            <li key={post.slug}>
+          {BLOG_POSTS.map((post, i) => (
+            <li key={post.slug} className="fx-reveal" style={{ transitionDelay: `${Math.min(i, 8) * 0.06}s` }}>
               <Link
                 to={`/blog/${post.slug}`}
-                className="fx-focus-ring group block rounded-2xl border border-zinc-200 bg-white/70 p-5 shadow-sm transition hover:border-indigo-300 hover:shadow-md dark:border-zinc-700 dark:bg-zinc-900/50 dark:hover:border-indigo-500/50"
+                className="fx-focus-ring group block rounded-2xl border border-zinc-200 bg-white/70 p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md dark:border-zinc-700 dark:bg-zinc-900/50 dark:hover:border-indigo-500/50"
               >
                 <div className="flex flex-wrap items-center gap-2">
                   {post.tags?.map((tag) => (

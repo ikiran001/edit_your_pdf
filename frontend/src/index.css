@@ -378,3 +378,117 @@ html.dark .pdf-text-layer-editor::-moz-selection {
   background-color: transparent !important;
 }
 
+/* ===========================================================================
+   Animated UI layer — bold but safe.
+   • All motion is additive (opt-in via classes) and never gates content.
+   • Scroll-reveal's hidden state is behind `html.fx-js`, so non-JS crawlers
+     and prerendered snapshots always render fully visible.
+   • Everything is disabled under prefers-reduced-motion (block at the end).
+   ======================================================================== */
+
+/* --- Global moving aurora (mounted once via <AnimatedBackground/>) --------- */
+.fx-anim-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  contain: strict;
+}
+.fx-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(64px);
+  opacity: 0.45;
+  will-change: transform;
+}
+html.dark .fx-blob {
+  opacity: 0.4;
+}
+@keyframes fxBlobA {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(9%, 7%, 0) scale(1.18); }
+}
+@keyframes fxBlobB {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(-8%, 6%, 0) scale(0.9); }
+}
+@keyframes fxBlobC {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(6%, -7%, 0) scale(1.12); }
+}
+.fx-blob-a { animation: fxBlobA 20s ease-in-out infinite; }
+.fx-blob-b { animation: fxBlobB 27s ease-in-out infinite; }
+.fx-blob-c { animation: fxBlobC 23s ease-in-out infinite; }
+
+/* --- Floating elements (hero icons) --------------------------------------- */
+@keyframes fxFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-14px) rotate(4deg); }
+}
+.fx-float { animation: fxFloat 6s ease-in-out infinite; will-change: transform; }
+.fx-float-2 { animation: fxFloat 7.5s ease-in-out infinite; animation-delay: -2.2s; }
+.fx-float-3 { animation: fxFloat 9s ease-in-out infinite; animation-delay: -4.1s; }
+
+/* --- Gradient text shimmer ------------------------------------------------- */
+@keyframes fxShimmer {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+.fx-shimmer {
+  background-size: 200% auto;
+  animation: fxShimmer 4.5s linear infinite;
+}
+
+/* --- Slow pan for the hero's decorative gradient --------------------------- */
+@keyframes fxHeroPan {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1.05); }
+  50% { transform: translate3d(0, 2%, 0) scale(1.15); }
+}
+.fx-hero-pan { animation: fxHeroPan 18s ease-in-out infinite; will-change: transform; }
+
+/* --- Card staggered entrance (plays once on mount) ------------------------- */
+@keyframes fxCardIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+.fx-card-in { animation: fxCardIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* --- Scroll reveal (hidden state gated behind html.fx-js) ------------------ */
+html.fx-js .fx-reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s ease-out, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+html.fx-js .fx-reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* --- Page transition ------------------------------------------------------- */
+@keyframes fxPageIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+.fx-page-in { animation: fxPageIn 0.45s ease-out both; }
+
+/* --- Branded loader -------------------------------------------------------- */
+@keyframes fxLoaderBounce {
+  0%, 80%, 100% { transform: scale(0.5); opacity: 0.35; }
+  40% { transform: scale(1); opacity: 1; }
+}
+.fx-loader-dot { animation: fxLoaderBounce 1.2s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .fx-blob-a, .fx-blob-b, .fx-blob-c,
+  .fx-float, .fx-float-2, .fx-float-3,
+  .fx-shimmer, .fx-hero-pan, .fx-card-in, .fx-page-in, .fx-loader-dot {
+    animation: none !important;
+  }
+  html.fx-js .fx-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+

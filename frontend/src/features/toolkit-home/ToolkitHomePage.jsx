@@ -152,9 +152,9 @@ export default function ToolkitHomePage() {
               : 'mx-auto grid min-w-0 w-full max-md:max-w-lg grid-cols-1 justify-center justify-items-stretch gap-3 md:max-w-none md:gap-4 md:[grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),min(100%,400px)))]'
           }
         >
-          {filteredTools.map((tool) => (
+          {filteredTools.map((tool, i) => (
             <div key={tool.id} className="min-h-0 min-w-0 md:min-h-[220px]">
-              <ToolCard tool={tool} />
+              <ToolCard tool={tool} index={i} />
             </div>
           ))}
         </div>

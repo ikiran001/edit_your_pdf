@@ -5,15 +5,18 @@ import { trackFeatureUsed } from '../../lib/analytics.js'
 import { REGISTRY_ID_TO_FEATURE } from '../constants/analyticsTools.js'
 import { getToolCardAccent } from '../constants/toolCardAccents.js'
 
-export default function ToolCard({ tool }) {
+export default function ToolCard({ tool, index = 0 }) {
   const { t } = useTranslation()
   const Icon = Icons[tool.icon] || Icons.FileQuestion
   const accent = getToolCardAccent(tool.id)
   const title = t(`tool.${tool.id}.title`, { defaultValue: tool.title })
   const description = t(`tool.${tool.id}.description`, { defaultValue: tool.description })
+  // Staggered entrance; capped so later cards don't wait too long.
+  const entranceDelay = `${Math.min(index, 14) * 0.04}s`
   const content = (
     <article
-      className={`group relative flex h-full flex-row items-start gap-3 overflow-hidden rounded-xl border border-zinc-200/90 bg-white/96 p-4 text-left shadow-md shadow-zinc-900/[0.04] ring-1 ring-black/[0.03] transition duration-300 ease-out will-change-transform sm:gap-4 sm:rounded-2xl sm:p-5 motion-safe:hover:-translate-y-0.5 motion-safe:hover:scale-[1.01] dark:border-zinc-700/85 dark:bg-zinc-950/88 dark:shadow-[0_0_36px_-14px_rgba(0,0,0,0.55)] dark:ring-white/[0.06] ${accent.hoverGlow} ${
+      style={{ animationDelay: entranceDelay }}
+      className={`fx-card-in group relative flex h-full flex-row items-start gap-3 overflow-hidden rounded-xl border border-zinc-200/90 bg-white/96 p-4 text-left shadow-md shadow-zinc-900/[0.04] ring-1 ring-black/[0.03] transition duration-300 ease-out will-change-transform sm:gap-4 sm:rounded-2xl sm:p-5 motion-safe:hover:-translate-y-1 motion-safe:hover:scale-[1.02] motion-safe:hover:shadow-xl dark:border-zinc-700/85 dark:bg-zinc-950/88 dark:shadow-[0_0_36px_-14px_rgba(0,0,0,0.55)] dark:ring-white/[0.06] ${accent.hoverGlow} ${
         !tool.implemented ? 'opacity-90' : ''
       }`}
     >

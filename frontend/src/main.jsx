@@ -5,6 +5,7 @@ import i18n from './i18n/i18n.js'
 import './lib/firebase.js'
 import { initAnalytics, initSessionRecording } from './lib/analytics.js'
 import { initClarity } from './lib/clarity.js'
+import { initScrollReveal } from './shared/utils/scrollReveal.js'
 import { ThemeProvider } from './context/ThemeContext.jsx'
 import { AuthProvider } from './auth/AuthContext.jsx'
 import { AuthModalProvider } from './auth/AuthModalContext.jsx'
@@ -16,6 +17,7 @@ import App from './App.jsx'
 initAnalytics()
 initSessionRecording()
 initClarity()
+initScrollReveal()
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

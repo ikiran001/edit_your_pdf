@@ -20,7 +20,7 @@ export default function ToolFeatureSeoSection({ toolId }) {
 
   return (
     <>
-      <article className="mb-8" aria-label={`About ${c.featureName}`}>
+      <article className="fx-reveal mb-8" aria-label={`About ${c.featureName}`}>
         <details className="rounded-2xl border border-zinc-200 bg-white/70 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/50">
           <summary className="cursor-pointer list-none px-5 py-3.5 text-sm font-medium text-indigo-700 outline-none transition hover:bg-zinc-50/80 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:text-indigo-300 dark:hover:bg-zinc-800/50 dark:focus-visible:ring-offset-zinc-950 [&::-webkit-details-marker]:hidden">
             How to use?
@@ -82,7 +82,7 @@ export default function ToolFeatureSeoSection({ toolId }) {
       </article>
 
       {c.faqs?.length ? (
-        <section className="mb-8" aria-label={`${c.featureName} — frequently asked questions`}>
+        <section className="fx-reveal mb-8" aria-label={`${c.featureName} — frequently asked questions`}>
           <h2 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
             Frequently asked questions
           </h2>
