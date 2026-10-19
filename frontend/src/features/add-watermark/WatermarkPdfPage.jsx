@@ -59,7 +59,6 @@ export default function WatermarkPdfPage() {
   const [pdfFile, setPdfFile] = useState(null)
   /** Master PDF bytes (pdf.js must not consume this buffer — pass `.slice()` into getDocument). */
   const [pdfBytes, setPdfBytes] = useState(null)
-  const [pdfDoc, setPdfDoc] = useState(null)
   const [numPages, setNumPages] = useState(0)
   const [mode, setMode] = useState('text')
   const [text, setText] = useState('DRAFT')
@@ -137,7 +136,6 @@ export default function WatermarkPdfPage() {
   useEffect(() => {
     if (!pdfFile) {
       setPdfBytes(null)
-      setPdfDoc(null)
       setNumPages(0)
       return undefined
     }
@@ -156,7 +154,6 @@ export default function WatermarkPdfPage() {
           doc.destroy()
           return
         }
-        setPdfDoc(doc)
         setNumPages(doc.numPages)
         markFunnelUpload(TOOL)
         trackFileUploaded({
@@ -212,7 +209,6 @@ export default function WatermarkPdfPage() {
     setError(null)
     setSuccessHint(null)
     setPdfBytes(null)
-    setPdfDoc(null)
     setNumPages(0)
     setPdfFile(f)
   }, [])
@@ -641,14 +637,15 @@ export default function WatermarkPdfPage() {
         <div>
           <WatermarkPreview
             pdfFile={pdfFile}
-            pdfDoc={pdfDoc}
+            pdfBytes={pdfBytes}
             mode={mode}
             text={text}
             fontSize={fontSize}
             colorHex={colorHex}
             opacityPct={opacityPct}
             rotationDeg={rotationDeg}
-            imageObjectUrl={imageObjectUrl}
+            imageBytes={imageBytes}
+            imageKind={imageKind}
             imageScalePreset={imageScalePreset}
             imageScalePercent={imageScalePercent}
             position={position}
