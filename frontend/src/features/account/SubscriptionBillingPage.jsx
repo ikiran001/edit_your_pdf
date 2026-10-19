@@ -91,6 +91,17 @@ export default function SubscriptionBillingPage() {
   const daily = me?.dailyDownloads
   const payments = me?.payments || []
 
+  // Expired = was Pro (has a past expiry date) but no longer active. A truly
+  // never-subscribed free user has no expiresAt.
+  const expiredAt = sub?.expiresAt ? new Date(sub.expiresAt) : null
+  const isExpired = Boolean(
+    sub &&
+      !sub.isPaid &&
+      expiredAt &&
+      !Number.isNaN(expiredAt.getTime()) &&
+      expiredAt.getTime() < Date.now()
+  )
+
   const used = daily?.usedToday ?? 0
   const limit = daily?.limit ?? 3
   const downloadPct = useMemo(() => {
@@ -149,12 +160,17 @@ export default function SubscriptionBillingPage() {
                   <>
                     <div className="mt-2 flex flex-wrap items-center gap-2">
                       <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white sm:text-3xl">
-                        {sub?.planLabel || 'Free'}
+                        {sub?.isPaid ? sub.planLabel : isExpired ? 'Pro expired' : 'Free'}
                       </h2>
                       {sub?.isPaid ? (
                         <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-500/25 dark:text-emerald-300 dark:ring-emerald-400/30">
                           <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
                           Pro active
+                        </span>
+                      ) : isExpired ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-xs font-semibold text-amber-800 ring-1 ring-amber-500/30 dark:text-amber-300 dark:ring-amber-400/30">
+                          <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
+                          Expired
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 rounded-full bg-zinc-500/10 px-2.5 py-0.5 text-xs font-semibold text-zinc-700 ring-1 ring-zinc-400/25 dark:text-zinc-300 dark:ring-zinc-500/30">
@@ -170,6 +186,17 @@ export default function SubscriptionBillingPage() {
                             {formatIso(sub?.expiresAt)}
                           </span>
                           . Renew manually anytime before then.
+                        </>
+                      ) : isExpired ? (
+                        <>
+                          Your Pro plan expired on{' '}
+                          <span className="font-medium text-zinc-800 dark:text-zinc-200">
+                            {formatIso(sub?.expiresAt)}
+                          </span>
+                          . You're back on the free plan (<strong>3 downloads/day</strong>).{' '}
+                          <strong className="text-amber-700 dark:text-amber-300">
+                            Renew to restore unlimited downloads.
+                          </strong>
                         </>
                       ) : (
                         <>
@@ -188,7 +215,7 @@ export default function SubscriptionBillingPage() {
                   onClick={() => setUpgradeOpen(true)}
                 >
                   <Sparkles className="h-4 w-4 opacity-90" aria-hidden />
-                  {sub?.isPaid ? 'Extend or change plan' : 'Upgrade to Pro'}
+                  {sub?.isPaid ? 'Extend or change plan' : isExpired ? 'Renew Pro' : 'Upgrade to Pro'}
                 </button>
                 <Link
                   to="/my-documents"
