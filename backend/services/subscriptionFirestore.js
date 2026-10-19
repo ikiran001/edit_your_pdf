@@ -51,9 +51,17 @@ export async function writePendingOrderLedger(orderId, uid, planKey, amountPaise
     );
 }
 
+/**
+ * Grace window after expiry during which Pro still counts as active. Kept tiny
+ * (2 min) to absorb clock skew only — a long grace would hand out free days,
+ * which is especially costly on the ₹10/day plan. Override with SUBSCRIPTION_GRACE_MS.
+ */
+const DEFAULT_GRACE_MS = 120000;
 function defaultGraceMs() {
-  const n = Number(process.env.SUBSCRIPTION_GRACE_MS || 172800000);
-  return Number.isFinite(n) && n >= 0 ? n : 172800000;
+  const raw = process.env.SUBSCRIPTION_GRACE_MS;
+  if (raw == null || raw === '') return DEFAULT_GRACE_MS;
+  const n = Number(raw);
+  return Number.isFinite(n) && n >= 0 ? n : DEFAULT_GRACE_MS;
 }
 
 /**
