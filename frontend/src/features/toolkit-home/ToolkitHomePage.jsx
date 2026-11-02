@@ -11,6 +11,7 @@ import { TOOL_REGISTRY } from '../../shared/constants/toolRegistry.js'
 import { TOOLKIT_HOME_CATEGORY_FILTERS } from '../../shared/constants/megaToolNav.js'
 import HeroSection from './HeroSection.jsx'
 import ToolkitNavMenus from './ToolkitNavMenus.jsx'
+import HomeContentSection from './HomeContentSection.jsx'
 import { peekFeedbackPrompt } from '../../lib/reviewPromptStorage.js'
 
 function matchesToolSearch(tool, q, t) {
@@ -195,6 +196,10 @@ export default function ToolkitHomePage() {
           <ShareTools label="Know someone who wrangles PDFs? Share pdfpilot 💙" />
         </div>
         </section>
+
+        <div className={`border-t border-zinc-200/60 dark:border-zinc-800/60 ${TOOLKIT_SHELL_X}`}>
+          <HomeContentSection />
+        </div>
       </main>
 
       <LegalFooter className="py-8" />

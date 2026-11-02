@@ -46,6 +46,21 @@
     "footerProcessing": "Files are processed in your session. Need the raw API? See the project README for self-hosting on GitHub Pages.",
     "ratingsNote": "Ratings and comments are shown only after real submissions."
   },
+  "homeContent": {
+    "aboutHeading": "The free online PDF toolkit",
+    "aboutP1": "pdfpilot is a free online PDF toolkit with more than 40 tools to edit, convert, merge, split, compress, sign, protect, and organise PDF files — all from your browser. There is nothing to install and no account to create for most tools, so you can open a document, make your change, and download the result in under a minute.",
+    "aboutP2": "Whether you need to shrink a scan for a government upload, combine certificates into one file for a job application, turn a PDF into an editable Word document, or add a signature without printing a single page, you can do it here. Each tool is purpose-built to get one job done cleanly instead of burying you in options you do not need.",
+    "privacyHeading": "Private by design",
+    "privacyP1": "Many of our tools — including merge, split, images-to-PDF, watermark, and scan — run entirely inside your browser, which means the file never leaves your device. Tools that need server processing, such as OCR or some conversions, work on your file only for as long as the task takes and do not keep it afterwards. You keep the original; we keep nothing.",
+    "indiaHeading": "Built for India",
+    "indiaP1": "pdfpilot is tuned for the paperwork people in India actually deal with. Compress a PDF to the exact 100KB, 200KB, or 500KB limits that UIDAI, SSC, UPSC, and state recruitment portals enforce; generate a GST-ready tax invoice with automatic CGST/SGST or IGST splits; and run OCR on scanned documents in both English and Hindi so they become searchable and easy to reuse.",
+    "howHeading": "How pdfpilot works",
+    "howStep1": "Pick a tool from the grid above, or search for exactly what you need.",
+    "howStep2": "Upload your PDF or images — drag and drop, or browse your device.",
+    "howStep3": "Make your change and download the finished file. No watermark on your document, no email required.",
+    "freeHeading": "Why is pdfpilot free?",
+    "freeP1": "pdfpilot is free to use for everyday tasks. A small number of heavier, server-side tools have a generous daily limit for signed-out users, and an optional Pro plan removes the cap for people who process documents in bulk. The core toolkit stays free so a one-off task never costs you anything."
+  },
   "hero": {
     "title": "Edit and download PDFs instantly",
     "subtitle": "Fast, simple, and secure PDF editing directly in your browser. No installs. No hassle.",
@@ -53,8 +68,19 @@
     "ctaSample": "Try sample PDF",
     "signInBlurb": "Sign in or create an account to continue."
   },
+  "consent": {
+    "title": "Cookie consent",
+    "message": "We use cookies to run pdfpilot, measure traffic, and show personalised ads. Accept all cookies, or decline non-essential ones.",
+    "learnMore": "Learn more",
+    "accept": "Accept all",
+    "decline": "Decline"
+  },
   "footer": {
     "copyright": "© {{year}} pdfpilot",
+    "about": "About",
+    "blog": "Blog",
+    "contact": "Contact",
+    "privacy": "Privacy",
     "privacySoon": "Privacy",
     "shareFeedback": "Share feedback",
     "terms": "Terms of Service"

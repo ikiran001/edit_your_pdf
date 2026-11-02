@@ -21,20 +21,26 @@ export default function ToolFeatureSeoSection({ toolId }) {
   return (
     <>
       <article className="fx-reveal mb-8" aria-label={`About ${c.featureName}`}>
+        <div
+          id={`${slug}-intro`}
+          className="mb-4 space-y-3 rounded-2xl border border-zinc-200 bg-white/70 px-5 py-5 text-sm leading-relaxed text-zinc-700 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/50 dark:text-zinc-300"
+        >
+          <h2 className="text-base font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+            About {c.featureName}
+          </h2>
+          {c.intro.map((p, i) => (
+            <p key={i}>{p}</p>
+          ))}
+        </div>
+
         <details className="rounded-2xl border border-zinc-200 bg-white/70 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/50">
           <summary className="cursor-pointer list-none px-5 py-3.5 text-sm font-medium text-indigo-700 outline-none transition hover:bg-zinc-50/80 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:text-indigo-300 dark:hover:bg-zinc-800/50 dark:focus-visible:ring-offset-zinc-950 [&::-webkit-details-marker]:hidden">
-            How to use?
+            How to use {c.featureName} — steps &amp; features
           </summary>
 
           <div className="space-y-8 border-t border-zinc-200 px-5 pb-5 pt-5 dark:border-zinc-700">
             <div className="rounded-2xl border border-zinc-200 bg-white/70 p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/50">
-              <div id={`${slug}-intro`} className="space-y-3 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
-                {c.intro.map((p, i) => (
-                  <p key={i}>{p}</p>
-                ))}
-              </div>
-
-              <ol className="mt-6 list-decimal space-y-2 pl-5 text-sm text-zinc-700 dark:text-zinc-300">
+              <ol className="list-decimal space-y-2 pl-5 text-sm text-zinc-700 dark:text-zinc-300">
                 {c.steps.map((step, i) => (
                   <li key={i} className="pl-1">
                     {step}
@@ -90,6 +96,7 @@ export default function ToolFeatureSeoSection({ toolId }) {
             {c.faqs.map((f, i) => (
               <details
                 key={i}
+                open
                 className="group rounded-2xl border border-zinc-200 bg-white/70 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/50"
               >
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3.5 text-sm font-medium text-zinc-900 outline-none transition hover:bg-zinc-50/80 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:text-zinc-100 dark:hover:bg-zinc-800/50 dark:focus-visible:ring-offset-zinc-950 [&::-webkit-details-marker]:hidden">

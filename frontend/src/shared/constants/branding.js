@@ -6,6 +6,7 @@ export const LEGAL_ENTITY_NAME = 'pdfpilot'
 export const LEGAL_CONTACT_EMAIL = 'ijkiranp@gmail.com'
 /** ISO-style date for “Last updated” on legal pages. */
 export const TERMS_LAST_UPDATED = '2026-04-18'
+export const PRIVACY_LAST_UPDATED = '2026-11-01'
 
 /**
  * Contractual governing law / courts (where local law allows parties to choose).
@@ -26,57 +27,132 @@ export const DEFAULT_SITE_DESCRIPTION =
 
 export const DOC_TITLE_HOME = 'Edit PDF Online Free | pdfpilot.pro'
 
+/**
+ * SEO <title> tags per route. Keyword-front-loaded (the phrase users actually
+ * search leads), then a short benefit, then the brand — this wins more clicks in
+ * search results than a generic "pdfpilot - X". Keep the lead phrase within the
+ * first ~60 chars so it survives SERP truncation.
+ *
+ * Short, bare feature labels live separately in TOOL_FEATURE_LABELS below (used
+ * for the SoftwareApplication schema name and synthesized meta descriptions) so
+ * these richer titles don't leak brand/benefit text into those derivations.
+ */
 const TOOL_DOC_TITLES = {
-  '/my-documents': 'pdfpilot - Saved PDFs',
-  '/account/subscription': 'pdfpilot - Subscription & billing',
-  '/tools/edit-pdf': 'pdfpilot - Edit PDF',
-  '/tools/edit-pdf/editor': 'pdfpilot - Edit PDF',
-  '/tools/merge-pdf': 'pdfpilot - Merge PDF',
-  '/tools/split-pdf': 'pdfpilot - Split PDF',
-  '/tools/compress-pdf': 'pdfpilot - Compress PDF',
-  '/tools/sign-pdf': 'pdfpilot - Sign PDF',
-  '/tools/e-sign': 'pdfpilot - E-Sign PDF',
-  '/tools/pdf-to-jpg': 'pdfpilot - PDF to JPG',
-  '/tools/pdf-to-png': 'pdfpilot - PDF to PNG',
-  '/tools/pdf-to-text': 'pdfpilot - PDF to text',
-  '/tools/jpg-to-pdf': 'pdfpilot - JPG to PDF',
-  '/tools/scan-to-pdf': 'pdfpilot - Scan to PDF',
-  '/tools/unlock-pdf': 'pdfpilot - Unlock PDF',
-  '/tools/ocr-pdf': 'pdfpilot - OCR PDF',
-  '/tools/encrypt-pdf': 'pdfpilot - Encrypt PDF',
-  '/tools/organize-pdf': 'pdfpilot - Organize PDF Pages',
-  '/tools/fill-pdf': 'pdfpilot - Fill PDF form',
-  '/tools/flatten-pdf': 'pdfpilot - Flatten PDF',
-  '/tools/add-page-numbers': 'pdfpilot - Add page numbers',
-  '/tools/add-watermark': 'pdfpilot - Add Watermark',
-  '/tools/pdf-to-word': 'pdfpilot - PDF to Word',
-  '/tools/word-to-pdf': 'pdfpilot - Word to PDF',
-  '/tools/gst-invoice': 'pdfpilot - GST invoice PDF',
-  '/tools/remove-pages': 'pdfpilot - Remove pages',
-  '/tools/extract-pages': 'pdfpilot - Extract pages',
-  '/tools/repair-pdf': 'pdfpilot - Repair PDF',
-  '/tools/powerpoint-to-pdf': 'pdfpilot - PowerPoint to PDF',
-  '/tools/excel-to-pdf': 'pdfpilot - Excel to PDF',
-  '/tools/html-to-pdf': 'pdfpilot - HTML to PDF',
-  '/tools/pdf-to-powerpoint': 'pdfpilot - PDF to PowerPoint',
-  '/tools/pdf-to-excel': 'pdfpilot - PDF to Excel',
-  '/tools/pdf-to-pdfa': 'pdfpilot - PDF to PDF/A',
-  '/tools/rotate-pdf': 'pdfpilot - Rotate PDF',
-  '/tools/crop-pdf': 'pdfpilot - Crop PDF',
-  '/tools/redact-pdf': 'pdfpilot - Redact PDF',
-  '/tools/compare-pdf': 'pdfpilot - Compare PDF',
-  '/tools/translate-pdf': 'pdfpilot - Translate PDF',
-  '/terms': 'pdfpilot - Terms of Service',
-  '/feedback': 'pdfpilot - Share feedback',
-  '/admin/feedback': 'pdfpilot - Feedback admin',
+  '/my-documents': 'Saved PDFs | pdfpilot',
+  '/account/subscription': 'Subscription & Billing | pdfpilot',
+  '/tools/edit-pdf': 'Edit PDF Online Free — Edit Text & Annotate | pdfpilot',
+  '/tools/edit-pdf/editor': 'Edit PDF Online Free — Edit Text & Annotate | pdfpilot',
+  '/tools/merge-pdf': 'Merge PDF Online Free — Combine PDFs Fast | pdfpilot',
+  '/tools/split-pdf': 'Split PDF Online Free — Extract & Separate Pages | pdfpilot',
+  '/tools/compress-pdf': 'Compress PDF Online Free — Reduce PDF File Size | pdfpilot',
+  '/tools/sign-pdf': 'Sign PDF Online Free — Add Your Signature | pdfpilot',
+  '/tools/e-sign': 'E-Sign PDF Online Free — Electronic Signatures | pdfpilot',
+  '/tools/pdf-to-jpg': 'PDF to JPG Online Free — Convert PDF to Images | pdfpilot',
+  '/tools/pdf-to-png': 'PDF to PNG Online Free — Convert PDF to Images | pdfpilot',
+  '/tools/pdf-to-text': 'PDF to Text Online Free — Extract Text from PDF | pdfpilot',
+  '/tools/jpg-to-pdf': 'JPG to PDF Online Free — Convert Images to PDF | pdfpilot',
+  '/tools/scan-to-pdf': 'Scan to PDF Online Free — Scan Documents to PDF | pdfpilot',
+  '/tools/unlock-pdf': 'Unlock PDF Online Free — Remove PDF Password | pdfpilot',
+  '/tools/ocr-pdf': 'OCR PDF Online — Make Scanned PDFs Searchable | pdfpilot',
+  '/tools/encrypt-pdf': 'Encrypt PDF Online Free — Password Protect PDF | pdfpilot',
+  '/tools/organize-pdf': 'Organize PDF Online Free — Reorder & Delete Pages | pdfpilot',
+  '/tools/fill-pdf': 'Fill PDF Forms Online Free — Complete PDF Forms | pdfpilot',
+  '/tools/flatten-pdf': 'Flatten PDF Online Free — Lock Forms & Annotations | pdfpilot',
+  '/tools/add-page-numbers': 'Add Page Numbers to PDF Online Free | pdfpilot',
+  '/tools/add-watermark': 'Add Watermark to PDF Online Free | pdfpilot',
+  '/tools/pdf-to-word': 'PDF to Word Online Free — Convert PDF to DOCX | pdfpilot',
+  '/tools/word-to-pdf': 'Word to PDF Online Free — Convert DOC to PDF | pdfpilot',
+  '/tools/gst-invoice': 'Free GST Invoice Generator — Create GST Bills Online | pdfpilot',
+  '/tools/remove-pages': 'Remove Pages from PDF Online Free | pdfpilot',
+  '/tools/extract-pages': 'Extract Pages from PDF Online Free | pdfpilot',
+  '/tools/repair-pdf': 'Repair PDF Online Free — Fix Corrupted PDF | pdfpilot',
+  '/tools/powerpoint-to-pdf': 'PowerPoint to PDF Online Free — Convert PPT to PDF | pdfpilot',
+  '/tools/excel-to-pdf': 'Excel to PDF Online Free — Convert XLS to PDF | pdfpilot',
+  '/tools/html-to-pdf': 'HTML to PDF Online Free — Convert Web Pages to PDF | pdfpilot',
+  '/tools/pdf-to-powerpoint': 'PDF to PowerPoint Online Free — Convert PDF to PPT | pdfpilot',
+  '/tools/pdf-to-excel': 'PDF to Excel Online Free — Convert PDF to XLS | pdfpilot',
+  '/tools/pdf-to-pdfa': 'PDF to PDF/A Online Free — Archive-Ready PDFs | pdfpilot',
+  '/tools/rotate-pdf': 'Rotate PDF Online Free — Fix Page Orientation | pdfpilot',
+  '/tools/crop-pdf': 'Crop PDF Online Free — Trim PDF Margins | pdfpilot',
+  '/tools/redact-pdf': 'Redact PDF Online Free — Black Out Sensitive Text | pdfpilot',
+  '/tools/compare-pdf': 'Compare PDF Online Free — Find Differences | pdfpilot',
+  '/tools/translate-pdf': 'Translate PDF Online — AI PDF Translation | pdfpilot',
+  '/tools/chat-with-pdf': 'Chat with PDF Online Free — Ask Your Documents | pdfpilot',
+  '/terms': 'Terms of Service | pdfpilot',
+  '/privacy': 'Privacy Policy | pdfpilot',
+  '/about': 'About pdfpilot — Free Online PDF Tools',
+  '/contact': 'Contact pdfpilot',
+  '/feedback': 'Share Feedback | pdfpilot',
+  '/admin/feedback': 'Feedback Admin | pdfpilot',
 }
 
 /**
- * Browser tab title for a route pathname (React Router path, no basename prefix in path).
+ * Short, bare feature labels per route — the plain tool name with no brand or
+ * benefit copy. Used for the SoftwareApplication JSON-LD `name` and to synthesize
+ * meta descriptions for routes without a hand-written one. Keep keys in sync with
+ * TOOL_DOC_TITLES.
+ */
+const TOOL_FEATURE_LABELS = {
+  '/my-documents': 'Saved PDFs',
+  '/account/subscription': 'Subscription & Billing',
+  '/tools/edit-pdf': 'Edit PDF',
+  '/tools/edit-pdf/editor': 'Edit PDF',
+  '/tools/merge-pdf': 'Merge PDF',
+  '/tools/split-pdf': 'Split PDF',
+  '/tools/compress-pdf': 'Compress PDF',
+  '/tools/sign-pdf': 'Sign PDF',
+  '/tools/e-sign': 'E-Sign PDF',
+  '/tools/pdf-to-jpg': 'PDF to JPG',
+  '/tools/pdf-to-png': 'PDF to PNG',
+  '/tools/pdf-to-text': 'PDF to Text',
+  '/tools/jpg-to-pdf': 'JPG to PDF',
+  '/tools/scan-to-pdf': 'Scan to PDF',
+  '/tools/unlock-pdf': 'Unlock PDF',
+  '/tools/ocr-pdf': 'OCR PDF',
+  '/tools/encrypt-pdf': 'Encrypt PDF',
+  '/tools/organize-pdf': 'Organize PDF Pages',
+  '/tools/fill-pdf': 'Fill PDF Form',
+  '/tools/flatten-pdf': 'Flatten PDF',
+  '/tools/add-page-numbers': 'Add Page Numbers',
+  '/tools/add-watermark': 'Add Watermark to PDF',
+  '/tools/pdf-to-word': 'PDF to Word',
+  '/tools/word-to-pdf': 'Word to PDF',
+  '/tools/gst-invoice': 'GST Invoice Generator',
+  '/tools/remove-pages': 'Remove PDF Pages',
+  '/tools/extract-pages': 'Extract PDF Pages',
+  '/tools/repair-pdf': 'Repair PDF',
+  '/tools/powerpoint-to-pdf': 'PowerPoint to PDF',
+  '/tools/excel-to-pdf': 'Excel to PDF',
+  '/tools/html-to-pdf': 'HTML to PDF',
+  '/tools/pdf-to-powerpoint': 'PDF to PowerPoint',
+  '/tools/pdf-to-excel': 'PDF to Excel',
+  '/tools/pdf-to-pdfa': 'PDF to PDF/A',
+  '/tools/rotate-pdf': 'Rotate PDF',
+  '/tools/crop-pdf': 'Crop PDF',
+  '/tools/redact-pdf': 'Redact PDF',
+  '/tools/compare-pdf': 'Compare PDF',
+  '/tools/translate-pdf': 'Translate PDF',
+  '/tools/chat-with-pdf': 'Chat with PDF',
+  '/terms': 'Terms of Service',
+  '/feedback': 'Share Feedback',
+  '/admin/feedback': 'Feedback Admin',
+}
+
+/**
+ * Browser tab / SEO title for a route pathname (React Router path, no basename prefix in path).
  */
 export function docTitleForPath(pathname) {
   const p = (pathname || '/').replace(/\/$/, '') || '/'
   return TOOL_DOC_TITLES[p] || DOC_TITLE_HOME
+}
+
+/**
+ * Short, bare feature label for a route (e.g. "Merge PDF"), or null if unknown.
+ * Used by the SoftwareApplication schema name and synthesized meta descriptions.
+ */
+export function featureLabelForPath(pathname) {
+  const p = (pathname || '/').replace(/\/$/, '') || '/'
+  return TOOL_FEATURE_LABELS[p] || null
 }
 
 /**
@@ -131,6 +207,12 @@ const TOOL_META_DESCRIPTIONS = {
     'Flatten PDF online free — merge annotations and form fields into the page so they can’t be edited. Lock your final document with pdfpilot.',
   '/tools/translate-pdf':
     'Translate PDF online — convert your document into another language while keeping it readable. AI-powered PDF translation with pdfpilot.',
+  '/privacy':
+    'pdfpilot privacy policy — what data we collect, how files are processed, our use of cookies, analytics, and advertising (Google AdSense), and your choices.',
+  '/about':
+    'About pdfpilot — a free online PDF toolkit with 40+ tools to edit, convert, compress, merge, sign, and protect PDFs, with privacy-first browser processing.',
+  '/contact':
+    'Contact pdfpilot — get in touch with questions, feedback, privacy requests, or support for our free online PDF tools.',
 }
 
 /**
@@ -141,9 +223,8 @@ export function metaDescriptionForPath(pathname) {
   const p = (pathname || '/').replace(/\/$/, '') || '/'
   if (p === '/') return DEFAULT_SITE_DESCRIPTION
   if (TOOL_META_DESCRIPTIONS[p]) return TOOL_META_DESCRIPTIONS[p]
-  const title = TOOL_DOC_TITLES[p]
-  if (title) {
-    const feature = title.replace(/^pdfpilot\s*[-–]\s*/, '')
+  const feature = TOOL_FEATURE_LABELS[p]
+  if (feature) {
     return `${feature} online free with pdfpilot — fast, secure, and easy to use. No installation needed for most tools.`
   }
   return DEFAULT_SITE_DESCRIPTION

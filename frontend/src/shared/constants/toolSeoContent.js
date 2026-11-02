@@ -38,8 +38,8 @@ export const TOOL_SEO_BY_ID = {
       },
     ],
     intro: [
-      'Edit PDF online to fix text, add highlights, sketch notes, and mark up pages without installing desktop software. Upload starts a focused editing session so you can work through your document in one place.',
-      'Your PDF is tied to your session on pdfpilot—ideal when you want to avoid passing drafts through random file-sharing sites. When you are done, download the updated PDF and keep a copy of the original if you might need it later.',
+      'Edit a PDF online to fix wording, highlight key lines, add notes, and mark up pages — with no desktop software to install and no account to create. Uploading opens a focused editing session so you can work through the whole document in one place and download the result when you are done.',
+      'Text editing works best on PDFs that already contain real, selectable text; scanned or image-only pages have no text layer to change, so run OCR first and then come back. Keep a copy of the original in case you need the untouched version later.',
     ],
     steps: [
       'Open Edit PDF from the toolkit and upload your file (drag-and-drop or browse).',
@@ -104,8 +104,8 @@ export const TOOL_SEO_BY_ID = {
       },
     ],
     intro: [
-      'Merge PDF files into one document for easier sharing, printing, and archiving. Put appendices, exhibits, and scans in the exact order you want.',
-      'Everything runs in your browser on pdfpilot—your PDFs are combined locally, so you skip uploading them to a third-party server just to stitch pages together.',
+      'Merge several PDFs into one document for easier sharing, printing, and archiving. Add appendices, exhibits, certificates, or scans and arrange them in the exact order readers should see them — then download a single, tidy file.',
+      'Merging runs entirely in your browser, so your files are combined locally on your own device and never uploaded to a third-party server just to be stitched together. That keeps sensitive annexes and personal documents private.',
     ],
     steps: [
       'Open Merge PDF from the toolkit.',
@@ -170,8 +170,8 @@ export const TOOL_SEO_BY_ID = {
       },
     ],
     intro: [
-      'Split PDF pages into separate files by custom ranges or by every page. Pull out chapters, invoices, or signed sections without copy-pasting screenshots.',
-      'Processing stays in your browser, so you can extract pages locally instead of uploading a full contract to an unknown website.',
+      'Split a PDF into separate files by custom page ranges, or break it into one file per page. It is the clean way to pull out chapters, invoices, or signed sections — far better than screenshotting pages, which loses quality and makes the text unselectable.',
+      'Everything happens in your browser, so you can extract pages locally instead of uploading a full contract to an unknown website, and every page you keep retains its original quality.',
     ],
     steps: [
       'Open Split PDF and upload your document.',
@@ -218,8 +218,8 @@ export const TOOL_SEO_BY_ID = {
   'compress-pdf': {
     featureName: 'Compress PDF',
     intro: [
-      'Compress PDF files to shrink size for email limits, cloud folders, and phones. Pick a level that balances smaller files against how sharp you need the document to look.',
-      'When your site points at a pdfpilot API with qpdf (and Ghostscript for Medium/High), compression runs there for real stream downsampling. If the API is missing, pdfpilot falls back to an in-browser pdf-lib rewrite — sizes may barely change.',
+      'Compress a PDF to shrink it for email limits, upload caps, cloud storage, and phones. Choose a level that balances a smaller file against how sharp the document needs to look — especially useful for the strict 100KB to 500KB limits on many government portals.',
+      'When connected to a pdfpilot API (qpdf, plus Ghostscript for the Medium and High levels), compression downsamples images and streams for real size reductions. Without that API it falls back to a lighter in-browser rewrite, where the size may change only a little.',
     ],
     steps: [
       'Open Compress PDF and add one or more PDFs.',
@@ -302,8 +302,8 @@ export const TOOL_SEO_BY_ID = {
       },
     ],
     intro: [
-      'Turn each PDF page into JPG images for slides, social posts, or tools that prefer pictures over documents. Export happens in your browser, so your deck is not uploaded to a random converter.',
-      'PDF to JPG online is perfect when a teammate can open images everywhere but struggles with PDF viewers on mobile.',
+      'Turn each page of a PDF into a JPG image — ideal for slides, social posts, thumbnails, or any tool that prefers pictures over documents. You get one image per page, ready to drop in wherever you need it.',
+      'The export runs in your browser, so your document is not sent to a random converter. JPG is the right pick when a recipient can open images everywhere but struggles with PDF viewers on mobile.',
     ],
     steps: [
       'Open PDF to JPG and upload your PDF.',
@@ -368,8 +368,8 @@ export const TOOL_SEO_BY_ID = {
       },
     ],
     intro: [
-      'Combine JPG or PNG images into one polished PDF—great for applications, receipts, or photo sets. Build the story in the right order, then download a single file.',
-      'JPG to PDF online runs in your browser so your scans and photos are not sent through an extra cloud you do not control.',
+      'Combine JPG or PNG images into one polished PDF — perfect for applications, receipts, ID proofs, or photo sets. Arrange the pictures in the right order and export a single file that looks far more professional than loose images.',
+      'Conversion runs in your browser, so your scans and photos are not sent through a cloud you do not control. If the finished PDF is too large to upload, compress it afterwards to fit the limit.',
     ],
     steps: [
       'Open JPG to PDF from the toolkit.',
@@ -434,8 +434,8 @@ export const TOOL_SEO_BY_ID = {
       },
     ],
     intro: [
-      'Sign PDF documents by placing your signature on the right page, then download a normal PDF others can open anywhere. Draw or paste a signature and position it precisely on lines or boxes.',
-      'Signing happens in your browser on pdfpilot, which keeps routine agreements off random “free sign” sites when you want a simpler, more private flow.',
+      'Sign a PDF by placing your signature exactly where it belongs, then download a normal PDF anyone can open. Draw your signature, type it, or upload a PNG, and position it precisely on the signature line or box — no printing or scanning involved.',
+      'Signing happens in your browser, which keeps routine agreements off random "free sign" sites when you want a simpler, more private flow. Keep the unsigned original in case you need to produce a fresh copy.',
     ],
     steps: [
       'Open Sign PDF and upload the file you need signed.',
@@ -500,8 +500,8 @@ export const TOOL_SEO_BY_ID = {
       },
     ],
     intro: [
-      'E-sign PDFs in your browser: add your signature, drag it onto the right line or box on each page, then download a standard PDF. Good for agreements, HR forms, and quick approvals when you do not need a full certificate-based workflow.',
-      'Processing stays on pdfpilot in your session — useful when you want a simple electronic signature without uploading to unknown third-party sites.',
+      'Add an electronic signature to a PDF: create your signature, drag it onto the right line or box on each page, and download a standard signed PDF. It is built for agreements, HR forms, offer letters, and quick approvals that do not need a certificate-based digital signature.',
+      'Processing stays in your session, so you get a simple electronic signature without uploading the document to unknown third-party sites.',
     ],
     steps: [
       'Open E-Sign PDF and upload the document.',
@@ -566,8 +566,8 @@ export const TOOL_SEO_BY_ID = {
       },
     ],
     intro: [
-      'Remove an open password from a PDF when you know the password and are allowed to keep an unlocked copy. This helps teams stop retyping the same password for internal references they already own.',
-      'Unlock PDF uses your configured pdfpilot API (with qpdf on the server) when available—your file and password go to that endpoint, not to a public converter. Only unlock documents you have permission to change.',
+      'Remove the open password from a PDF when you know the password and are entitled to keep an unlocked copy. It saves your team from retyping the same password over and over for internal references you already own.',
+      'Unlocking uses your configured pdfpilot API (with qpdf on the server) when available, so your file and password go to that endpoint rather than a public converter. Only unlock documents you have permission to change.',
     ],
     steps: [
       'Open Unlock PDF and upload the protected file.',
@@ -632,8 +632,8 @@ export const TOOL_SEO_BY_ID = {
       },
     ],
     intro: [
-      'Add an open password to a PDF with AES-256 so only people who know the password can open it. pdfpilot encrypts the file on your API server with qpdf—the same stack many teams already use for Unlock PDF.',
-      'Use a strong, unique password and store it in a password manager. Encrypted PDFs are still only as safe as the password you choose and how you share it.',
+      'Add an open password to a PDF with strong AES-256 encryption, so only people who know the password can open it. It is the simplest way to protect salary slips, bank statements, contracts, and ID scans before you send them.',
+      'Encryption runs on your pdfpilot API server with qpdf. Remember that an encrypted PDF is only as safe as the password you choose — use a long, unique one, and share it through a different channel than the file itself.',
     ],
     steps: [
       'Open Encrypt PDF and upload an unencrypted PDF (or unlock first if it already has a password).',
@@ -697,8 +697,8 @@ export const TOOL_SEO_BY_ID = {
       },
     ],
     intro: [
-      'Organize PDF pages visually: reorder with drag-and-drop or arrows, rotate mis-scanned sheets, and delete extras—then download a clean PDF. The whole workflow runs in your browser, so page thumbnails and your final file stay on your device.',
-      'Whether you are fixing a merged report or trimming a long download, you see every page before you commit, which cuts mistakes before you share.',
+      'Organize a PDF visually: drag pages into a new order, rotate sheets that scanned sideways, and delete the ones you do not need — then download one clean file. You see every page as a thumbnail before you commit to any change.',
+      'The whole workflow runs in your browser, so the page thumbnails and your final file stay on your device. Seeing the pages before you save cuts mistakes before you share.',
     ],
     steps: [
       'Open Organize Pages and upload your PDF.',
@@ -763,8 +763,8 @@ export const TOOL_SEO_BY_ID = {
       },
     ],
     intro: [
-      'Add a text or image watermark across your PDF—set opacity, rotation, position, and which pages receive it, then preview on page one before you download. Processing uses pdf-lib in your browser, so your file is not sent to a separate watermarking service.',
-      'Use it for DRAFT labels, confidential banners, or logo stamps while keeping the original structure of the PDF.',
+      'Stamp a text or image watermark across a PDF — set the opacity, rotation, position, and which pages receive it, then preview page one before you download. Use it for DRAFT labels, confidential banners, copyright notices, or a logo on proposals and quotes.',
+      'Watermarking runs in your browser, so your file is not sent to a separate service, and the original structure of the PDF is preserved.',
     ],
     steps: [
       'Open Add Watermark and upload your PDF.',
@@ -829,8 +829,8 @@ export const TOOL_SEO_BY_ID = {
       },
     ],
     intro: [
-      'Add page numbers to any PDF with clear placement controls — choose a grid position for single-page layouts or facing spreads with outer-margin alternation, then pick formats like plain numbers or Page N of M.',
-      'Processing runs in your browser with pdf-lib: upload the file, set margin and typography, and download a numbered copy without sending the PDF through a separate numbering service.',
+      'Add page numbers to any PDF with precise placement — pick a position on the page, alternate the outer margin for facing spreads, and choose a format such as a plain number or "Page N of M". It is the quick way to make reports, contracts, and handouts easy to reference.',
+      'Numbering runs in your browser: upload the file, set the margin and typography, and download a numbered copy without sending the PDF through a separate service.',
     ],
     steps: [
       'Open Add page numbers from the toolkit and upload your PDF.',
@@ -895,8 +895,8 @@ export const TOOL_SEO_BY_ID = {
       },
     ],
     intro: [
-      'Turn phone or laptop camera shots into a clean multi-page PDF. pdfpilot runs in your browser: you grant camera access only for this tab, capture each page, reorder or retake, then download one file.',
-      'If you cannot use the camera (permission denied or desktop without a webcam), upload existing photos instead — the same trim and contrast tools apply before the PDF is built.',
+      'Turn photos from your phone or laptop camera into a clean, multi-page PDF. Grant camera access for the tab, capture each page, reorder or retake any that came out blurry, and download a single file — no scanner required.',
+      'If you cannot use a camera — permission denied, or a desktop with no webcam — upload existing photos instead; the same trimming and contrast tools apply before the PDF is built. Everything happens on your device.',
     ],
     steps: [
       'Open Scan to PDF from the toolkit.',
@@ -961,8 +961,8 @@ export const TOOL_SEO_BY_ID = {
       },
     ],
     intro: [
-      'Convert PDF to Word in your browser when you need an editable .docx from a text-based PDF. pdf.js reads the file in your tab and pdfpilot builds a draft Word document locally — your PDF is not uploaded for conversion.',
-      'Output is best-effort draft text and paragraphs; complex layouts, tables, and fonts may simplify. Scanned PDFs need OCR first — use pdfpilot’s OCR PDF tool, then try again.',
+      'Convert a text-based PDF into an editable Word (.docx) document right in your browser, so you can reuse paragraphs, fix wording, or reformat without rebuilding the file from scratch.',
+      'The result is a best-effort draft — complex layouts, tables, and exact fonts may simplify, so proofread before sending. A scanned PDF has no real text to extract, so run OCR first and then convert. Your PDF is not uploaded for this conversion.',
     ],
     steps: [
       'Open PDF to Word from the toolkit.',
@@ -1026,8 +1026,8 @@ export const TOOL_SEO_BY_ID = {
       },
     ],
     intro: [
-      'Turn a Microsoft Word .docx into a draft PDF in your browser. JSZip reads the file in this tab; pdf-lib writes a simple, text-first PDF. Your document is not uploaded to a converter service for this step.',
-      'This is a fast draft — not a replacement for Microsoft Word’s own “Save as PDF” or a server with LibreOffice/Gotenberg. Tables, images, headers, and exact fonts are not reproduced; use those tools when you need print-ready fidelity.',
+      'Turn a Microsoft Word .docx into a shareable PDF in your browser, so fonts and page breaks stay put on any device and the document cannot be edited by accident.',
+      'This is a fast, text-first draft — not a replacement for Word\'s own "Save as PDF" or a server-based converter. Tables, images, headers, and exact fonts may not be reproduced, so use those options when you need print-ready fidelity. Your document is not uploaded for this step.',
     ],
     steps: [
       'Open Word to PDF from the toolkit.',
@@ -1073,8 +1073,8 @@ export const TOOL_SEO_BY_ID = {
   'gst-invoice': {
     featureName: 'GST invoice PDF',
     intro: [
-      'Create a simple GST-style tax invoice as a downloadable PDF directly in your browser. Fill supplier and buyer details, line items with HSN and GST%, and pdfpilot totals taxable value plus CGST/SGST (intra-state) or IGST (inter-state) from the two-digit state codes you enter.',
-      'This tool is for drafts and internal paperwork — always confirm format, e-invoicing, and return filing with a qualified chartered accountant before you rely on it for compliance.',
+      'Create a GST-style tax invoice as a downloadable PDF, right in your browser. Enter supplier and buyer details plus line items with HSN and GST%, and the tool totals the taxable value and applies CGST/SGST for intra-state sales or IGST for inter-state sales, based on the two-digit state codes you enter.',
+      'It is designed for drafts and internal paperwork. Always confirm the final format, e-invoicing (IRN and QR code), and return filing with a qualified chartered accountant before relying on it for compliance.',
     ],
     steps: [
       'Open GST invoice PDF from the toolkit.',
@@ -1160,8 +1160,8 @@ export const TOOL_SEO_BY_ID = {
       },
     ],
     intro: [
-      'Scanned PDFs are often pictures of pages. OCR (optical character recognition) adds a searchable text layer so you can find words, copy passages, and get better results in editors that rely on real text.',
-      'pdfpilot runs OCR on the server with open-source tools (ocrmypdf and Tesseract). You download a new PDF; keep the original if you still need the untouched scan.',
+      'A scanned PDF is really just pictures of pages, so you cannot search or copy its text. OCR (optical character recognition) reads those images and adds a searchable text layer underneath, making the document fully searchable while it still looks exactly the same.',
+      'OCR runs on the server with trusted open-source tools (ocrmypdf and Tesseract) and supports both English and Hindi. You download a new PDF — keep the original if you still need the untouched scan.',
     ],
     steps: [
       'Open OCR PDF from the toolkit.',
@@ -1219,8 +1219,8 @@ export const TOOL_SEO_BY_ID = {
       },
     ],
     intro: [
-      'Export every PDF page as a PNG image when you need lossless screenshots for design tools, crisp slides, or archives that keep sharp edges.',
-      'Conversion runs entirely in your browser on pdfpilot, so your document does not pass through an extra upload pipeline before you download the ZIP.',
+      'Export every page of a PDF as a PNG image when you need lossless, sharp-edged screenshots — ideal for design tools, crisp presentation slides, or archives where clean edges matter more than file size.',
+      'Conversion runs entirely in your browser, so your document does not pass through an extra upload pipeline before you download the images as a ZIP.',
     ],
     steps: [
       'Open PDF to PNG from the toolkit.',
@@ -1283,8 +1283,8 @@ export const TOOL_SEO_BY_ID = {
       },
     ],
     intro: [
-      'Pull plain text out of digital PDFs for notes, scripts, or quick edits. pdfpilot reads the embedded text layer in your browser—ideal when you just need words, not layout.',
-      'Scanned PDFs that are only pictures do not contain selectable text until OCR adds a layer; use OCR PDF first on pdfpilot when the server is configured, then try text export again.',
+      'Pull the plain text out of a digital PDF for notes, quotes, scripts, data entry, or quick edits. It reads the embedded text layer in your browser — ideal when you want the words without the layout.',
+      'A scanned PDF that is only images has no selectable text until OCR adds a layer, so run the OCR PDF tool first (when the server is configured) and then try the text export again.',
     ],
     steps: [
       'Open PDF to text from the toolkit.',
@@ -1347,8 +1347,8 @@ export const TOOL_SEO_BY_ID = {
       },
     ],
     intro: [
-      'Flattening turns interactive elements into static appearance—either by flattening AcroForm fields or by rasterizing entire pages to images when you need the strongest guarantee that nothing stays editable.',
-      'pdfpilot offers both paths in the browser: form flattening via pdf-lib, or full-page rasterization that trades file size for a printed-like snapshot.',
+      'Flatten a PDF to turn interactive elements into a fixed, static appearance — either by flattening form fields so they can no longer be changed, or by rasterizing whole pages to images when you need the strongest guarantee that nothing stays editable.',
+      'Both paths run in your browser: lightweight form flattening, or full-page rasterization that trades a larger file size for a locked, print-like snapshot.',
     ],
     steps: [
       'Open Flatten PDF and upload your document.',
@@ -1411,8 +1411,8 @@ export const TOOL_SEO_BY_ID = {
       },
     ],
     intro: [
-      'Complete standard AcroForm PDFs without printing and scanning. pdfpilot lists fields it can edit in the browser so you can type, tick boxes, and choose dropdown values before downloading.',
-      'Complex government PDFs sometimes include widgets pdf-lib cannot edit—when that happens, download still works for simpler forms or after editing elsewhere.',
+      'Complete a standard PDF form on screen — type into fields, tick checkboxes, and choose dropdown values — without printing and scanning. The tool lists the fields it can edit so you can fill the form and download the finished copy.',
+      'Some complex government PDFs include widgets that cannot be edited here; when that happens, downloading still works for simpler forms, or after you edit the tricky fields elsewhere.',
     ],
     steps: [
       'Open Fill PDF form and upload your PDF.',
@@ -1475,8 +1475,8 @@ export const TOOL_SEO_BY_ID = {
       },
     ],
     intro: [
-      'Some PDFs have broken cross-references or stream errors that make viewers crash. Rewriting the file through qpdf rebuilds structure many readers can open again.',
-      'Repair PDF sends your file to your configured pdfpilot API where qpdf runs — the same stack used for unlock and compress when you self-host.',
+      'Some PDFs have broken cross-reference tables or stream errors that make viewers freeze or refuse to open them. Rewriting the file rebuilds its internal structure so readers can open it again.',
+      'Repair sends your file to your configured pdfpilot API, where qpdf rebuilds it — the same reliable engine used for unlocking and compressing when you self-host.',
     ],
     steps: [
       'Open Repair PDF and upload the problematic file.',
