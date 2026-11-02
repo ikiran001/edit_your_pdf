@@ -37,6 +37,9 @@ const PRIORITY = {
 const STATIC_ROUTES = [
   { path: '/', priority: 1.0, changefreq: 'weekly' },
   { path: '/blog', priority: 0.7, changefreq: 'weekly' },
+  { path: '/about', priority: 0.5, changefreq: 'monthly' },
+  { path: '/contact', priority: 0.4, changefreq: 'monthly' },
+  { path: '/privacy', priority: 0.3, changefreq: 'monthly' },
   { path: '/terms', priority: 0.3, changefreq: 'monthly' },
 ]
 

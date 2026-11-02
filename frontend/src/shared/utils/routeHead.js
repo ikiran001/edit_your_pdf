@@ -16,6 +16,7 @@ import {
   BRAND_NAME,
   docTitleForPath,
   metaDescriptionForPath,
+  featureLabelForPath,
 } from '../constants/branding.js'
 import { TOOL_SEO_BY_ID } from '../constants/toolSeoContent.js'
 import { getBlogPost } from '../../content/blogPosts.js'
@@ -110,7 +111,7 @@ export function applyRouteHead(pathname) {
     primaryLd = {
       '@context': 'https://schema.org',
       '@type': 'SoftwareApplication',
-      name: `${title.replace(/^pdfpilot\s*[-–]\s*/, '')} — ${BRAND_NAME}`,
+      name: `${featureLabelForPath(p) || title} — ${BRAND_NAME}`,
       applicationCategory: 'BusinessApplication',
       operatingSystem: 'Web browser',
       ...(canonical ? { url: canonical } : {}),

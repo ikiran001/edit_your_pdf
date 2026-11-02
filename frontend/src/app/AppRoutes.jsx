@@ -9,6 +9,7 @@ import { rescanReveal } from '../shared/utils/scrollReveal.js'
 import { ClientToolDownloadAuthProvider } from '../auth/ClientToolDownloadAuthContext.jsx'
 import SkipToContent from '../shared/components/SkipToContent.jsx'
 import AnimatedBackground from '../shared/components/AnimatedBackground.jsx'
+import ConsentBanner from '../shared/components/ConsentBanner.jsx'
 
 /**
  * lazy() that recovers from stale-chunk 404s. After a new deploy, an already-open
@@ -73,6 +74,9 @@ const PlannedToolPage = lazyWithReload(() => import('../features/placeholder/Pla
 const MyDocumentsPage = lazyWithReload(() => import('../features/my-documents/MyDocumentsPage.jsx'))
 const SubscriptionBillingPage = lazyWithReload(() => import('../features/account/SubscriptionBillingPage.jsx'))
 const TermsOfServicePage = lazyWithReload(() => import('../features/legal/TermsOfServicePage.jsx'))
+const PrivacyPolicyPage = lazyWithReload(() => import('../features/legal/PrivacyPolicyPage.jsx'))
+const AboutPage = lazyWithReload(() => import('../features/legal/AboutPage.jsx'))
+const ContactPage = lazyWithReload(() => import('../features/legal/ContactPage.jsx'))
 const FeedbackPage = lazyWithReload(() => import('../features/feedback/FeedbackPage.jsx'))
 const AdminFeedbackPage = lazyWithReload(() => import('../features/feedback/AdminFeedbackPage.jsx'))
 const BlogIndexPage = lazyWithReload(() => import('../features/blog/BlogIndexPage.jsx'))
@@ -123,6 +127,7 @@ export default function AppRoutes() {
     <BrowserRouter basename={basename}>
       <AnimatedBackground />
       <SkipToContent />
+      <ConsentBanner />
       <ClientToolDownloadAuthProvider>
         <ErrorBoundary>
           <RouteAnalytics />
@@ -131,6 +136,9 @@ export default function AppRoutes() {
             <Routes>
               <Route path="/" element={<ToolkitHomePage />} />
               <Route path="/terms" element={<TermsOfServicePage />} />
+              <Route path="/privacy" element={<PrivacyPolicyPage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/contact" element={<ContactPage />} />
               <Route path="/blog" element={<BlogIndexPage />} />
               <Route path="/blog/:slug" element={<BlogPostPage />} />
               <Route path="/feedback" element={<FeedbackPage />} />

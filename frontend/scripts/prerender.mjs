@@ -39,6 +39,9 @@ const ORIGIN = `http://127.0.0.1:${PORT}`
 const ROUTES = [
   ...TOOL_REGISTRY.filter((t) => t.implemented !== false).map((t) => t.path),
   '/terms',
+  '/privacy',
+  '/about',
+  '/contact',
   '/blog',
   ...BLOG_POSTS.map((post) => `/blog/${post.slug}`),
   '/',
