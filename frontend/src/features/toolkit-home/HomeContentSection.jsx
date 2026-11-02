@@ -18,7 +18,7 @@ export default function HomeContentSection({ className = '' }) {
 
   return (
     <section
-      className={`fx-reveal mx-auto w-full max-w-3xl space-y-10 py-10 text-left ${className}`}
+      className={`mx-auto w-full max-w-3xl space-y-10 py-10 text-left ${className}`}
       aria-label={t('homeContent.aboutHeading')}
     >
       <div className="space-y-3">
