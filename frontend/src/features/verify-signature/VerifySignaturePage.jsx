@@ -13,6 +13,7 @@ import {
 } from '../../lib/analytics.js'
 import { ANALYTICS_TOOL } from '../../shared/constants/analyticsTools.js'
 import { MSG } from '../../shared/constants/branding.js'
+import { buildVerificationReport } from './signatureReport.js'
 
 const VERIFY_TOOL = ANALYTICS_TOOL.verify_signature
 
@@ -76,6 +77,24 @@ export default function VerifySignaturePage() {
       )
     } finally {
       setBusy(false)
+    }
+  }
+
+  const downloadReport = async () => {
+    if (!result) return
+    try {
+      const bytes = await buildVerificationReport(result, file?.name || 'document.pdf')
+      const blob = new Blob([bytes], { type: 'application/pdf' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'signature-verification-report.pdf'
+      a.rel = 'noopener'
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (e) {
+      console.error('[verify-signature] report', e)
+      setError('Could not generate the report.')
     }
   }
 
@@ -170,14 +189,25 @@ export default function VerifySignaturePage() {
         </div>
       )}
 
-      <button
-        type="button"
-        disabled={busy}
-        onClick={verify}
-        className="mt-2 rounded-xl bg-indigo-600 px-8 py-3 text-sm font-semibold text-white shadow-lg disabled:opacity-50"
-      >
-        {busy ? MSG.processingFile : 'Verify signature'}
-      </button>
+      <div className="mt-2 flex flex-wrap gap-3">
+        <button
+          type="button"
+          disabled={busy}
+          onClick={verify}
+          className="rounded-xl bg-indigo-600 px-8 py-3 text-sm font-semibold text-white shadow-lg disabled:opacity-50"
+        >
+          {busy ? MSG.processingFile : 'Verify signature'}
+        </button>
+        {result && (
+          <button
+            type="button"
+            onClick={downloadReport}
+            className="rounded-xl border border-indigo-300 px-6 py-3 text-sm font-semibold text-indigo-700 dark:border-indigo-700 dark:text-indigo-300"
+          >
+            Download report (PDF)
+          </button>
+        )}
+      </div>
 
       <ToolFeatureSeoSection toolId="verify-signature" />
     </ToolPageShell>
