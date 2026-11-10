@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import multer from 'multer';
+import forge from 'node-forge';
 import verifyPDF from 'pdf-signature-reader';
 import { guardPdfPageCount } from '../utils/pdfLimits.js';
 
@@ -39,6 +40,74 @@ function mapSignature(sig) {
   };
 }
 
+// The end-entity cert is the one no other cert is issued by (its subject is
+// nobody's issuer). Falls back to the first cert if the chain is unusual.
+function leafCert(certs) {
+  const issuerCNs = new Set(certs.map((c) => c.issuer.getField('CN')?.value).filter(Boolean));
+  return certs.find((c) => {
+    const cn = c.subject.getField('CN')?.value;
+    return cn && !issuerCNs.has(cn);
+  }) || certs[0];
+}
+
+// Best-effort signer list straight from each /Contents <hex> PKCS#7 blob, used
+// when the full verifier cannot (e.g. the file was altered after signing).
+function extractSigners(buf) {
+  const text = buf.toString('latin1');
+  const re = /\/Contents\s*<([0-9A-Fa-f]+)>/g;
+  const signers = [];
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    try {
+      const der = Buffer.from(m[1], 'hex').toString('latin1');
+      const p7 = forge.pkcs7.messageFromAsn1(forge.asn1.fromDer(der, { parseAllBytes: false }));
+      const certs = p7.certificates || [];
+      if (!certs.length) continue;
+      const leaf = leafCert(certs);
+      signers.push({
+        signer: leaf.subject.getField('CN')?.value || 'Unknown signer',
+        issuedBy: leaf.issuer.getField('CN')?.value || null,
+        validFrom: leaf.validity?.notBefore || null,
+        validTo: leaf.validity?.notAfter || null,
+      });
+    } catch {
+      // not a parseable signature blob — skip it
+    }
+  }
+  return signers;
+}
+
+// True when a signed ByteRange reaches past the end of the file, which means
+// the document was shrunk/truncated/re-saved after signing.
+function byteRangeBeyondEof(buf) {
+  const text = buf.toString('latin1');
+  const re = /\/ByteRange\s*\[\s*\d+\s+\d+\s+(\d+)\s+(\d+)\s*\]/g;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    if (Number(m[1]) + Number(m[2]) > buf.length) return true;
+  }
+  return false;
+}
+
+// Fallback when pdf-signature-reader cannot verify: decide whether the PDF is
+// unsigned, or signed-but-unverifiable, and report signer + reason honestly.
+function analyzeUnverified(buf) {
+  const text = buf.toString('latin1');
+  if (!/\/SubFilter\s*\/(adbe\.pkcs7|ETSI\.CAdES)/i.test(text)) {
+    return { signed: false };
+  }
+  return {
+    signed: true,
+    verified: false,
+    integrity: false,
+    unreadable: true,
+    note: byteRangeBeyondEof(buf)
+      ? 'The signature does not match this file — the document appears to have been modified or is incomplete since it was signed.'
+      : 'This PDF is signed, but its signature could not be fully verified here.',
+    signatures: extractSigners(buf),
+  };
+}
+
 /**
  * POST /verify-signature — multipart: field `file` (PDF).
  * Reports each embedded digital signature and whether the document was
@@ -64,17 +133,16 @@ router.post('/verify-signature', (req, res) => {
     try {
       result = verifyPDF(req.file.buffer);
     } catch (e) {
-      // verifyPDF throws (before its own try/catch) when there is no signature
-      // field or the signature type is unsupported — treat both as "not signed".
-      if (e?.type === 'TYPE_PARSE' || e?.type === 'UNSUPPORTED_SUBFILTER') {
-        return res.json({ signed: false });
-      }
-      console.warn('[verify-signature] verify failed:', e?.message);
-      return res.status(422).json({ error: 'Could not read signatures from this PDF.' });
+      // verifyPDF throws (before its own try/catch) for missing/unsupported
+      // signatures — fall back to our own best-effort analysis.
+      return res.json(analyzeUnverified(req.file.buffer));
     }
 
+    // verifyPDF swallows internal parse failures into { message } with no
+    // signatures array — treat that as unverifiable, not a hard error.
     if (!Array.isArray(result?.signatures)) {
-      return res.status(422).json({ error: result?.message || 'Could not verify signatures.' });
+      console.warn('[verify-signature] unverifiable:', result?.message);
+      return res.json(analyzeUnverified(req.file.buffer));
     }
 
     res.json({

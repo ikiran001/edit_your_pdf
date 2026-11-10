@@ -114,18 +114,27 @@ export default function VerifySignaturePage() {
 
       {result?.signed && (
         <div className="mb-4 space-y-4">
-          <div
-            role="status"
-            className={
-              result.integrity
-                ? 'rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-100'
-                : 'rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-900 dark:border-red-900 dark:bg-red-950/50 dark:text-red-100'
-            }
-          >
-            {result.integrity
-              ? '✔ Digitally signed — not modified since signing'
-              : '✘ The document was modified after it was signed'}
-          </div>
+          {result.unreadable ? (
+            <div
+              role="status"
+              className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-100"
+            >
+              ⚠ {result.note || 'This PDF is signed, but its signature could not be verified here.'}
+            </div>
+          ) : (
+            <div
+              role="status"
+              className={
+                result.integrity
+                  ? 'rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-100'
+                  : 'rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-900 dark:border-red-900 dark:bg-red-950/50 dark:text-red-100'
+              }
+            >
+              {result.integrity
+                ? '✔ Digitally signed — not modified since signing'
+                : '✘ The document was modified after it was signed'}
+            </div>
+          )}
 
           {result.signatures.map((s, i) => (
             <div
@@ -143,17 +152,21 @@ export default function VerifySignaturePage() {
               )}
               {s.reason && <div className="mt-0.5 text-zinc-600 dark:text-zinc-400">Reason: {s.reason}</div>}
               {s.location && <div className="mt-0.5 text-zinc-600 dark:text-zinc-400">Location: {s.location}</div>}
-              <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                {s.expired ? 'Certificate expired. ' : ''}
-                {s.authenticity ? 'Certificate chain is consistent.' : 'Certificate chain could not be validated.'}
-              </div>
+              {s.authenticity !== undefined && (
+                <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                  {s.expired ? 'Certificate expired. ' : ''}
+                  {s.authenticity ? 'Certificate chain is consistent.' : 'Certificate chain could not be validated.'}
+                </div>
+              )}
             </div>
           ))}
 
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            Trust is checked against the signature&apos;s own certificate chain, not an external
-            authority list.
-          </p>
+          {!result.unreadable && (
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Trust is checked against the signature&apos;s own certificate chain, not an external
+              authority list.
+            </p>
+          )}
         </div>
       )}
 
