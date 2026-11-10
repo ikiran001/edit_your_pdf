@@ -49,12 +49,27 @@ export async function buildVerificationReport(result, fileName) {
   const margin = 50
   const maxWidth = 595 - margin * 2
 
-  // Branded header band
-  page.drawRectangle({ x: 0, y: 778, width: 595, height: 64, color: rgb(...BRAND_INDIGO) })
-  page.drawText(BRAND_NAME, { x: margin, y: 808, size: 22, font: bold, color: rgb(1, 1, 1) })
-  page.drawText(TAGLINE, { x: margin, y: 790, size: 9, font, color: rgb(0.9, 0.9, 1) })
+  // Branded header: logo mark + wordmark + divider. The logo is fetched at
+  // runtime; if it can't load we fall back to the wordmark alone.
+  let logo = null
+  try {
+    const base = import.meta.env?.BASE_URL || '/'
+    const res = await fetch(`${base}favicon-192x192.png`)
+    if (res.ok) logo = await pdf.embedPng(await res.arrayBuffer())
+  } catch {
+    logo = null
+  }
 
-  let y = 742
+  let brandX = margin
+  if (logo) {
+    page.drawImage(logo, { x: margin, y: 792, width: 36, height: 36 })
+    brandX = margin + 48
+  }
+  page.drawText(BRAND_NAME, { x: brandX, y: 812, size: 20, font: bold, color: rgb(...BRAND_INDIGO) })
+  page.drawText(TAGLINE, { x: brandX, y: 797, size: 9, font, color: rgb(0.42, 0.42, 0.48) })
+  page.drawLine({ start: { x: margin, y: 784 }, end: { x: 595 - margin, y: 784 }, thickness: 1, color: rgb(...BRAND_INDIGO) })
+
+  let y = 748
 
   const draw = (text, { size = 11, f = font, color = [0.12, 0.12, 0.14], gap = 16 } = {}) => {
     for (const ln of wrap(text, f, size, maxWidth)) {
