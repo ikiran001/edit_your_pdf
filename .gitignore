@@ -10,3 +10,5 @@ backend/data/site-feedback.json
 *.log
 .DS_Store
 backend/fonts/*.ttf
+# Private, real signed PDFs used as local regression fixtures (may contain PII)
+backend/test-fixtures/

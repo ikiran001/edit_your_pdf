@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "test": "node --test 'utils/**/*.test.mjs' 'services/**/*.test.mjs' 'middleware/**/*.test.mjs'",
+    "test": "node --test 'utils/**/*.test.mjs' 'services/**/*.test.mjs' 'middleware/**/*.test.mjs' 'routes/**/*.test.mjs'",
     "verify:edit": "node scripts/verify-edit-pipeline.mjs",
     "verify:native-mask": "node scripts/verify-native-mask-table.mjs",
     "verify:unlock": "node scripts/verify-unlock-pdf.mjs",
