@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
+    "test": "node --test 'utils/**/*.test.mjs' 'services/**/*.test.mjs' 'middleware/**/*.test.mjs'",
     "verify:edit": "node scripts/verify-edit-pipeline.mjs",
     "verify:native-mask": "node scripts/verify-native-mask-table.mjs",
     "verify:unlock": "node scripts/verify-unlock-pdf.mjs",
@@ -22,6 +23,7 @@
     "helmet": "^8.1.0",
     "multer": "^1.4.5-lts.2",
     "pdf-lib": "^1.17.1",
+    "pdf-signature-reader": "^1.4.3",
     "pdfjs-dist": "^4.10.38",
     "razorpay": "^2.9.6",
     "regenerator-runtime": "^0.14.1",

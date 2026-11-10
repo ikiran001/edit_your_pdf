@@ -60,6 +60,7 @@ const WordToPdfPage = lazyWithReload(() => import('../features/word-to-pdf/WordT
 const PdfToWordPage = lazyWithReload(() => import('../features/pdf-to-word/PdfToWordPage.jsx'))
 const GstInvoicePage = lazyWithReload(() => import('../features/gst-invoice/GstInvoicePage.jsx'))
 const RepairPdfPage = lazyWithReload(() => import('../features/repair-pdf/RepairPdfPage.jsx'))
+const VerifySignaturePage = lazyWithReload(() => import('../features/verify-signature/VerifySignaturePage.jsx'))
 const CropPdfPage = lazyWithReload(() => import('../features/crop-pdf/CropPdfPage.jsx'))
 const ComparePdfPage = lazyWithReload(() => import('../features/compare-pdf/ComparePdfPage.jsx'))
 const PowerpointToPdfPage = lazyWithReload(() => import('../features/powerpoint-to-pdf/PowerpointToPdfPage.jsx'))
@@ -188,6 +189,7 @@ export default function AppRoutes() {
               <Route path="/tools/crop-pdf" element={<CropPdfPage />} />
               <Route path="/tools/compare-pdf" element={<ComparePdfPage />} />
               <Route path="/tools/repair-pdf" element={<RepairPdfPage />} />
+              <Route path="/tools/verify-signature" element={<VerifySignaturePage />} />
               <Route path="/tools/powerpoint-to-pdf" element={<PowerpointToPdfPage />} />
               <Route path="/tools/excel-to-pdf" element={<ExcelToPdfPage />} />
               <Route path="/tools/html-to-pdf" element={<HtmlToPdfPage />} />

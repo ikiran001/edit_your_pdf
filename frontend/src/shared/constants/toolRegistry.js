@@ -174,6 +174,15 @@ export const TOOL_REGISTRY = [
     icon: 'Wrench',
   },
   {
+    id: 'verify-signature',
+    path: '/tools/verify-signature',
+    title: 'Verify Signature',
+    description:
+      'Check a signed PDF — confirms it was not modified since signing and shows who signed it.',
+    implemented: true,
+    icon: 'BadgeCheck',
+  },
+  {
     id: 'powerpoint-to-pdf',
     path: '/tools/powerpoint-to-pdf',
     title: 'PowerPoint to PDF',

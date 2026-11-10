@@ -11,6 +11,7 @@ import ocrPdfRouter from './routes/ocrPdf.js';
 import encryptRouter from './routes/encrypt.js';
 import compressPdfRouter from './routes/compressPdf.js';
 import repairPdfRouter from './routes/repairPdf.js';
+import verifySignatureRouter from './routes/verifySignature.js';
 import documentFlowRouter from './routes/documentFlow.js';
 import userSessionsRouter from './routes/userSessions.js';
 import feedbackRouter from './routes/feedback.js';
@@ -22,16 +23,20 @@ import { isDownloadAuthEnabled, isFirstAnonymousDownloadEnabled } from './servic
 import { getFirebaseAdminHealthInfo, isFirebaseAdminReady } from './services/firebaseAdmin.js';
 import { startSessionCleanup } from './utils/sessionCleanup.js';
 import { getQpdfBinary } from './utils/resolveQpdf.js';
+import { isValidSessionId } from './utils/sessionId.js';
 import { getGhostscriptBinary } from './utils/resolveGhostscript.js';
 import { getOcrmypdfBinary } from './utils/resolveOcrmypdf.js';
 import { ensureNotoFontsReady } from './services/pdfUnicodeFonts.js';
 import {
+  authLimiter,
   cpuHeavyLimiter,
   editLimiter,
   securityCors,
   securityHelmet,
   uploadLimiter,
 } from './middleware/httpSecurity.js';
+import { heavyJobLimiter } from './middleware/concurrencyLimiter.js';
+import { authorizeSessionAccess } from './services/sessionOwnership.js';
 import swaggerUi from 'swagger-ui-express';
 import openApiDocument from './openapi.js';
 
@@ -180,15 +185,15 @@ app.get('/health', (_req, res) => {
     /** Client tools should POST; GET returns 405 (see route in compressPdf.js). */
     compressPdf: 'POST /compress-pdf',
     repairPdf: 'POST /repair-pdf',
+    verifySignature: 'POST /verify-signature',
+    // Binary absolute paths are intentionally omitted — they leak the server's filesystem
+    // layout. Booleans + versions are enough for an uptime/readiness check.
     qpdf: Boolean(qpdfBin && qpdfVersion),
-    qpdfPath: qpdfBin,
     qpdfVersion,
     ghostscript: Boolean(gsBin && gsVersion),
-    ghostscriptPath: gsBin,
     ghostscriptVersion: gsVersion,
     unlock,
     ocrmypdf: Boolean(ocrmypdfBin && ocrmypdfVersion),
-    ocrmypdfPath: ocrmypdfBin,
     ocrmypdfVersion,
     /** Present on builds that include Razorpay + Firestore billing routes (404 on /subscription/me = stale deploy). */
     subscription: {
@@ -207,15 +212,24 @@ app.post(
   handleRazorpayWebhook
 );
 
-app.use('/ocr-pdf', cpuHeavyLimiter);
-app.use('/compress-pdf', cpuHeavyLimiter);
-app.use('/document-flow', cpuHeavyLimiter);
-app.use('/unlock-pdf', cpuHeavyLimiter);
-app.use('/encrypt-pdf', cpuHeavyLimiter);
-app.use('/repair-pdf', cpuHeavyLimiter);
+// Native-process routes: per-IP budget (cpuHeavyLimiter) + a global concurrency cap
+// (heavyJobLimiter) so total simultaneous qpdf/Ghostscript/LibreOffice/ocrmypdf jobs
+// can't exhaust a small instance regardless of how many IPs attack.
+app.use('/ocr-pdf', cpuHeavyLimiter, heavyJobLimiter);
+app.use('/compress-pdf', cpuHeavyLimiter, heavyJobLimiter);
+app.use('/document-flow', cpuHeavyLimiter, heavyJobLimiter);
+app.use('/unlock-pdf', cpuHeavyLimiter, heavyJobLimiter);
+app.use('/encrypt-pdf', cpuHeavyLimiter, heavyJobLimiter);
+app.use('/repair-pdf', cpuHeavyLimiter, heavyJobLimiter);
+app.use('/verify-signature', cpuHeavyLimiter, heavyJobLimiter);
 app.use('/upload', uploadLimiter);
 app.use('/edit', editLimiter);
 app.use('/ai', cpuHeavyLimiter);
+// Auth / billing / account / feedback: brute-force & abuse protection. The Razorpay
+// webhook is mounted earlier (above) so it is not affected by this limiter.
+app.use('/subscription', authLimiter);
+app.use('/user-sessions', authLimiter);
+app.use('/feedback', authLimiter);
 
 app.use(uploadRouter);
 app.use(editRouter);
@@ -225,6 +239,7 @@ app.use(ocrPdfRouter);
 app.use(encryptRouter);
 app.use(compressPdfRouter);
 app.use(repairPdfRouter);
+app.use(verifySignatureRouter);
 app.use(documentFlowRouter);
 app.use(userSessionsRouter);
 app.use(feedbackRouter);
@@ -236,8 +251,16 @@ console.log(
 );
 
 /** Serve PDF for pdf.js: latest edited file when present, else original upload. */
-app.get('/pdf/:sessionId', (req, res) => {
+app.get('/pdf/:sessionId', async (req, res) => {
+  if (!isValidSessionId(req.params.sessionId)) {
+    return res.status(400).send('Invalid sessionId');
+  }
   const dir = path.join(uploadsDir, req.params.sessionId);
+  // Ownership: a claimed session may only be served to its owner. This closes the IDOR
+  // where a leaked sessionId let anyone fetch (and thus save) another user's PDF via the
+  // viewer endpoint, also bypassing the /download auth + free-tier gate.
+  const access = await authorizeSessionAccess(req, dir);
+  if (!access.ok) return res.status(access.status).json(access.body);
   const edited = path.join(dir, 'edited.pdf');
   const original = path.join(dir, 'original.pdf');
   const p = fs.existsSync(edited) ? edited : original;

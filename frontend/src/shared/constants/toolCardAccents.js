@@ -28,6 +28,7 @@ export const TOOL_ACCENT_KEY_BY_ID = {
   'remove-pages': 'rose',
   'extract-pages': 'rose',
   'repair-pdf': 'emerald',
+  'verify-signature': 'emerald',
   'powerpoint-to-pdf': 'orange',
   'excel-to-pdf': 'orange',
   'html-to-pdf': 'orange',

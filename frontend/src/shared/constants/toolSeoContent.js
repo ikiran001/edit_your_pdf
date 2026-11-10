@@ -1518,4 +1518,68 @@ export const TOOL_SEO_BY_ID = {
       },
     ],
   },
+  'verify-signature': {
+    featureName: 'Verify Signature',
+    faqs: [
+      {
+        q: 'How do I check if a signed PDF is valid?',
+        a: 'Open Verify Signature, upload the PDF, and pdfpilot checks each embedded digital signature. A green result means the document has not been changed since it was signed.',
+      },
+      {
+        q: 'What does the green check actually prove?',
+        a: 'It proves integrity — the bytes covered by the signature match, so the document was not modified after signing. It also shows the signer’s name and certificate details.',
+      },
+      {
+        q: 'Does it confirm the signer is who they claim to be?',
+        a: 'Trust is checked against the signature’s own certificate chain, not an external authority list. So it confirms the chain is internally consistent, not that a public CA vouches for the signer.',
+      },
+      {
+        q: 'What if the PDF is not signed?',
+        a: 'The tool tells you the PDF is not digitally signed. Only PDFs with a standard PKCS#7 / CAdES signature can be verified.',
+      },
+    ],
+    intro: [
+      'A digital signature lets you prove a PDF has not been altered since it was signed. Verify Signature reads the embedded signature, recomputes the signed hash, and confirms whether the document still matches.',
+      'Verification runs on your configured pdfpilot API. Your file is read in memory to check the signature and is not stored.',
+    ],
+    steps: [
+      'Open Verify Signature and upload the signed PDF.',
+      'Run the check — pdfpilot reads each signature in the file.',
+      'Read the result: green means signed and unmodified, red means the file changed after signing.',
+      'Review signer name, issuer, and certificate validity dates for each signature.',
+      'If the PDF is not signed, the tool says so — sign it first with Sign PDF.',
+    ],
+    benefits: [
+      {
+        title: 'Tamper check',
+        body: 'Confirms the document was not modified after it was signed.',
+      },
+      {
+        title: 'Signer details',
+        body: 'Shows who signed, the issuing certificate, and its validity period.',
+      },
+      {
+        title: 'Multiple signatures',
+        body: 'Reports every signature in the file, not just the first.',
+      },
+      {
+        title: 'Honest limits',
+        body: 'Trust is validated against the embedded chain, not an external CA list.',
+      },
+    ],
+    highlights: [
+      {
+        title: 'Clear green check',
+        body: 'An at-a-glance result tells you if the signature holds.',
+      },
+      {
+        title: 'Nothing stored',
+        body: 'The PDF is read in memory on your API to verify, then discarded.',
+      },
+      {
+        title: 'Pairs with Sign PDF',
+        body: 'Sign a document, then verify the result end to end.',
+      },
+    ],
+  },
 }
