@@ -8,6 +8,7 @@ import router from './verifySignature.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ALTERED_FIXTURE = path.join(__dirname, '../test-fixtures/signed-altered-byterange.pdf');
+const VALID_FIXTURE = path.join(__dirname, '../../test-artifacts/signed-valid.pdf');
 
 async function postPdf(buffer) {
   const app = express();
@@ -23,6 +24,14 @@ async function postPdf(buffer) {
     server.close();
   }
 }
+
+test('valid signed PDF passes the integrity (green) check', async () => {
+  const body = await postPdf(fs.readFileSync(VALID_FIXTURE));
+  assert.equal(body.signed, true);
+  assert.equal(body.integrity, true);
+  assert.ok(!body.unreadable);
+  assert.equal(body.signatures[0].signer, 'EYP Valid Signer');
+});
 
 test('reports a plain PDF as not signed', async () => {
   const unsigned = Buffer.from('%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF');
