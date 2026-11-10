@@ -14,6 +14,9 @@ import {
   resolveSofficePath,
 } from '../services/documentFlowConvert.js';
 import { translateViaLibreTranslate, translateViaMyMemory } from '../services/translateText.js';
+import { authorizeSessionAccess } from '../services/sessionOwnership.js';
+import { guardPdfPageCount } from '../utils/pdfLimits.js';
+import { sanitizeHtmlForConversion } from '../utils/sanitizeHtmlForConversion.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const uploadsRoot = path.join(__dirname, '..', 'uploads');
@@ -46,6 +49,8 @@ router.get('/document-flow/session/:sessionId/export-docx', async (req, res) => 
     });
   }
   const dir = path.join(uploadsRoot, sessionId);
+  const access = await authorizeSessionAccess(req, dir);
+  if (!access.ok) return res.status(access.status).json(access.body);
   const editedPath = path.join(dir, 'edited.pdf');
   const originalPath = path.join(dir, 'original.pdf');
   let chosen;
@@ -116,6 +121,8 @@ router.post('/document-flow/convert-pdf-to-docx', (req, res) => {
     if (!req.file?.buffer) {
       return res.status(400).json({ error: 'file required' });
     }
+    const guard = await guardPdfPageCount(req.file.buffer);
+    if (!guard.ok) return res.status(guard.status).json(guard.body);
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pdfpilot-pdf2docx-upload-'));
     const inputAbs = path.join(tmp, 'upload.pdf');
     try {
@@ -194,6 +201,8 @@ router.post('/document-flow/convert-pdf-to-xlsx', (req, res) => {
   single(req, res, async (err) => {
     if (err) return res.status(400).json({ error: err.message || 'Upload failed' });
     if (!req.file?.buffer) return res.status(400).json({ error: 'file required' });
+    const guard = await guardPdfPageCount(req.file.buffer);
+    if (!guard.ok) return res.status(guard.status).json(guard.body);
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pdfpilot-pdf2xlsx-upload-'));
     const inputAbs = path.join(tmp, 'upload.pdf');
     try {
@@ -236,6 +245,8 @@ router.post('/document-flow/convert-pdf-to-pptx', (req, res) => {
   single(req, res, async (err) => {
     if (err) return res.status(400).json({ error: err.message || 'Upload failed' });
     if (!req.file?.buffer) return res.status(400).json({ error: 'file required' });
+    const guard = await guardPdfPageCount(req.file.buffer);
+    if (!guard.ok) return res.status(guard.status).json(guard.body);
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pdfpilot-pdf2pptx-upload-'));
     const inputAbs = path.join(tmp, 'upload.pdf');
     try {
@@ -385,7 +396,10 @@ router.post('/document-flow/convert-html-to-pdf', (req, res) => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pdfpilot-html2pdf-'));
     const inputAbs = path.join(tmp, n.endsWith('.htm') ? 'upload.htm' : 'upload.html');
     try {
-      fs.writeFileSync(inputAbs, req.file.buffer);
+      // Strip external references so LibreOffice can't be steered into fetching internal
+      // URLs (SSRF, e.g. cloud metadata) or local files while rendering the HTML.
+      const safeHtml = sanitizeHtmlForConversion(req.file.buffer.toString('utf8'));
+      fs.writeFileSync(inputAbs, safeHtml, 'utf8');
       const buf = await convertFileToPdfBuffer({ inputPath: inputAbs, sofficePath });
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', 'attachment; filename="page.pdf"');

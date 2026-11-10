@@ -3,23 +3,19 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { tryConsumeOneTimeDownloadToken } from '../services/sessionDownloadToken.js';
-import { verifyFirebaseIdToken, isFirebaseAdminReady } from '../services/firebaseAdmin.js';
+import { isFirebaseAdminReady } from '../services/firebaseAdmin.js';
 import {
   isDownloadAuthEnabled,
   isFirstAnonymousDownloadEnabled,
 } from '../services/downloadAuthPolicy.js';
 import { reserveAuthenticatedDownload } from '../services/subscriptionFirestore.js';
+import { isValidSessionId } from '../utils/sessionId.js';
+import { authorizeSessionAccess } from '../services/sessionOwnership.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const uploadsRoot = path.join(__dirname, '..', 'uploads');
 
 const router = Router();
-
-function readBearerToken(req) {
-  const h = req.headers.authorization || req.headers.Authorization;
-  if (typeof h !== 'string' || !h.startsWith('Bearer ')) return '';
-  return h.slice(7).trim();
-}
 
 function pipePdf(res, filePath) {
   res.setHeader('Content-Type', 'application/pdf');
@@ -73,22 +69,22 @@ async function enforceSubscriptionForSignedInUser(res, authedUid) {
  */
 router.get('/download', async (req, res) => {
   const sessionId = req.query.sessionId;
-  if (!sessionId || typeof sessionId !== 'string') {
-    return res.status(400).json({ error: 'bad_request', message: 'sessionId query required' });
+  if (!isValidSessionId(sessionId)) {
+    return res.status(400).json({ error: 'bad_request', message: 'valid sessionId query required' });
   }
-  const editedPath = path.join(uploadsRoot, sessionId, 'edited.pdf');
-  const originalPath = path.join(uploadsRoot, sessionId, 'original.pdf');
+  const sessionDir = path.join(uploadsRoot, sessionId);
+  const editedPath = path.join(sessionDir, 'edited.pdf');
+  const originalPath = path.join(sessionDir, 'original.pdf');
   const filePath = fs.existsSync(editedPath) ? editedPath : originalPath;
   if (!fs.existsSync(filePath)) {
     return res.status(404).json({ error: 'not_found', message: 'Not found' });
   }
 
-  const bearer = readBearerToken(req);
-  let authedUid = null;
-  if (bearer && isFirebaseAdminReady()) {
-    const user = await verifyFirebaseIdToken(bearer);
-    if (user) authedUid = user.uid;
-  }
+  // Ownership: a claimed session may only be downloaded by its owner. Anonymous sessions
+  // stay open (the pre-sign-in flow); access.uid is the verified uid for metering, or null.
+  const access = await authorizeSessionAccess(req, sessionDir);
+  if (!access.ok) return res.status(access.status).json(access.body);
+  const authedUid = access.uid;
 
   if (!isDownloadAuthEnabled()) {
     if (!(await enforceSubscriptionForSignedInUser(res, authedUid))) return;
@@ -106,7 +102,6 @@ router.get('/download', async (req, res) => {
     });
   }
 
-  const sessionDir = path.join(uploadsRoot, sessionId);
   let allowed = Boolean(authedUid);
   const downloadToken =
     typeof req.query.downloadToken === 'string' ? req.query.downloadToken.trim() : '';

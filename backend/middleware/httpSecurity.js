@@ -88,6 +88,20 @@ export const uploadLimiter = rateLimit({
   message: { ok: false, error: 'Too many uploads from this network. Try again in a few minutes.' },
 });
 
+/**
+ * Auth / billing / account / feedback endpoints. Not CPU-heavy, but unbounded calls let an
+ * attacker brute-force payment signatures, hammer Firebase token verification (network round
+ * trips to Google), or flood feedback. Moderate per-IP budget — generous enough for the SPA's
+ * normal reads (subscription status, library) but low enough to blunt abuse.
+ */
+export const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: intEnv('RATE_LIMIT_AUTH_MAX', 120),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { ok: false, error: 'Too many requests from this network. Try again in a few minutes.' },
+});
+
 /** `/edit` can be chatty during autosave — keep generous but bounded. */
 export const editLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,

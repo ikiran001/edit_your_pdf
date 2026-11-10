@@ -5,6 +5,7 @@ import path from 'path';
 import os from 'os';
 import { getQpdfBinary } from '../utils/resolveQpdf.js';
 import { runProcess } from '../utils/runProcess.js';
+import { guardPdfPageCount } from '../utils/pdfLimits.js';
 
 const MAX_BYTES = 52 * 1024 * 1024;
 const REPAIR_TIMEOUT_MS = Number.parseInt(process.env.REPAIR_TIMEOUT_MS || '', 10) || 120_000;
@@ -44,6 +45,11 @@ router.post('/repair-pdf', (req, res) => {
     if (!req.file?.buffer?.length) {
       return res.status(400).json({ error: 'No PDF file' });
     }
+
+    // Fails open for unparseable/corrupt input (the repair case), only blocks a
+    // parseable PDF whose page count is over the bomb cap.
+    const guard = await guardPdfPageCount(req.file.buffer);
+    if (!guard.ok) return res.status(guard.status).json(guard.body);
 
     const bin = getQpdfBinary();
     if (!bin) {

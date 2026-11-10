@@ -1,0 +1,51 @@
+# pdfpilot API on a Hetzner VPS (CX22), fronted by Caddy with automatic HTTPS.
+#
+#   Browser → https://api.pdfpilot.pro → Caddy :443 → api :3001 (private compose network)
+#
+# The API port (3001) is NOT published to the host — only Caddy is reachable from the
+# internet (ports 80/443). Run from this folder on the server:
+#   cp .env.example .env && nano .env
+#   docker compose up -d --build
+name: pdfpilot
+
+services:
+  api:
+    build:
+      context: ../..          # repository root (uses the root Dockerfile: LibreOffice + OCR)
+      dockerfile: Dockerfile
+    image: pdfpilot-api:latest
+    restart: unless-stopped
+    env_file:
+      - ${PDFPILOT_ENV_FILE:?set PDFPILOT_ENV_FILE in deploy/hetzner/.env}
+    expose:
+      - "3001"               # visible to Caddy on the internal network only, not to the host
+    networks: [web]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on: [api]
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - API_DOMAIN=${API_DOMAIN:?set API_DOMAIN in deploy/hetzner/.env}
+      - ACME_EMAIL=${ACME_EMAIL:?set ACME_EMAIL in deploy/hetzner/.env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data      # persists Let's Encrypt certs across restarts
+      - caddy_config:/config
+    networks: [web]
+
+networks:
+  web:
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -9,6 +9,8 @@ import {
 } from '../services/applyTextReplacements.js';
 import { dedupeNativeTextEditRecords, mergeEditsWithNative } from '../utils/mergeEdits.js';
 import { dedupeAnnotTextItemsBySlot } from '../utils/nativeTextOverlap.js';
+import { isValidSessionId } from '../utils/sessionId.js';
+import { authorizeSessionAccess } from '../services/sessionOwnership.js';
 import {
   loadNativeTextEdits,
   saveNativeTextEdits,
@@ -48,13 +50,15 @@ const debugEdit = process.env.DEBUG_PDF_EDIT === '1' || process.env.DEBUG_PDF_ED
  * Markup is also baked into edited.pdf; the client marks hydrated items `rasterizedInPdf` so it does
  * not draw them twice on the canvas (see PdfPageCanvas).
  */
-router.get('/editor-state/:sessionId', (req, res) => {
+router.get('/editor-state/:sessionId', async (req, res) => {
   const sessionId = req.params.sessionId;
-  if (!sessionId || typeof sessionId !== 'string') {
-    return res.status(400).json({ error: 'sessionId required' });
+  if (!isValidSessionId(sessionId)) {
+    return res.status(400).json({ error: 'valid sessionId required' });
   }
   const dir = path.join(uploadsRoot, sessionId);
   if (!fs.existsSync(dir)) return res.status(404).json({ error: 'Session not found' });
+  const access = await authorizeSessionAccess(req, dir);
+  if (!access.ok) return res.status(access.status).json(access.body);
   const nativeTextEdits = loadNativeTextEdits(uploadsRoot, sessionId);
   const edits = loadSessionEdits(uploadsRoot, sessionId);
   return res.json({ nativeTextEdits, edits });
@@ -84,9 +88,11 @@ router.post('/edit', express.json({ limit: '52mb' }), async (req, res) => {
     /** When true, pdf-lib flattens AcroForm fields into page content (no fillable widgets). */
     flattenForms,
   } = req.body || {};
-  if (!sessionId || typeof sessionId !== 'string') {
-    return res.status(400).json({ error: 'sessionId required' });
+  if (!isValidSessionId(sessionId)) {
+    return res.status(400).json({ error: 'valid sessionId required' });
   }
+  const access = await authorizeSessionAccess(req, path.join(uploadsRoot, sessionId));
+  if (!access.ok) return res.status(access.status).json(access.body);
   const originalPath = path.join(uploadsRoot, sessionId, 'original.pdf');
   const editedPath = path.join(uploadsRoot, sessionId, 'edited.pdf');
   const outPath = editedPath;

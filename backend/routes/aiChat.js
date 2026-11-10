@@ -4,6 +4,8 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { extractPdfText } from '../services/extractPdfText.js';
 import { requirePro } from '../middleware/requirePro.js';
+import { isValidSessionId } from '../utils/sessionId.js';
+import { readSessionOwnerUid } from '../services/sessionOwnership.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const uploadsRoot = path.join(__dirname, '..', 'uploads');
@@ -49,8 +51,13 @@ router.post('/ai/chat', express.json({ limit: '1mb' }), requirePro, async (req, 
     }
 
     const { sessionId, message, history } = req.body || {};
-    if (!sessionId || typeof sessionId !== 'string') {
-      return res.status(400).json({ error: 'Missing sessionId.' });
+    if (!isValidSessionId(sessionId)) {
+      return res.status(400).json({ error: 'Missing or invalid sessionId.' });
+    }
+    // Ownership: a Pro user may only chat with their own (or an unclaimed) document.
+    const ownerUid = readSessionOwnerUid(path.join(uploadsRoot, sessionId));
+    if (ownerUid && ownerUid !== req.user?.uid) {
+      return res.status(403).json({ error: 'This document belongs to another account.' });
     }
     if (!message || typeof message !== 'string' || !message.trim()) {
       return res.status(400).json({ error: 'Missing message.' });

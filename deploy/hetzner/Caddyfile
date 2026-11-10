@@ -1,0 +1,21 @@
+# Caddy reverse proxy for the pdfpilot API.
+# Caddy automatically obtains and renews a Let's Encrypt TLS certificate for API_DOMAIN,
+# as long as the DNS A record points at this server and ports 80/443 are open.
+
+{
+	# Email for Let's Encrypt expiry / problem notices.
+	email {$ACME_EMAIL}
+}
+
+{$API_DOMAIN} {
+	encode zstd gzip
+
+	# PDF uploads can be large; cap to protect the box (multer on the API enforces its own limit too).
+	request_body {
+		max_size 100MB
+	}
+
+	# OCR / LibreOffice conversions can run long. Caddy imposes no response timeout by default,
+	# so these requests complete fine with a plain reverse_proxy.
+	reverse_proxy api:3001
+}

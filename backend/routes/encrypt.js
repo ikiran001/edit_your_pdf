@@ -5,6 +5,7 @@ import path from 'path';
 import os from 'os';
 import { getQpdfBinary } from '../utils/resolveQpdf.js';
 import { runProcess } from '../utils/runProcess.js';
+import { guardPdfPageCount } from '../utils/pdfLimits.js';
 
 const MAX_BYTES = 52 * 1024 * 1024;
 const MIN_PASSWORD_LEN = 12;
@@ -39,6 +40,9 @@ router.post('/encrypt-pdf', (req, res) => {
       return res.status(400).json({ error: 'Missing PDF file.' });
     }
 
+    const guard = await guardPdfPageCount(req.file.buffer);
+    if (!guard.ok) return res.status(guard.status).json(guard.body);
+
     const password = typeof req.body?.password === 'string' ? req.body.password : '';
     if (password.length < MIN_PASSWORD_LEN) {
       return res.status(400).json({
@@ -47,6 +51,12 @@ router.post('/encrypt-pdf', (req, res) => {
     }
     if (password.length > MAX_PASSWORD_LEN) {
       return res.status(400).json({ error: `Password must be at most ${MAX_PASSWORD_LEN} characters.` });
+    }
+    // qpdf's --encrypt takes the password as a positional token; a leading "-" or "@"
+    // would be reparsed as a CLI flag or an @argfile (option injection / local-file read),
+    // and there's no --user-password= form before qpdf 11.7 (prod ships 11.3). Reject them.
+    if (password[0] === '-' || password[0] === '@') {
+      return res.status(400).json({ error: 'Password cannot start with "-" or "@".' });
     }
 
     const bin = getQpdfBinary();

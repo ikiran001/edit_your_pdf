@@ -6,6 +6,7 @@ import os from 'os';
 import { getQpdfBinary } from '../utils/resolveQpdf.js';
 import { getGhostscriptBinary } from '../utils/resolveGhostscript.js';
 import { runProcess } from '../utils/runProcess.js';
+import { guardPdfPageCount } from '../utils/pdfLimits.js';
 
 const MAX_BYTES = 52 * 1024 * 1024;
 const COMPRESS_TIMEOUT_MS = Number.parseInt(process.env.COMPRESS_TIMEOUT_MS || '', 10) || 180_000;
@@ -86,6 +87,9 @@ router.post('/compress-pdf', (req, res) => {
     if (!req.file?.buffer?.length) {
       return res.status(400).json({ error: 'Missing PDF file.' });
     }
+
+    const guard = await guardPdfPageCount(req.file.buffer);
+    if (!guard.ok) return res.status(guard.status).json(guard.body);
 
     const bin = getQpdfBinary();
     if (!bin) {
