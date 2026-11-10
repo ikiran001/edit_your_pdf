@@ -9,6 +9,7 @@ import router from './verifySignature.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ALTERED_FIXTURE = path.join(__dirname, '../test-fixtures/signed-altered-byterange.pdf');
 const VALID_FIXTURE = path.join(__dirname, '../../test-artifacts/signed-valid.pdf');
+const CADES_FIXTURE = path.join(__dirname, '../../test-artifacts/signed-cades.pdf');
 
 async function postPdf(buffer) {
   const app = express();
@@ -31,6 +32,13 @@ test('valid signed PDF passes the integrity (green) check', async () => {
   assert.equal(body.integrity, true);
   assert.ok(!body.unreadable);
   assert.equal(body.signatures[0].signer, 'EYP Valid Signer');
+});
+
+test('valid ETSI.CAdES (PAdES) signature passes the integrity check', async () => {
+  const body = await postPdf(fs.readFileSync(CADES_FIXTURE));
+  assert.equal(body.signed, true);
+  assert.equal(body.integrity, true);
+  assert.equal(body.signatures[0].signer, 'EYP CAdES Signer');
 });
 
 test('reports a plain PDF as not signed', async () => {
